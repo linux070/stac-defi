@@ -1,0 +1,379 @@
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { formatCurrency, formatNumber } from '../utils/blockchain';
+import FAIcon from '../components/FAIcon';
+import AnimatedText from '../components/AnimatedText';
+
+const Home = ({ setActiveTab }) => {
+  const { t } = useTranslation();
+  const [stats, setStats] = useState({
+    volume: { value: 847200, change: 15.3, trend: 'up' },
+    tvl: { value: 3200000, change: 8.7, trend: 'up' },
+    users: { value: 1247, change: 12.4, trend: 'up' },
+    transactions: { value: 8934, change: 5.2, trend: 'up' },
+    crossChain: { value: 342, change: 22.1, trend: 'up' },
+    tokens: { value: 24, change: 0, trend: 'stable' },
+  });
+
+  // Simulate live data updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStats(prevStats => ({
+        ...prevStats,
+        volume: {
+          ...prevStats.volume,
+          value: prevStats.volume.value + Math.floor(Math.random() * 1000),
+          change: parseFloat((prevStats.volume.change + (Math.random() * 0.5 - 0.25)).toFixed(1))
+        },
+        tvl: {
+          ...prevStats.tvl,
+          value: prevStats.tvl.value + Math.floor(Math.random() * 500),
+          change: parseFloat((prevStats.tvl.change + (Math.random() * 0.2 - 0.1)).toFixed(1))
+        },
+        users: {
+          ...prevStats.users,
+          value: prevStats.users.value + Math.floor(Math.random() * 5),
+          change: parseFloat((prevStats.users.change + (Math.random() * 0.3 - 0.15)).toFixed(1))
+        },
+        transactions: {
+          ...prevStats.transactions,
+          value: prevStats.transactions.value + Math.floor(Math.random() * 15),
+          change: parseFloat((prevStats.transactions.change + (Math.random() * 0.1 - 0.05)).toFixed(1))
+        }
+      }));
+    }, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const statCards = [
+    {
+      id: 'tvl',
+      label: t('totalValueLocked'),
+      value: formatCurrency(stats.tvl.value, 0),
+      change: stats.tvl.change,
+      trend: stats.tvl.trend,
+      icon: TrendingUp,
+      faIcon: 'chart-line',
+      color: 'from-blue-500 to-blue-600',
+      description: 'Aggregate from all liquidity pools'
+    },
+    {
+      id: 'volume',
+      label: t('24hVolume'),
+      value: formatCurrency(stats.volume.value, 0),
+      change: stats.volume.change,
+      trend: stats.volume.trend,
+      icon: DollarSign,
+      faIcon: 'dollar-sign',
+      color: 'from-green-500 to-green-600',
+      description: 'Sum of swap transactions in last 24h'
+    },
+    {
+      id: 'transactions',
+      label: t('transactionCount'),
+      value: formatNumber(stats.transactions.value),
+      change: stats.transactions.change,
+      trend: stats.transactions.trend,
+      icon: Activity,
+      faIcon: 'receipt',
+      color: 'from-purple-500 to-purple-600',
+      description: 'Count from indexer'
+    },
+    {
+      id: 'users',
+      label: t('activeUsers'),
+      value: formatNumber(stats.users.value),
+      change: stats.users.change,
+      trend: stats.users.trend,
+      icon: Users,
+      faIcon: 'users',
+      color: 'from-orange-500 to-orange-600',
+      description: 'Unique wallet addresses in 24h'
+    },
+    {
+      id: 'crossChain',
+      label: t('crossChainTransfers'),
+      value: formatNumber(stats.crossChain.value),
+      change: stats.crossChain.change,
+      trend: stats.crossChain.trend,
+      icon: Globe,
+      faIcon: 'link',
+      color: 'from-indigo-500 to-indigo-600',
+      description: 'Bridge transaction count'
+    },
+    {
+      id: 'tokens',
+      label: t('supportedTokens'),
+      value: formatNumber(stats.tokens.value),
+      change: stats.tokens.change,
+      trend: stats.tokens.trend,
+      icon: Coins,
+      faIcon: 'coins',
+      color: 'from-pink-500 to-pink-600',
+      description: 'Token registry count'
+    },
+  ];
+
+  return (
+    <div className="space-y-8">
+      {/* Hero Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 p-8 md:p-12 text-white shadow-2xl"
+      >
+
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSg0NSkiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3BhdHRlcm4pIi8+PC9zdmc+')] opacity-20"></div>
+        <div className="relative z-10">
+         
+          <AnimatedText 
+            text={t('welcome')}
+            className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight"
+            staggerDelay={0.08}
+          />
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-lg md:text-2xl opacity-90 mb-2 max-w-2xl"
+          >
+            {t('subtitle')}
+          </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="text-base md:text-lg opacity-75 mb-8 max-w-2xl"
+          >
+            Swap tokens, bridge assets, and provide liquidity with zero friction. Built on Arc's enterprise-grade infrastructure.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-wrap gap-4"
+          >
+            <button className="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-200 flex items-center space-x-2 shadow-lg">
+              <span>{t('swap')} Now</span>
+            </button>
+            <button className="bg-white/20 backdrop-blur-sm border-2 border-white/30 px-8 py-4 rounded-xl font-bold hover:bg-white/30 hover:scale-105 transition-all duration-200 flex items-center space-x-2">
+              <span>{t('addLiquidity')}</span>
+            </button>
+          </motion.div>
+          
+          {/* Key Benefits */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-8 flex flex-wrap gap-6 text-sm"
+          >
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span>Sub-second finality</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span>USDC gas fees</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span>Best execution</span>
+            </div>
+          </motion.div>
+        </div>
+        
+        {/* Background decorations */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+      </motion.div>
+
+      {/* Statistics Dashboard */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="card bg-gradient-to-br from-white to-blue-50 dark:from-dark-900 dark:to-dark-950/50 border border-blue-100 dark:border-blue-900/50 p-6 rounded-2xl"
+      >
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-2">Network Statistics</h2>
+          <p className="text-gray-600 dark:text-gray-400">Real-time metrics updated automatically</p>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {statCards.map((stat, index) => {
+            const Icon = stat.icon;
+            const TrendIcon = stat.trend === 'up' ? ArrowUpRight : stat.trend === 'down' ? ArrowDownRight : null;
+            
+            return (
+              <motion.div
+                key={stat.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * index }}
+                className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center text-white`}>
+                    <FAIcon icon={stat.faIcon} size="lg" className="text-white" />
+                  </div>
+                  {stat.trend !== 'stable' && (
+                    <div className={`flex items-center space-x-1 text-xs font-semibold px-2 py-1 rounded-full
+                      ${stat.trend === 'up' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}
+                    >
+                      {TrendIcon && <TrendIcon size={14} />}
+                      <span>{stat.change}%</span>
+                    </div>
+                  )}
+                </div>
+                <h3 className="text-2xl font-bold mb-1">{stat.value}</h3>
+                <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">{stat.label}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{stat.description}</p>
+                
+                {/* Data source indicator */}
+                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center text-xs text-gray-500 dark:text-gray-400">
+                  <div className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>
+                  {stat.id === 'tvl' && 'Updated every 30 seconds'}
+                  {stat.id === 'volume' && 'Real-time'}
+                  {stat.id === 'transactions' && 'Real-time'}
+                  {stat.id === 'users' && 'Updated every 5 minutes'}
+                  {stat.id === 'crossChain' && 'Real-time'}
+                  {stat.id === 'tokens' && 'Static count'}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* Quick Actions */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Quick Actions</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <button 
+            onClick={() => setActiveTab('swap')}
+            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-primary-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-dark-900"
+          >
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <FAIcon icon="exchange-alt" size="lg" className="text-white" />
+            </div>
+            <h3 className="font-bold text-xl mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+              {t('swapTokens')}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Exchange tokens instantly at the best rates
+            </p>
+            <div className="flex items-center text-primary-600 dark:text-primary-400 text-sm font-semibold">
+              <span>Start swapping</span>
+              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
+            </div>
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('bridge')}
+            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-green-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-dark-900"
+          >
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <FAIcon icon="link" size="lg" className="text-white" />
+            </div>
+            <h3 className="font-bold text-xl mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+              {t('bridgeAssets')}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Transfer assets between Sepolia and Arc Testnet
+            </p>
+            <div className="flex items-center text-green-600 dark:text-green-400 text-sm font-semibold">
+              <span>Start bridging</span>
+              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
+            </div>
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('liquidity')}
+            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-purple-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-dark-900"
+          >
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <FAIcon icon="tint" size="lg" className="text-white" />
+            </div>
+            <h3 className="font-bold text-xl mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+              {t('addLiquidity')}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Earn fees by providing liquidity to pools
+            </p>
+            <div className="flex items-center text-purple-600 dark:text-purple-400 text-sm font-semibold">
+              <span>Explore pools</span>
+              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Why Arc Network */}
+      <div className="card bg-gradient-to-br from-white to-blue-50 dark:from-dark-900 dark:to-dark-950/50 border border-blue-100 dark:border-blue-900/50 p-6 rounded-2xl">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-2">{t('whyArcNetwork')}</h2>
+          <p className="text-gray-600 dark:text-dark-400">{t('experienceNextGen')}</p>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
+                <FAIcon icon="bolt" size="lg" />
+              </div>
+            </div>
+            <h3 className="text-lg font-bold mb-2">{t('lightningFast')}</h3>
+            <p className="text-sm text-gray-600 dark:text-dark-400">
+              {t('subsecondFinality')}
+            </p>
+          </div>
+          
+          <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-green-200 dark:hover:border-green-900">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white">
+                <FAIcon icon="dollar-sign" size="lg" />
+              </div>
+            </div>
+            <h3 className="text-lg font-bold mb-2">{t('usdcGasFees')}</h3>
+            <p className="text-sm text-gray-600 dark:text-dark-400">
+              {t('predictableCosts')}
+            </p>
+          </div>
+          
+          <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-purple-200 dark:hover:border-purple-900">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white">
+                <FAIcon icon="cubes" size="lg" />
+              </div>
+            </div>
+            <h3 className="text-lg font-bold mb-2">{t('enterpriseGrade')}</h3>
+            <p className="text-sm text-gray-600 dark:text-dark-400">
+              {t('builtForInstitutions')}
+            </p>
+          </div>
+        </div>
+        
+        <div className="mt-8 text-center">
+          <a 
+            href="https://arc.network" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          >
+            <FAIcon icon="book" className="mr-2" />
+            {t('learnMoreAboutArc')}
+            <ArrowUpRight size={16} className="ml-2" />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Home;
