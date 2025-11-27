@@ -157,46 +157,46 @@ const Bridge = () => {
     );
   };
 
-const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, triggerRef }) => {
-  const selectorRef = useRef(null);
-  
-  // Handle ESC key press to close modal
-  useEffect(() => {
-    const handleEsc = (event) => {
-      if (event.keyCode === 27) {
-        onClose();
+  const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, triggerRef }) => {
+    const selectorRef = useRef(null);
+    
+    // Handle ESC key press to close modal
+    useEffect(() => {
+      const handleEsc = (event) => {
+        if (event.keyCode === 27) {
+          onClose();
+        }
+      };
+      
+      if (isOpen) {
+        document.addEventListener('keydown', handleEsc);
       }
-    };
+      
+      return () => {
+        document.removeEventListener('keydown', handleEsc);
+      };
+    }, [isOpen, onClose]);
     
-    if (isOpen) {
-      document.addEventListener('keydown', handleEsc);
-    }
-    
-    return () => {
-      document.removeEventListener('keydown', handleEsc);
-    };
-  }, [isOpen, onClose]);
-  
-  if (!isOpen) return null;
+    if (!isOpen) return null;
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
-          onClick={onClose}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div
-            ref={selectorRef}
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md flex flex-col max-h-[80vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+    return (
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
+            <motion.div
+              ref={selectorRef}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md flex flex-col max-h-[80vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+            >
               <div className="flex justify-between items-center mb-4 flex-shrink-0">
                 <h3 className="text-xl font-bold">{t('selectToken')}</h3>
                 <button 
@@ -221,7 +221,11 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, triggerRef })
                     >
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl">
-                          <FAIcon icon={TOKENS[token].logo} />
+                          <FAIcon 
+                            icon={TOKENS[token].logo} 
+                            tokenSymbol={token}
+                            useUniswapIcon={true}
+                          />
                         </div>
                         <div className="text-left">
                           <p className="font-semibold">{token}</p>
@@ -334,7 +338,11 @@ return (
               className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[120px] w-auto flex-shrink-0"
             >
               <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl">
-                <FAIcon icon={TOKENS[selectedToken].logo} />
+                <FAIcon 
+                  icon={TOKENS[selectedToken].logo} 
+                  tokenSymbol={selectedToken}
+                  useUniswapIcon={true}
+                />
               </div>
               <div className="text-left min-w-0">
                 <p className="font-bold text-base truncate">{selectedToken}</p>
@@ -347,7 +355,7 @@ return (
             <div className="flex items-center justify-end mt-2">
               <div className="flex items-center space-x-2">
                 <span className="text-xs text-gray-500 dark:text-gray-400">Bal:</span>
-                <span className="text-sm font-semibold">10.00 {selectedToken}</span>
+                <span className="text-sm font-semibold">{selectedToken}</span>
               </div>
             </div>
           )}

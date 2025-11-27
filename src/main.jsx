@@ -2,14 +2,12 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
-import './i18n/config'
+import './i18n/config.js'
 import '@rainbow-me/rainbowkit/styles.css';
 import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { defineChain } from 'viem';
-
-
 
 // Define Arc Testnet chain
 const arcTestnet = defineChain({
@@ -46,17 +44,33 @@ const config = getDefaultConfig({
   ssr: true,
 });
 
-
 const queryClient = new QueryClient();
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
-          <App />
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
-  </React.StrictMode>,
-)
+// Add error boundary
+try {
+  const rootElement = document.getElementById('root');
+  if (!rootElement) {
+    console.error('Failed to find the root element');
+  } else {
+    ReactDOM.createRoot(rootElement).render(
+      <React.StrictMode>
+        <WagmiProvider config={config}>
+          <QueryClientProvider client={queryClient}>
+            <RainbowKitProvider>
+              <App />
+            </RainbowKitProvider>
+          </QueryClientProvider>
+        </WagmiProvider>
+      </React.StrictMode>,
+    )
+  }
+} catch (error) {
+  console.error('Error rendering the application:', error);
+  document.getElementById('root').innerHTML = `
+    <div style="padding: 20px; text-align: center; color: #ef4444;">
+      <h1>Error Loading Application</h1>
+      <p>${error.message}</p>
+      <p>Please check the console for more details.</p>
+    </div>
+  `;
+}

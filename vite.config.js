@@ -10,5 +10,12 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true
+  },
+  css: {
+    postcss: {
+      config: {
+        path: './postcss.config.cjs'
+      }
+    }
   }
 })

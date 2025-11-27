@@ -312,7 +312,12 @@ const Swap = () => {
                       {token.symbol === 'USDC' ? (
                         <CircleIcon className="text-lg" />
                       ) : (
-                        <FAIcon icon={token.logo} className="text-lg" />
+                        <FAIcon 
+                          icon={token.logo} 
+                          tokenSymbol={token.symbol}
+                          useUniswapIcon={true}
+                          className="text-lg" 
+                        />
                       )}
                       <span className="font-medium">{token.symbol}</span>
                     </button>
@@ -343,7 +348,12 @@ const Swap = () => {
                           {token.symbol === 'USDC' ? (
                             <CircleIcon className="text-xl" />
                           ) : (
-                            <FAIcon icon={token.logo} className="text-xl" />
+                            <FAIcon 
+                              icon={token.logo} 
+                              tokenSymbol={token.symbol}
+                              useUniswapIcon={true}
+                              className="text-xl" 
+                            />
                           )}
                         </div>
                         <div className="text-left">
@@ -500,7 +510,12 @@ const Swap = () => {
                   {fromToken === 'USDC' ? (
                     <CircleIcon className="text-xl" />
                   ) : (
-                    <FAIcon icon={TOKENS[fromToken].logo} className="text-xl" />
+                    <FAIcon 
+                      icon={TOKENS[fromToken].logo} 
+                      tokenSymbol={fromToken}
+                      useUniswapIcon={true}
+                      className="text-xl" 
+                    />
                   )}
                 </div>
                 <div className="text-left min-w-0">
@@ -567,7 +582,12 @@ const Swap = () => {
                   {toToken === 'USDC' ? (
                     <CircleIcon className="text-xl" />
                   ) : (
-                    <FAIcon icon={TOKENS[toToken].logo} className="text-xl" />
+                    <FAIcon 
+                      icon={TOKENS[toToken].logo} 
+                      tokenSymbol={toToken}
+                      useUniswapIcon={true}
+                      className="text-xl" 
+                    />
                   )}
                 </div>
                 <div className="text-left min-w-0">
