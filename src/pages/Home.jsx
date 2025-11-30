@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins, Zap, BookOpen, Link, Droplets } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatCurrency, formatNumber } from '../utils/blockchain';
+import { ArrowUpDown } from "lucide-react"
 
 const Home = ({ setActiveTab }) => {
   const { t } = useTranslation();
