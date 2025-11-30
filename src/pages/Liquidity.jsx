@@ -4,7 +4,6 @@ import { useWallet } from '../contexts/WalletContext';
 import { Plus, Minus, TrendingUp, DollarSign, PieChart, Activity, Filter, Search, ChevronDown, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TOKENS } from '../config/networks';
-import FAIcon from '../components/FAIcon';
 import { formatCurrency } from '../utils/blockchain';
 
 const Liquidity = () => {

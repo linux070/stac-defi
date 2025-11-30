@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins } from 'lucide-react';
+import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins, Zap, BookOpen, Link, Droplets } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatCurrency, formatNumber } from '../utils/blockchain';
-import FAIcon from '../components/FAIcon';
 import AnimatedText from '../components/AnimatedText';
 
 const Home = ({ setActiveTab }) => {
@@ -56,7 +55,7 @@ const Home = ({ setActiveTab }) => {
       change: stats.tvl.change,
       trend: stats.tvl.trend,
       icon: TrendingUp,
-      faIcon: 'chart-line',
+      lucideIcon: TrendingUp,
       color: 'from-blue-500 to-blue-600',
       description: 'Aggregate from all liquidity pools'
     },
@@ -67,7 +66,7 @@ const Home = ({ setActiveTab }) => {
       change: stats.volume.change,
       trend: stats.volume.trend,
       icon: DollarSign,
-      faIcon: 'dollar-sign',
+      lucideIcon: DollarSign,
       color: 'from-green-500 to-green-600',
       description: 'Sum of swap transactions in last 24h'
     },
@@ -78,7 +77,7 @@ const Home = ({ setActiveTab }) => {
       change: stats.transactions.change,
       trend: stats.transactions.trend,
       icon: Activity,
-      faIcon: 'receipt',
+      lucideIcon: Activity,
       color: 'from-purple-500 to-purple-600',
       description: 'Count from indexer'
     },
@@ -89,7 +88,7 @@ const Home = ({ setActiveTab }) => {
       change: stats.users.change,
       trend: stats.users.trend,
       icon: Users,
-      faIcon: 'users',
+      lucideIcon: Users,
       color: 'from-orange-500 to-orange-600',
       description: 'Unique wallet addresses in 24h'
     },
@@ -100,7 +99,7 @@ const Home = ({ setActiveTab }) => {
       change: stats.crossChain.change,
       trend: stats.crossChain.trend,
       icon: Globe,
-      faIcon: 'link',
+      lucideIcon: Globe,
       color: 'from-indigo-500 to-indigo-600',
       description: 'Bridge transaction count'
     },
@@ -111,7 +110,7 @@ const Home = ({ setActiveTab }) => {
       change: stats.tokens.change,
       trend: stats.tokens.trend,
       icon: Coins,
-      faIcon: 'coins',
+      lucideIcon: Coins,
       color: 'from-pink-500 to-pink-600',
       description: 'Token registry count'
     },
@@ -218,7 +217,7 @@ const Home = ({ setActiveTab }) => {
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center text-white`}>
-                    <FAIcon icon={stat.faIcon} size="lg" className="text-white" />
+                    {stat.lucideIcon && React.createElement(stat.lucideIcon, { size: 20, className: "text-white" })}
                   </div>
                   {stat.trend !== 'stable' && (
                     <div className={`flex items-center space-x-1 text-xs font-semibold px-2 py-1 rounded-full
@@ -260,7 +259,7 @@ const Home = ({ setActiveTab }) => {
             className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-primary-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-dark-900"
           >
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <FAIcon icon="exchange-alt" size="lg" className="text-white" />
+              <ArrowUpDown size={24} className="text-white" />
             </div>
             <h3 className="font-bold text-xl mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
               {t('swapTokens')}

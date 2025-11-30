@@ -8,6 +8,7 @@ import Bridge from './pages/Bridge';
 import Liquidity from './pages/Liquidity';
 import Transactions from './pages/Transactions';
 
+// thi issuadff 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
 

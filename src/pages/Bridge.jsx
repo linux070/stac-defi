@@ -4,7 +4,6 @@ import { useWallet } from '../contexts/WalletContext';
 import { ArrowLeftRight, ChevronDown, Loader, AlertCircle, Info, Wallet, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
-import FAIcon from '../components/FAIcon';
 import { sanitizeInput } from '../utils/blockchain';
 
 const Bridge = () => {
@@ -338,11 +337,7 @@ return (
               className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[120px] w-auto flex-shrink-0"
             >
               <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl">
-                <FAIcon 
-                  icon={TOKENS[selectedToken].logo} 
-                  tokenSymbol={selectedToken}
-                  useUniswapIcon={true}
-                />
+                {selectedToken === 'ETH' ? 'Ξ' : selectedToken === 'USDC' ? 'USD' : selectedToken}
               </div>
               <div className="text-left min-w-0">
                 <p className="font-bold text-base truncate">{selectedToken}</p>

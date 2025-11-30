@@ -7,7 +7,7 @@ import { TOKENS, TOKEN_PRICES } from '../config/networks';
 import { sanitizeInput, calculateSwapQuote, validateAmount, validateSlippage } from '../utils/blockchain';
 import useTokenBalance from '../hooks/useTokenBalance';
 import Toast from '../components/Toast';
-import FAIcon from '../components/FAIcon';
+// import FAIcon from '../components/FAIcon';
 import CircleIcon from '../components/CircleIcon';
 // import { approveToken, swapExactTokensForTokens, getAmountsOut } from '../utils/swap';
 // import { SWAP_CONTRACT_ADDRESS } from '../config/contracts';
