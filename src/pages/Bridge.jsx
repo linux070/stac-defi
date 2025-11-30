@@ -221,10 +221,9 @@ const Bridge = () => {
                     >
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                          <FAIcon 
-                            icon={TOKENS[token].logo} 
-                            className="text-xl" 
-                          />
+                          <span className="text-xl">
+                            {token === 'ETH' ? 'Ξ' : token === 'USDC' ? 'USD' : token.charAt(0)}
+                          </span>
                         </div>
                         <div className="text-left">
                           <p className="font-semibold">{token}</p>

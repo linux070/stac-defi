@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins, Zap, BookOpen, Link, Droplets } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatCurrency, formatNumber } from '../utils/blockchain';
-import AnimatedText from '../components/AnimatedText';
 
 const Home = ({ setActiveTab }) => {
   const { t } = useTranslation();
@@ -128,11 +127,9 @@ const Home = ({ setActiveTab }) => {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSg0NSkiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3BhdHRlcm4pIi8+PC9zdmc+')] opacity-20"></div>
         <div className="relative z-10">
          
-          <AnimatedText 
-            text={t('welcome')}
-            className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight"
-            staggerDelay={0.08}
-          />
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight">
+            {t('welcome')}
+          </h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -278,7 +275,7 @@ const Home = ({ setActiveTab }) => {
             className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-green-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-dark-900"
           >
             <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <FAIcon icon="link" size="lg" className="text-white" />
+              <Link size={24} className="text-white" />
             </div>
             <h3 className="font-bold text-xl mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
               {t('bridgeAssets')}
@@ -297,7 +294,7 @@ const Home = ({ setActiveTab }) => {
             className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-purple-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-dark-900"
           >
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <FAIcon icon="tint" size="lg" className="text-white" />
+              <Droplets size={24} className="text-white" />
             </div>
             <h3 className="font-bold text-xl mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
               {t('addLiquidity')}
@@ -324,7 +321,7 @@ const Home = ({ setActiveTab }) => {
           <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
             <div className="flex items-start justify-between mb-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
-                <FAIcon icon="bolt" size="lg" />
+                <Zap size={20} />
               </div>
             </div>
             <h3 className="text-lg font-bold mb-2">{t('lightningFast')}</h3>
@@ -336,7 +333,7 @@ const Home = ({ setActiveTab }) => {
           <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-green-200 dark:hover:border-green-900">
             <div className="flex items-start justify-between mb-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white">
-                <FAIcon icon="dollar-sign" size="lg" />
+                <DollarSign size={20} />
               </div>
             </div>
             <h3 className="text-lg font-bold mb-2">{t('usdcGasFees')}</h3>
@@ -348,7 +345,7 @@ const Home = ({ setActiveTab }) => {
           <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-purple-200 dark:hover:border-purple-900">
             <div className="flex items-start justify-between mb-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white">
-                <FAIcon icon="cubes" size="lg" />
+                <Cubes size={20} />
               </div>
             </div>
             <h3 className="text-lg font-bold mb-2">{t('enterpriseGrade')}</h3>
@@ -365,7 +362,7 @@ const Home = ({ setActiveTab }) => {
             rel="noopener noreferrer"
             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
           >
-            <FAIcon icon="book" className="mr-2" />
+            <BookOpen className="mr-2" />
             {t('learnMoreAboutArc')}
             <ArrowUpRight size={16} className="ml-2" />
           </a>

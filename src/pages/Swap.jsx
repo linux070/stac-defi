@@ -8,7 +8,6 @@ import { sanitizeInput, calculateSwapQuote, validateAmount, validateSlippage } f
 import useTokenBalance from '../hooks/useTokenBalance';
 import Toast from '../components/Toast';
 // import FAIcon from '../components/FAIcon';
-import CircleIcon from '../components/CircleIcon';
 // import { approveToken, swapExactTokensForTokens, getAmountsOut } from '../utils/swap';
 // import { SWAP_CONTRACT_ADDRESS } from '../config/contracts';
 
@@ -313,14 +312,11 @@ const Swap = () => {
                         ${token.symbol === exclude ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {token.symbol === 'USDC' ? (
-                        <CircleIcon className="text-lg" />
+                        <span className="text-lg font-bold text-blue-500">USD</span>
                       ) : (
-                        <FAIcon 
-                          icon={token.logo} 
-                          tokenSymbol={token.symbol}
-                          useUniswapIcon={true}
-                          className="text-lg" 
-                        />
+                        <span className="text-lg">
+                          {token.symbol === 'ETH' ? 'Ξ' : token.symbol.charAt(0)}
+                        </span>
                       )}
                       <span className="font-medium">{token.symbol}</span>
                     </button>
@@ -349,14 +345,11 @@ const Swap = () => {
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
                           {token.symbol === 'USDC' ? (
-                            <CircleIcon className="text-xl" />
+                            <span className="text-xl font-bold text-blue-500">USD</span>
                           ) : (
-                            <FAIcon 
-                              icon={token.logo} 
-                              tokenSymbol={token.symbol}
-                              useUniswapIcon={true}
-                              className="text-xl" 
-                            />
+                            <span className="text-xl">
+                              {token.symbol === 'ETH' ? 'Ξ' : token.symbol.charAt(0)}
+                            </span>
                           )}
                         </div>
                         <div className="text-left">
@@ -511,14 +504,11 @@ const Swap = () => {
               >
                 <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
                   {fromToken === 'USDC' ? (
-                    <CircleIcon className="text-xl" />
+                    <span className="text-blue-500 font-bold">USD</span>
                   ) : (
-                    <FAIcon 
-                      icon={TOKENS[fromToken].logo} 
-                      tokenSymbol={fromToken}
-                      useUniswapIcon={true}
-                      className="text-xl" 
-                    />
+                    <span className="text-xl">
+                      {fromToken === 'ETH' ? 'Ξ' : fromToken}
+                    </span>
                   )}
                 </div>
                 <div className="text-left min-w-0">
@@ -583,14 +573,11 @@ const Swap = () => {
               >
                 <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
                   {toToken === 'USDC' ? (
-                    <CircleIcon className="text-xl" />
+                    <span className="text-blue-500 font-bold">USD</span>
                   ) : (
-                    <FAIcon 
-                      icon={TOKENS[toToken].logo} 
-                      tokenSymbol={toToken}
-                      useUniswapIcon={true}
-                      className="text-xl" 
-                    />
+                    <span className="text-xl">
+                      {toToken === 'ETH' ? 'Ξ' : toToken}
+                    </span>
                   )}
                 </div>
                 <div className="text-left min-w-0">
