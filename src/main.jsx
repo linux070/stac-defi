@@ -26,7 +26,7 @@ const arcTestnet = defineChain({
 // Define Sepolia Testnet chain
 const sepolia = defineChain({
   id: 11155111,
-  name: 'Ethereum Sepolia',
+  name: 'Sepolia',
   nativeCurrency: { name: 'SepoliaETH', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
     default: { http: ['https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161'] },

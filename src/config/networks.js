@@ -1,4 +1,4 @@
-// Network configurations for Arc Testnet and Ethereum Sepolia
+// Network configurations for Arc Testnet and Sepolia
 
 export const NETWORKS = {
   ARC_TESTNET: {

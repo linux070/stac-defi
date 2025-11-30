@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tailwind CSS Framework Directives */
+/* These directives are processed by Tailwind CSS during build */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer base {
   body {
     @apply bg-white dark:bg-dark-950 text-gray-900 dark:text-white transition-colors duration-1000;

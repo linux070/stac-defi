@@ -10,7 +10,7 @@ import { sanitizeInput } from '../utils/blockchain';
 const Bridge = () => {
   const { t } = useTranslation();
   const { isConnected, chainId } = useWallet();
-  const [fromChain, setFromChain] = useState('Ethereum Sepolia');
+  const [fromChain, setFromChain] = useState('Sepolia');
   const [toChain, setToChain] = useState('Arc Testnet');
   const [selectedToken, setSelectedToken] = useState('ETH');
   const [amount, setAmount] = useState('');
@@ -40,7 +40,7 @@ const Bridge = () => {
     };
   }, [showChainSelector, showTokenSelector]);
 
-  const chains = ['Ethereum Sepolia', 'Arc Testnet'];
+  const chains = ['Sepolia', 'Arc Testnet'];
   const bridgeTokens = ['ETH', 'USDC'];
 
   const handleSwitchChains = () => {
@@ -90,7 +90,7 @@ const Bridge = () => {
     
     if (!isOpen) return null;
 
-    const chains = ['Arc Testnet', 'Ethereum Sepolia'];
+    const chains = ['Arc Testnet', 'Sepolia'];
 
     return (
       <AnimatePresence>
@@ -208,6 +208,7 @@ const Bridge = () => {
               </div>
               
               <div className="flex-1 overflow-y-auto -mx-6 px-6">
+                {/* Token List */}
                 <div className="space-y-2">
                   {bridgeTokens.map((token) => (
                     <button
@@ -220,11 +221,10 @@ const Bridge = () => {
                         ${token === selectedToken ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl">
+                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
                           <FAIcon 
                             icon={TOKENS[token].logo} 
-                            tokenSymbol={token}
-                            useUniswapIcon={true}
+                            className="text-xl" 
                           />
                         </div>
                         <div className="text-left">

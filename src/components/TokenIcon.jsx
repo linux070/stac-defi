@@ -1,26 +1,35 @@
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEthereum, faBitcoin } from '@fortawesome/free-brands-svg-icons';
+import { faDollarSign, faEuroSign } from '@fortawesome/free-solid-svg-icons';
 
 const TokenIcon = ({ symbol, size = 24, className = '' }) => {
-  // List of supported tokens
-  const supportedTokens = ['ETH', 'USDT', 'USDC', 'EURO', 'ARC', 'DAI', 'WBTC', 'BNB'];
+  // Map token symbols to FontAwesome icons
+  const tokenIconMap = {
+    'ETH': faEthereum,
+    'BTC': faBitcoin,
+    'WBTC': faBitcoin,
+    'USDC': faDollarSign,
+    'USDT': faDollarSign,
+    'DAI': faDollarSign,
+    'EUR': faEuroSign,
+    'EURO': faEuroSign,
+    'ARC': faEthereum, // Using Ethereum icon as placeholder for ARC
+    'BNB': faEthereum, // Using Ethereum icon as placeholder for BNB
+  };
+
+  const icon = tokenIconMap[symbol?.toUpperCase()];
   
-  // Check if we have a custom icon for this token
-  const hasCustomIcon = supportedTokens.includes(symbol?.toUpperCase());
-  
-  if (hasCustomIcon) {
-    // Use our custom SVG icons
+  if (icon) {
     return (
-      <img 
-        src={`/icons/${symbol.toUpperCase()}.svg`} 
-        alt={symbol}
-        width={size}
-        height={size}
+      <FontAwesomeIcon 
+        icon={icon} 
         className={className}
         style={{ width: size, height: size }}
       />
     );
   }
-  
+
   // Fallback to a generic circle with token symbol
   return (
     <div 

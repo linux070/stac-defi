@@ -11,103 +11,13 @@ const Transactions = () => {
   const [activeTab, setActiveTab] = useState('my');
   const [copiedHash, setCopiedHash] = useState('');
 
-  // Mock transaction data - stored in localStorage for persistence
+  // Transaction data - stored in localStorage for persistence
   const [myTransactions, setMyTransactions] = useState(() => {
     const saved = localStorage.getItem('myTransactions');
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 1,
-        type: 'Swap',
-        from: 'ETH',
-        to: 'USDC',
-        amount: '1.5',
-        timestamp: Date.now() - 3600000,
-        status: 'success',
-        hash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-        address: walletAddress || '0xabcdef1234567890abcdef1234567890abcdef12',
-      },
-      {
-        id: 2,
-        type: 'Bridge',
-        from: 'Ethereum Sepolia',
-        to: 'Arc Testnet',
-        amount: '0.5 ETH',
-        timestamp: Date.now() - 7200000,
-        status: 'success',
-        hash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
-        address: walletAddress || '0x1234567890abcdef1234567890abcdef12345678',
-      },
-      {
-        id: 3,
-        type: 'Add LP',
-        from: 'ETH-USDC',
-        to: 'Pool',
-        amount: '1 ETH + 2000 USDC',
-        timestamp: Date.now() - 86400000,
-        status: 'success',
-        hash: '0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba',
-        address: walletAddress || '0xdef1234567890abcdef1234567890abcdef12345',
-      },
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
 
-  const [allTransactions] = useState([
-    {
-      id: 1,
-      type: 'Swap',
-      from: 'ETH',
-      to: 'USDC',
-      amount: '2.3',
-      timestamp: Date.now() - 300000,
-      status: 'success',
-      hash: '0xaaa1234567890abcdef1234567890abcdef1234567890abcdef1234567890aaa',
-      address: '0xbbb1234567890abcdef1234567890abcdef12345',
-    },
-    {
-      id: 2,
-      type: 'Bridge',
-      from: 'Arc Testnet',
-      to: 'Ethereum Sepolia',
-      amount: '1.2 ETH',
-      timestamp: Date.now() - 600000,
-      status: 'pending',
-      hash: '0xccc1234567890abcdef1234567890abcdef1234567890abcdef1234567890ccc',
-      address: '0xddd1234567890abcdef1234567890abcdef12345',
-    },
-    {
-      id: 3,
-      type: 'Swap',
-      from: 'USDC',
-      to: 'DAI',
-      amount: '5000',
-      timestamp: Date.now() - 900000,
-      status: 'success',
-      hash: '0xeee1234567890abcdef1234567890abcdef1234567890abcdef1234567890eee',
-      address: '0xfff1234567890abcdef1234567890abcdef12345',
-    },
-    {
-      id: 4,
-      type: 'Add LP',
-      from: 'USDC-USDT',
-      to: 'Pool',
-      amount: '10000 USDC + 10000 USDT',
-      timestamp: Date.now() - 1800000,
-      status: 'success',
-      hash: '0x1111234567890abcdef1234567890abcdef1234567890abcdef1234567890111',
-      address: '0x2221234567890abcdef1234567890abcdef12345',
-    },
-    {
-      id: 5,
-      type: 'Swap',
-      from: 'WBTC',
-      to: 'ETH',
-      amount: '0.05',
-      timestamp: Date.now() - 3600000,
-      status: 'failed',
-      hash: '0x3331234567890abcdef1234567890abcdef1234567890abcdef1234567890333',
-      address: '0x4441234567890abcdef1234567890abcdef12345',
-    },
-  ]);
+  const [allTransactions] = useState([]);
 
   // Persist my transactions
   useEffect(() => {
@@ -182,7 +92,6 @@ const Transactions = () => {
           </div>
         </div>
       </div>
-
 
       {/* Transactions Table */}
       <div className="card overflow-x-auto">

@@ -199,12 +199,15 @@ const Swap = () => {
       setToast({ visible: true, type: 'success', message: t('transactionSubmitted') });
       setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
       
+      // Reset form after successful swap
+      setFromAmount('');
+      setToAmount('');
+      setSwapQuote(null);
+      setShowSwapDetails(false);
+      
       // Refresh balances
       refetchFrom();
       refetchTo();
-      
-      setFromAmount('');
-      setToAmount('');
     } catch (err) {
       setToast({ visible: true, type: 'error', message: err.message });
       setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
