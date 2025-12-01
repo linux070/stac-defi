@@ -202,9 +202,7 @@ const Home = ({ setActiveTab }) => {
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {statCards.map((stat, index) => {
-            const Icon = stat.icon;
             const TrendIcon = stat.trend === 'up' ? ArrowUpRight : stat.trend === 'down' ? ArrowDownRight : null;
-            
             return (
               <motion.div
                 key={stat.id}
@@ -232,13 +230,8 @@ const Home = ({ setActiveTab }) => {
                 
                 {/* Data source indicator */}
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center text-xs text-gray-500 dark:text-gray-400">
-                  <div className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>
-                  {stat.id === 'tvl' && 'Updated every 30 seconds'}
-                  {stat.id === 'volume' && 'Real-time'}
-                  {stat.id === 'transactions' && 'Real-time'}
-                  {stat.id === 'users' && 'Updated every 5 minutes'}
-                  {stat.id === 'crossChain' && 'Real-time'}
-                  {stat.id === 'tokens' && 'Static count'}
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                  Live Data
                 </div>
               </motion.div>
             );
@@ -246,113 +239,62 @@ const Home = ({ setActiveTab }) => {
         </div>
       </motion.div>
 
-      {/* Quick Actions */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Quick Actions</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <button 
-            onClick={() => setActiveTab('swap')}
-            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-primary-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-dark-900"
-          >
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <ArrowUpDown size={24} className="text-white" />
-            </div>
-            <h3 className="font-bold text-xl mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-              {t('swapTokens')}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Exchange tokens instantly at the best rates
-            </p>
-            <div className="flex items-center text-primary-600 dark:text-primary-400 text-sm font-semibold">
-              <span>Start swapping</span>
-              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
-            </div>
-          </button>
-
-          <button 
-            onClick={() => setActiveTab('bridge')}
-            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-green-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-dark-900"
-          >
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <Link size={24} className="text-white" />
-            </div>
-            <h3 className="font-bold text-xl mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-              {t('bridgeAssets')}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Transfer assets between Sepolia and Arc Testnet
-            </p>
-            <div className="flex items-center text-green-600 dark:text-green-400 text-sm font-semibold">
-              <span>Start bridging</span>
-              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
-            </div>
-          </button>
-
-          <button 
-            onClick={() => setActiveTab('liquidity')}
-            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-purple-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-dark-900"
-          >
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <Droplets size={24} className="text-white" />
-            </div>
-            <h3 className="font-bold text-xl mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-              {t('addLiquidity')}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Earn fees by providing liquidity to pools
-            </p>
-            <div className="flex items-center text-purple-600 dark:text-purple-400 text-sm font-semibold">
-              <span>Explore pools</span>
-              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
-            </div>
-          </button>
-        </div>
-      </div>
-
-      {/* Why Arc Network */}
-      <div className="card bg-gradient-to-br from-white to-blue-50 dark:from-dark-900 dark:to-dark-950/50 border border-blue-100 dark:border-blue-900/50 p-6 rounded-2xl">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">{t('whyArcNetwork')}</h2>
+      {/* Features Grid */}
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold mb-2">{t('whyArcNetwork')}</h2>
           <p className="text-gray-600 dark:text-dark-400">{t('experienceNextGen')}</p>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
             <div className="flex items-start justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
-                <Zap size={20} />
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <ArrowUpDown size={24} className="text-white" />
               </div>
             </div>
-            <h3 className="text-lg font-bold mb-2">{t('lightningFast')}</h3>
-            <p className="text-sm text-gray-600 dark:text-dark-400">
-              {t('subsecondFinality')}
+            <h3 className="text-lg font-bold mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+              {t('swapTokens')}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
+              Exchange tokens instantly at the best rates
             </p>
+            <div className="flex items-center text-primary-600 dark:text-primary-400 text-sm font-semibold">
+              <span>Start swapping</span>
+              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
+            </div>
           </div>
-          
-          <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-green-200 dark:hover:border-green-900">
-            <div className="flex items-start justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white">
-                <DollarSign size={20} />
-              </div>
+
+          <div className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-green-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-dark-900">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <Link size={24} className="text-white" />
             </div>
-            <h3 className="text-lg font-bold mb-2">{t('usdcGasFees')}</h3>
-            <p className="text-sm text-gray-600 dark:text-dark-400">
-              {t('predictableCosts')}
+            <h3 className="font-bold text-xl mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+              {t('bridgeAssets')}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
+              Transfer assets between Sepolia and Arc Testnet
             </p>
+            <div className="flex items-center text-green-600 dark:text-green-400 text-sm font-semibold">
+              <span>Start bridging</span>
+              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
+            </div>
           </div>
-          
-          <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-purple-200 dark:hover:border-purple-900">
-            <div className="flex items-start justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white">
-                <Cubes size={20} />
-              </div>
+
+          <div className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-purple-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-dark-900">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <Droplets size={24} className="text-white" />
             </div>
-            <h3 className="text-lg font-bold mb-2">{t('enterpriseGrade')}</h3>
-            <p className="text-sm text-gray-600 dark:text-dark-400">
-              {t('builtForInstitutions')}
+            <h3 className="font-bold text-xl mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+              {t('addLiquidity')}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
+              Provide liquidity to earn passive income
             </p>
+            <div className="flex items-center text-purple-600 dark:text-purple-400 text-sm font-semibold">
+              <span>Start earning</span>
+              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
+            </div>
           </div>
         </div>
         

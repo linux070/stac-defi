@@ -89,7 +89,7 @@ const Bridge = () => {
     
     if (!isOpen) return null;
 
-    const chains = ['Arc Testnet', 'Sepolia'];
+    const chainList = ['Arc Testnet', 'Sepolia'];
 
     return (
       <AnimatePresence>
@@ -122,7 +122,7 @@ const Bridge = () => {
               <div className="flex-1 overflow-y-auto -mx-6 px-6">
                 {/* Chain List */}
                 <div className="space-y-2">
-                  {chains.map((chain) => (
+                  {chainList.map((chain) => (
                     <button
                       key={chain}
                       onClick={() => {
@@ -227,7 +227,7 @@ const Bridge = () => {
                         </div>
                         <div className="text-left">
                           <p className="font-semibold">{token}</p>
-                          <p className="text-xs text-gray-500">{TOKENS[token].name}</p>
+                          <p className="text-xs text-gray-500">{TOKENS[token]?.name || token}</p>
                         </div>
                       </div>
                     </button>
@@ -340,7 +340,7 @@ return (
               </div>
               <div className="text-left min-w-0">
                 <p className="font-bold text-base truncate">{selectedToken}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{TOKENS[selectedToken].name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{TOKENS[selectedToken]?.name || selectedToken}</p>
               </div>
               <ChevronDown size={16} />
             </button>

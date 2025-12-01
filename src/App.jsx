@@ -8,7 +8,6 @@ import Bridge from './pages/Bridge';
 import Liquidity from './pages/Liquidity';
 import Transactions from './pages/Transactions';
 
-// thi issuadff 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
 
@@ -26,7 +25,7 @@ function App() {
         case 'transactions':
           return <Transactions />;
         default:
-          return <Home />;
+          return <Home setActiveTab={setActiveTab} />;
       }
     } catch (error) {
       console.error('Error rendering page:', error);

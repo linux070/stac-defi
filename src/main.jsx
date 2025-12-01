@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
+import './polyfills.js'
 import './index.css'
 import './i18n/config.js'
 import '@rainbow-me/rainbowkit/styles.css';
@@ -8,6 +9,14 @@ import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { defineChain } from 'viem';
+
+// Import wallets
+import { 
+  metaMaskWallet, 
+  walletConnectWallet, 
+  coinbaseWallet, 
+  rabbyWallet 
+} from '@rainbow-me/rainbowkit/wallets';
 
 // Define Arc Testnet chain
 const arcTestnet = defineChain({
@@ -39,9 +48,20 @@ const sepolia = defineChain({
 
 const config = getDefaultConfig({
   appName: 'Stac',
-  projectId: '7d4d84f37143c02aea3560eedfebb918', // You should get a real project ID from https://cloud.walletconnect.com/
+  projectId: '7d4d84f37143c02aea3560eedfebb918',
   chains: [arcTestnet, sepolia],
   ssr: true,
+  wallets: [
+    {
+      groupName: 'Supported Wallets',
+      wallets: [
+        metaMaskWallet,
+        walletConnectWallet,
+        coinbaseWallet,
+        rabbyWallet
+      ]
+    }
+  ]
 });
 
 const queryClient = new QueryClient();
