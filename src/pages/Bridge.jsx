@@ -6,6 +6,33 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
 import { sanitizeInput } from '../utils/blockchain';
 
+import { useBridge } from "../bridge/hooks/useBridge";
+
+const MyBridge = () => {
+  const { 
+    sourceChain, 
+    destinationChain, 
+    amount,
+    estimateGas,
+    executeBridge
+  } = useBridge();
+
+  return (
+    <div>
+      {/* Your existing UI styling */}
+      <h2>Bridge</h2>
+
+      {/* your own inputs */}
+      ...
+    </div>
+  );
+};
+
+// yoooo
+
+
+
+
 const Bridge = () => {
   const { t } = useTranslation();
   const { isConnected, chainId } = useWallet();
