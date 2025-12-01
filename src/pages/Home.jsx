@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins, Zap, BookOpen, Link, Droplets } from 'lucide-react';
+import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins, Zap, BookOpen, Link, Droplets, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatCurrency, formatNumber } from '../utils/blockchain';
 import { ArrowUpDown } from "lucide-react"
@@ -242,7 +242,7 @@ const Home = ({ setActiveTab }) => {
       {/* Features Grid */}
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-3xl font-bold mb-2">{t('whyArcNetwork')}</h2>
+          <h2 className="text-3xl font-bold mb-2">Quick Actions</h2>
           <p className="text-gray-600 dark:text-dark-400">{t('experienceNextGen')}</p>
         </div>
         
@@ -294,6 +294,46 @@ const Home = ({ setActiveTab }) => {
             <div className="flex items-center text-purple-600 dark:text-purple-400 text-sm font-semibold">
               <span>Start earning</span>
               <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
+            </div>
+          </div>
+        </div>
+        
+        {/* Why Arc Network Section */}
+        <div className="mt-12">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-2">Why Arc Network</h2>
+            <p className="text-gray-600 dark:text-dark-400">Experience the next generation of decentralized finance</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white dark:bg-dark-900/50 rounded-xl p-6 border border-gray-100 dark:border-dark-800">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4">
+                <Zap size={24} className="text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Lightning Fast</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Sub-second finality with USDC gas fees for instant transactions
+              </p>
+            </div>
+            
+            <div className="bg-white dark:bg-dark-900/50 rounded-xl p-6 border border-gray-100 dark:border-dark-800">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4">
+                <Shield size={24} className="text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Enterprise Grade</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Built on battle-tested infrastructure with multi-layer security
+              </p>
+            </div>
+            
+            <div className="bg-white dark:bg-dark-900/50 rounded-xl p-6 border border-gray-100 dark:border-dark-800">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4">
+                <Globe size={24} className="text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Cross-Chain</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Seamless asset transfers between multiple blockchain networks
+              </p>
             </div>
           </div>
         </div>

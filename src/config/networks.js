@@ -52,9 +52,9 @@ export const TOKENS = {
     },
     logo: 'usd-circle', // FAIcon name (Circle USDC)
   },
-  EUR: {
-    symbol: 'EUR',
-    name: 'Euro',
+  EURC: {
+    symbol: 'EURC',
+    name: 'Euro Coin',
     decimals: 6,
     address: {
       [NETWORKS.ARC_TESTNET.chainId]: '0x', // Placeholder

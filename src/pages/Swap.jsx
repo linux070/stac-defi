@@ -312,10 +312,26 @@ const Swap = () => {
                         ${token.symbol === exclude ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {token.symbol === 'USDC' ? (
-                        <span className="text-lg font-bold text-blue-500">USD</span>
+                        <img 
+                          src="/icons/usdc.png" 
+                          alt={token.symbol} 
+                          className="w-10 h-10 rounded-full object-contain"
+                        />
+                      ) : token.symbol === 'ETH' ? (
+                        <img 
+                          src="/icons/eth.png" 
+                          alt={token.symbol} 
+                          className="w-10 h-10 rounded-full object-contain"
+                        />
+                      ) : token.symbol === 'EURC' ? (
+                        <img 
+                          src="/icons/eurc.png" 
+                          alt={token.symbol} 
+                          className="w-10 h-10 rounded-full object-contain"
+                        />
                       ) : (
                         <span className="text-lg">
-                          {token.symbol === 'ETH' ? 'Ξ' : token.symbol.charAt(0)}
+                          {token.symbol.charAt(0)}
                         </span>
                       )}
                       <span className="font-medium">{token.symbol}</span>
@@ -345,7 +361,23 @@ const Swap = () => {
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
                           {token.symbol === 'USDC' ? (
-                            <span className="text-xl font-bold text-blue-500">USD</span>
+                            <img 
+                              src="/icons/usdc.png" 
+                              alt={token.symbol} 
+                              className="w-10 h-10 rounded-full object-contain"
+                            />
+                          ) : token.symbol === 'ETH' ? (
+                            <img 
+                              src="/icons/eth.png" 
+                              alt={token.symbol} 
+                              className="w-10 h-10 rounded-full object-contain"
+                            />
+                          ) : token.symbol === 'EURC' ? (
+                            <img 
+                              src="/icons/eurc.png" 
+                              alt={token.symbol} 
+                              className="w-10 h-10 rounded-full object-contain"
+                            />
                           ) : (
                             <span className="text-xl">
                               {token.symbol === 'ETH' ? 'Ξ' : token.symbol.charAt(0)}
@@ -504,10 +536,26 @@ const Swap = () => {
               >
                 <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
                   {fromToken === 'USDC' ? (
-                    <span className="text-blue-500 font-bold">USD</span>
+                    <img 
+                      src="/icons/usdc.png" 
+                      alt={fromToken} 
+                      className="w-10 h-10 rounded-full object-contain"
+                    />
+                  ) : fromToken === 'ETH' ? (
+                    <img 
+                      src="/icons/eth.png" 
+                      alt={fromToken} 
+                      className="w-10 h-10 rounded-full object-contain"
+                    />
+                  ) : fromToken === 'EURC' ? (
+                    <img 
+                      src="/icons/eurc.png" 
+                      alt={fromToken} 
+                      className="w-10 h-10 rounded-full object-contain"
+                    />
                   ) : (
                     <span className="text-xl">
-                      {fromToken === 'ETH' ? 'Ξ' : fromToken}
+                      {fromToken}
                     </span>
                   )}
                 </div>
@@ -573,13 +621,29 @@ const Swap = () => {
               >
                 <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
                   {toToken === 'USDC' ? (
-                    <span className="text-blue-500 font-bold">USD</span>
-                  ) : (
-                    <span className="text-xl">
-                      {toToken === 'ETH' ? 'Ξ' : toToken}
-                    </span>
-                  )}
-                </div>
+                    <img 
+                      src="/icons/usdc.png" 
+                      alt={toToken} 
+                      className="w-10 h-10 rounded-full object-contain"
+                    />
+                  ) : toToken === 'ETH' ? (
+                    <img 
+                      src="/icons/eth.png" 
+                      alt={toToken} 
+                      className="w-10 h-10 rounded-full object-contain"
+                  />
+                ) : toToken === 'EURC' ? (
+                  <img 
+                    src="/icons/eurc.png" 
+                    alt={toToken} 
+                    className="w-10 h-10 rounded-full object-contain"
+                  />
+                ) : (
+                  <span className="text-xl">
+                    {toToken}
+                  </span>
+                )}
+              </div>
                 <div className="text-left min-w-0">
                   <p className="font-bold text-base truncate">{toToken}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{TOKENS[toToken].name}</p>

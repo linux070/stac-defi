@@ -40,7 +40,7 @@ const Bridge = () => {
   }, [showChainSelector, showTokenSelector]);
 
   const chains = ['Sepolia', 'Arc Testnet'];
-  const bridgeTokens = ['ETH', 'USDC'];
+  const bridgeTokens = ['ETH', 'USDC', 'EURC'];
 
   const handleSwitchChains = () => {
     setFromChain(toChain);
@@ -137,8 +137,20 @@ const Bridge = () => {
                         ${chain === exclude ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                          {chain.includes('Arc') ? '🔷' : '⟠'}
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                          {chain.includes('Arc') ? (
+                            <img 
+                              src="/icons/arc_logo.png" 
+                              alt="Arc Testnet" 
+                              className="w-10 h-10 rounded-full object-contain"
+                            />
+                          ) : (
+                            <img 
+                              src="/icons/eth.png" 
+                              alt="Sepolia" 
+                              className="w-10 h-10 rounded-full object-contain"
+                            />
+                          )}
                         </div>
                         <div className="text-left">
                           <p className="font-semibold">{chain}</p>
@@ -220,10 +232,30 @@ const Bridge = () => {
                         ${token === selectedToken ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                          <span className="text-xl">
-                            {token === 'ETH' ? 'Ξ' : token === 'USDC' ? 'USD' : token.charAt(0)}
-                          </span>
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                          {token === 'ETH' ? (
+                            <img 
+                              src="/icons/eth.png" 
+                              alt="ETH" 
+                              className="w-10 h-10 rounded-full object-contain"
+                            />
+                          ) : token === 'USDC' ? (
+                            <img 
+                              src="/icons/usdc.png" 
+                              alt="USDC" 
+                              className="w-10 h-10 rounded-full object-contain"
+                            />
+                          ) : token === 'EURC' ? (
+                            <img 
+                              src="/icons/eurc.png" 
+                              alt="EURC" 
+                              className="w-10 h-10 rounded-full object-contain"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                              <span className="text-xl">{token.charAt(0)}</span>
+                            </div>
+                          )}
                         </div>
                         <div className="text-left">
                           <p className="font-semibold">{token}</p>
@@ -271,8 +303,20 @@ return (
           className="w-full p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
         >
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl">
-              {fromChain.includes('Arc') ? '🔷' : '⟠'}
+            <div className="w-10 h-10 rounded-full flex items-center justify-center">
+              {fromChain.includes('Arc') ? (
+                <img 
+                  src="/icons/arc_logo.png" 
+                  alt={fromChain} 
+                  className="w-10 h-10 rounded-full object-contain"
+                />
+              ) : (
+                <img 
+                  src="/icons/eth.png" 
+                  alt={fromChain} 
+                  className="w-10 h-10 rounded-full object-contain"
+                />
+              )}
             </div>
             <div className="text-left">
               <p className="font-bold text-base">{fromChain}</p>
@@ -303,8 +347,20 @@ return (
           className="w-full p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
         >
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl">
-              {toChain.includes('Arc') ? '🔷' : '⟠'}
+            <div className="w-10 h-10 rounded-full flex items-center justify-center">
+              {toChain.includes('Arc') ? (
+                <img 
+                  src="/icons/arc_logo.png" 
+                  alt={toChain} 
+                  className="w-10 h-10 rounded-full object-contain"
+                />
+              ) : (
+                <img 
+                  src="/icons/eth.png" 
+                  alt={toChain} 
+                  className="w-10 h-10 rounded-full object-contain"
+                />
+              )}
             </div>
             <div className="text-left">
               <p className="font-bold text-base">{toChain}</p>
@@ -335,8 +391,30 @@ return (
               onClick={() => setShowTokenSelector(true)}
               className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[120px] w-auto flex-shrink-0"
             >
-              <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl">
-                {selectedToken === 'ETH' ? 'Ξ' : selectedToken === 'USDC' ? 'USD' : selectedToken}
+              <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                {selectedToken === 'ETH' ? (
+                  <img 
+                    src="/icons/eth.png" 
+                    alt={selectedToken} 
+                    className="w-10 h-10 rounded-full object-contain"
+                  />
+                ) : selectedToken === 'USDC' ? (
+                  <img 
+                    src="/icons/usdc.png" 
+                    alt={selectedToken} 
+                    className="w-10 h-10 rounded-full object-contain"
+                  />
+                ) : selectedToken === 'EURC' ? (
+                  <img 
+                    src="/icons/eurc.png" 
+                    alt={selectedToken} 
+                    className="w-10 h-10 rounded-full object-contain"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl">
+                    {selectedToken}
+                  </div>
+                )}
               </div>
               <div className="text-left min-w-0">
                 <p className="font-bold text-base truncate">{selectedToken}</p>
