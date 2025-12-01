@@ -139,11 +139,9 @@ const Bridge = () => {
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 rounded-full flex items-center justify-center">
                           {chain.includes('Arc') ? (
-                            <img 
-                              src="/icons/arc_logo.png" 
-                              alt="Arc Testnet" 
-                              className="w-10 h-10 rounded-full object-contain"
-                            />
+                            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                              <span className="text-white font-bold text-sm">Arc</span>
+                            </div>
                           ) : (
                             <img 
                               src="/icons/eth.png" 
@@ -305,11 +303,9 @@ return (
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full flex items-center justify-center">
               {fromChain.includes('Arc') ? (
-                <img 
-                  src="/icons/arc_logo.png" 
-                  alt={fromChain} 
-                  className="w-10 h-10 rounded-full object-contain"
-                />
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">Arc</span>
+                </div>
               ) : (
                 <img 
                   src="/icons/eth.png" 
@@ -349,11 +345,9 @@ return (
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full flex items-center justify-center">
               {toChain.includes('Arc') ? (
-                <img 
-                  src="/icons/arc_logo.png" 
-                  alt={toChain} 
-                  className="w-10 h-10 rounded-full object-contain"
-                />
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">Arc</span>
+                </div>
               ) : (
                 <img 
                   src="/icons/eth.png" 
