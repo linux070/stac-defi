@@ -304,8 +304,7 @@ const Home = ({ setActiveTab }) => {
                 </div>
               </div>
               <h3 className="text-2xl font-bold mb-1">Lightning Fast</h3>
-              <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Sub-second finality</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">USDC gas fees for instant transactions</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.</p>
             </div>
             
             <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
@@ -315,8 +314,7 @@ const Home = ({ setActiveTab }) => {
                 </div>
               </div>
               <h3 className="text-2xl font-bold mb-1">USDC Gas Fee</h3>
-              <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Predictable transaction costs</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Stablecoin-based gas fees for better UX</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400"> Predictable transaction costs with stablecoin-based gas fees for better UX.</p>
             </div>
             
             <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
@@ -326,8 +324,7 @@ const Home = ({ setActiveTab }) => {
                 </div>
               </div>
               <h3 className="text-2xl font-bold mb-1">Enterprise Grade</h3>
-              <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Battle-tested infrastructure</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Multi-layer security</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400"> Built for institutional use with advanced security and compliance features. </p>
             </div>
           </div>
         </div>
