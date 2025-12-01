@@ -139,9 +139,11 @@ const Bridge = () => {
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 rounded-full flex items-center justify-center">
                           {chain.includes('Arc') ? (
-                            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                              <span className="text-white font-bold text-sm">Arc</span>
-                            </div>
+                            <img 
+                              src="/icons/Arc.png" 
+                              alt="Arc Testnet" 
+                              className="w-10 h-10 rounded-full object-contain"
+                            />
                           ) : (
                             <img 
                               src="/icons/eth.png" 
@@ -303,9 +305,11 @@ return (
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full flex items-center justify-center">
               {fromChain.includes('Arc') ? (
-                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">Arc</span>
-                </div>
+                <img 
+                  src="/icons/Arc.png" 
+                  alt="Arc Testnet" 
+                  className="w-10 h-10 rounded-full object-contain"
+                />
               ) : (
                 <img 
                   src="/icons/eth.png" 
@@ -345,9 +349,11 @@ return (
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full flex items-center justify-center">
               {toChain.includes('Arc') ? (
-                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">Arc</span>
-                </div>
+                <img 
+                  src="/icons/Arc.png" 
+                  alt="Arc Testnet" 
+                  className="w-10 h-10 rounded-full object-contain"
+                />
               ) : (
                 <img 
                   src="/icons/eth.png" 

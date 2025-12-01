@@ -241,31 +241,35 @@ const Home = ({ setActiveTab }) => {
 
       {/* Features Grid */}
       <div className="space-y-6">
-        <div className="text-center">
+        <div className="text-left">
           <h2 className="text-3xl font-bold mb-2">Quick Actions</h2>
           <p className="text-gray-600 dark:text-dark-400">{t('experienceNextGen')}</p>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
-            <div className="flex items-start justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <ArrowUpDown size={24} className="text-white" />
-              </div>
+          <div 
+            onClick={() => setActiveTab('swap')}
+            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-blue-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-dark-900 cursor-pointer"
+          >
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <ArrowUpDown size={24} className="text-white" />
             </div>
-            <h3 className="text-lg font-bold mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+            <h3 className="font-bold text-xl mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
               {t('swapTokens')}
             </h3>
             <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
               Exchange tokens instantly at the best rates
             </p>
-            <div className="flex items-center text-primary-600 dark:text-primary-400 text-sm font-semibold">
+            <div className="flex items-center text-blue-600 dark:text-blue-400 text-sm font-semibold">
               <span>Start swapping</span>
               <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
             </div>
           </div>
 
-          <div className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-green-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-dark-900">
+          <div 
+            onClick={() => setActiveTab('bridge')}
+            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-green-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-dark-900 cursor-pointer"
+          >
             <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
               <Link size={24} className="text-white" />
             </div>
@@ -281,7 +285,10 @@ const Home = ({ setActiveTab }) => {
             </div>
           </div>
 
-          <div className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-purple-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-dark-900">
+          <div 
+            onClick={() => setActiveTab('liquidity')}
+            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-purple-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-dark-900 cursor-pointer"
+          >
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
               <Droplets size={24} className="text-white" />
             </div>
