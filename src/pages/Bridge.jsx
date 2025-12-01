@@ -6,32 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
 import { sanitizeInput } from '../utils/blockchain';
 
-import { useBridge } from "../bridge/hooks/useBridge";
-
-const MyBridge = () => {
-  const { 
-    sourceChain, 
-    destinationChain, 
-    amount,
-    estimateGas,
-    executeBridge
-  } = useBridge();
-
-  return (
-    <div>
-      {/* Your existing UI styling */}
-      <h2>Bridge</h2>
-
-      {/* your own inputs */}
-      ...
-    </div>
-  );
-};
-
-// yoooo
-
-
-
 
 const Bridge = () => {
   const { t } = useTranslation();
@@ -545,105 +519,6 @@ return (
     />
   </div>
 );
-};
-
-
-import React, { useState } from "react";
-import { useBridge } from "../bridge/hooks/useBridge";
-
-const Bridge = () => {
-  const {
-    sourceChain,
-    destinationChain,
-    setSourceChain,
-    setDestinationChain,
-    amount,
-    setAmount,
-    executeBridge,
-    estimatedFee,
-    loading,
-  } = useBridge();
-
-  const [txHash, setTxHash] = useState("");
-
-  const handleBridge = async () => {
-    const hash = await executeBridge();
-    setTxHash(hash);
-  };
-
-  return (
-    <div style={{ padding: "20px", background: "white", borderRadius: "12px" }}>
-      <h1 style={{ color: "#000", fontSize: "22px" }}>Bridge Assets</h1>
-
-      {/* Amount */}
-      <input
-        type="number"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-        placeholder="Amount"
-        style={{
-          width: "100%",
-          padding: "10px",
-          borderRadius: "8px",
-          marginTop: "12px",
-          border: "1px solid #ccc"
-        }}
-      />
-
-      {/* Source chain */}
-      <select
-        value={sourceChain}
-        onChange={(e) => setSourceChain(e.target.value)}
-        style={{ width: "100%", marginTop: "12px", padding: "10px" }}
-      >
-        <option value="">Select Source Chain</option>
-        <option value="arc-testnet">Arc Testnet</option>
-        <option value="sepolia">Sepolia</option>
-      </select>
-
-      {/* Destination chain */}
-      <select
-        value={destinationChain}
-        onChange={(e) => setDestinationChain(e.target.value)}
-        style={{ width: "100%", marginTop: "12px", padding: "10px" }}
-      >
-        <option value="">Select Destination Chain</option>
-        <option value="arc-testnet">Arc Testnet</option>
-        <option value="sepolia">Sepolia</option>
-      </select>
-
-      {/* Estimate */}
-      {estimatedFee && (
-        <p style={{ marginTop: "10px" }}>
-          Estimated Fee: {estimatedFee}
-        </p>
-      )}
-
-      {/* Button */}
-      <button
-        onClick={handleBridge}
-        disabled={loading}
-        style={{
-          width: "100%",
-          padding: "12px",
-          background: "#0066ff",
-          color: "white",
-          borderRadius: "8px",
-          marginTop: "14px",
-          cursor: "pointer"
-        }}
-      >
-        {loading ? "Processing..." : "Bridge Now"}
-      </button>
-
-      {/* Tx hash */}
-      {txHash && (
-        <p style={{ marginTop: "10px", fontSize: "14px" }}>
-          Tx Hash: {txHash}
-        </p>
-      )}
-    </div>
-  );
 };
 
 export default Bridge;
