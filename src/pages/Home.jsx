@@ -243,104 +243,91 @@ const Home = ({ setActiveTab }) => {
       <div className="space-y-6">
         <div className="text-left">
           <h2 className="text-3xl font-bold mb-2">Quick Actions</h2>
-          <p className="text-gray-600 dark:text-dark-400">{t('experienceNextGen')}</p>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div 
             onClick={() => setActiveTab('swap')}
-            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-blue-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-dark-900 cursor-pointer"
+            className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900 cursor-pointer"
           >
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <ArrowUpDown size={24} className="text-white" />
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
+                <ArrowUpDown size={20} className="text-white" />
+              </div>
             </div>
-            <h3 className="font-bold text-xl mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-              {t('swapTokens')}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
-              Exchange tokens instantly at the best rates
-            </p>
-            <div className="flex items-center text-blue-600 dark:text-blue-400 text-sm font-semibold">
-              <span>Start swapping</span>
-              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
-            </div>
+            <h3 className="text-2xl font-bold mb-1">{t('swapTokens')}</h3>
+            <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Exchange tokens</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Instant trades at best rates</p>
           </div>
 
           <div 
             onClick={() => setActiveTab('bridge')}
-            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-green-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-dark-900 cursor-pointer"
+            className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900 cursor-pointer"
           >
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <Link size={24} className="text-white" />
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white">
+                <Link size={20} className="text-white" />
+              </div>
             </div>
-            <h3 className="font-bold text-xl mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-              {t('bridgeAssets')}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
-              Transfer assets between Sepolia and Arc Testnet
-            </p>
-            <div className="flex items-center text-green-600 dark:text-green-400 text-sm font-semibold">
-              <span>Start bridging</span>
-              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
-            </div>
+            <h3 className="text-2xl font-bold mb-1">{t('bridgeAssets')}</h3>
+            <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Transfer assets</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Between Sepolia and Arc Testnet</p>
           </div>
 
           <div 
             onClick={() => setActiveTab('liquidity')}
-            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-purple-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-dark-900 cursor-pointer"
+            className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900 cursor-pointer"
           >
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <Droplets size={24} className="text-white" />
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white">
+                <Droplets size={20} className="text-white" />
+              </div>
             </div>
-            <h3 className="font-bold text-xl mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-              {t('addLiquidity')}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
-              Provide liquidity to earn passive income
-            </p>
-            <div className="flex items-center text-purple-600 dark:text-purple-400 text-sm font-semibold">
-              <span>Start earning</span>
-              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
-            </div>
+            <h3 className="text-2xl font-bold mb-1">{t('addLiquidity')}</h3>
+            <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Provide liquidity</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Earn passive income</p>
           </div>
         </div>
         
         {/* Why Arc Network Section */}
         <div className="mt-12">
-          <div className="text-center mb-8">
+          <div className="text-left mb-8">
             <h2 className="text-3xl font-bold mb-2">Why Arc Network</h2>
-            <p className="text-gray-600 dark:text-dark-400">Experience the next generation of decentralized finance</p>
+            <p className="text-gray-600 dark:text-dark-400">Experience the next generation of blockchain infrastructure</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-dark-900/50 rounded-xl p-6 border border-gray-100 dark:border-dark-800">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4">
-                <Zap size={24} className="text-white" />
+            <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
+                  <Zap size={20} className="text-white" />
+                </div>
               </div>
-              <h3 className="text-xl font-bold mb-2">Lightning Fast</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Sub-second finality with USDC gas fees for instant transactions
-              </p>
+              <h3 className="text-2xl font-bold mb-1">Lightning Fast</h3>
+              <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Sub-second finality</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">USDC gas fees for instant transactions</p>
             </div>
             
-            <div className="bg-white dark:bg-dark-900/50 rounded-xl p-6 border border-gray-100 dark:border-dark-800">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4">
-                <Shield size={24} className="text-white" />
+            <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white">
+                  <DollarSign size={20} className="text-white" />
+                </div>
               </div>
-              <h3 className="text-xl font-bold mb-2">Enterprise Grade</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Built on battle-tested infrastructure with multi-layer security
-              </p>
+              <h3 className="text-2xl font-bold mb-1">USDC Gas Fee</h3>
+              <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Predictable transaction costs</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Stablecoin-based gas fees for better UX</p>
             </div>
             
-            <div className="bg-white dark:bg-dark-900/50 rounded-xl p-6 border border-gray-100 dark:border-dark-800">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4">
-                <Globe size={24} className="text-white" />
+            <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white">
+                  <Shield size={20} className="text-white" />
+                </div>
               </div>
-              <h3 className="text-xl font-bold mb-2">Cross-Chain</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Seamless asset transfers between multiple blockchain networks
-              </p>
+              <h3 className="text-2xl font-bold mb-1">Enterprise Grade</h3>
+              <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Battle-tested infrastructure</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Multi-layer security</p>
             </div>
           </div>
         </div>
