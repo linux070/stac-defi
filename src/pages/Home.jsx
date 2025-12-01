@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins, Zap, BookOpen, Link, Droplets, Shield } from 'lucide-react';
+import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins, Zap, ExternalLink, Link, Droplets, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatCurrency, formatNumber } from '../utils/blockchain';
 import { ArrowUpDown } from "lucide-react"
@@ -239,64 +239,90 @@ const Home = ({ setActiveTab }) => {
         </div>
       </motion.div>
 
-      {/* Features Grid */}
-      <div className="space-y-6">
-        <div className="text-left">
-          <h2 className="text-3xl font-bold mb-2">Quick Actions</h2>
+      {/* Quick Actions */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="card bg-gradient-to-br from-white to-blue-50 dark:from-dark-900 dark:to-dark-950/50 border border-blue-100 dark:border-blue-900/50 p-6 rounded-2xl"
+      >
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-2">Quick Actions</h2>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div 
             onClick={() => setActiveTab('swap')}
-            className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900 cursor-pointer"
+            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-blue-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-dark-900 cursor-pointer"
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
-                <ArrowUpDown size={20} className="text-white" />
-              </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <ArrowUpDown size={24} className="text-white" />
             </div>
-            <h3 className="text-2xl font-bold mb-1">{t('swapTokens')}</h3>
-            <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Exchange tokens</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Instant trades at best rates</p>
+            <h3 className="font-bold text-xl mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              {t('swapTokens')}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
+              Exchange tokens instantly at the best rates
+            </p>
+            <div className="flex items-center text-blue-600 dark:text-blue-400 text-sm font-semibold">
+              <span>Start swapping</span>
+              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
+            </div>
           </div>
 
           <div 
             onClick={() => setActiveTab('bridge')}
-            className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900 cursor-pointer"
+            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-green-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-dark-900 cursor-pointer"
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white">
-                <Link size={20} className="text-white" />
-              </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <Link size={24} className="text-white" />
             </div>
-            <h3 className="text-2xl font-bold mb-1">{t('bridgeAssets')}</h3>
-            <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Transfer assets</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Between Sepolia and Arc Testnet</p>
+            <h3 className="font-bold text-xl mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+              {t('bridgeAssets')}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
+              Transfer assets between Sepolia and Arc Testnet
+            </p>
+            <div className="flex items-center text-green-600 dark:text-green-400 text-sm font-semibold">
+              <span>Start bridging</span>
+              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
+            </div>
           </div>
 
           <div 
             onClick={() => setActiveTab('liquidity')}
-            className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900 cursor-pointer"
+            className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-purple-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-dark-900 cursor-pointer"
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white">
-                <Droplets size={20} className="text-white" />
-              </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <Droplets size={24} className="text-white" />
             </div>
-            <h3 className="text-2xl font-bold mb-1">{t('addLiquidity')}</h3>
-            <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Provide liquidity</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Earn passive income</p>
+            <h3 className="font-bold text-xl mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+              {t('addLiquidity')}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
+              Provide liquidity to earn passive income
+            </p>
+            <div className="flex items-center text-purple-600 dark:text-purple-400 text-sm font-semibold">
+              <span>Start earning</span>
+              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
+            </div>
           </div>
         </div>
+      </motion.div>
         
         {/* Why Arc Network Section */}
-        <div className="mt-12">
-          <div className="text-left mb-8">
-            <h2 className="text-3xl font-bold mb-2">Why Arc Network</h2>
-            <p className="text-gray-600 dark:text-dark-400">Experience the next generation of blockchain infrastructure</p>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="card bg-gradient-to-br from-white to-blue-50 dark:from-dark-900 dark:to-dark-950/50 border border-blue-100 dark:border-blue-900/50 p-6 rounded-2xl mt-12"
+        >
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2">Why Arc Network</h2>
+            <p className="text-gray-600 dark:text-gray-400">Experience the next generation of blockchain infrastructure</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
               <div className="flex items-start justify-between mb-3">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
@@ -327,7 +353,7 @@ const Home = ({ setActiveTab }) => {
               <p className="text-xs text-gray-500 dark:text-gray-400"> Built for institutional use with advanced security and compliance features. </p>
             </div>
           </div>
-        </div>
+        </motion.div>
         
         <div className="mt-8 text-center">
           <a 
@@ -336,12 +362,11 @@ const Home = ({ setActiveTab }) => {
             rel="noopener noreferrer"
             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
           >
-            <BookOpen className="mr-2" />
+            <ExternalLink className="mr-2" />
             {t('learnMoreAboutArc')}
             <ArrowUpRight size={16} className="ml-2" />
           </a>
         </div>
-      </div>
     </div>
   );
 };
