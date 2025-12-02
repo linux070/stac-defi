@@ -11,6 +11,66 @@ import Toast from '../components/Toast';
 // import { approveToken, swapExactTokensForTokens, getAmountsOut } from '../utils/swap';
 // import { SWAP_CONTRACT_ADDRESS } from '../config/contracts';
 
+
+import { useState } from 'react';
+import { BridgeKit } from '@circle-fin/bridge-kit';
+import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
+
+// 1. Initialize the Kit
+const kit = new BridgeKit();
+
+export function MyBridgeComponent() {
+  const [status, setStatus] = useState("Idle");
+
+  const handleBridge = async () => {
+    try {
+      setStatus("Bridging...");
+
+      // A. Get the user's wallet (e.g., from window.ethereum or Wagmi)
+      if (!window.ethereum) return alert("No wallet found!");
+      
+      // B. Create the 'Key' (Adapter) so the kit can sign transactions
+      const walletAdapter = await createAdapterFromProvider({ 
+        provider: window.ethereum 
+      });
+
+      // C. Run the Bridge command
+      const result = await kit.bridge({
+        from: { 
+          adapter: walletAdapter, 
+          chain: 'Sepolia' // The chain the user is currently on
+        },
+        to: { 
+          adapter: walletAdapter, // Or a different adapter if sending to Solana
+          chain: 'Arc testnet' // Where the money goes
+        },
+        amount: '5.00' // Amount of USDC to send
+      });
+
+      console.log("Success:", result);
+      setStatus("Done! tx hash: " + result.txHash);
+
+    } catch (error) {
+      console.error(error);
+      setStatus("Error: " + error.message);
+    }
+  };
+
+  return (
+    <div>
+      {/* 3. YOUR EXISTING UI - No changes needed, just add onClick */}
+      <button 
+        onClick={handleBridge}
+        style={{ padding: '10px', background: 'blue', color: 'white' }}
+      >
+        Bridge USDC
+      </button>
+      
+      <p>Status: {status}</p>
+    </div>
+  );
+}
+
 const Swap = () => {
   const { t } = useTranslation();
   const { isConnected, balance } = useWallet();
