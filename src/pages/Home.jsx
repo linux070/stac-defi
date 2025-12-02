@@ -122,7 +122,7 @@ const Home = ({ setActiveTab }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-3xl p-8 md:p-12 
+        className="animate-float rounded-3xl p-8 md:p-12 
         /* --- LIGHT MODE (Vibrant Gradient) --- */
         bg-gradient-to-br from-blue-600 to-indigo-600
         text-white
@@ -139,7 +139,9 @@ const Home = ({ setActiveTab }) => {
         <div className="relative z-10">
          
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight">
-            {t('welcome')}
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-200 to-white bg-[length:200%_auto] animate-text-shimmer">
+              {t('welcome')}
+            </span>
           </h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -206,8 +208,8 @@ const Home = ({ setActiveTab }) => {
         className="card"
       >
         <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">Network Statistics</h2>
-          <p className="text-gray-600 dark:text-slate-400">Real-time metrics updated automatically</p>
+          <h2 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">Network Statistics</h2>
+          <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mb-8 max-w-2xl">Real-time metrics updated automatically</p>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -235,8 +237,8 @@ const Home = ({ setActiveTab }) => {
                   )}
                 </div>
                 <h3 className="text-3xl font-bold text-slate-900 dark:text-white dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.15)] mb-1">{stat.value}</h3>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{stat.label}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{stat.description}</p>
+                <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400 mb-1">{stat.label}</p>
+                <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">{stat.description}</p>
                 
                 {/* Data source indicator */}
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center text-xs text-gray-500 dark:text-gray-400">
@@ -328,8 +330,8 @@ const Home = ({ setActiveTab }) => {
           className="card mt-12"
         >
           <div className="mb-6">
-            <h2 className="text-2xl font-bold mb-2">Why Arc Network</h2>
-            <p className="text-gray-600 dark:text-slate-400">Experience the next generation of blockchain infrastructure</p>
+            <h2 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">Why Arc Network</h2>
+            <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mb-8 max-w-2xl">Experience the next generation of blockchain infrastructure</p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -339,8 +341,8 @@ const Home = ({ setActiveTab }) => {
                   <Zap size={20} className="text-white" />
                 </div>
               </div>
-              <h3 className="text-3xl font-bold text-slate-900 dark:text-white dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.15)] mb-1">Lightning Fast</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.</p>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Lightning Fast</h3>
+              <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.</p>
             </div>
             
             <div className="relative overflow-hidden rounded-2xl p-6 bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all dark:bg-slate-900/50 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-2xl dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
@@ -349,8 +351,8 @@ const Home = ({ setActiveTab }) => {
                   <DollarSign size={20} className="text-white" />
                 </div>
               </div>
-              <h3 className="text-3xl font-bold text-slate-900 dark:text-white dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.15)] mb-1">USDC Gas Fee</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400"> Predictable transaction costs with stablecoin-based gas fees for better UX.</p>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">USDC Gas Fee</h3>
+              <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">Predictable transaction costs with stablecoin-based gas fees for better UX.</p>
             </div>
             
             <div className="relative overflow-hidden rounded-2xl p-6 bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all dark:bg-slate-900/50 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-2xl dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
@@ -359,8 +361,8 @@ const Home = ({ setActiveTab }) => {
                   <Shield size={20} className="text-white" />
                 </div>
               </div>
-              <h3 className="text-3xl font-bold text-slate-900 dark:text-white dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.15)] mb-1">Enterprise Grade</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400"> Built for institutional use with advanced security and compliance features. </p>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Enterprise Grade</h3>
+              <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">Built for institutional use with advanced security and compliance features.</p>
             </div>
           </div>
         </motion.div>
@@ -370,11 +372,11 @@ const Home = ({ setActiveTab }) => {
             href="https://arc.network" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold rounded-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            className="inline-flex items-center px-6 py-3 bg-slate-900/50 backdrop-blur-lg border border-white/10 text-white font-semibold rounded-full hover:border-blue-400 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300 group"
           >
             <ExternalLink className="mr-2" />
             {t('learnMoreAboutArc')}
-            <ArrowUpRight size={16} className="ml-2" />
+            <ArrowUpRight size={16} className="ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
           </a>
         </div>
     </div>

@@ -119,8 +119,15 @@ const Liquidity = () => {
 
   return (
     <div className="max-w-6xl mx-auto flex items-center justify-center h-full">
-      <div className="text-center py-20">
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
+      <div className="text-center py-20 flex flex-col items-center">
+        <div className="flex justify-center mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center animate-pulse">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
           {t('comingSoon')}
         </h2>
         <p className="text-gray-600 dark:text-gray-400">

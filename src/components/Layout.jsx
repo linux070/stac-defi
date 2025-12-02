@@ -44,59 +44,36 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo and Mobile Menu */}
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-              <div className="flex items-center space-x-2">
-                <div className="w-10 h-10 bg-gradient-arc rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                  S
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold gradient-text">Stac</h1>
-                </div>
-              </div>
+      {/* Transparent Header Container */}
+      <header className="fixed top-4 left-0 right-0 z-50 bg-transparent">
+        {/* Mobile Header - Logo and Wallet only */}
+        <div className="md:hidden max-w-6xl w-fit mx-auto px-4 sm:px-6 lg:px-8 mb-4">
+          <div className="flex items-center justify-between rounded-full bg-white/80 dark:bg-[#0f1218]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2">
+            {/* Logo */}
+            <div className="flex items-center">
+              <img 
+                src="/icons/stac.png" 
+                alt="Stac Logo" 
+                className="h-10 w-auto object-contain dark:brightness-0 dark:invert"
+              />
+              <h1 className="text-xl font-bold gradient-text ml-1.5">Stac</h1>
             </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2
-                      ${activeTab === item.id
-                        ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg'
-                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700'
-                      }`}
-                  >
-                    <Icon size={18} />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-
-            {/* Right Side Actions */}
-            <div className="flex items-center space-x-2">
-              {/* Language Selector */}
-              <div className="relative">
+            {/* Controls - Theme Toggle and Language Selector */}
+            <div className="flex items-center">
+              <button
+                onClick={toggleDarkMode}
+                className="p-2 rounded-full hover:bg-white/10 dark:hover:bg-white/5 mx-1"
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              
+              <div className="relative mx-1">
                 <button
                   onClick={() => setShowLangMenu(!showLangMenu)}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center space-x-1"
+                  className="p-2 rounded-full hover:bg-white/10 dark:hover:bg-white/5 flex items-center"
                 >
                   <span className="text-lg">{currentLang.flag}</span>
-                  <ChevronDown size={16} className="text-gray-500" />
                 </button>
                 <AnimatePresence>
                   {showLangMenu && (
@@ -104,16 +81,16 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2"
+                      className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
                     >
                       {languages.map((lang) => (
                         <button
                           key={lang.code}
                           onClick={() => changeLanguage(lang.code)}
-                          className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2
+                          className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center
                             ${i18n.language === lang.code ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`}
                         >
-                          <span className="text-lg">{lang.flag}</span>
+                          <span className="text-lg mr-2">{lang.flag}</span>
                           <span>{lang.name}</span>
                         </button>
                       ))}
@@ -122,15 +99,103 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                 </AnimatePresence>
               </div>
 
-              {/* Theme Toggle */}
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-
               {/* Wallet Button */}
+              <div>
+                <ConnectButton
+                  showBalance={false}
+                  accountStatus={{
+                    smallScreen: 'avatar',
+                    largeScreen: 'full',
+                  }}
+                  chainStatus={{
+                    smallScreen: 'icon',
+                    largeScreen: 'full',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Island Container - Pill-shaped with logo, navigation, and wallet */}
+        <div className="max-w-6xl w-fit mx-auto px-4 sm:px-6 lg:px-8 hidden md:block">
+          <div className="flex items-center rounded-full bg-white/80 dark:bg-[#0f1218]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2">
+            {/* Logo */}
+            <div className="flex items-center mr-6">
+              <img 
+                src="/icons/stac.png" 
+                alt="Stac Logo" 
+                className="h-10 w-auto object-contain dark:brightness-0 dark:invert"
+              />
+              <h1 className="text-xl font-bold gradient-text ml-1.5">Stac</h1>
+            </div>
+
+            {/* Desktop Navigation */}
+            <nav className="flex items-center space-x-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center
+                      ${activeTab === item.id
+                        ? 'bg-blue-100/50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                        : 'text-gray-600 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:bg-gray-700/50'
+                      }`}
+                  >
+                    <Icon size={16} className="mr-2" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Spacer to push controls to the right */}
+            <div className="flex-grow"></div>
+
+            {/* Language Selector */}
+            <div className="relative mx-2">
+              <button
+                onClick={() => setShowLangMenu(!showLangMenu)}
+                className="p-2 rounded-full hover:bg-white/10 dark:hover:bg-white/5 flex items-center"
+              >
+                <span className="text-lg">{currentLang.flag}</span>
+              </button>
+              <AnimatePresence>
+                {showLangMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
+                  >
+                    {languages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => changeLanguage(lang.code)}
+                        className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center
+                          ${i18n.language === lang.code ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`}
+                      >
+                        <span className="text-lg mr-2">{lang.flag}</span>
+                        <span>{lang.name}</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-full hover:bg-white/10 dark:hover:bg-white/5 mx-1"
+            >
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+
+            {/* Wallet Button */}
+            <div className="ml-2">
               <ConnectButton
                 showBalance={false}
                 accountStatus={{
@@ -145,6 +210,29 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             </div>
           </div>
         </div>
+
+        {/* Mobile Floating Navigation Bar - Dock Style */}
+        <nav className="md:hidden fixed bottom-4 left-4 right-4 z-30 bg-white/80 dark:bg-[#0f1218]/80 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 p-2">
+          <div className="flex justify-around items-center">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200
+                    ${activeTab === item.id
+                      ? 'bg-white/20 dark:bg-white/10'
+                      : 'hover:bg-white/10 dark:hover:bg-white/5'
+                    }`}
+                >
+                  <Icon size={24} />
+                  <span className="text-xs mt-1">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
       </header>
 
       {/* Mobile Sidebar */}
@@ -192,7 +280,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-blue-900/20 dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-visible">
+      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-blue-900/20 dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-24 md:pt-24 md:pb-8 overflow-visible">
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}

@@ -119,6 +119,8 @@
   "displayingRealTime": "Mostrando transacciones en tiempo real de Arc Testnet y Sepolia. Las transacciones se obtienen de los exploradores de blockchain y se actualizan cada 15 segundos.",
   "noTransactionsFound": "No se encontraron transacciones",
   "transactionsWillAppear": "Las transacciones aparecerán aquí",
+  "crossChainTransfers": "Transferencias entre Cadenas",
+  "supportedTokens": "Tokens Soportados",
   "crossChainBridging": "Puente entre cadenas",
   "bridgeInfoDescription": "Transfiere activos de forma segura entre Sepolia y Arc Testnet. Tiempo estimado: 2-5 minutos.",
   "filterByType": "Filtrar por tipo:",
@@ -133,5 +135,7 @@
   "priceRange": "Rango de Precio",
   "noPositionsFound": "No se encontraron posiciones",
   "noPositionsMatchCriteria": "No hay posiciones que coincidan con tus filtros actuales",
-  "clearFilters": "Limpiar Filtros"
+  "clearFilters": "Limpiar Filtros",
+  "comingSoon": "Próximamente",
+  "liquidityFeatureComingSoon": "Los pools de liquidez se lanzarán en breve."
 }

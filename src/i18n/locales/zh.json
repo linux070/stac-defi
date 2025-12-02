@@ -119,6 +119,8 @@
   "displayingRealTime": "显示来自 Arc Testnet 和 Sepolia 的实时交易。交易从区块链浏览器获取，每15秒更新一次。",
   "noTransactionsFound": "未找到交易",
   "transactionsWillAppear": "交易将显示在这里",
+  "crossChainTransfers": "跨链转账",
+  "supportedTokens": "支持的代币",
   "crossChainBridging": "跨链桥接",
   "bridgeInfoDescription": "在 Sepolia 和 Arc Testnet 之间安全转移资产。预计时间：2-5 分钟。",
   "filterByType": "按类型筛选：",
@@ -133,5 +135,7 @@
   "priceRange": "价格区间",
   "noPositionsFound": "未找到头寸",
   "noPositionsMatchCriteria": "没有符合您当前筛选条件的头寸",
-  "clearFilters": "清除筛选"
+  "clearFilters": "清除筛选",
+  "comingSoon": "即将推出",
+  "liquidityFeatureComingSoon": "流动性池即将启动。"
 }
