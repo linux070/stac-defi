@@ -5,7 +5,7 @@ import { ArrowLeftRight, ChevronDown, Loader, AlertCircle, Info, Wallet, X } fro
 import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
 import { sanitizeInput } from '../utils/blockchain';
-
+import useTokenBalance from '../hooks/useTokenBalance';
 
 const Bridge = () => {
   const { t } = useTranslation();
@@ -18,6 +18,9 @@ const Bridge = () => {
   const [showChainSelector, setShowChainSelector] = useState(null);
   const [showTokenSelector, setShowTokenSelector] = useState(false);
   
+  // Real-time token balance
+  const { balance, loading, refetch } = useTokenBalance(selectedToken);
+
   // Refs for trigger buttons
   const fromChainTriggerRef = useRef(null);
   const toChainTriggerRef = useRef(null);
@@ -428,7 +431,13 @@ return (
             <div className="flex items-center justify-end mt-2">
               <div className="flex items-center space-x-2">
                 <span className="text-xs text-gray-500 dark:text-gray-400">Bal:</span>
-                <span className="text-sm font-semibold">{selectedToken}</span>
+                <span className="text-sm font-semibold">
+                  {loading ? (
+                    <Loader className="animate-spin" size={14} />
+                  ) : (
+                    `${balance || '0.00'} ${selectedToken}`
+                  )}
+                </span>
               </div>
             </div>
           )}
