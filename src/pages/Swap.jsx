@@ -12,7 +12,7 @@ import Toast from '../components/Toast';
 // import { SWAP_CONTRACT_ADDRESS } from '../config/contracts';
 
 
-import { useState } from 'react';
+
 import { BridgeKit } from '@circle-fin/bridge-kit';
 import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
 
