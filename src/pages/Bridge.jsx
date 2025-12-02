@@ -12,23 +12,20 @@ const Bridge = () => {
   const { isConnected, chainId } = useWallet();
   const [fromChain, setFromChain] = useState('Sepolia');
   const [toChain, setToChain] = useState('Arc Testnet');
-  const [selectedToken, setSelectedToken] = useState('ETH');
   const [amount, setAmount] = useState('');
   const [bridgeLoading, setBridgeLoading] = useState(false);
   const [showChainSelector, setShowChainSelector] = useState(null);
-  const [showTokenSelector, setShowTokenSelector] = useState(false);
   
-  // Real-time token balance
-  const { balance, loading, refetch } = useTokenBalance(selectedToken);
+  // Real-time token balance for USDC
+  const { balance, loading, refetch } = useTokenBalance('USDC');
 
   // Refs for trigger buttons
   const fromChainTriggerRef = useRef(null);
   const toChainTriggerRef = useRef(null);
-  const tokenSelectorTriggerRef = useRef(null);
   
   // Effect to handle body overflow when modals are open
   useEffect(() => {
-    const isModalOpen = showChainSelector || showTokenSelector;
+    const isModalOpen = showChainSelector;
     if (isModalOpen) {
       // Prevent background scrolling when modal is open
       document.body.style.overflow = 'hidden';
@@ -41,10 +38,9 @@ const Bridge = () => {
     return () => {
       document.body.style.overflow = 'visible';
     };
-  }, [showChainSelector, showTokenSelector]);
+  }, [showChainSelector]);
 
   const chains = ['Sepolia', 'Arc Testnet'];
-  const bridgeTokens = ['ETH', 'USDC', 'EURC'];
 
   const handleSwitchChains = () => {
     setFromChain(toChain);
@@ -172,111 +168,6 @@ const Bridge = () => {
     );
   };
 
-  const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, triggerRef }) => {
-    const selectorRef = useRef(null);
-    
-    // Handle ESC key press to close modal
-    useEffect(() => {
-      const handleEsc = (event) => {
-        if (event.keyCode === 27) {
-          onClose();
-        }
-      };
-      
-      if (isOpen) {
-        document.addEventListener('keydown', handleEsc);
-      }
-      
-      return () => {
-        document.removeEventListener('keydown', handleEsc);
-      };
-    }, [isOpen, onClose]);
-    
-    if (!isOpen) return null;
-
-    return (
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
-            onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              ref={selectorRef}
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md flex flex-col max-h-[80vh] overflow-hidden"
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
-            >
-              <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                <h3 className="text-xl font-bold">{t('selectToken')}</h3>
-                <button 
-                  onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto -mx-6 px-6">
-                {/* Token List */}
-                <div className="space-y-2">
-                  {bridgeTokens.map((token) => (
-                    <button
-                      key={token}
-                      onClick={() => {
-                        onSelect(token);
-                        onClose();
-                      }}
-                      className={`w-full p-4 rounded-lg flex items-center justify-between transition-all duration-200
-                        ${token === selectedToken ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center">
-                          {token === 'ETH' ? (
-                            <img 
-                              src="/icons/eth.png" 
-                              alt="ETH" 
-                              className="w-10 h-10 rounded-full object-contain"
-                            />
-                          ) : token === 'USDC' ? (
-                            <img 
-                              src="/icons/usdc.png" 
-                              alt="USDC" 
-                              className="w-10 h-10 rounded-full object-contain"
-                            />
-                          ) : token === 'EURC' ? (
-                            <img 
-                              src="/icons/eurc.png" 
-                              alt="EURC" 
-                              className="w-10 h-10 rounded-full object-contain"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                              <span className="text-xl">{token.charAt(0)}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-left">
-                          <p className="font-semibold">{token}</p>
-                          <p className="text-xs text-gray-500">{TOKENS[token]?.name || token}</p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    );
-  };
-
 return (
   <div className="max-w-lg mx-auto">
     <motion.div
@@ -390,42 +281,20 @@ return (
               />
 
             </div>
-            <button
-              ref={tokenSelectorTriggerRef}
-              onClick={() => setShowTokenSelector(true)}
-              className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[120px] w-auto flex-shrink-0"
-            >
+            {/* Static USDC Token Display - Removed dropdown functionality */}
+            <div className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm self-end min-w-[120px] w-auto flex-shrink-0">
               <div className="w-10 h-10 rounded-full flex items-center justify-center">
-                {selectedToken === 'ETH' ? (
-                  <img 
-                    src="/icons/eth.png" 
-                    alt={selectedToken} 
-                    className="w-10 h-10 rounded-full object-contain"
-                  />
-                ) : selectedToken === 'USDC' ? (
-                  <img 
-                    src="/icons/usdc.png" 
-                    alt={selectedToken} 
-                    className="w-10 h-10 rounded-full object-contain"
-                  />
-                ) : selectedToken === 'EURC' ? (
-                  <img 
-                    src="/icons/eurc.png" 
-                    alt={selectedToken} 
-                    className="w-10 h-10 rounded-full object-contain"
-                  />
-                ) : (
-                  <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl">
-                    {selectedToken}
-                  </div>
-                )}
+                <img 
+                  src="/icons/usdc.png" 
+                  alt="USDC" 
+                  className="w-10 h-10 rounded-full object-contain"
+                />
               </div>
               <div className="text-left min-w-0">
-                <p className="font-bold text-base truncate">{selectedToken}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{TOKENS[selectedToken]?.name || selectedToken}</p>
+                <p className="font-bold text-base truncate">USDC</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">USD Coin</p>
               </div>
-              <ChevronDown size={16} />
-            </button>
+            </div>
           </div>
           {isConnected && (
             <div className="flex items-center justify-end mt-2">
@@ -435,7 +304,7 @@ return (
                   {loading ? (
                     <Loader className="animate-spin" size={14} />
                   ) : (
-                    `${balance || '0.00'} ${selectedToken}`
+                    `${balance || '0.00'} USDC`
                   )}
                 </span>
               </div>
@@ -457,7 +326,7 @@ return (
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600 dark:text-gray-400">{t('bridgeFee')}</span>
-            <span className="font-semibold">0.1% ({(parseFloat(amount) * 0.001).toFixed(4)} {selectedToken})</span>
+            <span className="font-semibold">0.1% ({(parseFloat(amount) * 0.001).toFixed(4)} USDC)</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600 dark:text-gray-400">{t('gasFee')}</span>
@@ -465,7 +334,7 @@ return (
           </div>
           <div className="flex justify-between pt-2 border-t border-gray-300 dark:border-gray-600">
             <span className="text-gray-600 dark:text-gray-400">{t('youWillReceive')}</span>
-            <span className="font-bold">{(parseFloat(amount) * 0.999).toFixed(4)} {selectedToken}</span>
+            <span className="font-bold">{(parseFloat(amount) * 0.999).toFixed(4)} USDC</span>
           </div>
         </motion.div>
       )}
@@ -519,15 +388,9 @@ return (
       exclude={fromChain}
       triggerRef={showChainSelector === 'to' ? toChainTriggerRef : fromChainTriggerRef}
     />
-    <TokenSelector
-      isOpen={showTokenSelector}
-      onClose={() => setShowTokenSelector(false)}
-      selectedToken={selectedToken}
-      onSelect={setSelectedToken}
-      triggerRef={tokenSelectorTriggerRef}
-    />
   </div>
 );
+
 };
 
 export default Bridge;
