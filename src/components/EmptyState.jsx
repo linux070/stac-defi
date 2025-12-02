@@ -12,7 +12,7 @@ const EmptyState = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="card text-center py-16"
+      className="card text-center"
     >
       <div className="max-w-md mx-auto">
         <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center text-5xl">

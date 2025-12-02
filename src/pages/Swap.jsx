@@ -480,7 +480,7 @@ const Swap = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card shadow-2xl"
+        className="card"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

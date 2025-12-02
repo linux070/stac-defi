@@ -193,11 +193,11 @@ const Home = ({ setActiveTab }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="card bg-gradient-to-br from-white to-blue-50 dark:from-dark-900 dark:to-dark-950/50 border border-blue-100 dark:border-blue-900/50 p-6 rounded-2xl"
+        className="card"
       >
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-2">Network Statistics</h2>
-          <p className="text-gray-600 dark:text-gray-400">Real-time metrics updated automatically</p>
+          <p className="text-gray-600 dark:neon-secondary-text">Real-time metrics updated automatically</p>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -212,7 +212,7 @@ const Home = ({ setActiveTab }) => {
                 className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center text-white`}>
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} neon-icon-container flex items-center justify-center text-white`}>
                     {stat.lucideIcon && React.createElement(stat.lucideIcon, { size: 20, className: "text-white" })}
                   </div>
                   {stat.trend !== 'stable' && (
@@ -224,9 +224,9 @@ const Home = ({ setActiveTab }) => {
                     </div>
                   )}
                 </div>
-                <h3 className="text-2xl font-bold mb-1">{stat.value}</h3>
-                <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">{stat.label}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{stat.description}</p>
+                <h3 className="text-2xl neon-text mb-1">{stat.value}</h3>
+                <p className="text-sm font-medium text-gray-900 dark:neon-secondary-text mb-1">{stat.label}</p>
+                <p className="text-xs text-gray-500 dark:neon-secondary-text">{stat.description}</p>
                 
                 {/* Data source indicator */}
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center text-xs text-gray-500 dark:text-gray-400">
@@ -244,7 +244,7 @@ const Home = ({ setActiveTab }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="card bg-gradient-to-br from-white to-blue-50 dark:from-dark-900 dark:to-dark-950/50 border border-blue-100 dark:border-blue-900/50 p-6 rounded-2xl"
+        className="card"
       >
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-2">Quick Actions</h2>
@@ -255,7 +255,7 @@ const Home = ({ setActiveTab }) => {
             onClick={() => setActiveTab('swap')}
             className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-blue-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-dark-900 cursor-pointer"
           >
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 neon-icon-container rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
               <ArrowUpDown size={24} className="text-white" />
             </div>
             <h3 className="font-bold text-xl mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
@@ -274,7 +274,7 @@ const Home = ({ setActiveTab }) => {
             onClick={() => setActiveTab('bridge')}
             className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-green-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-dark-900 cursor-pointer"
           >
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 neon-icon-container rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
               <Link size={24} className="text-white" />
             </div>
             <h3 className="font-bold text-xl mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
@@ -293,7 +293,7 @@ const Home = ({ setActiveTab }) => {
             onClick={() => setActiveTab('liquidity')}
             className="group p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-purple-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-dark-900 cursor-pointer"
           >
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 neon-icon-container rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
               <Droplets size={24} className="text-white" />
             </div>
             <h3 className="font-bold text-xl mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
@@ -315,42 +315,42 @@ const Home = ({ setActiveTab }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="card bg-gradient-to-br from-white to-blue-50 dark:from-dark-900 dark:to-dark-950/50 border border-blue-100 dark:border-blue-900/50 p-6 rounded-2xl mt-12"
+          className="card mt-12"
         >
           <div className="mb-6">
             <h2 className="text-2xl font-bold mb-2">Why Arc Network</h2>
-            <p className="text-gray-600 dark:text-gray-400">Experience the next generation of blockchain infrastructure</p>
+            <p className="text-gray-600 dark:neon-secondary-text">Experience the next generation of blockchain infrastructure</p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
               <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 neon-icon-container flex items-center justify-center text-white">
                   <Zap size={20} className="text-white" />
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-1">Lightning Fast</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.</p>
+              <h3 className="text-2xl neon-text mb-1">Lightning Fast</h3>
+              <p className="text-xs text-gray-500 dark:neon-secondary-text">Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.</p>
             </div>
             
             <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
               <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 neon-icon-container flex items-center justify-center text-white">
                   <DollarSign size={20} className="text-white" />
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-1">USDC Gas Fee</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400"> Predictable transaction costs with stablecoin-based gas fees for better UX.</p>
+              <h3 className="text-2xl neon-text mb-1">USDC Gas Fee</h3>
+              <p className="text-xs text-gray-500 dark:neon-secondary-text"> Predictable transaction costs with stablecoin-based gas fees for better UX.</p>
             </div>
             
             <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
               <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 neon-icon-container flex items-center justify-center text-white">
                   <Shield size={20} className="text-white" />
                 </div>
               </div>
-              <h3 className="text-2xl font-bold mb-1">Enterprise Grade</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400"> Built for institutional use with advanced security and compliance features. </p>
+              <h3 className="text-2xl neon-text mb-1">Enterprise Grade</h3>
+              <p className="text-xs text-gray-500 dark:neon-secondary-text"> Built for institutional use with advanced security and compliance features. </p>
             </div>
           </div>
         </motion.div>
