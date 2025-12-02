@@ -2,16 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { NETWORKS, isNetworkSupported, switchNetwork } from '../config/networks';
 import { useAccount, useDisconnect, useBalance, useSwitchChain, usePublicClient, useWalletClient } from 'wagmi';
-import { initBridge } from './bridge/config/bridge.config';
-  
-
-// Initialize Bridge just added, calm
-const bridge = initBridge({
-  provider,
-  signer,
-  chainId,
-});
-
 
 const WalletContext = createContext();
 
