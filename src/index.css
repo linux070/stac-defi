@@ -14,16 +14,6 @@
     @apply bg-dark-950;
   }
   
-  /* Deep space background with ambient glow */
-  .main-container {
-    /* A deep black base */
-    background-color: #050508; 
-    
-    /* A subtle blue glow at the top center to highlight the header */
-    background-image: 
-      radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 100% 0%, rgba(99, 102, 241, 0.1) 0%, transparent 40%);
-  }
 }
 
 @layer components {
@@ -36,27 +26,25 @@
     @apply bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border-2 border-primary-500 font-semibold py-2 px-6 rounded-lg hover:bg-primary-50 dark:hover:bg-gray-700 transition-all duration-500;
   }
   
-  /* Glassmorphic card styles */
+  /* Card styles with light/dark mode support */
   .card {
-    /* 1. Make background semi-transparent */
-    background: rgba(30, 41, 59, 0.4); 
-
-    /* 2. Add the blur (The Glass Effect) */
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-
-    /* 3. A much more subtle, sophisticated border */
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    
-    /* 4. A subtle inner top-light to make it look 3D */
-    box-shadow: 
-      0 4px 6px -1px rgba(0, 0, 0, 0.1), 
-      0 2px 4px -1px rgba(0, 0, 0, 0.06),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.05); /* The top highlight */
-      
-    border-radius: 16px; /* Keep your existing radius */
-    padding: 1.5rem; /* Keep existing padding */
+    /* Base styles */
+    border-radius: 16px;
+    padding: 1.5rem;
     transition: all 0.5s ease;
+    
+    /* Light mode styles (Crisp Paper) */
+    background-color: #fff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    
+    /* Dark mode styles (Frosted Glass) */
+    @apply dark:bg-slate-900/50 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-2xl dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)];
+  }
+  
+  /* Hover effect for cards */
+  .card:hover {
+    @apply shadow-md dark:shadow-lg;
   }
   
   .input-field {
@@ -105,18 +93,9 @@
   }
   
   /* Neon glow effects for dark mode */
-  .neon-text {
-    @apply text-white font-semibold;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-  }
-  
   .neon-icon-container {
     box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .neon-secondary-text {
-    color: rgba(255, 255, 255, 0.6);
   }
   
   /* Enhanced dark mode utility classes */

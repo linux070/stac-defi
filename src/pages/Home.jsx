@@ -122,7 +122,17 @@ const Home = ({ setActiveTab }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 p-8 md:p-12 text-white shadow-2xl"
+        className="rounded-3xl p-8 md:p-12 
+        /* --- LIGHT MODE (Vibrant Gradient) --- */
+        bg-gradient-to-br from-blue-600 to-indigo-600
+        text-white
+        shadow-xl shadow-blue-500/20
+        
+        /* --- DARK MODE (Subtle & Deep) --- */
+        dark:bg-slate-800/40 
+        dark:from-transparent dark:to-transparent /* Remove gradient in dark mode if you want glass */
+        dark:backdrop-blur-md
+        dark:border dark:border-white/10"
       >
 
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSg0NSkiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3BhdHRlcm4pIi8+PC9zdmc+')] opacity-20"></div>
@@ -197,7 +207,7 @@ const Home = ({ setActiveTab }) => {
       >
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-2">Network Statistics</h2>
-          <p className="text-gray-600 dark:neon-secondary-text">Real-time metrics updated automatically</p>
+          <p className="text-gray-600 dark:text-slate-400">Real-time metrics updated automatically</p>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -209,7 +219,7 @@ const Home = ({ setActiveTab }) => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * index }}
-                className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900"
+                className="relative overflow-hidden rounded-2xl p-6 bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all dark:bg-slate-900/50 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-2xl dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} neon-icon-container flex items-center justify-center text-white`}>
@@ -224,9 +234,9 @@ const Home = ({ setActiveTab }) => {
                     </div>
                   )}
                 </div>
-                <h3 className="text-2xl neon-text mb-1">{stat.value}</h3>
-                <p className="text-sm font-medium text-gray-900 dark:neon-secondary-text mb-1">{stat.label}</p>
-                <p className="text-xs text-gray-500 dark:neon-secondary-text">{stat.description}</p>
+                <h3 className="text-3xl font-bold text-slate-900 dark:text-white dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.15)] mb-1">{stat.value}</h3>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{stat.label}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{stat.description}</p>
                 
                 {/* Data source indicator */}
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center text-xs text-gray-500 dark:text-gray-400">
@@ -319,38 +329,38 @@ const Home = ({ setActiveTab }) => {
         >
           <div className="mb-6">
             <h2 className="text-2xl font-bold mb-2">Why Arc Network</h2>
-            <p className="text-gray-600 dark:neon-secondary-text">Experience the next generation of blockchain infrastructure</p>
+            <p className="text-gray-600 dark:text-slate-400">Experience the next generation of blockchain infrastructure</p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
+            <div className="relative overflow-hidden rounded-2xl p-6 bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all dark:bg-slate-900/50 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-2xl dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
               <div className="flex items-start justify-between mb-3">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 neon-icon-container flex items-center justify-center text-white">
                   <Zap size={20} className="text-white" />
                 </div>
               </div>
-              <h3 className="text-2xl neon-text mb-1">Lightning Fast</h3>
-              <p className="text-xs text-gray-500 dark:neon-secondary-text">Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.</p>
+              <h3 className="text-3xl font-bold text-slate-900 dark:text-white dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.15)] mb-1">Lightning Fast</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.</p>
             </div>
             
-            <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
+            <div className="relative overflow-hidden rounded-2xl p-6 bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all dark:bg-slate-900/50 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-2xl dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
               <div className="flex items-start justify-between mb-3">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 neon-icon-container flex items-center justify-center text-white">
                   <DollarSign size={20} className="text-white" />
                 </div>
               </div>
-              <h3 className="text-2xl neon-text mb-1">USDC Gas Fee</h3>
-              <p className="text-xs text-gray-500 dark:neon-secondary-text"> Predictable transaction costs with stablecoin-based gas fees for better UX.</p>
+              <h3 className="text-3xl font-bold text-slate-900 dark:text-white dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.15)] mb-1">USDC Gas Fee</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400"> Predictable transaction costs with stablecoin-based gas fees for better UX.</p>
             </div>
             
-            <div className="bg-white dark:bg-dark-900/50 rounded-xl p-5 border border-gray-100 dark:border-dark-800 hover:shadow-lg transition-all duration-300 hover:border-blue-200 dark:hover:border-blue-900">
+            <div className="relative overflow-hidden rounded-2xl p-6 bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all dark:bg-slate-900/50 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-2xl dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
               <div className="flex items-start justify-between mb-3">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 neon-icon-container flex items-center justify-center text-white">
                   <Shield size={20} className="text-white" />
                 </div>
               </div>
-              <h3 className="text-2xl neon-text mb-1">Enterprise Grade</h3>
-              <p className="text-xs text-gray-500 dark:neon-secondary-text"> Built for institutional use with advanced security and compliance features. </p>
+              <h3 className="text-3xl font-bold text-slate-900 dark:text-white dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.15)] mb-1">Enterprise Grade</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400"> Built for institutional use with advanced security and compliance features. </p>
             </div>
           </div>
         </motion.div>

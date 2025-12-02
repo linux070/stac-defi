@@ -43,7 +43,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
   const currentLang = languages.find(l => l.code === i18n.language) || languages[0];
 
   return (
-    <div className="min-h-screen flex flex-col main-container">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -192,7 +192,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-visible">
+      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-blue-900/20 dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-visible">
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}
