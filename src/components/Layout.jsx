@@ -212,8 +212,8 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         </div>
 
         {/* Mobile Floating Navigation Bar - Dock Style */}
-        <nav className="md:hidden fixed bottom-4 left-0 right-0 z-30 px-4">
-          <div className="bg-white/80 dark:bg-[#0f1218]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 p-2 rounded-2xl mx-auto max-w-md">
+        <nav className="md:hidden fixed top-20 left-1/2 -translate-x-1/2 z-30 w-[95%]">
+          <div className="bg-white/80 dark:bg-[#0f1218]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 p-2 rounded-2xl">
             <div className="flex justify-around items-center">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -221,7 +221,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200
                       ${activeTab === item.id
                         ? 'bg-white/20 dark:bg-white/10'
                         : 'hover:bg-white/10 dark:hover:bg-white/5'
@@ -282,7 +282,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-blue-900/20 dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 md:pt-32 md:pb-8 overflow-visible">
+      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-blue-900/20 dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-40 pb-24 md:pt-32 md:pb-8 overflow-visible">
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}
