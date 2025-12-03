@@ -121,7 +121,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         {/* Mobile Navigation Bar - Bottom Bar */}
         <nav className="md:hidden fixed top-20 left-0 right-0 mx-auto z-30 w-[98%]">
           <div className="bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 p-2 rounded-2xl">
-            <div className="flex justify-between items-center">
+            <div className="grid grid-cols-5 gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -129,13 +129,13 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                     key={item.id}
                     data-nav={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`p-1 rounded-full text-[10px] font-medium transition-all duration-200 flex items-center nav-link tracking-tight
+                    className={`py-2 px-0 rounded-full text-[10px] font-medium transition-all duration-200 flex flex-col items-center justify-center nav-link
                       ${activeTab === item.id
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                         : 'text-slate-500 bg-transparent'
-                      }${item.id === 'transactions' ? ' tracking-tight' : ''}`}
+                      }${item.id === 'transactions' ? ' tracking-tighter' : ''}`}
                   >
-                    <Icon size={16} className="mr-1" />
+                    <Icon size={16} />
                     <span>{item.label}</span>
                   </button>
                 );
