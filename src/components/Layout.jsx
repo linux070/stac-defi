@@ -48,7 +48,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       <header className="fixed top-4 left-0 right-0 z-50 bg-transparent">
         {/* Mobile Header - Dual-Stack Layout */}
         {/* Top Bar: Logo & Wallet */}
-        <div className="md:hidden w-[95%] left-1/2 -translate-x-1/2 mb-4">
+        <div className="md:hidden fixed top-4 left-0 right-0 mx-auto w-[95%] mb-4">
           <div className="flex items-center justify-between rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2">
             {/* Logo */}
             <div className="flex items-center">
@@ -119,7 +119,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         </div>
 
         {/* Mobile Navigation Bar - Bottom Bar */}
-        <nav className="md:hidden fixed top-20 left-1/2 -translate-x-1/2 z-30 w-[95%]">
+        <nav className="md:hidden fixed top-20 left-0 right-0 mx-auto z-30 w-[95%]">
           <div className="bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 p-2 rounded-2xl">
             <div className="flex justify-around items-center">
               {navItems.map((item) => {
