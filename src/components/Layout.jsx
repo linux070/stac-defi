@@ -82,12 +82,15 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
+                      className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
                     >
                       {languages.map((lang) => (
                         <button
                           key={lang.code}
-                          onClick={() => changeLanguage(lang.code)}
+                          onClick={() => {
+                            changeLanguage(lang.code);
+                            setShowLangMenu(false);
+                          }}
                           className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center
                             ${i18n.language === lang.code ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`}
                         >
