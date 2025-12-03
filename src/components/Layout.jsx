@@ -129,13 +129,13 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                     key={item.id}
                     data-nav={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`py-2 px-0 rounded-full text-[10px] font-medium transition-all duration-200 flex flex-col items-center justify-center nav-link
+                    className={`py-3 px-0 rounded-full text-xs font-medium transition-all duration-200 flex flex-col items-center justify-center nav-link
                       ${activeTab === item.id
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                         : 'text-slate-500 bg-transparent'
                       }${item.id === 'transactions' ? ' tracking-tighter' : ''}`}
                   >
-                    <Icon size={16} />
+                    <Icon size={24} />
                     <span>{item.label}</span>
                   </button>
                 );
