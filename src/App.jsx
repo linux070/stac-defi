@@ -7,6 +7,7 @@ import Swap from './pages/Swap';
 import Bridge from './pages/Bridge';
 import Liquidity from './pages/Liquidity';
 import Transactions from './pages/Transactions';
+import { Analytics } from '@vercel/analytics/react';
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -45,6 +46,7 @@ function App() {
           <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
             {renderPage()}
           </Layout>
+          <Analytics />
         </WalletProvider>
       </ThemeProvider>
     );
