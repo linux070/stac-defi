@@ -131,8 +131,8 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                     onClick={() => setActiveTab(item.id)}
                     className={`px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center nav-link
                       ${activeTab === item.id
-                        ? 'bg-blue-100/50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                        : 'text-gray-600 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:bg-gray-700/50'
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                        : 'text-slate-500 bg-transparent'
                       }`}
                   >
                     <Icon size={16} className="mr-2" />
