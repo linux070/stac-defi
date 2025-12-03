@@ -46,9 +46,10 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
     <div className="min-h-screen flex flex-col">
       {/* Transparent Header Container */}
       <header className="fixed top-4 left-0 right-0 z-50 bg-transparent">
-        {/* Mobile Header - Logo and Wallet only */}
-        <div className="md:hidden max-w-6xl w-full px-4 mb-4">
-          <div className="flex items-center justify-between rounded-full bg-white/80 dark:bg-[#0f1218]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2 mx-auto w-fit max-w-full">
+        {/* Mobile Header - Dual-Stack Layout */}
+        {/* Top Bar: Logo & Wallet */}
+        <div className="md:hidden w-[95%] left-1/2 -translate-x-1/2 mb-4">
+          <div className="flex items-center justify-between rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2">
             {/* Logo */}
             <div className="flex items-center">
               <img 
@@ -117,9 +118,34 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
           </div>
         </div>
 
-        {/* Island Container - Pill-shaped with logo, navigation, and wallet */}
-        <div className="max-w-6xl w-full px-4 hidden md:block">
-          <div className="flex items-center rounded-full bg-white/80 dark:bg-[#0f1218]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2 mx-auto w-fit max-w-full">
+        {/* Mobile Navigation Bar - Bottom Bar */}
+        <nav className="md:hidden fixed top-20 left-1/2 -translate-x-1/2 z-30 w-[95%]">
+          <div className="bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 p-2 rounded-2xl">
+            <div className="flex justify-around items-center">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200
+                      ${activeTab === item.id
+                        ? 'bg-white/20 dark:bg-white/10'
+                        : 'hover:bg-white/10 dark:hover:bg-white/5'
+                      }`}
+                  >
+                    <Icon size={24} />
+                    <span className="text-xs mt-1">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </nav>
+
+        {/* Desktop Header - Floating Island */}
+        <div className="hidden md:block md:fixed md:top-4 md:left-0 md:right-0 md:flex md:justify-center">
+          <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2 mx-auto w-fit max-w-full">
             {/* Logo */}
             <div className="flex items-center mr-6">
               <img 
@@ -210,31 +236,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             </div>
           </div>
         </div>
-
-        {/* Mobile Floating Navigation Bar - Dock Style */}
-        <nav className="md:hidden fixed top-20 left-1/2 -translate-x-1/2 z-30 w-[95%]">
-          <div className="bg-white/80 dark:bg-[#0f1218]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 p-2 rounded-2xl">
-            <div className="flex justify-around items-center">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200
-                      ${activeTab === item.id
-                        ? 'bg-white/20 dark:bg-white/10'
-                        : 'hover:bg-white/10 dark:hover:bg-white/5'
-                      }`}
-                  >
-                    <Icon size={24} />
-                    <span className="text-xs mt-1">{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </nav>
       </header>
 
       {/* Mobile Sidebar */}
@@ -282,7 +283,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-blue-900/20 dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-40 pb-24 md:pt-32 md:pb-8 overflow-visible">
+      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-blue-900/20 dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-48 md:pt-32 pb-24 md:pb-8 overflow-visible">
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}
