@@ -127,15 +127,16 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                 return (
                   <button
                     key={item.id}
+                    data-nav={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200
+                    className={`px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center nav-link
                       ${activeTab === item.id
-                        ? 'bg-white/20 dark:bg-white/10'
-                        : 'hover:bg-white/10 dark:hover:bg-white/5'
+                        ? 'bg-blue-100/50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                        : 'text-gray-600 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:bg-gray-700/50'
                       }`}
                   >
-                    <Icon size={24} />
-                    <span className="text-xs mt-1">{item.label}</span>
+                    <Icon size={16} className="mr-2" />
+                    <span>{item.label}</span>
                   </button>
                 );
               })}
@@ -163,8 +164,9 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                 return (
                   <button
                     key={item.id}
+                    data-nav={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center
+                    className={`px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center nav-link
                       ${activeTab === item.id
                         ? 'bg-blue-100/50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                         : 'text-gray-600 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:bg-gray-700/50'
