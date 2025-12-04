@@ -171,6 +171,16 @@ const Home = ({ setActiveTab }) => {
             <button className="bg-white/20 backdrop-blur-sm border-2 border-white/30 px-8 py-4 rounded-xl font-bold hover:bg-white/30 hover:scale-105 transition-all duration-200 flex items-center space-x-2">
               <span>{t('addLiquidity')}</span>
             </button>
+            {/* Learn More About Arc Button */}
+            <a 
+              href="https://arc.network" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="border border-gray-300 dark:border-gray-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-white/10 transition-all duration-200 flex items-center space-x-2"
+            >
+              <span>Learn More About Arc</span>
+              <ArrowUpRight size={20} />
+            </a>
           </motion.div>
           
           {/* Key Benefits */}
