@@ -178,9 +178,8 @@ const Home = ({ setActiveTab }) => {
               rel="noopener noreferrer"
               className="border border-gray-300 dark:border-gray-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-white/10 transition-all duration-200 flex items-center space-x-2"
             >
-              <span>Learn More About Arc</span>
-              <ArrowUpRight size={20} />
-            </a>
+              <span>Learn More</span>
+            </button>
           </motion.div>
           
           {/* Key Benefits */}
