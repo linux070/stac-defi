@@ -163,20 +163,17 @@ const Home = ({ setActiveTab }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex flex-wrap gap-4"
+            className="flex flex-col md:flex-row gap-4 md:gap-4"
           >
-            <button className="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-200 flex items-center space-x-2 shadow-lg">
+            <button className="w-full md:w-auto bg-white text-blue-600 px-8 py-4 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg">
               <span>{t('swap')} Now</span>
             </button>
-            <button className="bg-white/20 backdrop-blur-sm border-2 border-white/30 px-8 py-4 rounded-xl font-bold hover:bg-white/30 hover:scale-105 transition-all duration-200 flex items-center space-x-2">
+            <button className="w-full md:w-auto bg-white/20 backdrop-blur-sm border-2 border-white/30 px-8 py-4 rounded-xl font-bold hover:bg-white/30 hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2">
               <span>{t('addLiquidity')}</span>
             </button>
-            {/* Learn More About Arc Button */}
-            <a 
-              href="https://arc.network" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="border border-gray-300 dark:border-gray-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-white/10 transition-all duration-200 flex items-center space-x-2"
+            <button 
+              onClick={() => window.open('https://arc.network', '_blank', 'noopener,noreferrer')}
+              className="w-full md:w-auto bg-white text-blue-600 px-8 py-4 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-200 shadow-lg flex items-center justify-center"
             >
               <span>Learn More</span>
             </button>
