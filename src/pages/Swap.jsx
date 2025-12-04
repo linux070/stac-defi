@@ -4,7 +4,7 @@ import { useWallet } from '../contexts/WalletContext';
 import { ArrowDownUp, Settings, ChevronDown, ChevronUp, Info, Loader, Wallet, AlertTriangle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TOKENS, TOKEN_PRICES } from '../config/networks';
-import { sanitizeInput, calculateSwapQuote, validateAmount, validateSlippage } from '../utils/blockchain';
+import { sanitizeInput, calculateSwapQuote, validateAmount, validateSlippage, getFilteredTokens } from '../utils/blockchain';
 import useTokenBalance from '../hooks/useTokenBalance';
 import Toast from '../components/Toast';
 
@@ -68,9 +68,9 @@ export function MyBridgeComponent() {
 
 const Swap = () => {
   const { t } = useTranslation();
-  const { isConnected, balance } = useWallet();
-  const [fromToken, setFromToken] = useState('ETH');
-  const [toToken, setToToken] = useState('USDC');
+  const { isConnected, balance, chainId } = useWallet();
+  const [fromToken, setFromToken] = useState('USDC');
+  const [toToken, setToToken] = useState('EURC');
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
   const [slippage, setSlippage] = useState(0.5);
@@ -110,7 +110,30 @@ const Swap = () => {
   const { balance: fromBalance, loading: fromLoading, refetch: refetchFrom } = useTokenBalance(fromToken);
   const { balance: toBalance, loading: toLoading, refetch: refetchTo } = useTokenBalance(toToken);
 
-  const tokenList = Object.values(TOKENS);
+  const tokenList = useMemo(() => {
+    const allTokens = Object.values(TOKENS);
+    return getFilteredTokens(allTokens, chainId);
+  }, [chainId]);
+
+  // Reset selected tokens when network changes to ARC or Sepolia and ETH was selected
+  useEffect(() => {
+    const networksExcludingETH = [
+      '0xCF4B1', // ARC Testnet
+      '0xaa36a7' // Sepolia
+    ];
+    
+    if (networksExcludingETH.includes(chainId)) {
+      // Reset fromToken if it's ETH
+      if (fromToken === 'ETH') {
+        setFromToken('USDC');
+      }
+      
+      // Reset toToken if it's ETH
+      if (toToken === 'ETH') {
+        setToToken('USDC');
+      }
+    }
+  }, [chainId, fromToken, toToken]);
 
   // Validate slippage when it changes
   useEffect(() => {
@@ -176,13 +199,8 @@ const Swap = () => {
       return;
     }
     
-    if (fromToken === 'ETH') {
-      // Reserve 0.01 ETH for gas
-      const maxAmount = Math.max(0, parseFloat(fromBalance) - 0.01);
-      setFromAmount(maxAmount.toFixed(6));
-    } else {
-      setFromAmount(fromBalance);
-    }
+    // For all tokens (including ETH when available), use full balance
+    setFromAmount(fromBalance);
   };
 
   const handleSwap = async () => {
@@ -198,29 +216,27 @@ const Swap = () => {
       return;
     }
 
-    // Check if token approval is needed (for non-ETH tokens)
-    if (fromToken !== 'ETH') {
-      setSwapLoading(true);
-      try {
-        // In a real implementation, you would get the provider and signer from the wallet context
-        // const provider = new ethers.providers.Web3Provider(window.ethereum);
-        // const signer = provider.getSigner();
-        
-        // For demo purposes, we'll simulate the approval process
-        setToast({ visible: true, type: 'info', message: t('approvalRequired') });
-        setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
-        
-        // Simulate approval process
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        setToast({ visible: true, type: 'success', message: t('approvalCompleted') });
-        setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
-      } catch (err) {
-        setToast({ visible: true, type: 'error', message: err.message });
-        setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
-        setSwapLoading(false);
-        return;
-      }
+    // Check if token approval is needed
+    setSwapLoading(true);
+    try {
+      // In a real implementation, you would get the provider and signer from the wallet context
+      // const provider = new ethers.providers.Web3Provider(window.ethereum);
+      // const signer = provider.getSigner();
+      
+      // For demo purposes, we'll simulate the approval process
+      setToast({ visible: true, type: 'info', message: t('approvalRequired') });
+      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
+      
+      // Simulate approval process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setToast({ visible: true, type: 'success', message: t('approvalCompleted') });
+      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
+    } catch (err) {
+      setToast({ visible: true, type: 'error', message: err.message });
+      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
+      setSwapLoading(false);
+      return;
     }
 
     setSwapLoading(true);
@@ -348,9 +364,9 @@ const Swap = () => {
       );
     }, [searchQuery, tokenList]);
     
-    // Popular tokens for quick selection - Updated to include EURC
+    // Popular tokens for quick selection - Completely remove ETH, only show USDC and EURC
     const popularTokens = useMemo(() => {
-      return tokenList.filter(token => ['ETH', 'USDC', 'EURC'].includes(token.symbol));
+      return tokenList.filter(token => ['USDC', 'EURC'].includes(token.symbol));
     }, [tokenList]);
     
     // Handle ESC key press to close modal
@@ -432,12 +448,6 @@ const Swap = () => {
                           alt={token.symbol} 
                           className="w-10 h-10 rounded-full object-contain"
                         />
-                      ) : token.symbol === 'ETH' ? (
-                        <img 
-                          src="/icons/eth.png" 
-                          alt={token.symbol} 
-                          className="w-10 h-10 rounded-full object-contain"
-                        />
                       ) : token.symbol === 'EURC' ? (
                         <img 
                           src="/icons/eurc.png" 
@@ -480,12 +490,6 @@ const Swap = () => {
                           {token.symbol === 'USDC' ? (
                             <img 
                               src="/icons/usdc.png" 
-                              alt={token.symbol} 
-                              className="w-10 h-10 rounded-full object-contain"
-                            />
-                          ) : token.symbol === 'ETH' ? (
-                            <img 
-                              src="/icons/eth.png" 
                               alt={token.symbol} 
                               className="w-10 h-10 rounded-full object-contain"
                             />
@@ -601,6 +605,7 @@ const Swap = () => {
               <div className="relative flex-1">
                 <input
                   type="text"
+                  inputMode="decimal"
                   value={fromAmount}
                   onChange={(e) => setFromAmount(sanitizeInput(e.target.value))}
                   placeholder="0.0"
@@ -616,12 +621,6 @@ const Swap = () => {
                   {fromToken === 'USDC' ? (
                     <img 
                       src="/icons/usdc.png" 
-                      alt={fromToken} 
-                      className="w-10 h-10 rounded-full object-contain"
-                    />
-                  ) : fromToken === 'ETH' ? (
-                    <img 
-                      src="/icons/eth.png" 
                       alt={fromToken} 
                       className="w-10 h-10 rounded-full object-contain"
                     />
@@ -704,9 +703,9 @@ const Swap = () => {
                       alt={toToken} 
                       className="w-10 h-10 rounded-full object-contain"
                     />
-                  ) : toToken === 'ETH' ? (
+                  ) : toToken === 'EURC' ? (
                     <img 
-                      src="/icons/eth.png" 
+                      src="/icons/eurc.png" 
                       alt={toToken} 
                       className="w-10 h-10 rounded-full object-contain"
                   />

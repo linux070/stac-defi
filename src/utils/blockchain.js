@@ -5,8 +5,14 @@ import { TOKENS, TOKEN_PRICES } from '../config/networks';
 export const sanitizeInput = (value) => {
   if (typeof value !== 'string') return '';
   
-  // Remove any non-numeric characters except decimal point
-  let sanitized = value.replace(/[^\d.]/g, '');
+  // Replace commas with dots to support different keyboard layouts
+  let sanitized = value.replace(/,/g, '.');
+  
+  // Check if the value matches the required pattern ^[0-9]*[.,]?[0-9]*$
+  const validPattern = /^[0-9]*\.?[0-9]*$/;
+  if (!validPattern.test(sanitized) && sanitized !== '') {
+    return ''; // Return empty string if pattern doesn't match
+  }
   
   // Prevent multiple decimal points
   const parts = sanitized.split('.');
@@ -44,21 +50,63 @@ export const validateAmount = (amount, balance = null, minAmount = 0.000001) => 
     throw new Error(`Amount must be at least ${minAmount}`);
   }
   
-  if (num > 1000000) {
-    throw new Error('Amount exceeds maximum limit of 1,000,000');
+  // Check if user has sufficient balance
+  if (balance !== null) {
+    const bal = parseFloat(balance);
+    if (num > bal) {
+      throw new Error('Insufficient balance');
+    }
   }
   
-  // Validate against balance if provided
-  if (balance !== null && num > parseFloat(balance)) {
-    throw new Error(`Insufficient balance. You have ${balance}`);
+  return true;
+};
+
+// Format currency with proper decimal handling
+export const formatCurrency = (value, decimals = 2) => {
+  if (value === null || value === undefined) return '0.00';
+  
+  const num = parseFloat(value);
+  if (isNaN(num)) return '0.00';
+  
+  return num.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+};
+
+// Format token amounts with appropriate decimals
+export const formatTokenAmount = (amount, decimals = 6) => {
+  if (!amount) return '0.00';
+  
+  const num = parseFloat(amount);
+  if (isNaN(num)) return '0.00';
+  
+  // For very small amounts, show scientific notation
+  if (num > 0 && num < 0.000001) {
+    return num.toExponential(6);
   }
   
-  // Check for scientific notation
-  if (amount.toLowerCase().includes('e')) {
-    throw new Error('Scientific notation not allowed');
+  return num.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: decimals
+  });
+};
+
+// Get filtered token list based on network
+export const getFilteredTokens = (tokenList, chainId) => {
+  // Networks where ETH should be excluded (ARC Testnet and Sepolia)
+  const networksExcludingETH = [
+    '0xCF4B1', // ARC Testnet
+    '0xaa36a7' // Sepolia
+  ];
+  
+  // If we're on a network that should exclude ETH, filter it out
+  if (networksExcludingETH.includes(chainId)) {
+    return tokenList.filter(token => token.symbol !== 'ETH');
   }
   
-  return num;
+  // Otherwise return all tokens
+  return tokenList;
 };
 
 // Validate Ethereum address with checksum
@@ -149,16 +197,6 @@ export const formatAddress = (address) => {
 // Format number with commas
 export const formatNumber = (num) => {
   return new Intl.NumberFormat('en-US').format(num);
-};
-
-// Format currency
-export const formatCurrency = (amount, decimals = 2) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(amount);
 };
 
 // Copy to clipboard

@@ -276,6 +276,7 @@ const Bridge = () => {
               <div className="relative flex-1">
                 <input
                   type="text"
+                  inputMode="decimal"
                   value={amount}
                   onChange={(e) => setAmount(sanitizeInput(e.target.value))}
                   placeholder="0.0"

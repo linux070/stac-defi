@@ -9,7 +9,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatAddress } from '../utils/blockchain';
 import WalletModal from './WalletModal';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import CustomConnectButton from './CustomConnectButton';
 
 const Layout = ({ children, activeTab, setActiveTab }) => {
   const { t, i18n } = useTranslation();
@@ -50,18 +50,19 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         {/* Top Bar: Logo & Wallet */}
         <div className="md:hidden fixed top-4 left-0 right-0 mx-auto w-[95%] mb-4">
           <div className="flex items-center justify-between rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2">
-            {/* Logo */}
+            {/* Logo - Hide text on mobile, keep only icon */}
             <div className="flex items-center">
               <img 
                 src="/icons/stac.png" 
                 alt="Stac Logo" 
-                className="h-10 w-auto object-contain dark:brightness-0 dark:invert"
+                className="w-10 h-10 md:w-8 md:h-8 object-contain dark:brightness-0 dark:invert"
               />
-              <h1 className="text-xl font-bold gradient-text ml-1.5">Stac</h1>
+              {/* Hidden on mobile, visible on desktop */}
+              <h1 className="text-xl font-bold gradient-text ml-1.5 hidden md:block">Stac</h1>
             </div>
 
             {/* Controls - Theme Toggle and Language Selector */}
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <button
                 onClick={toggleDarkMode}
                 className="p-2 rounded-full hover:bg-white/10 dark:hover:bg-white/5 mx-1"
@@ -105,17 +106,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
               {/* Wallet Button */}
               <div>
-                <ConnectButton
-                  showBalance={false}
-                  accountStatus={{
-                    smallScreen: 'avatar',
-                    largeScreen: 'full',
-                  }}
-                  chainStatus={{
-                    smallScreen: 'icon',
-                    largeScreen: 'full',
-                  }}
-                />
+                <CustomConnectButton />
               </div>
             </div>
           </div>
@@ -227,17 +218,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
             {/* Wallet Button */}
             <div className="ml-2">
-              <ConnectButton
-                showBalance={false}
-                accountStatus={{
-                  smallScreen: 'avatar',
-                  largeScreen: 'full',
-                }}
-                chainStatus={{
-                  smallScreen: 'icon',
-                  largeScreen: 'full',
-                }}
-              />
+              <CustomConnectButton />
             </div>
           </div>
         </div>
