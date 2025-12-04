@@ -7,11 +7,6 @@ import { TOKENS, TOKEN_PRICES } from '../config/networks';
 import { sanitizeInput, calculateSwapQuote, validateAmount, validateSlippage } from '../utils/blockchain';
 import useTokenBalance from '../hooks/useTokenBalance';
 import Toast from '../components/Toast';
-// import FAIcon from '../components/FAIcon';
-// import { approveToken, swapExactTokensForTokens, getAmountsOut } from '../utils/swap';
-// import { SWAP_CONTRACT_ADDRESS } from '../config/contracts';
-
-
 
 import { BridgeKit } from '@circle-fin/bridge-kit';
 import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
@@ -275,6 +270,66 @@ const Swap = () => {
     }
   };
 
+  const SlippageTolerance = () => {
+    const [isCustomFocused, setIsCustomFocused] = useState(false);
+    
+    // Determine the text color based on slippage value for validation feedback
+    const getSlippageTextColor = () => {
+      if (slippage > 5) return 'text-red-500';
+      if (slippage > 1) return 'text-yellow-500';
+      return 'text-gray-900 dark:text-white';
+    };
+    
+    return (
+      <div>
+        <label className="block text-sm font-medium mb-2">{t('slippageTolerance')}</label>
+        <div className="grid grid-cols-4 gap-2">
+          {[0.1, 0.5, 1.0].map((value) => (
+            <button
+              key={value}
+              onClick={() => {
+                setSlippage(value);
+                setCustomSlippage('');
+              }}
+              className={`py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center
+                ${slippage === value 
+                  ? 'bg-blue-500 text-white shadow-md' 
+                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+            >
+              {value}%
+            </button>
+          ))}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="0.0"
+              value={customSlippage}
+              onChange={(e) => {
+                const val = sanitizeInput(e.target.value);
+                setCustomSlippage(val);
+                if (val && !isNaN(parseFloat(val))) {
+                  setSlippage(parseFloat(val));
+                }
+              }}
+              onFocus={() => setIsCustomFocused(true)}
+              onBlur={() => setIsCustomFocused(false)}
+              className={`w-full h-full py-3 pl-3 pr-8 rounded-lg font-medium bg-gray-100 dark:bg-gray-800 focus:outline-none ${
+                isCustomFocused ? 'ring-2 ring-blue-500' : ''
+              } ${getSlippageTextColor()}`}
+            />
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none">%</span>
+          </div>
+        </div>
+        {slippageWarning && (
+          <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded flex items-start space-x-2">
+            <AlertTriangle size={16} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-yellow-700 dark:text-yellow-300">{slippageWarning}</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, triggerRef }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const selectorRef = useRef(null);
@@ -293,9 +348,9 @@ const Swap = () => {
       );
     }, [searchQuery, tokenList]);
     
-    // Popular tokens for quick selection
+    // Popular tokens for quick selection - Updated to include EURC
     const popularTokens = useMemo(() => {
-      return tokenList.filter(token => ['ETH', 'USDC', 'EUR'].includes(token.symbol));
+      return tokenList.filter(token => ['ETH', 'USDC', 'EURC'].includes(token.symbol));
     }, [tokenList]);
     
     // Handle ESC key press to close modal
@@ -390,9 +445,11 @@ const Swap = () => {
                           className="w-10 h-10 rounded-full object-contain"
                         />
                       ) : (
-                        <span className="text-lg">
-                          {token.symbol.charAt(0)}
-                        </span>
+                        <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                          <span className="text-lg font-bold">
+                            {token.symbol.charAt(0)}
+                          </span>
+                        </div>
                       )}
                       <span className="font-medium">{token.symbol}</span>
                     </button>
@@ -440,7 +497,7 @@ const Swap = () => {
                             />
                           ) : (
                             <span className="text-xl">
-                              {token.symbol === 'ETH' ? 'Ξ' : token.symbol.charAt(0)}
+                              {token.symbol.charAt(0)}
                             </span>
                           )}
                         </div>
@@ -518,46 +575,7 @@ const Swap = () => {
             >
               <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-6">
                 {/* Slippage Tolerance */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">{t('slippageTolerance')}</label>
-                  <div className="flex flex-wrap gap-2">
-                    {[0.1, 0.5, 1.0].map((value) => (
-                      <button
-                        key={value}
-                        onClick={() => {
-                          setSlippage(value);
-                          setCustomSlippage('');
-                        }}
-                        className={`px-4 py-2 rounded-lg font-medium transition-all duration-200
-                          ${slippage === value ? 'bg-primary-500 text-white' : 'bg-white dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500'}`}
-                      >
-                        {value}%
-                      </button>
-                    ))}
-                    <div className="relative flex-1 min-w-[100px]">
-                      <input
-                        type="text"
-                        placeholder="Custom"
-                        value={customSlippage}
-                        onChange={(e) => {
-                          const val = sanitizeInput(e.target.value);
-                          setCustomSlippage(val);
-                          if (val && !isNaN(parseFloat(val))) {
-                            setSlippage(parseFloat(val));
-                          }
-                        }}
-                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-600"
-                      />
-                      <span className="absolute right-3 top-2.5 text-gray-500">%</span>
-                    </div>
-                  </div>
-                  {slippageWarning && (
-                    <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded flex items-start space-x-2">
-                      <AlertTriangle size={16} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-yellow-700 dark:text-yellow-300">{slippageWarning}</p>
-                    </div>
-                  )}
-                </div>
+                <SlippageTolerance />
               </div>
             </motion.div>
           )}
