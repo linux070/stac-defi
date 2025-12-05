@@ -15,7 +15,7 @@ const EmptyState = ({
       className="card text-center"
     >
       <div className="max-w-md mx-auto">
-        <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center text-5xl">
+        <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-none flex items-center justify-center text-5xl">
           {icon}
         </div>
         <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">

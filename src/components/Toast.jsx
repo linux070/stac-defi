@@ -26,7 +26,7 @@ const Toast = ({ type = 'info', message, onClose, visible }) => {
           exit={{ opacity: 0, y: -50, x: '-50%' }}
           className="fixed top-4 left-1/2 z-50 max-w-md w-full"
         >
-          <div className={`${colors[type]} border-l-4 rounded-lg shadow-xl p-4 flex items-start space-x-3`}>
+          <div className={`${colors[type]} border-l-4 rounded-none shadow-xl p-4 flex items-start space-x-3`}>
             <div className="flex-shrink-0 mt-0.5">
               {icons[type]}
             </div>

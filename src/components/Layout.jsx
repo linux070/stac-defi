@@ -9,7 +9,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatAddress } from '../utils/blockchain';
 import WalletModal from './WalletModal';
-import CustomConnectButton from './CustomConnectButton';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 const Layout = ({ children, activeTab, setActiveTab }) => {
   const { t, i18n } = useTranslation();
@@ -105,16 +105,24 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               </div>
 
               {/* Wallet Button */}
-              <div>
-                <CustomConnectButton />
-              </div>
+              <ConnectButton
+                showBalance={false}
+                accountStatus={{
+                  smallScreen: 'avatar',
+                  largeScreen: 'full',
+                }}
+                chainStatus={{
+                  smallScreen: 'icon',
+                  largeScreen: 'full',
+                }}
+              />
             </div>
           </div>
         </div>
 
         {/* Mobile Navigation Bar - Bottom Bar */}
         <nav className="md:hidden fixed top-20 left-0 right-0 mx-auto z-30 w-[98%]">
-          <div className="bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 p-2 rounded-2xl">
+          <div className="bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 p-2 rounded-full">
             <div className="grid grid-cols-5 gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -190,7 +198,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
+                    className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
                   >
                     {languages.map((lang) => (
                       <button
@@ -217,9 +225,17 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             </button>
 
             {/* Wallet Button */}
-            <div className="ml-2">
-              <CustomConnectButton />
-            </div>
+            <ConnectButton
+                showBalance={false}
+                accountStatus={{
+                  smallScreen: 'avatar',
+                  largeScreen: 'full',
+                }}
+                chainStatus={{
+                  smallScreen: 'icon',
+                  largeScreen: 'full',
+                }}
+              />
           </div>
         </div>
       </header>

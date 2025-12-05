@@ -12,7 +12,7 @@ const TokenIcon = ({ symbol, size = 24, className = '' }) => {
   
   return (
     <div 
-      className={`flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold ${className}`}
+      className={`flex items-center justify-center rounded-none bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold ${className}`}
       style={{ width: size, height: size, fontSize: size * 0.4 }}
     >
       {text}

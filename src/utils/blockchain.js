@@ -94,18 +94,8 @@ export const formatTokenAmount = (amount, decimals = 6) => {
 
 // Get filtered token list based on network
 export const getFilteredTokens = (tokenList, chainId) => {
-  // Networks where ETH should be excluded (ARC Testnet and Sepolia)
-  const networksExcludingETH = [
-    '0xCF4B1', // ARC Testnet
-    '0xaa36a7' // Sepolia
-  ];
-  
-  // If we're on a network that should exclude ETH, filter it out
-  if (networksExcludingETH.includes(chainId)) {
-    return tokenList.filter(token => token.symbol !== 'ETH');
-  }
-  
-  // Otherwise return all tokens
+  // Since ETH is no longer in the TOKENS list, we don't need to filter it out
+  // Return all tokens as they are already filtered
   return tokenList;
 };
 

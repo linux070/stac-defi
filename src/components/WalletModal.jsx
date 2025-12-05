@@ -42,13 +42,13 @@ const WalletModal = ({ isOpen, onClose }) => {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6"
+          className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-none shadow-2xl p-6"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">{t('connectWallet')}</h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-none"
             >
               <X size={20} />
             </button>
@@ -67,7 +67,7 @@ const WalletModal = ({ isOpen, onClose }) => {
                 key={wallet.id}
                 onClick={() => handleConnect(wallet.id)}
                 disabled={!wallet.available || isConnecting}
-                className={`w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between
+                className={`w-full p-4 rounded-none border-2 transition-all duration-200 flex items-center justify-between
                   ${wallet.available
                     ? 'border-gray-200 dark:border-gray-700 hover:border-primary-500 hover:shadow-lg'
                     : 'border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed'

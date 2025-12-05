@@ -18,18 +18,18 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-gradient-arc text-white font-semibold py-2 px-6 rounded-lg hover:opacity-90 transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-gradient-arc text-white font-semibold py-2 px-6 rounded-full hover:opacity-90 transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   
   /* Custom colors defined in tailwind.config.js */
   .btn-secondary {
-    @apply bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border-2 border-primary-500 font-semibold py-2 px-6 rounded-lg hover:bg-primary-50 dark:hover:bg-gray-700 transition-all duration-500;
+    @apply bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border-2 border-primary-500 font-semibold py-2 px-6 rounded-full hover:bg-primary-50 dark:hover:bg-gray-700 transition-all duration-500;
   }
   
   /* Card styles with light/dark mode support */
   .card {
     /* Base styles */
-    border-radius: 16px;
+    border-radius: 32px;
     padding: 1.5rem;
     transition: all 0.5s ease;
     
@@ -48,7 +48,7 @@
   }
   
   .input-field {
-    @apply w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 dark:text-white transition-all duration-500;
+    @apply w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 dark:text-white transition-all duration-500;
   }
   
   /* Custom gradient defined in tailwind.config.js */
@@ -63,7 +63,7 @@
   
   /* Responsive token selector button */
   .token-selector-button {
-    @apply flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[120px] w-auto flex-shrink-0;
+    @apply flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[120px] w-auto flex-shrink-0;
   }
   
   /* Responsive token selector text */

@@ -16,6 +16,11 @@ const Home = ({ setActiveTab }) => {
     tokens: { value: 24, change: 0, trend: 'stable' },
   });
 
+  // Gatekeeping function to enter the app
+  const handleGetStarted = () => {
+    setActiveTab('swap');
+  };
+
   // Simulate live data updates
   useEffect(() => {
     const interval = setInterval(() => {
@@ -122,7 +127,7 @@ const Home = ({ setActiveTab }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="animate-float rounded-3xl p-8 md:p-12 
+        className="animate-float rounded-3xl p-8 md:p-12
         /* --- LIGHT MODE (Vibrant Gradient) --- */
         bg-gradient-to-br from-blue-600 to-indigo-600
         text-white
@@ -163,13 +168,17 @@ const Home = ({ setActiveTab }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex flex-col md:flex-row gap-4 md:gap-4"
+            className="flex flex-row gap-4"
           >
-            <button className="w-full md:w-auto bg-white text-blue-600 px-8 py-4 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg">
-              <span>{t('swap')} Now</span>
+            <button 
+              className="w-full md:w-auto bg-white text-blue-600 px-7 py-4 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
+            >
+              <span>Get Started</span>
             </button>
-            <button className="w-full md:w-auto bg-white/20 backdrop-blur-sm border-2 border-white/30 px-8 py-4 rounded-xl font-bold hover:bg-white/30 hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2">
-              <span>{t('addLiquidity')}</span>
+            <button 
+              className="w-full md:w-auto bg-white/20 border border-white/40 text-white px-8 py-3 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2 backdrop-blur-sm"
+            >
+              <span>Learn More</span>
             </button>
           </motion.div>
           
@@ -251,15 +260,18 @@ const Home = ({ setActiveTab }) => {
         </div>
       </motion.div>
 
-      {/* Quick Actions */}
-      <motion.div 
+       {/* Quick Actions */}
+       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
         className="card"
       >
         <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">Quick Actions</h2>
+        <h2 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">Quick Actions</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Everything you need to manage your assets on Arc
+          </p>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -366,19 +378,6 @@ const Home = ({ setActiveTab }) => {
             </div>
           </div>
         </motion.div>
-        
-        <div className="mt-8 text-center">
-          <a 
-            href="https://arc.network" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="inline-flex items-center px-6 py-3 bg-slate-900/50 backdrop-blur-lg border border-white/10 text-white font-semibold rounded-full hover:border-blue-400 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300 group"
-          >
-            <ExternalLink className="mr-2" />
-            {t('learnMoreAboutArc')}
-            <ArrowUpRight size={16} className="ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
-          </a>
-        </div>
     </div>
   );
 };

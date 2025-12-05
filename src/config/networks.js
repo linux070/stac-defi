@@ -33,15 +33,8 @@ export const SUPPORTED_CHAINS = [
 
 export const DEFAULT_CHAIN = NETWORKS.ARC_TESTNET;
 
-// Token configurations
+// Token configuration
 export const TOKENS = {
-  ETH: {
-    symbol: 'ETH',
-    name: 'Ethereum',
-    decimals: 18,
-    address: '0x0000000000000000000000000000000000000000', // Native token
-    logo: 'ethereum', // FAIcon name
-  },
   USDC: {
     symbol: 'USDC',
     name: 'USD Coin',
