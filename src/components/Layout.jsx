@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
 import { useTheme } from '../contexts/ThemeContext';
 import { useWallet } from '../contexts/WalletContext';
 import {
@@ -12,34 +12,19 @@ import WalletModal from './WalletModal';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 const Layout = ({ children, activeTab, setActiveTab }) => {
-  const { t, i18n } = useTranslation();
   const { darkMode, toggleDarkMode } = useTheme();
   const { walletAddress, balance, isConnected, disconnect, fetchBalance } = useWallet();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
-  const [showLangMenu, setShowLangMenu] = useState(false);
-
-  const languages = [
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'es', name: 'Español', flag: '🇪🇸' },
-    { code: 'zh', name: '中文', flag: '🇨🇳' },
-    { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  ];
 
   const navItems = [
-    { id: 'home', label: t('home'), icon: Home },
-    { id: 'swap', label: t('swap'), icon: ArrowLeftRight },
-    { id: 'bridge', label: t('bridge'), icon: Globe },
-    { id: 'liquidity', label: t('liquidity'), icon: Droplet },
-    { id: 'transactions', label: t('transactions'), icon: Clock },
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'swap', label: 'Swap', icon: ArrowLeftRight },
+    { id: 'bridge', label: 'Bridge', icon: Globe },
+    { id: 'liquidity', label: 'Liquidity', icon: Droplet },
+    { id: 'transactions', label: 'Transactions', icon: Clock },
   ];
 
-  const changeLanguage = (lang) => {
-    i18n.changeLanguage(lang);
-    setShowLangMenu(false);
-  };
-
-  const currentLang = languages.find(l => l.code === i18n.language) || languages[0];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -236,50 +221,13 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       {/* Footer */}
       <footer className="mt-auto py-6 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-3 items-center min-h-[120px]">
-            {/* Left Section - Language Selector */}
-            <div className="justify-self-start">
-              <div className="relative">
-                <button
-                  onClick={() => setShowLangMenu(!showLangMenu)}
-                  className="flex items-center text-sm text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-                >
-                  <span className="mr-2">{currentLang.flag}</span>
-                  <span>{currentLang.name} ({currentLang.code.toUpperCase()})</span>
-                </button>
-                <AnimatePresence>
-                  {showLangMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute left-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
-                    >
-                      {languages.map((lang) => (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            changeLanguage(lang.code);
-                            setShowLangMenu(false);
-                          }}
-                          className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center text-sm
-                            ${i18n.language === lang.code ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`}
-                        >
-                          <span className="text-lg mr-2">{lang.flag}</span>
-                          <span>{lang.name}</span>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+          <div className="flex justify-center items-center min-h-[120px]">
+                      
             
             {/* Center Section - Copyright and Attribution */}
             <div className="justify-self-center text-center">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {t('footer.copyright', { year: new Date().getFullYear() })} · 
-                {t('footer.attribution', { author: 'Linux🏅🃏' })}
+                © {new Date().getFullYear()} · Built by : 
                 <a 
                   href="https://x.com/linux_mode" 
                   target="_blank" 
