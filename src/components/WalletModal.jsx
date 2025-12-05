@@ -87,7 +87,7 @@ const WalletModal = ({ isOpen, onClose }) => {
           </div>
 
           <p className="mt-6 text-xs text-center text-gray-500 dark:text-gray-400">
-            By connecting a wallet, you agree to our Terms of Service
+            {t('byConnectingWallet')}
           </p>
         </motion.div>
       </div>

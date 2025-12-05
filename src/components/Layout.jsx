@@ -36,7 +36,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
   const changeLanguage = (lang) => {
     i18n.changeLanguage(lang);
-    localStorage.setItem('language', lang);
     setShowLangMenu(false);
   };
 
@@ -61,7 +60,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               <h1 className="text-xl font-bold gradient-text ml-1.5 hidden md:block">Stac</h1>
             </div>
 
-            {/* Controls - Theme Toggle and Language Selector */}
+            {/* Controls - Theme Toggle */}
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleDarkMode}
@@ -69,40 +68,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               >
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
-              
-              <div className="relative mx-1">
-                <button
-                  onClick={() => setShowLangMenu(!showLangMenu)}
-                  className="p-2 rounded-full hover:bg-white/10 dark:hover:bg-white/5 flex items-center"
-                >
-                  <span className="text-lg">{currentLang.flag}</span>
-                </button>
-                <AnimatePresence>
-                  {showLangMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
-                    >
-                      {languages.map((lang) => (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            changeLanguage(lang.code);
-                            setShowLangMenu(false);
-                          }}
-                          className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center
-                            ${i18n.language === lang.code ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`}
-                        >
-                          <span className="text-lg mr-2">{lang.flag}</span>
-                          <span>{lang.name}</span>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
 
               {/* Wallet Button */}
               <ConnectButton
@@ -183,38 +148,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
             {/* Spacer to push controls to the right */}
             <div className="flex-grow"></div>
-
-            {/* Language Selector */}
-            <div className="relative mx-2">
-              <button
-                onClick={() => setShowLangMenu(!showLangMenu)}
-                className="p-2 rounded-full hover:bg-white/10 dark:hover:bg-white/5 flex items-center"
-              >
-                <span className="text-lg">{currentLang.flag}</span>
-              </button>
-              <AnimatePresence>
-                {showLangMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
-                  >
-                    {languages.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => changeLanguage(lang.code)}
-                        className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center
-                          ${i18n.language === lang.code ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`}
-                      >
-                        <span className="text-lg mr-2">{lang.flag}</span>
-                        <span>{lang.name}</span>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
 
             {/* Theme Toggle */}
             <button
@@ -301,22 +234,65 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       <WalletModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
       
       {/* Footer */}
-      <footer className="mt-auto py-6 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+      <footer className="mt-auto py-6 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              © {new Date().getFullYear()} Stac. All rights reserved. 
-              
-              
-              Built by : <a 
-                href="https://x.com/linux_mode" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors font-medium"
-              >
-                Linux🏅🃏
-              </a>
-            </p>
+          <div className="grid grid-cols-3 items-center min-h-[120px]">
+            {/* Left Section - Language Selector */}
+            <div className="justify-self-start">
+              <div className="relative">
+                <button
+                  onClick={() => setShowLangMenu(!showLangMenu)}
+                  className="flex items-center text-sm text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                >
+                  <span className="mr-2">{currentLang.flag}</span>
+                  <span>{currentLang.name} ({currentLang.code.toUpperCase()})</span>
+                </button>
+                <AnimatePresence>
+                  {showLangMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute left-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50"
+                    >
+                      {languages.map((lang) => (
+                        <button
+                          key={lang.code}
+                          onClick={() => {
+                            changeLanguage(lang.code);
+                            setShowLangMenu(false);
+                          }}
+                          className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center text-sm
+                            ${i18n.language === lang.code ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`}
+                        >
+                          <span className="text-lg mr-2">{lang.flag}</span>
+                          <span>{lang.name}</span>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+            
+            {/* Center Section - Copyright and Attribution */}
+            <div className="justify-self-center text-center">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {t('footer.copyright', { year: new Date().getFullYear() })} · 
+                {t('footer.attribution', { author: 'Linux🏅🃏' })}
+                <a 
+                  href="https://x.com/linux_mode" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors font-medium"
+                >
+                  Linux🏅🃏
+                </a>
+              </p>
+            </div>
+            
+            {/* Right Section - Empty for balance */}
+            <div className="justify-self-end"></div>
           </div>
         </div>
       </footer>

@@ -145,7 +145,7 @@ const Home = ({ setActiveTab }) => {
          
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-200 to-white bg-[length:200%_auto] animate-text-shimmer">
-              {t('welcome')}
+              {t('Welcome to Stac')}
             </span>
           </h1>
           <motion.p
@@ -154,7 +154,7 @@ const Home = ({ setActiveTab }) => {
             transition={{ delay: 0.2 }}
             className="text-lg md:text-2xl opacity-90 mb-2 max-w-2xl"
           >
-            {t('subtitle')}
+            {t('Home of Defi on Arc')}
           </motion.p>
           <motion.p
             initial={{ opacity: 0, y: 20 }}

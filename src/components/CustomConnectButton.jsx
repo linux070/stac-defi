@@ -1,7 +1,10 @@
 import React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useTranslation } from 'react-i18next';
 
 const CustomConnectButton = () => {
+  const { t } = useTranslation();
+  
   return (
     <ConnectButton.Custom>
       {({
@@ -42,10 +45,10 @@ const CustomConnectButton = () => {
                   >
                     {/* Stacked text for mobile, horizontal for desktop */}
                     <span className="md:hidden flex flex-col leading-tight">
-                      <span>Connect</span>
-                      <span>Wallet</span>
+                      <span>{t('connect')}</span>
+                      <span>{t('wallet')}</span>
                     </span>
-                    <span className="hidden md:inline">Connect Wallet</span>
+                    <span className="hidden md:inline">{t('connectWallet')}</span>
                   </button>
                 );
               }
@@ -57,7 +60,7 @@ const CustomConnectButton = () => {
                     type="button"
                     className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 text-sm font-medium rounded-full transition-all duration-200"
                   >
-                    Wrong network
+                    {t('wrongNetwork')}
                   </button>
                 );
               }
@@ -134,7 +137,7 @@ const CustomConnectButton = () => {
                         {account.displayName?.charAt(0) || 'W'}
                       </div>
                       <span className="leading-tight text-xs">
-                        {account.displayName?.substring(0, 4) || 'Wallet'}
+                        {account.displayName?.substring(0, 4) || t('wallet')}
                       </span>
                     </button>
                   </div>

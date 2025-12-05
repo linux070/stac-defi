@@ -1,7 +1,69 @@
 {
-  "welcome": "Welcome to Stac",
-  "subtitle": "Home of DeFi on Arc",
+  "nav": {
+    "home": "Home",
+    "swap": "Swap",
+    "bridge": "Bridge",
+    "liquidity": "Liquidity",
+    "transactions": "Transactions"
+  },
+  "hero": {
+    "title": "Welcome to Stac",
+    "subtitle": "Home of DeFi on Arc",
+    "description": "Swap tokens, bridge assets, and provide liquidity with zero friction. Built on Arc's enterprise-grade infrastructure.",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "benefit1": "Sub-second finality",
+    "benefit2": "USDC gas fees",
+    "benefit3": "Best execution"
+  },
+  "quick_actions": {
+    "title": "Quick Actions",
+    "description": "Everything you need to manage your assets on Arc",
+    "swap_title": "Swap Tokens",
+    "swap_desc": "Exchange tokens instantly at the best rates",
+    "swap_action": "Start swapping",
+    "bridge_title": "Bridge Assets",
+    "bridge_desc": "Transfer assets between Sepolia and Arc Testnet",
+    "bridge_action": "Start bridging",
+    "liquidity_title": "Add Liquidity",
+    "liquidity_desc": "Provide liquidity to earn passive income",
+    "liquidity_action": "Start earning"
+  },
+  "network_stats": {
+    "title": "Network Statistics",
+    "description": "Real-time metrics updated automatically",
+    "liveData": "Live Data",
+    "tvl_label": "Total Value Locked",
+    "volume_label": "24h Volume",
+    "transactions_label": "Transaction Count",
+    "users_label": "Active Users",
+    "crossChain_label": "Cross-Chain Transfers",
+    "tokens_label": "Supported Tokens",
+    "tvl_description": "Aggregate from all liquidity pools",
+    "volume_description": "Sum of swap transactions in last 24h",
+    "transactions_description": "Count from indexer",
+    "users_description": "Unique wallet addresses in 24h",
+    "crossChain_description": "Bridge transaction count",
+    "tokens_description": "Token registry count"
+  },
+  "why_arc": {
+    "title": "Why Arc Network",
+    "description": "Experience the next generation of blockchain infrastructure",
+    "fast_title": "Lightning Fast",
+    "fast_description": "Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.",
+    "usdc_title": "USDC Gas Fee",
+    "usdc_description": "Predictable transaction costs with stablecoin-based gas fees for better UX.",
+    "enterprise_title": "Enterprise Grade",
+    "enterprise_description": "Built for institutional use with advanced security and compliance features."
+  },
+  "footer": {
+    "copyright": "© {{year}} Stac. All rights reserved.",
+    "attribution": "Built by : {{author}}"
+  },
+  "byConnectingWallet": "By connecting a wallet, you agree to our Terms of Service",
   "connectWallet": "Connect Wallet",
+  "connect": "Connect",
+  "wallet": "Wallet",
   "disconnect": "Disconnect",
   "connecting": "Connecting...",
   "home": "Home",

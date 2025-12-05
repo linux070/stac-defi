@@ -1,7 +1,69 @@
 {
-  "welcome": "欢迎来到 Stac",
-  "subtitle": "Arc 上的 DeFi 之家",
+  "nav": {
+    "home": "首页",
+    "swap": "兑换",
+    "bridge": "跨链桥",
+    "liquidity": "流动性",
+    "transactions": "交易"
+  },
+  "hero": {
+    "title": "欢迎来到 Stac",
+    "subtitle": "Arc 上的 DeFi 之家",
+    "description": "零摩擦地兑换代币、跨链资产和提供流动性。基于 Arc 的企业级基础设施构建。",
+    "getStarted": "开始使用",
+    "learnMore": "了解更多",
+    "benefit1": "亚秒级确认",
+    "benefit2": "USDC 燃气费",
+    "benefit3": "最佳执行"
+  },
+  "quick_actions": {
+    "title": "快速操作",
+    "description": "管理您在 Arc 上资产所需的一切",
+    "swap_title": "兑换代币",
+    "swap_desc": "以最佳汇率即时兑换代币",
+    "swap_action": "开始兑换",
+    "bridge_title": "跨链资产",
+    "bridge_desc": "在 Sepolia 和 Arc Testnet 之间转移资产",
+    "bridge_action": "开始跨链",
+    "liquidity_title": "添加流动性",
+    "liquidity_desc": "提供流动性以获得被动收入",
+    "liquidity_action": "开始赚钱"
+  },
+  "network_stats": {
+    "title": "网络统计",
+    "description": "实时指标自动更新",
+    "liveData": "实时数据",
+    "tvl_label": "总锁定价值",
+    "volume_label": "24小时交易量",
+    "transactions_label": "交易数量",
+    "users_label": "活跃用户",
+    "crossChain_label": "跨链转账",
+    "tokens_label": "支持的代币",
+    "tvl_description": "所有流动性池的汇总",
+    "volume_description": "过去24小时兑换交易的总和",
+    "transactions_description": "来自索引器的计数",
+    "users_description": "24小时内唯一钱包地址",
+    "crossChain_description": "跨链交易计数",
+    "tokens_description": "代币注册表计数"
+  },
+  "why_arc": {
+    "title": "为什么选择 Arc Network",
+    "description": "体验下一代区块链基础设施",
+    "fast_title": "闪电般快速",
+    "fast_description": "亚秒级确认，交易速度比传统区块链快1000倍。",
+    "usdc_title": "USDC 燃气费",
+    "usdc_description": "可预测的交易成本，基于稳定币的燃气费带来更好的用户体验。",
+    "enterprise_title": "企业级",
+    "enterprise_description": "专为机构使用而构建，具有高级安全性和合规功能。"
+  },
+  "footer": {
+    "copyright": "© {{year}} Stac. 版权所有。",
+    "attribution": "由 {{author}} 构建"
+  },
+  "byConnectingWallet": "连接钱包即表示您同意我们的服务条款",
   "connectWallet": "连接钱包",
+  "connect": "连接",
+  "wallet": "钱包",
   "disconnect": "断开连接",
   "connecting": "连接中...",
   "home": "首页",

@@ -1,7 +1,69 @@
 {
-  "welcome": "Bienvenido a Stac",
-  "subtitle": "Hogar de DeFi en Arc",
+  "nav": {
+    "home": "Inicio",
+    "swap": "Intercambiar",
+    "bridge": "Puente",
+    "liquidity": "Liquidez",
+    "transactions": "Transacciones"
+  },
+  "hero": {
+    "title": "Bienvenido a Stac",
+    "subtitle": "Hogar de DeFi en Arc",
+    "description": "Intercambia tokens, activos puente y proporciona liquidez sin fricción. Construido sobre la infraestructura empresarial de Arc.",
+    "getStarted": "Comenzar",
+    "learnMore": "Aprender Más",
+    "benefit1": "Finalidad en subsegundos",
+    "benefit2": "Tarifas en USDC",
+    "benefit3": "Mejor ejecución"
+  },
+  "quick_actions": {
+    "title": "Acciones Rápidas",
+    "description": "Todo lo que necesitas para gestionar tus activos en Arc",
+    "swap_title": "Intercambiar Tokens",
+    "swap_desc": "Intercambia tokens instantáneamente a las mejores tasas",
+    "swap_action": "Comenzar intercambio",
+    "bridge_title": "Activos Puente",
+    "bridge_desc": "Transfiere activos entre Sepolia y Arc Testnet",
+    "bridge_action": "Comenzar puente",
+    "liquidity_title": "Añadir Liquidez",
+    "liquidity_desc": "Proporciona liquidez para obtener ingresos pasivos",
+    "liquidity_action": "Comenzar a ganar"
+  },
+  "network_stats": {
+    "title": "Estadísticas de Red",
+    "description": "Métricas en tiempo real actualizadas automáticamente",
+    "liveData": "Datos en Vivo",
+    "tvl_label": "Valor Total Bloqueado",
+    "volume_label": "Volumen 24h",
+    "transactions_label": "Número de Transacciones",
+    "users_label": "Usuarios Activos",
+    "crossChain_label": "Transferencias entre Cadenas",
+    "tokens_label": "Tokens Soportados",
+    "tvl_description": "Agregado de todos los fondos de liquidez",
+    "volume_description": "Suma de transacciones de intercambio en las últimas 24h",
+    "transactions_description": "Conteo desde el indexador",
+    "users_description": "Direcciones de billetera únicas en 24h",
+    "crossChain_description": "Conteo de transacciones puente",
+    "tokens_description": "Conteo del registro de tokens"
+  },
+  "why_arc": {
+    "title": "¿Por qué Arc Network?",
+    "description": "Experimenta la próxima generación de infraestructura blockchain",
+    "fast_title": "Ultra-Rápido",
+    "fast_description": "Finalidad en subsegundos con velocidades de transacción hasta 1000 veces más rápidas que las blockchains tradicionales.",
+    "usdc_title": "Tarifa en USDC",
+    "usdc_description": "Costos de transacción predecibles con tarifas basadas en stablecoins para mejor UX.",
+    "enterprise_title": "Grado Empresarial",
+    "enterprise_description": "Construido para uso institucional con funciones avanzadas de seguridad y cumplimiento."
+  },
+  "footer": {
+    "copyright": "© {{year}} Stac. Todos los derechos reservados.",
+    "attribution": "Construido por : {{author}}"
+  },
+  "byConnectingWallet": "Al conectar una billetera, aceptas nuestros Términos de Servicio",
   "connectWallet": "Conectar Billetera",
+  "connect": "Conectar",
+  "wallet": "Billetera",
   "disconnect": "Desconectar",
   "connecting": "Conectando...",
   "home": "Inicio",
