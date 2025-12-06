@@ -70,32 +70,6 @@ return (
           </div>
         </div>
 
-        {/* Mobile Navigation Bar - Bottom Bar */}
-        <nav className="md:hidden fixed top-20 left-0 right-0 mx-auto z-30 w-[98%]">
-          <div className="bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 p-2 rounded-full">
-            <div className="grid grid-cols-5 gap-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    data-nav={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`py-3 px-0 rounded-full text-xs font-medium transition-all duration-200 flex flex-col items-center justify-center nav-link
-                      ${activeTab === item.id
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                        : 'text-slate-500 bg-transparent'
-                      }${item.id === 'transactions' ? ' tracking-tighter' : ''}`}
-                  >
-                    <Icon size={24} />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </nav>
-
         {/* Desktop Header - Floating Island */}
         <div className="hidden md:block md:fixed md:top-4 md:left-0 md:right-0 md:flex md:justify-center">
           <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2 mx-auto w-fit max-w-full">
@@ -158,7 +132,31 @@ return (
         </div>
       </header>
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Bottom Navigation - Fixed at bottom with glassmorphism effect */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 shadow-lg">
+        <div className="grid grid-cols-5">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                data-nav={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`py-3 px-0 text-xs font-medium transition-all duration-200 flex flex-col items-center justify-center nav-link
+                  ${activeTab === item.id
+                    ? 'text-blue-600 dark:text-blue-400'
+                    : 'text-gray-500 dark:text-gray-400'
+                  }`}
+              >
+                <Icon size={20} className="mb-1" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Mobile Sidebar - Adjusted for bottom nav */}
       <AnimatePresence>
         {sidebarOpen && (
           <>
@@ -173,7 +171,7 @@ return (
               initial={{ x: -300 }}
               animate={{ x: 0 }}
               exit={{ x: -300 }}
-              className="fixed left-0 top-16 bottom-0 w-64 bg-white dark:bg-gray-900 shadow-xl z-50 lg:hidden"
+              className="fixed left-0 top-16 bottom-16 w-64 bg-white dark:bg-gray-900 shadow-xl z-50 lg:hidden"
             >
               <nav className="p-4 space-y-2">
                 {navItems.map((item) => {
@@ -203,7 +201,7 @@ return (
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-blue-900/20 dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-48 md:pt-32 pb-24 md:pb-8 overflow-visible">
+      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-blue-900/20 dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-48 md:pt-32 pb-16 md:pb-0 overflow-visible">
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}
@@ -222,14 +220,14 @@ return (
       <footer className="mt-auto py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Flex container that stacks on mobile and aligns horizontally on desktop */}
-          <div className="flex flex-col md:flex-row items-center md:items-center justify-between min-h-[60px] gap-4 md:gap-0">
+          <div className="flex flex-col md:flex-row items-center justify-between min-h-[60px] gap-4 md:gap-0">
             {/* Left Section - Language Selector */}
             <div className="flex-shrink-0 md:mr-4">
               <LanguageSelector placement="footer" />
             </div>
             
             {/* Center Section - Copyright and Attribution */}
-            <div className="text-center md:absolute md:left-1/2 md:transform md:-translate-x-1/2">
+            <div className="text-center">
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 © {new Date().getFullYear()} Stac. All rights reserved. · 
                 Built by : <a 
