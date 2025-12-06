@@ -221,15 +221,16 @@ return (
       {/* Footer */}
       <footer className="mt-auto py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between min-h-[60px] relative">
+          {/* Flex container that stacks on mobile and aligns horizontally on desktop */}
+          <div className="flex flex-col md:flex-row items-center md:items-center justify-between min-h-[60px] gap-4 md:gap-0">
             {/* Left Section - Language Selector */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 md:mr-4">
               <LanguageSelector placement="footer" />
             </div>
             
-            {/* Center Section - Copyright and Attribution (absolutely centered) */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+            {/* Center Section - Copyright and Attribution */}
+            <div className="text-center md:absolute md:left-1/2 md:transform md:-translate-x-1/2">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 © {new Date().getFullYear()} Stac. All rights reserved. · 
                 Built by : <a 
                   href="https://x.com/linux_mode" 
@@ -242,9 +243,9 @@ return (
               </p>
             </div>
             
-            {/* Right Section - Empty spacer to balance the left element */}
-            <div className="flex-shrink-0 w-auto">
-              {/* This empty div balances the left element to prevent layout shifting */}
+            {/* Right Section - Empty spacer on desktop to maintain balance */}
+            <div className="flex-shrink-0 md:w-auto">
+              {/* This empty div balances the left element on desktop */}
             </div>
           </div>
         </div>

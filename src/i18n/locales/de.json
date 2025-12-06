@@ -80,5 +80,18 @@
   "USDC Gas Fee": "USDC-Gasgebühr",
   "Predictable transaction costs with stablecoin-based gas fees for better UX.": "Vorhersehbare Transaktionskosten mit stabilcoin-basierten Gasgebühren für eine bessere Benutzererfahrung.",
   "Enterprise Grade": "Enterprise-Klasse",
-  "Built for institutional use with advanced security and compliance features.": "Entwickelt für institutionelle Nutzung mit fortschrittlichen Sicherheits- und Compliance-Funktionen."
+  "Built for institutional use with advanced security and compliance features.": "Entwickelt für institutionelle Nutzung mit fortschrittlichen Sicherheits- und Compliance-Funktionen.",
+  "metrics.aggregateFromAllPools": "Aggregiert aus allen Liquiditätspools",
+  "metrics.sumOfSwapTransactions": "Summe der Swap-Transaktionen in den letzten 24h",
+  "metrics.countFromIndexer": "Zählung vom Indexer",
+  "metrics.uniqueWalletAddresses": "Einzigartige Wallet-Adressen in 24h",
+  "metrics.bridgeTransactionCount": "Brücken-Transaktionszählung",
+  "metrics.tokenRegistryCount": "Token-Registrierungszählung",
+  "landing.description": "Tauschen Sie Token, überbrücken Sie Vermögenswerte und stellen Sie Liquidität ohne Reibungsverlust bereit. Aufgebaut auf Arcs unternehmensreifer Infrastruktur.",
+  "landing.swapNow": "Jetzt tauschen",
+  "landing.learnMore": "Mehr erfahren",
+  "swap.tradeTokensTitle": "Handeln Sie Token sofort und einfach",
+  "transactions.liveFeed": "Live-Feed: Anzeige von Echtzeit-Transaktionen",
+  "transactions.noTransactionsFound": "Keine Transaktionen gefunden",
+  "liquidity.poolsLaunchingSoon": "Liquiditätspools werden in Kürze gestartet."
 }

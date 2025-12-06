@@ -90,5 +90,18 @@
   "Unique wallet addresses in 24h": "24 小时内的唯一钱包地址",
   "Bridge transaction count": "桥接交易计数",
   "Token registry count": "代币注册计数",
-  "Real-time metrics updated automatically": "实时指标自动更新"
+  "Real-time metrics updated automatically": "实时指标自动更新",
+  "metrics.aggregateFromAllPools": "来自所有流动性池的总和",
+  "metrics.sumOfSwapTransactions": "过去 24 小时兑换交易的总和",
+  "metrics.countFromIndexer": "来自索引器的计数",
+  "metrics.uniqueWalletAddresses": "24 小时内的唯一钱包地址",
+  "metrics.bridgeTransactionCount": "桥接交易计数",
+  "metrics.tokenRegistryCount": "代币注册计数",
+  "landing.description": "零摩擦兑换代币、桥接资产和提供流动性。基于 Arc 的企业级基础设施构建。",
+  "landing.swapNow": "立即兑换",
+  "landing.learnMore": "了解更多",
+  "swap.tradeTokensTitle": "即时便捷地交易代币",
+  "transactions.liveFeed": "实时推送：显示实时交易",
+  "transactions.noTransactionsFound": "未找到交易记录",
+  "liquidity.poolsLaunchingSoon": "流动性池即将启动。"
 }

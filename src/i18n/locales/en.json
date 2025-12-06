@@ -90,5 +90,18 @@
   "Unique wallet addresses in 24h": "Unique wallet addresses in 24h",
   "Bridge transaction count": "Bridge transaction count",
   "Token registry count": "Token registry count",
-  "Real-time metrics updated automatically": "Real-time metrics updated automatically"
+  "Real-time metrics updated automatically": "Real-time metrics updated automatically",
+  "metrics.aggregateFromAllPools": "Aggregate from all liquidity pools",
+  "metrics.sumOfSwapTransactions": "Sum of swap transactions in last 24h",
+  "metrics.countFromIndexer": "Count from indexer",
+  "metrics.uniqueWalletAddresses": "Unique wallet addresses in 24h",
+  "metrics.bridgeTransactionCount": "Bridge transaction count",
+  "metrics.tokenRegistryCount": "Token registry count",
+  "landing.description": "Swap tokens, bridge assets, and provide liquidity with zero friction. Built on Arc's enterprise-grade infrastructure.",
+  "landing.swapNow": "Swap Now",
+  "landing.learnMore": "Learn More",
+  "swap.tradeTokensTitle": "Trade Tokens Instantly and Easily",
+  "transactions.liveFeed": "Live Feed: Displaying real-time transactions",
+  "transactions.noTransactionsFound": "No transactions found",
+  "liquidity.poolsLaunchingSoon": "Liquidity pools are launching shortly."
 }

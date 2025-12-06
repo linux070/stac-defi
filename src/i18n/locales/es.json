@@ -90,5 +90,18 @@
   "Unique wallet addresses in 24h": "Direcciones únicas de billetera en 24h",
   "Bridge transaction count": "Conteo de transacciones puente",
   "Token registry count": "Conteo de registro de tokens",
-  "Real-time metrics updated automatically": "Métricas en tiempo real actualizadas automáticamente"
+  "Real-time metrics updated automatically": "Métricas en tiempo real actualizadas automáticamente",
+  "metrics.aggregateFromAllPools": "Agregado de todos los fondos de liquidez",
+  "metrics.sumOfSwapTransactions": "Suma de transacciones de intercambio en las últimas 24h",
+  "metrics.countFromIndexer": "Conteo desde el indexador",
+  "metrics.uniqueWalletAddresses": "Direcciones únicas de billetera en 24h",
+  "metrics.bridgeTransactionCount": "Conteo de transacciones puente",
+  "metrics.tokenRegistryCount": "Conteo de registro de tokens",
+  "landing.description": "Intercambia tokens, conecta activos y proporciona liquidez sin fricción. Construido sobre la infraestructura empresarial de Arc.",
+  "landing.swapNow": "Intercambiar Ahora",
+  "landing.learnMore": "Aprender Más",
+  "swap.tradeTokensTitle": "Intercambia Tokens de Forma Instantánea y Sencilla",
+  "transactions.liveFeed": "Feed en Vivo: Mostrando transacciones en tiempo real",
+  "transactions.noTransactionsFound": "No se encontraron transacciones",
+  "liquidity.poolsLaunchingSoon": "Los fondos de liquidez se lanzarán próximamente."
 }
