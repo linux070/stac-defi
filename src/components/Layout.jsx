@@ -34,16 +34,14 @@ return (
         {/* Top Bar: Logo & Wallet */}
         <div className="md:hidden fixed top-4 left-0 right-0 mx-auto w-[95%] mb-4">
           <div className="flex items-center justify-between rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2">
-            {/* Logo - Hide text on mobile, keep only icon */}
-            <div className="flex items-center">
+            {/* Logo - Standalone logo without text */}
+            <a href="/" className="flex items-center ml-1 cursor-pointer hover:opacity-80 transition-opacity">
               <img 
                 src="/icons/stac.png" 
                 alt="Stac Logo" 
-                className="w-10 h-10 md:w-8 md:h-8 object-contain dark:brightness-0 dark:invert"
+                className="h-9 w-9 object-contain dark:brightness-0 dark:invert"
               />
-              {/* Hidden on mobile, visible on desktop */}
-              <h1 className="text-xl font-bold gradient-text ml-1.5 hidden md:block">Stac</h1>
-            </div>
+            </a>
 
             {/* Controls - Theme Toggle */}
             <div className="flex items-center gap-2">
@@ -73,15 +71,14 @@ return (
         {/* Desktop Header - Floating Island */}
         <div className="hidden md:block md:fixed md:top-4 md:left-0 md:right-0 md:flex md:justify-center">
           <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2 mx-auto w-fit max-w-full">
-            {/* Logo */}
-            <div className="flex items-center mr-6">
+            {/* Logo - Standalone logo without text */}
+            <a href="/" className="flex items-center ml-2 mr-6 cursor-pointer hover:opacity-80 transition-opacity">
               <img 
                 src="/icons/stac.png" 
                 alt="Stac Logo" 
-                className="h-10 w-auto object-contain dark:brightness-0 dark:invert"
+                className="h-11 w-11 object-contain dark:brightness-0 dark:invert"
               />
-              <h1 className="text-xl font-bold gradient-text ml-1.5">Stac</h1>
-            </div>
+            </a>
 
             {/* Desktop Navigation */}
             <nav className="flex items-center space-x-1">
