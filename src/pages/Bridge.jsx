@@ -53,7 +53,7 @@ const Bridge = () => {
 
   const handleBridge = async () => {
     if (!isConnected) {
-      alert(t('connectWalletFirst'));
+      alert('Please connect your wallet first');
       return;
     }
 
@@ -66,7 +66,7 @@ const Bridge = () => {
     // Call the bridgeUSDC function from the hook with the specified amount
     await bridgeUSDC(amount);
     setBridgeLoading(false);
-    // alert(t('transactionSubmitted') + '\nEstimated arrival: 2-5 minutes');
+    // alert('Transaction submitted' + '\nEstimated arrival: 2-5 minutes');
     setAmount('');
   };
 
@@ -113,7 +113,7 @@ const Bridge = () => {
               onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
             >
               <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                <h3 className="text-xl font-bold">{t('selectNetwork')}</h3>
+                <h3 className="text-xl font-bold">{t('Select Network')}</h3>
                 <button 
                   onClick={onClose}
                   className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -157,7 +157,7 @@ const Bridge = () => {
                         </div>
                         <div className="text-left">
                           <p className="font-semibold">{chain}</p>
-                          <p className="text-xs text-gray-500">Testnet</p>
+                          <p className="text-xs text-gray-500">{t('Testnet')}</p>
                         </div>
                       </div>
                     </button>
@@ -179,21 +179,21 @@ const Bridge = () => {
         className="card"
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold">{t('bridgeAssets')}</h2>
+          <h2 className="text-xl font-bold">{t('Bridge Assets')}</h2>
         </div>
       
         {/* Info Banner */}
         <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start space-x-3">
           <Info className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={20} />
           <div className="text-sm text-blue-600 dark:text-blue-400">
-            <p className="font-semibold mb-1">{t('crossChainBridging')}</p>
-            <p>{t('bridgeInfoDescription')}</p>
+            <p className="font-semibold mb-1">{t('Cross-Chain Bridging')}</p>
+            <p>{t('Transfer assets securely between Sepolia and Arc Testnet. Estimated time: 2-5 minutes.')}</p>
           </div>
         </div>
 
         {/* From Chain */}
         <div className="mb-2">
-          <label className="block text-sm font-medium mb-2">From</label>
+          <label className="block text-sm font-medium mb-2">{t('From')}</label>
           <button
             ref={fromChainTriggerRef}
             onClick={() => setShowChainSelector('from')}
@@ -217,7 +217,7 @@ const Bridge = () => {
               </div>
               <div className="text-left">
                 <p className="font-bold text-base">{fromChain}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t('sourceNetwork')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t('Source Network')}</p>
               </div>
             </div>
             <ChevronDown size={16} />
@@ -229,7 +229,7 @@ const Bridge = () => {
           <button
             onClick={handleSwitchChains}
             className="switch-button p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group"
-            title={t('switchChains')}
+            title="Switch Chains"
           >
             <ArrowLeftRight size={24} className="group-hover:rotate-180 transition-transform duration-300" />
           </button>
@@ -237,7 +237,7 @@ const Bridge = () => {
 
         {/* To Chain */}
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">To</label>
+          <label className="block text-sm font-medium mb-2">{t('To')}</label>
           <button
             ref={toChainTriggerRef}
             onClick={() => setShowChainSelector('to')}
@@ -261,7 +261,7 @@ const Bridge = () => {
               </div>
               <div className="text-left">
                 <p className="font-bold text-base">{toChain}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t('destinationNetwork')}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t('Destination Network')}</p>
               </div>
             </div>
             <ChevronDown size={16} />
@@ -270,7 +270,7 @@ const Bridge = () => {
 
         {/* Token Selection */}
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">Asset</label>
+          <label className="block text-sm font-medium mb-2">{t('Asset')}</label>
           <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
             <div className="flex items-center justify-between gap-2 w-full">
               <div className="relative flex-1">
@@ -295,14 +295,14 @@ const Bridge = () => {
                 </div>
                 <div className="text-left min-w-0">
                   <p className="font-bold text-base truncate">USDC</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">USD Coin</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{t('USD Coin')}</p>
                 </div>
               </div>
             </div>
             {isConnected && (
               <div className="flex items-center justify-end mt-2">
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Bal:</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{t('Balance')}:</span>
                   <span className="text-sm font-semibold">
                     {loading ? (
                       <Loader className="animate-spin" size={14} />
@@ -324,19 +324,19 @@ const Bridge = () => {
             className="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-2 text-sm"
           >
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">{t('estimatedTime')}</span>
+              <span className="text-gray-600 dark:text-gray-400">{t('Estimated Time')}</span>
               <span className="font-semibold">2-5 minutes</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">{t('bridgeFee')}</span>
+              <span className="text-gray-600 dark:text-gray-400">{t('Bridge Fee')}</span>
               <span className="font-semibold">0.1% ({(parseFloat(amount) * 0.001).toFixed(4)} USDC)</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">{t('gasFee')}</span>
+              <span className="text-gray-600 dark:text-gray-400">{t('Gas Fee')}</span>
               <span className="font-semibold">~$0.50 USDC</span>
             </div>
             <div className="flex justify-between pt-2 border-t border-gray-300 dark:border-gray-600">
-              <span className="text-gray-600 dark:text-gray-400">{t('youWillReceive')}</span>
+              <span className="text-gray-600 dark:text-gray-400">{t('You Will Receive')}</span>
               <span className="font-bold">{(parseFloat(amount) * 0.999).toFixed(4)} USDC</span>
             </div>
           </motion.div>
@@ -346,7 +346,7 @@ const Bridge = () => {
         <div className="mb-6 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start space-x-2">
           <AlertCircle className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" size={16} />
           <p className="text-xs text-yellow-700 dark:text-yellow-300">
-            {t('securityNotice')}
+            {t('Cross-chain transfers are irreversible. Please verify all details before confirming the transaction.')}
           </p>
         </div>
 
@@ -359,16 +359,16 @@ const Bridge = () => {
           {bridgeLoading || status === 'loading' ? (
             <>
               <Loader className="animate-spin" size={24} />
-              <span>{t('bridging')}</span>
+              <span>Bridging</span>
             </>
           ) : !isConnected ? (
             <>
               <Wallet size={24} />
-              <span>{t('connectWallet')}</span>
+              <span>{t('Connect Wallet')}</span>
             </>
           ) : (
             <>
-              <span> {t('bridge')}</span>
+              <span>{t('Bridge')}</span>
             </>
           )}
         </button>

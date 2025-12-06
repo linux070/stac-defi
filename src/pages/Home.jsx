@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins, Zap, ExternalLink, Link, Droplets, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatCurrency, formatNumber } from '../utils/blockchain';
-import { ArrowUpDown } from "lucide-react"
+import { ArrowUpDown } from "lucide-react";
 
 const Home = ({ setActiveTab }) => {
   const { t } = useTranslation();
@@ -55,69 +55,69 @@ const Home = ({ setActiveTab }) => {
   const statCards = [
     {
       id: 'tvl',
-      label: t('totalValueLocked'),
+      label: t('Total Value Locked'),
       value: formatCurrency(stats.tvl.value, 0),
       change: stats.tvl.change,
       trend: stats.tvl.trend,
       icon: TrendingUp,
       lucideIcon: TrendingUp,
       color: 'from-blue-500 to-blue-600',
-      description: 'Aggregate from all liquidity pools'
+      description: t('Aggregate from all liquidity pools')
     },
     {
       id: 'volume',
-      label: t('24hVolume'),
+      label: t('24h Volume'),
       value: formatCurrency(stats.volume.value, 0),
       change: stats.volume.change,
       trend: stats.volume.trend,
       icon: DollarSign,
       lucideIcon: DollarSign,
       color: 'from-green-500 to-green-600',
-      description: 'Sum of swap transactions in last 24h'
+      description: t('Sum of swap transactions in last 24h')
     },
     {
       id: 'transactions',
-      label: t('transactionCount'),
+      label: t('Transaction Count'),
       value: formatNumber(stats.transactions.value),
       change: stats.transactions.change,
       trend: stats.transactions.trend,
       icon: Activity,
       lucideIcon: Activity,
       color: 'from-purple-500 to-purple-600',
-      description: 'Count from indexer'
+      description: t('Count from indexer')
     },
     {
       id: 'users',
-      label: t('activeUsers'),
+      label: t('Active Users'),
       value: formatNumber(stats.users.value),
       change: stats.users.change,
       trend: stats.users.trend,
       icon: Users,
       lucideIcon: Users,
       color: 'from-orange-500 to-orange-600',
-      description: 'Unique wallet addresses in 24h'
+      description: t('Unique wallet addresses in 24h')
     },
     {
-      id: 'crossChain',
-      label: t('crossChainTransfers'),
+      id: 'Cross-Chain',
+      label: t('Cross Chain Transfers'),
       value: formatNumber(stats.crossChain.value),
       change: stats.crossChain.change,
       trend: stats.crossChain.trend,
       icon: Globe,
       lucideIcon: Globe,
       color: 'from-indigo-500 to-indigo-600',
-      description: 'Bridge transaction count'
+      description: t('Bridge transaction count')
     },
     {
       id: 'tokens',
-      label: t('supportedTokens'),
+      label: t('Supported Tokens'),
       value: formatNumber(stats.tokens.value),
       change: stats.tokens.change,
       trend: stats.tokens.trend,
       icon: Coins,
       lucideIcon: Coins,
       color: 'from-pink-500 to-pink-600',
-      description: 'Token registry count'
+      description: t('Token registry count')
     },
   ];
 
@@ -162,7 +162,7 @@ const Home = ({ setActiveTab }) => {
             transition={{ delay: 0.25 }}
             className="text-base md:text-lg opacity-75 mb-8 max-w-2xl"
           >
-            Swap tokens, bridge assets, and provide liquidity with zero friction. Built on Arc's enterprise-grade infrastructure.
+            {t('Swap tokens, bridge assets, and provide liquidity with zero friction. Built on Arc\'s enterprise-grade infrastructure.')}
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -171,15 +171,19 @@ const Home = ({ setActiveTab }) => {
             className="flex flex-row gap-4"
           >
             <button 
+              onClick={handleGetStarted}
               className="w-full md:w-auto bg-white text-blue-600 px-7 py-4 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
             >
-              <span>Get Started</span>
+              <span>{t('Swap Now')}</span>
             </button>
-            <button 
+            <a 
+              href="https://www.arc.network/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="w-full md:w-auto bg-white/20 border border-white/40 text-white px-8 py-3 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2 backdrop-blur-sm"
             >
-              <span>Learn More</span>
-            </button>
+              <span>{t('Learn More')}</span>
+            </a>
           </motion.div>
           
           {/* Key Benefits */}
@@ -191,15 +195,15 @@ const Home = ({ setActiveTab }) => {
           >
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span>Sub-second finality</span>
+              <span>{t('Sub-second finality')}</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span>USDC gas fees</span>
+              <span>{t('USDC gas fees')}</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span>Best execution</span>
+              <span>{t('Best execution')}</span>
             </div>
           </motion.div>
         </div>
@@ -217,8 +221,8 @@ const Home = ({ setActiveTab }) => {
         className="card"
       >
         <div className="mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">Network Statistics</h2>
-          <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mb-8 max-w-2xl">Real-time metrics updated automatically</p>
+          <h2 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Network Statistics')}</h2>
+          <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mb-8 max-w-2xl">{t('Real-time metrics updated automatically')}</p>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -252,7 +256,7 @@ const Home = ({ setActiveTab }) => {
                 {/* Data source indicator */}
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center text-xs text-gray-500 dark:text-gray-400">
                   <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                  Live Data
+                  <span>{t('Live Data')}</span>
                 </div>
               </motion.div>
             );
@@ -268,9 +272,9 @@ const Home = ({ setActiveTab }) => {
         className="card"
       >
         <div className="mb-6">
-        <h2 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">Quick Actions</h2>
+        <h2 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Quick Actions')}</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Everything you need to manage your assets on Arc
+            {t('Everything you need to manage your assets on Arc')}
           </p>
         </div>
         
@@ -283,13 +287,13 @@ const Home = ({ setActiveTab }) => {
               <ArrowUpDown size={24} className="text-white" />
             </div>
             <h3 className="font-bold text-xl mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-              {t('swapTokens')}
+              {t('Swap Tokens')}
             </h3>
             <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
-              Exchange tokens instantly at the best rates
+              {t('Exchange tokens instantly at the best rates')}
             </p>
             <div className="flex items-center text-blue-600 dark:text-blue-400 text-sm font-semibold">
-              <span>Start swapping</span>
+              <span>{t('Start swapping')}</span>
               <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
             </div>
           </div>
@@ -302,13 +306,13 @@ const Home = ({ setActiveTab }) => {
               <Link size={24} className="text-white" />
             </div>
             <h3 className="font-bold text-xl mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-              {t('bridgeAssets')}
+              {t('Bridge Assets')}
             </h3>
             <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
-              Transfer assets between Sepolia and Arc Testnet
+              {t('Transfer assets between Sepolia and Arc Testnet')}
             </p>
             <div className="flex items-center text-green-600 dark:text-green-400 text-sm font-semibold">
-              <span>Start bridging</span>
+              <span>{t('Start bridging')}</span>
               <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
             </div>
           </div>
@@ -321,13 +325,13 @@ const Home = ({ setActiveTab }) => {
               <Droplets size={24} className="text-white" />
             </div>
             <h3 className="font-bold text-xl mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-              {t('addLiquidity')}
+              {t('Add Liquidity')}
             </h3>
             <p className="text-sm text-gray-600 dark:text-dark-400 mb-4">
-              Provide liquidity to earn passive income
+              {t('Provide liquidity to earn passive income')}
             </p>
             <div className="flex items-center text-purple-600 dark:text-purple-400 text-sm font-semibold">
-              <span>Start earning</span>
+              <span>{t('Start earning')}</span>
               <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
             </div>
           </div>
@@ -342,8 +346,8 @@ const Home = ({ setActiveTab }) => {
           className="card mt-12"
         >
           <div className="mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">Why Arc Network</h2>
-            <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mb-8 max-w-2xl">Experience the next generation of blockchain infrastructure</p>
+            <h2 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Why Arc Network')}</h2>
+            <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mb-8 max-w-2xl">{t('Experience the next generation of blockchain infrastructure')}</p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -353,8 +357,8 @@ const Home = ({ setActiveTab }) => {
                   <Zap size={20} className="text-white" />
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Lightning Fast</h3>
-              <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.</p>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">{t('Lightning Fast')}</h3>
+              <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">{t('Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.')}</p>
             </div>
             
             <div className="relative overflow-hidden rounded-2xl p-6 bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all dark:bg-slate-900/50 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-2xl dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
@@ -363,8 +367,8 @@ const Home = ({ setActiveTab }) => {
                   <DollarSign size={20} className="text-white" />
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">USDC Gas Fee</h3>
-              <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">Predictable transaction costs with stablecoin-based gas fees for better UX.</p>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">{t('USDC Gas Fee')}</h3>
+              <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">{t('Predictable transaction costs with stablecoin-based gas fees for better UX.')}</p>
             </div>
             
             <div className="relative overflow-hidden rounded-2xl p-6 bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all dark:bg-slate-900/50 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-2xl dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
@@ -373,8 +377,8 @@ const Home = ({ setActiveTab }) => {
                   <Shield size={20} className="text-white" />
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Enterprise Grade</h3>
-              <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">Built for institutional use with advanced security and compliance features.</p>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">{t('Enterprise Grade')}</h3>
+              <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">{t('Built for institutional use with advanced security and compliance features.')}</p>
             </div>
           </div>
         </motion.div>

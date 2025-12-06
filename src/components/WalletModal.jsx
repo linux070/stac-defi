@@ -45,7 +45,7 @@ const WalletModal = ({ isOpen, onClose }) => {
           className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-none shadow-2xl p-6"
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">{t('connectWallet')}</h2>
+            <h2 className="text-2xl font-bold">{t('Connect Wallet')}</h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-none"
@@ -80,14 +80,14 @@ const WalletModal = ({ isOpen, onClose }) => {
                   <span className="font-semibold">{wallet.name}</span>
                 </div>
                 {!wallet.available && (
-                  <span className="text-xs text-gray-500">Not installed</span>
+                  <span className="text-xs text-gray-500">{t('Not installed')}</span>
                 )}
               </button>
             ))}
           </div>
 
           <p className="mt-6 text-xs text-center text-gray-500 dark:text-gray-400">
-            {t('byConnectingWallet')}
+            {t('By connecting a wallet, you agree to our Terms of Service')}
           </p>
         </motion.div>
       </div>

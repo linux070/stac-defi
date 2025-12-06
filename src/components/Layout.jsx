@@ -1,32 +1,32 @@
 import React, { useState } from 'react';
-
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useWallet } from '../contexts/WalletContext';
 import {
   Home, ArrowLeftRight, Droplet, Clock, Menu, X,
-  Moon, Sun, Globe, Wallet, LogOut, RefreshCw, ChevronDown
+  Moon, Sun, Wallet, LogOut, RefreshCw, ChevronDown, Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatAddress } from '../utils/blockchain';
 import WalletModal from './WalletModal';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import LanguageSelector from './LanguageSelector';
 
 const Layout = ({ children, activeTab, setActiveTab }) => {
+  const { t, i18n } = useTranslation();
   const { darkMode, toggleDarkMode } = useTheme();
   const { walletAddress, balance, isConnected, disconnect, fetchBalance } = useWallet();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
-
   const navItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'swap', label: 'Swap', icon: ArrowLeftRight },
-    { id: 'bridge', label: 'Bridge', icon: Globe },
-    { id: 'liquidity', label: 'Liquidity', icon: Droplet },
-    { id: 'transactions', label: 'Transactions', icon: Clock },
+    { id: 'home', label: t('Home'), icon: Home },
+    { id: 'swap', label: t('Swap'), icon: ArrowLeftRight },
+    { id: 'bridge', label: t('Bridge'), icon: Globe },
+    { id: 'liquidity', label: t('Liquidity'), icon: Droplet },
+    { id: 'transactions', label: t('Transactions'), icon: Clock },
   ];
 
-
-  return (
+return (
     <div className="min-h-screen flex flex-col">
       {/* Transparent Header Container */}
       <header className="fixed top-4 left-0 right-0 z-50 bg-transparent">
@@ -219,16 +219,19 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       <WalletModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
       
       {/* Footer */}
-      <footer className="mt-auto py-6 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 relative">
+      <footer className="mt-auto py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center items-center min-h-[120px]">
-                      
+          <div className="flex items-center justify-between min-h-[60px] relative">
+            {/* Left Section - Language Selector */}
+            <div className="flex-shrink-0">
+              <LanguageSelector placement="footer" />
+            </div>
             
-            {/* Center Section - Copyright and Attribution */}
-            <div className="justify-self-center text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                © {new Date().getFullYear()} · Built by : 
-                <a 
+            {/* Center Section - Copyright and Attribution (absolutely centered) */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 text-center">
+              <p className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                © {new Date().getFullYear()} Stac. All rights reserved. · 
+                Built by : <a 
                   href="https://x.com/linux_mode" 
                   target="_blank" 
                   rel="noopener noreferrer"
@@ -239,8 +242,10 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               </p>
             </div>
             
-            {/* Right Section - Empty for balance */}
-            <div className="justify-self-end"></div>
+            {/* Right Section - Empty spacer to balance the left element */}
+            <div className="flex-shrink-0 w-auto">
+              {/* This empty div balances the left element to prevent layout shifting */}
+            </div>
           </div>
         </div>
       </footer>

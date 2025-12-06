@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './polyfills.js'
 import './index.css'
+import './i18n/config.js';
 import '@rainbow-me/rainbowkit/styles.css';
 import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
@@ -13,7 +14,7 @@ import { defineChain } from 'viem';
 import { 
   metaMaskWallet, 
   walletConnectWallet, 
-  coinbaseWallet,
+  coinbaseWallet, 
   rabbyWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 

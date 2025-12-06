@@ -69,16 +69,6 @@ const Liquidity = () => {
     },
   ];
 
-  // Mock portfolio data
-  const portfolio = {
-    totalValue: 15000,
-    assets: [
-      { token: 'ETH', balance: '5.234', value: 10468, change: 2.3 },
-      { token: 'USDC', balance: '2500', value: 2500, change: 0.0 },
-      { token: 'USDT', balance: '1500', value: 1500, change: -0.1 },
-      { token: 'DAI', balance: '532', value: 532, change: 0.2 },
-    ],
-  };
 
   // Filter positions based on type and search term
   const filteredPositions = positions.filter(position => {
@@ -128,10 +118,10 @@ const Liquidity = () => {
           </div>
         </div>
         <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
-          {t('comingSoon')}
+          {t('Coming Soon')}
         </h2>
         <p className="text-gray-600 dark:text-gray-400">
-          {t('liquidityFeatureComingSoon')}
+          {t('Liquidity pools are launching shortly.')}
         </p>
       </div>
     </div>

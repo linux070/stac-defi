@@ -298,7 +298,7 @@ const Swap = () => {
     
     return (
       <div>
-        <label className="block text-sm font-medium mb-2">{t('slippageTolerance')}</label>
+        <label className="block text-sm font-medium mb-2">{t('Slippage Tolerance')}</label>
         <div className="grid grid-cols-4 gap-2">
           {[0.1, 0.5, 1.0].map((value) => (
             <button
@@ -364,7 +364,7 @@ const Swap = () => {
       );
     }, [searchQuery, tokenList]);
     
-    // Popular tokens for quick selection - Completely remove ETH, only show USDC and EURC
+    // Popular tokens for quick selection.
     const popularTokens = useMemo(() => {
       return tokenList.filter(token => ['USDC', 'EURC'].includes(token.symbol));
     }, [tokenList]);
@@ -404,7 +404,7 @@ const Swap = () => {
               onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
             >
               <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                <h3 className="text-xl font-bold">{t('selectToken')}</h3>
+                <h3 className="text-xl font-bold">{t('Select Token')}</h3>
                 <button 
                   onClick={onClose}
                   className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -417,7 +417,7 @@ const Swap = () => {
               <div className="mb-4 flex-shrink-0">
                 <input
                   type="text"
-                  placeholder={t('searchTokens')}
+                  placeholder={t('Search Tokens')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
@@ -426,7 +426,7 @@ const Swap = () => {
               
               {/* Popular Tokens - add flex-shrink-0 */}
               <div className="mb-4 flex-shrink-0">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('popularTokens')}</h4>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('Your Tokens')}</h4>
                 <div className="flex flex-wrap gap-2">
                   {popularTokens.map((token) => (
                     <button
@@ -546,8 +546,8 @@ const Swap = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold mb-1">{t('swapTokens')}</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('tradeTokensInstant')}</p>
+            <h2 className="text-xl font-bold mb-1">{t('Swap Tokens')}</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('Trade Tokens Instantly and Easily')}</p>
           </div>
           <div className="flex items-center space-x-2">
             <a 
@@ -599,7 +599,7 @@ const Swap = () => {
 
         {/* From Token */}
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">{t('from')}</label>
+          <label className="block text-sm font-medium mb-2">{t('From')}</label>
           <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
             <div className="flex items-center justify-between gap-2 w-full">
               <div className="relative flex-1">
@@ -659,7 +659,7 @@ const Swap = () => {
                   onClick={handleMaxClick}
                   className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors ml-2"
                 >
-                  {t('max')}
+                  {t('Max')}
                 </button>
               </div>
             )}
@@ -679,7 +679,7 @@ const Swap = () => {
 
         {/* To Token */}
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">{t('to')}</label>
+          <label className="block text-sm font-medium mb-2">{t('To')}</label>
           <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
             <div className="flex items-center justify-between gap-2 w-full">
               <div className="relative flex-1">
@@ -708,12 +708,6 @@ const Swap = () => {
                       src="/icons/eurc.png" 
                       alt={toToken} 
                       className="w-10 h-10 rounded-full object-contain"
-                  />
-                ) : toToken === 'EURC' ? (
-                  <img 
-                    src="/icons/eurc.png" 
-                    alt={toToken} 
-                    className="w-10 h-10 rounded-full object-contain"
                   />
                 ) : (
                   <span className="text-xl">
@@ -756,15 +750,15 @@ const Swap = () => {
             >
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('expectedOutput')}</span>
+                  <span className="text-gray-600 dark:text-gray-400">{t('Expected Output')}</span>
                   <span className="font-semibold">{swapQuote.expectedOutput} {toToken}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('minReceived')}</span>
+                  <span className="text-gray-600 dark:text-gray-400">{t('Min Received')}</span>
                   <span className="font-semibold">{swapQuote.minReceived} {toToken}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('priceImpact')}</span>
+                  <span className="text-gray-600 dark:text-gray-400">{t('Price Impact')}</span>
                   <span className={`font-semibold ${parseFloat(swapQuote.priceImpact) > 1 ? 'text-red-600' : 'text-green-600'}`}>
                     {swapQuote.priceImpact}%
                   </span>

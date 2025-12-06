@@ -68,9 +68,9 @@ const Transactions = () => {
       {/* Header with Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold mb-2">{t('transactions')}</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('Transactions')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {activeTab === 'my' ? t('myTransactions') : t('allTransactions')}
+            {activeTab === 'my' ? t('My Transactions') : t('All Transactions')}
           </p>
         </div>
         <div className="flex items-center space-x-4">
@@ -80,14 +80,14 @@ const Transactions = () => {
               className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200
                 ${activeTab === 'my' ? 'bg-gradient-arc text-white shadow-lg' : 'border-2 border-blue-400 text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
             >
-              {t('myTransactions')}
+              {t('My Transactions')}
             </button>
             <button
               onClick={() => setActiveTab('all')}
               className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200
                 ${activeTab === 'all' ? 'bg-gradient-arc text-white shadow-lg' : 'border-2 border-blue-400 text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
             >
-              {t('allTransactions')}
+              {t('All Transactions')}
             </button>
           </div>
         </div>
@@ -99,14 +99,14 @@ const Transactions = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-4">{t('type')}</th>
-                <th className="text-left py-4">{t('from')}</th>
-                <th className="text-left py-4">{t('to')}</th>
-                <th className="text-left py-4">{t('amount')}</th>
-                <th className="text-left py-4">{t('time')}</th>
-                <th className="text-left py-4">{t('status')}</th>
-                <th className="text-left py-4">{t('transactionHash')}</th>
-                {activeTab === 'all' && <th className="text-left py-4">{t('address')}</th>}
+                <th className="text-left py-4">Type</th>
+                <th className="text-left py-4">From</th>
+                <th className="text-left py-4">To</th>
+                <th className="text-left py-4">Amount</th>
+                <th className="text-left py-4">Time</th>
+                <th className="text-left py-4">Status</th>
+                <th className="text-left py-4">Transaction Hash</th>
+                {activeTab === 'all' && <th className="text-left py-4">Address</th>}
               </tr>
             </thead>
             <tbody>
@@ -138,7 +138,7 @@ const Transactions = () => {
                       <button
                         onClick={() => handleCopyHash(tx.hash)}
                         className="font-mono text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1"
-                        title={t('copy')}
+                        title="Copy"
                       >
                         <span>{formatAddress(tx.hash)}</span>
                         {copiedHash === tx.hash ? (
@@ -152,7 +152,7 @@ const Transactions = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-500 hover:text-blue-600"
-                        title={t('viewOnExplorer')}
+                        title="View on Explorer"
                       >
                         <ExternalLink size={14} />
                       </a>
@@ -167,11 +167,11 @@ const Transactions = () => {
           </table>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-2">{t('noTransactionsFound')}</p>
+            <p className="text-gray-500 mb-2">{t('No transactions found')}</p>
             <p className="text-sm text-gray-400">
               {activeTab === 'my' && !isConnected
-                ? t('connectWalletFirst')
-                : t('transactionsWillAppear')}
+                ? t('Please connect your wallet first')
+                : t('Transactions will appear here')}
             </p>
           </div>
         )}
@@ -181,7 +181,7 @@ const Transactions = () => {
       {activeTab === 'all' && (
         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <p className="text-sm text-blue-600 dark:text-blue-400">
-            <strong>{t('liveFeed')}:</strong> {t('displayingRealTime')}
+            <strong>{t('Live Feed')}:</strong> {t('Displaying real-time transactions')}
           </p>
         </div>
       )}
