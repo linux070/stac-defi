@@ -98,7 +98,7 @@ const Bridge = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+            className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black bg-opacity-50"
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -109,22 +109,22 @@ const Bridge = () => {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md flex flex-col max-h-[80vh] overflow-hidden"
+              className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 md:p-6 w-full max-w-md flex flex-col max-h-[80vh] overflow-hidden"
               onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
             >
-              <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                <h3 className="text-xl font-bold">{t('Select Network')}</h3>
+              <div className="flex justify-between items-center mb-3 md:mb-4 flex-shrink-0">
+                <h3 className="text-lg md:text-xl font-bold">{t('Select Network')}</h3>
                 <button 
                   onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="p-1 md:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
-                  <X size={20} />
+                  <X size={16} />
                 </button>
               </div>
               
-              <div className="flex-1 overflow-y-auto -mx-6 px-6">
+              <div className="flex-1 overflow-y-auto -mx-2 md:-mx-6 px-2 md:px-6">
                 {/* Chain List */}
-                <div className="space-y-2">
+                <div className="space-y-1 md:space-y-2">
                   {chainList.map((chain) => (
                     <button
                       key={chain}
@@ -135,28 +135,28 @@ const Bridge = () => {
                         }
                       }}
                       disabled={chain === exclude}
-                      className={`w-full p-4 rounded-lg flex items-center justify-between transition-all duration-200
+                      className={`w-full p-2 md:p-4 rounded-lg flex items-center justify-between transition-all duration-200
                         ${chain === selectedChain ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}
                         ${chain === exclude ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                      <div className="flex items-center space-x-2 md:space-x-3">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center">
                           {chain.includes('Arc') ? (
                             <img 
                               src="/icons/Arc.png" 
                               alt="Arc Testnet" 
-                              className="w-10 h-10 rounded-full object-contain"
+                              className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                             />
                           ) : (
                             <img 
                               src="/icons/eth.png" 
                               alt="Sepolia" 
-                              className="w-10 h-10 rounded-full object-contain"
+                              className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                             />
                           )}
                         </div>
                         <div className="text-left">
-                          <p className="font-semibold">{chain}</p>
+                          <p className="font-semibold text-sm md:text-base">{chain}</p>
                           <p className="text-xs text-gray-500">{t('Testnet')}</p>
                         </div>
                       </div>
@@ -176,47 +176,47 @@ const Bridge = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card"
+        className="card p-3 md:p-8"
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
           <h2 className="text-xl font-bold">{t('Bridge Assets')}</h2>
         </div>
       
         {/* Info Banner */}
-        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start space-x-3">
-          <Info className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={20} />
-          <div className="text-sm text-blue-600 dark:text-blue-400">
+        <div className="mb-4 md:mb-6 p-2 md:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start space-x-2 md:space-x-3">
+          <Info className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={16} />
+          <div className="text-[10px] md:text-sm text-blue-600 dark:text-blue-400">
             <p className="font-semibold mb-1">{t('Cross-Chain Bridging')}</p>
             <p>{t('Transfer assets securely between Sepolia and Arc Testnet. Estimated time: 2-5 minutes.')}</p>
           </div>
         </div>
 
         {/* From Chain */}
-        <div className="mb-2">
-          <label className="block text-sm font-medium mb-2">{t('From')}</label>
+        <div className="mb-2 md:mb-2">
+          <label className="block text-sm font-medium mb-1 md:mb-2">{t('From')}</label>
           <button
             ref={fromChainTriggerRef}
             onClick={() => setShowChainSelector('from')}
-            className="w-full p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
+            className="w-full p-2 md:p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
           >
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center">
+            <div className="flex items-center space-x-2 md:space-x-3">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center">
                 {fromChain.includes('Arc') ? (
                   <img 
                     src="/icons/Arc.png" 
                     alt="Arc Testnet" 
-                    className="w-10 h-10 rounded-full object-contain"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                   />
                 ) : (
                   <img 
                     src="/icons/eth.png" 
                     alt={fromChain} 
-                    className="w-10 h-10 rounded-full object-contain"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                   />
                 )}
               </div>
               <div className="text-left">
-                <p className="font-bold text-base">{fromChain}</p>
+                <p className="font-bold text-sm md:text-base">{fromChain}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{t('Source Network')}</p>
               </div>
             </div>
@@ -225,42 +225,42 @@ const Bridge = () => {
         </div>
 
         {/* Switch Button */}
-        <div className="flex justify-center my-6 relative z-10">
+        <div className="flex justify-center my-4 md:my-6 relative z-10">
           <button
             onClick={handleSwitchChains}
-            className="switch-button p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group"
+            className="switch-button p-3 md:p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group"
             title="Switch Chains"
           >
-            <ArrowLeftRight size={24} className="group-hover:rotate-180 transition-transform duration-300" />
+            <ArrowLeftRight size={20} className="group-hover:rotate-180 transition-transform duration-300" />
           </button>
         </div>
 
         {/* To Chain */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">{t('To')}</label>
+        <div className="mb-4 md:mb-6">
+          <label className="block text-sm font-medium mb-1 md:mb-2">{t('To')}</label>
           <button
             ref={toChainTriggerRef}
             onClick={() => setShowChainSelector('to')}
-            className="w-full p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
+            className="w-full p-2 md:p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
           >
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center">
+            <div className="flex items-center space-x-2 md:space-x-3">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center">
                 {toChain.includes('Arc') ? (
                   <img 
                     src="/icons/Arc.png" 
                     alt="Arc Testnet" 
-                    className="w-10 h-10 rounded-full object-contain"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                   />
                 ) : (
                   <img 
                     src="/icons/eth.png" 
                     alt={toChain} 
-                    className="w-10 h-10 rounded-full object-contain"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                   />
                 )}
               </div>
               <div className="text-left">
-                <p className="font-bold text-base">{toChain}</p>
+                <p className="font-bold text-sm md:text-base">{toChain}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{t('Destination Network')}</p>
               </div>
             </div>
@@ -269,9 +269,9 @@ const Bridge = () => {
         </div>
 
         {/* Token Selection */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">{t('Asset')}</label>
-          <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
+        <div className="mb-3 md:mb-4">
+          <label className="block text-sm font-medium mb-1 md:mb-2">{t('Asset')}</label>
+          <div className="p-2 md:p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
             <div className="flex items-center justify-between gap-2 w-full">
               <div className="relative flex-1">
                 <input
@@ -280,32 +280,32 @@ const Bridge = () => {
                   value={amount}
                   onChange={(e) => setAmount(sanitizeInput(e.target.value))}
                   placeholder="0.0"
-                  className="text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16"
+                  className="text-2xl md:text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16"
                 />
 
               </div>
               {/* Static USDC Token Display - Removed dropdown functionality */}
-              <div className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm self-end min-w-[120px] w-auto flex-shrink-0">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center">
+              <div className="flex items-center space-x-2 px-2 py-1 md:px-3 md:py-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm self-end min-w-[100px] md:min-w-[120px] w-auto flex-shrink-0">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center">
                   <img 
                     src="/icons/usdc.png" 
                     alt="USDC" 
-                    className="w-10 h-10 rounded-full object-contain"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                   />
                 </div>
                 <div className="text-left min-w-0">
-                  <p className="font-bold text-base truncate">USDC</p>
+                  <p className="font-bold text-sm md:text-base truncate">USDC</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{t('USD Coin')}</p>
                 </div>
               </div>
             </div>
             {isConnected && (
-              <div className="flex items-center justify-end mt-2">
-                <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-end mt-1 md:mt-2">
+                <div className="flex items-center space-x-1 md:space-x-2">
                   <span className="text-xs text-gray-500 dark:text-gray-400">{t('Balance')}:</span>
-                  <span className="text-sm font-semibold">
+                  <span className="text-xs md:text-sm font-semibold">
                     {loading ? (
-                      <Loader className="animate-spin" size={14} />
+                      <Loader className="animate-spin" size={12} />
                     ) : (
                       `${balance || '0.00'} USDC`
                     )}
@@ -321,7 +321,7 @@ const Bridge = () => {
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
-            className="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-2 text-sm"
+            className="mb-4 md:mb-6 p-2 md:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-1 md:space-y-2 text-xs md:text-sm"
           >
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">{t('Estimated Time')}</span>
@@ -335,7 +335,7 @@ const Bridge = () => {
               <span className="text-gray-600 dark:text-gray-400">{t('Gas Fee')}</span>
               <span className="font-semibold">~$0.50 USDC</span>
             </div>
-            <div className="flex justify-between pt-2 border-t border-gray-300 dark:border-gray-600">
+            <div className="flex justify-between pt-1 md:pt-2 border-t border-gray-300 dark:border-gray-600">
               <span className="text-gray-600 dark:text-gray-400">{t('You Will Receive')}</span>
               <span className="font-bold">{(parseFloat(amount) * 0.999).toFixed(4)} USDC</span>
             </div>
@@ -343,9 +343,9 @@ const Bridge = () => {
         )}
 
         {/* Security Notice */}
-        <div className="mb-6 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start space-x-2">
-          <AlertCircle className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" size={16} />
-          <p className="text-xs text-yellow-700 dark:text-yellow-300">
+        <div className="mb-4 md:mb-6 p-2 md:p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start space-x-1 md:space-x-2">
+          <AlertCircle className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" size={14} />
+          <p className="text-[10px] md:text-xs text-yellow-700 dark:text-yellow-300">
             {t('Cross-chain transfers are irreversible. Please verify all details before confirming the transaction.')}
           </p>
         </div>
@@ -354,28 +354,28 @@ const Bridge = () => {
         <button
           onClick={handleBridge}
           disabled={!amount || bridgeLoading || !isConnected || status === 'loading'}
-          className="w-full btn-primary py-5 text-xl font-bold flex items-center justify-center space-x-2 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-xl"
+          className="w-full btn-primary py-3 md:py-5 text-lg md:text-xl font-bold flex items-center justify-center space-x-2 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-xl"
         >
           {bridgeLoading || status === 'loading' ? (
             <>
-              <Loader className="animate-spin" size={24} />
-              <span>Bridging</span>
+              <Loader className="animate-spin" size={20} />
+              <span className="text-sm md:text-base">Bridging</span>
             </>
           ) : !isConnected ? (
             <>
-              <Wallet size={24} />
-              <span>{t('Connect Wallet')}</span>
+              <Wallet size={20} />
+              <span className="text-sm md:text-base">{t('Connect Wallet')}</span>
             </>
           ) : (
             <>
-              <span>{t('Bridge')}</span>
+              <span className="text-sm md:text-base">{t('Bridge')}</span>
             </>
           )}
         </button>
         
         {/* Logs Display - Unobtrusive debugging information */}
         {logs.length > 0 && (
-          <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg text-xs text-gray-700 dark:text-gray-300 max-h-32 overflow-y-auto">
+          <div className="mt-3 md:mt-4 p-2 md:p-3 bg-gray-100 dark:bg-gray-700 rounded-lg text-[10px] md:text-xs text-gray-700 dark:text-gray-300 max-h-24 md:max-h-32 overflow-y-auto">
             <h4 className="font-semibold mb-1">Bridge Logs:</h4>
             {logs.map((log, index) => (
               <div key={index} className="mb-1 last:mb-0">{log}</div>
