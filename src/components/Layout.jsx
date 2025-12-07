@@ -23,7 +23,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
     { id: 'swap', label: t('Swap'), icon: ArrowLeftRight },
     { id: 'bridge', label: t('Bridge'), icon: Globe },
     { id: 'liquidity', label: t('Liquidity'), icon: Droplet },
-    { id: 'transactions', label: t('Transactions'), icon: Clock },
+    { id: 'activity', label: t('Activity'), icon: Clock },
   ];
 
 return (

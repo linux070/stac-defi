@@ -23,7 +23,7 @@ function App() {
           return <Bridge />;
         case 'liquidity':
           return <Liquidity />;
-        case 'transactions':
+        case 'activity':
           return <Transactions />;
         default:
           return <Home setActiveTab={setActiveTab} />;

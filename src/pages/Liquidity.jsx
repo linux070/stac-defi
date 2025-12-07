@@ -118,10 +118,10 @@ const Liquidity = () => {
           </div>
         </div>
         <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
-          {t('Coming Soon')}
+          {t('liquidity.underConstruction')}
         </h2>
         <p className="text-gray-600 dark:text-gray-400">
-          {t('Liquidity pools are launching shortly.')}
+          {t('liquidity.poolsLaunchingSoon')}
         </p>
       </div>
     </div>

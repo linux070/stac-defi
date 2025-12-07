@@ -195,15 +195,15 @@ const Home = ({ setActiveTab }) => {
           >
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span>{t('Sub-second Finality')}</span>
+              <span>{t('features.subSecondFinality')}</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span>{t('USDC Gas Fees')}</span>
+              <span>{t('features.usdcGasFees')}</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span>{t('Best Execution')}</span>
+              <span>{t('features.bestExecution')}</span>
             </div>
           </motion.div>
         </div>

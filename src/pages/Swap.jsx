@@ -489,7 +489,7 @@ const Swap = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-bold mb-1">{t('Swap Tokens')}</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('Trade Tokens Instantly and Easily')}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('swap.tradeTokensTitle')}</p>
           </div>
           <div className="flex items-center space-x-2">
             <a 

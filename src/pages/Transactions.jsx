@@ -11,18 +11,18 @@ const Transactions = () => {
   const [activeTab, setActiveTab] = useState('my');
   const [copiedHash, setCopiedHash] = useState('');
 
-  // Transaction data - stored in localStorage for persistence
-  const [myTransactions, setMyTransactions] = useState(() => {
-    const saved = localStorage.getItem('myTransactions');
+  // Activity data - stored in localStorage for persistence
+  const [myActivity, setMyActivity] = useState(() => {
+    const saved = localStorage.getItem('myActivity');
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [allTransactions] = useState([]);
+  const [allActivity] = useState([]);
 
-  // Persist my transactions
+  // Persist my activity
   useEffect(() => {
-    localStorage.setItem('myTransactions', JSON.stringify(myTransactions));
-  }, [myTransactions]);
+    localStorage.setItem('myActivity', JSON.stringify(myActivity));
+  }, [myActivity]);
 
   const handleCopyHash = async (hash) => {
     const success = await copyToClipboard(hash);
@@ -60,17 +60,17 @@ const Transactions = () => {
     }
   };
 
-  const currentTransactions = activeTab === 'my' ? myTransactions : allTransactions;
-  const filteredTransactions = currentTransactions;
+  const currentActivity = activeTab === 'my' ? myActivity : allActivity;
+  const filteredActivity = currentActivity;
 
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header with Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold mb-2">{t('Transactions')}</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('Activity')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {activeTab === 'my' ? t('My Transactions') : t('All Transactions')}
+            {activeTab === 'my' ? t('My Activity') : t('All Activity')}
           </p>
         </div>
         <div className="flex items-center space-x-4">
@@ -80,22 +80,22 @@ const Transactions = () => {
               className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200
                 ${activeTab === 'my' ? 'bg-gradient-arc text-white shadow-lg' : 'border-2 border-blue-400 text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
             >
-              {t('My Transactions')}
+              {t('My Activity')}
             </button>
             <button
               onClick={() => setActiveTab('all')}
               className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200
                 ${activeTab === 'all' ? 'bg-gradient-arc text-white shadow-lg' : 'border-2 border-blue-400 text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
             >
-              {t('All Transactions')}
+              {t('All Activity')}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Transactions Table */}
+      {/* Activity Table */}
       <div className="card overflow-x-auto">
-        {filteredTransactions.length > 0 ? (
+        {filteredActivity.length > 0 ? (
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -110,7 +110,7 @@ const Transactions = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.map((tx, index) => (
+              {filteredActivity.map((tx, index) => (
                 <motion.tr
                   key={tx.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -167,11 +167,11 @@ const Transactions = () => {
           </table>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-2">{t('No transactions found')}</p>
+            <p className="text-gray-500 mb-2">{t('activity.noActivityFound')}</p>
             <p className="text-sm text-gray-400">
               {activeTab === 'my' && !isConnected
                 ? t('Please connect your wallet first')
-                : t('Transactions will appear here')}
+                : t('Activity will appear here')}
             </p>
           </div>
         )}
@@ -181,7 +181,7 @@ const Transactions = () => {
       {activeTab === 'all' && (
         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <p className="text-sm text-blue-600 dark:text-blue-400">
-            <strong>{t('Live Feed')}:</strong> {t('Displaying real-time transactions')}
+            <strong>{t('Live Feed')}:</strong> {t('activity.liveFeed')}
           </p>
         </div>
       )}
