@@ -108,5 +108,6 @@
   "liquidity.underConstruction": "Bajo construcción, próximamente.",
   "features.subSecondFinality": "Finalidad en Menos de un Segundo",
   "features.usdcGasFees": "Tarifas de Gas en USDC",
-  "features.bestExecution": "Mejor Ejecución"
+  "features.bestExecution": "Mejor Ejecución",
+  "connectWallet": "Conectar Cartera"
 }

@@ -108,5 +108,6 @@
   "liquidity.underConstruction": "正在建设中，即将推出。",
   "features.subSecondFinality": "亚秒级终结性",
   "features.usdcGasFees": "USDC 燃气费",
-  "features.bestExecution": "最佳执行"
+  "features.bestExecution": "最佳执行",
+  "connectWallet": "连接钱包"
 }

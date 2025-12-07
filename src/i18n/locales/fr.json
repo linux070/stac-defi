@@ -98,5 +98,6 @@
   "liquidity.underConstruction": "En construction, bientôt disponible.",
   "features.subSecondFinality": "Finalité en Moins d'une Seconde",
   "features.usdcGasFees": "Frais de Gaz en USDC",
-  "features.bestExecution": "Meilleure Exécution"
+  "features.bestExecution": "Meilleure Exécution",
+  "connectWallet": "Connecter le Portefeuille"
 }

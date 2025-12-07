@@ -98,5 +98,6 @@
   "liquidity.underConstruction": "Unter Bau, demnächst verfügbar.",
   "features.subSecondFinality": "Subsekundäre Finalität",
   "features.usdcGasFees": "USDC-Gasgebühren",
-  "features.bestExecution": "Beste Ausführung"
+  "features.bestExecution": "Beste Ausführung",
+  "connectWallet": "Wallet verbinden"
 }
