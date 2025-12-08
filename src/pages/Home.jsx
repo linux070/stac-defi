@@ -367,8 +367,8 @@ const Home = ({ setActiveTab }) => {
               <p className="text-xs md:text-sm text-gray-600 dark:text-dark-400 mb-4 flex-grow">{t('Predictable transaction costs with stablecoin-based gas fees for better UX.')}</p>
             </div>
             
-            <div className="p-5 md:p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 text-left bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-dark-900 flex flex-col">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-500 to-purple-600 neon-icon-container rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg">
+            <div className="p-5 md:p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 text-left bg-gradient-to-br from-gray-50 to-white dark:from-gray-900/10 dark:to-dark-900 flex flex-col">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-gray-500 to-gray-600 neon-icon-container rounded-xl flex items-center justify-center mb-4 text-xl shadow-lg">
                 <Shield size={20} className="text-white md:size-24" />
               </div>
               <h3 className="font-bold text-lg md:text-xl mb-2">{t('Enterprise Grade')}</h3>
