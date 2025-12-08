@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
+import { useSwitchChain } from 'wagmi';
 import { ArrowLeftRight, ChevronDown, Loader, AlertCircle, Info, Wallet, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
@@ -11,6 +12,7 @@ import useBridge from '../hooks/useBridge';
 const Bridge = () => {
   const { t } = useTranslation();
   const { isConnected, chainId } = useWallet();
+  const { switchChain } = useSwitchChain(); // Add this hook
   const [fromChain, setFromChain] = useState('Sepolia');
   const [toChain, setToChain] = useState('Arc Testnet');
   const [amount, setAmount] = useState('');
@@ -26,6 +28,7 @@ const Bridge = () => {
   // Refs for trigger buttons
   const fromChainTriggerRef = useRef(null);
   const toChainTriggerRef = useRef(null);
+  
   
   // Effect to handle body overflow when modals are open
   useEffect(() => {
@@ -46,9 +49,261 @@ const Bridge = () => {
 
   const chains = ['Sepolia', 'Arc Testnet'];
 
-  const handleSwitchChains = () => {
-    setFromChain(toChain);
-    setToChain(fromChain);
+  // Helper function to map chain names to chain IDs
+  const getChainIdByName = (chainName) => {
+    switch (chainName) {
+      case 'Arc Testnet':
+        return parseInt(NETWORKS.ARC_TESTNET.chainId, 16);
+      case 'Sepolia':
+        return parseInt(NETWORKS.ETHEREUM_SEPOLIA.chainId, 16);
+      default:
+        return null;
+    }
+  };
+
+  // Effect to sync the Bridge networks with the global wallet network
+  // This ensures that when the user switches networks in their wallet directly,
+  // the Bridge component updates to reflect the current network
+  useEffect(() => {
+    if (chainId) {
+      // Map the hex chainId to a network name
+      const arcChainId = NETWORKS.ARC_TESTNET.chainId;
+      const sepoliaChainId = NETWORKS.ETHEREUM_SEPOLIA.chainId;
+      
+      if (chainId === arcChainId) {
+        setFromChain('Arc Testnet');
+        // If the 'From' chain is Arc Testnet, the 'To' chain should be Sepolia
+        setToChain('Sepolia');
+      } else if (chainId === sepoliaChainId) {
+        setFromChain('Sepolia');
+        // If the 'From' chain is Sepolia, the 'To' chain should be Arc Testnet
+        setToChain('Arc Testnet');
+      }
+    }
+  }, [chainId]);
+
+  const handleSwitchChains = async () => {
+    // When switching chains, we need to update both the 'from' and 'to' chains
+    // We'll switch the wallet network to match the new 'from' chain
+    
+    // Swap the local states first
+    const newFromChain = toChain;
+    const newToChain = fromChain;
+    
+    // Update both local states
+    setFromChain(newFromChain);
+    setToChain(newToChain);
+    
+    // If connected, trigger wallet network switch to match the new 'from' chain
+    if (isConnected) {
+      try {
+        // Get the chain ID for the new 'from' chain
+        const chainId = getChainIdByName(newFromChain);
+        
+        if (chainId) {
+          // Trigger wallet network switch
+          await switchChain({ chainId });
+        }
+      } catch (error) {
+        console.error('Failed to switch network:', error);
+        
+        // Handle the case where the chain needs to be added to the wallet (Error 4902)
+        if ((error?.code === 4902 || error?.message?.includes('wallet_addEthereumChain')) && window.ethereum) {
+          try {
+            // Add Arc Testnet to the wallet
+            if (newFromChain === 'Arc Testnet') {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: NETWORKS.ARC_TESTNET.chainId,
+                  chainName: NETWORKS.ARC_TESTNET.chainName,
+                  nativeCurrency: NETWORKS.ARC_TESTNET.nativeCurrency,
+                  rpcUrls: NETWORKS.ARC_TESTNET.rpcUrls,
+                  blockExplorerUrls: NETWORKS.ARC_TESTNET.blockExplorerUrls,
+                }],
+              });
+              
+              // After adding, try to switch again
+              const chainId = getChainIdByName(newFromChain);
+              if (chainId) {
+                await switchChain({ chainId });
+                setFromChain(newFromChain);
+              }
+            } else if (newFromChain === 'Sepolia') {
+              // For Sepolia, just try to add it
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: NETWORKS.ETHEREUM_SEPOLIA.chainId,
+                  chainName: NETWORKS.ETHEREUM_SEPOLIA.chainName,
+                  nativeCurrency: NETWORKS.ETHEREUM_SEPOLIA.nativeCurrency,
+                  rpcUrls: NETWORKS.ETHEREUM_SEPOLIA.rpcUrls,
+                  blockExplorerUrls: NETWORKS.ETHEREUM_SEPOLIA.blockExplorerUrls,
+                }],
+              });
+              
+              // After adding, try to switch again
+              const chainId = getChainIdByName(newFromChain);
+              if (chainId) {
+                await switchChain({ chainId });
+                setFromChain(newFromChain);
+              }
+            }
+          } catch (addError) {
+            console.error('Failed to add network:', addError);
+          }
+        }
+        // The local state is already updated, so we don't need to revert it
+      }
+    }
+  };
+
+  // Updated function to handle network selection with auto-switch
+  const handleNetworkChange = async (newChain) => {
+    if (!isConnected) {
+      // If not connected, just update the local state
+      setFromChain(newChain);
+      return;
+    }
+
+    try {
+      // Get the chain ID for the new chain
+      const chainId = getChainIdByName(newChain);
+      
+      if (chainId) {
+        // Trigger wallet network switch
+        await switchChain({ chainId });
+        
+        // Update local state (will be confirmed by the useEffect above)
+        setFromChain(newChain);
+      }
+    } catch (error) {
+      console.error('Failed to switch network:', error);
+      
+      // Handle the case where the chain needs to be added to the wallet (Error 4902)
+      if ((error?.code === 4902 || error?.message?.includes('wallet_addEthereumChain')) && window.ethereum) {
+        try {
+          // Add Arc Testnet to the wallet
+          if (newChain === 'Arc Testnet') {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: NETWORKS.ARC_TESTNET.chainId,
+                chainName: NETWORKS.ARC_TESTNET.chainName,
+                nativeCurrency: NETWORKS.ARC_TESTNET.nativeCurrency,
+                rpcUrls: NETWORKS.ARC_TESTNET.rpcUrls,
+                blockExplorerUrls: NETWORKS.ARC_TESTNET.blockExplorerUrls,
+              }],
+            });
+            
+            // After adding, try to switch again
+            const chainId = getChainIdByName(newChain);
+            if (chainId) {
+              await switchChain({ chainId });
+              setFromChain(newChain);
+            }
+          } else if (newChain === 'Sepolia') {
+            // For Sepolia, just try to add it
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: NETWORKS.ETHEREUM_SEPOLIA.chainId,
+                chainName: NETWORKS.ETHEREUM_SEPOLIA.chainName,
+                nativeCurrency: NETWORKS.ETHEREUM_SEPOLIA.nativeCurrency,
+                rpcUrls: NETWORKS.ETHEREUM_SEPOLIA.rpcUrls,
+                blockExplorerUrls: NETWORKS.ETHEREUM_SEPOLIA.blockExplorerUrls,
+              }],
+            });
+            
+            // After adding, try to switch again
+            const chainId = getChainIdByName(newChain);
+            if (chainId) {
+              await switchChain({ chainId });
+              setFromChain(newChain);
+            }
+          }
+        } catch (addError) {
+          console.error('Failed to add network:', addError);
+        }
+      }
+      
+      // Even if switching fails, update the local state for UI consistency
+      setFromChain(newChain);
+    }
+  };
+
+  // New function to handle 'To' network changes with auto-switch
+  const handleToNetworkChange = async (newChain) => {
+    if (!isConnected) {
+      // If not connected, just update the local state
+      setToChain(newChain);
+      return;
+    }
+
+    try {
+      // Get the chain ID for the new chain
+      const chainId = getChainIdByName(newChain);
+      
+      if (chainId) {
+        // Trigger wallet network switch
+        await switchChain({ chainId });
+        
+        // Update local state (will be confirmed by the useEffect above)
+        setToChain(newChain);
+      }
+    } catch (error) {
+      console.error('Failed to switch network:', error);
+      
+      // Handle the case where the chain needs to be added to the wallet (Error 4902)
+      if ((error?.code === 4902 || error?.message?.includes('wallet_addEthereumChain')) && window.ethereum) {
+        try {
+          // Add Arc Testnet to the wallet
+          if (newChain === 'Arc Testnet') {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: NETWORKS.ARC_TESTNET.chainId,
+                chainName: NETWORKS.ARC_TESTNET.chainName,
+                nativeCurrency: NETWORKS.ARC_TESTNET.nativeCurrency,
+                rpcUrls: NETWORKS.ARC_TESTNET.rpcUrls,
+                blockExplorerUrls: NETWORKS.ARC_TESTNET.blockExplorerUrls,
+              }],
+            });
+            
+            // After adding, try to switch again
+            const chainId = getChainIdByName(newChain);
+            if (chainId) {
+              await switchChain({ chainId });
+              setToChain(newChain);
+            }
+          } else if (newChain === 'Sepolia') {
+            // For Sepolia, just try to add it
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: NETWORKS.ETHEREUM_SEPOLIA.chainId,
+                chainName: NETWORKS.ETHEREUM_SEPOLIA.chainName,
+                nativeCurrency: NETWORKS.ETHEREUM_SEPOLIA.nativeCurrency,
+                rpcUrls: NETWORKS.ETHEREUM_SEPOLIA.rpcUrls,
+                blockExplorerUrls: NETWORKS.ETHEREUM_SEPOLIA.blockExplorerUrls,
+              }],
+            });
+            
+            // After adding, try to switch again
+            const chainId = getChainIdByName(newChain);
+            if (chainId) {
+              await switchChain({ chainId });
+              setToChain(newChain);
+            }
+          }
+        } catch (addError) {
+          console.error('Failed to add network:', addError);
+        }
+      }
+      
+      // Even if switching fails, update the local state for UI consistency
+      setToChain(newChain);
+    }
   };
 
   const handleBridge = async () => {
@@ -129,15 +384,11 @@ const Bridge = () => {
                     <button
                       key={chain}
                       onClick={() => {
-                        if (chain !== exclude) {
-                          onSelect(chain);
-                          onClose();
-                        }
+                        onSelect(chain);
+                        onClose();
                       }}
-                      disabled={chain === exclude}
                       className={`w-full p-2 md:p-4 rounded-lg flex items-center justify-between transition-all duration-200
-                        ${chain === selectedChain ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}
-                        ${chain === exclude ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        ${chain === selectedChain ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                     >
                       <div className="flex items-center space-x-2 md:space-x-3">
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center">
@@ -172,18 +423,18 @@ const Bridge = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="max-w-lg mx-auto w-full">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card p-3 md:p-8"
+        className="card p-4 md:p-8"
       >
         <div className="flex items-center justify-between mb-4 md:mb-6">
-          <h2 className="text-xl font-bold">{t('Bridge Assets')}</h2>
+          <h2 className="text-xl md:text-2xl font-bold">{t('Bridge Assets')}</h2>
         </div>
       
         {/* Info Banner */}
-        <div className="mb-4 md:mb-6 p-2 md:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start space-x-2 md:space-x-3">
+        <div className="mb-4 md:mb-6 p-3 md:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start space-x-2 md:space-x-3">
           <Info className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={16} />
           <div className="text-[10px] md:text-sm text-blue-600 dark:text-blue-400">
             <p className="font-semibold mb-1">{t('Cross-Chain Bridging')}</p>
@@ -197,7 +448,7 @@ const Bridge = () => {
           <button
             ref={fromChainTriggerRef}
             onClick={() => setShowChainSelector('from')}
-            className="w-full p-2 md:p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
+            className="w-full p-3 md:p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
           >
             <div className="flex items-center space-x-2 md:space-x-3">
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center">
@@ -241,7 +492,7 @@ const Bridge = () => {
           <button
             ref={toChainTriggerRef}
             onClick={() => setShowChainSelector('to')}
-            className="w-full p-2 md:p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
+            className="w-full p-3 md:p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
           >
             <div className="flex items-center space-x-2 md:space-x-3">
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center">
@@ -271,7 +522,7 @@ const Bridge = () => {
         {/* Token Selection */}
         <div className="mb-3 md:mb-4">
           <label className="block text-sm font-medium mb-1 md:mb-2">{t('Asset')}</label>
-          <div className="p-2 md:p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
+          <div className="p-3 md:p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
             <div className="flex items-center justify-between gap-2 w-full">
               <div className="relative flex-1">
                 <input
@@ -321,7 +572,7 @@ const Bridge = () => {
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
-            className="mb-4 md:mb-6 p-2 md:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-1 md:space-y-2 text-xs md:text-sm"
+            className="mb-4 md:mb-6 p-3 md:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-1 md:space-y-2 text-xs md:text-sm"
           >
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">{t('Estimated Time')}</span>
@@ -354,7 +605,7 @@ const Bridge = () => {
         <button
           onClick={handleBridge}
           disabled={!amount || bridgeLoading || !isConnected || status === 'loading'}
-          className="w-full btn-primary py-3 md:py-5 text-lg md:text-xl font-bold flex items-center justify-center space-x-2 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-xl"
+          className="w-full btn-primary py-3 md:py-5 text-base md:text-xl font-bold flex items-center justify-center space-x-2 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-xl"
         >
           {bridgeLoading || status === 'loading' ? (
             <>
@@ -389,7 +640,7 @@ const Bridge = () => {
         isOpen={showChainSelector === 'from'}
         onClose={() => setShowChainSelector(null)}
         selectedChain={fromChain}
-        onSelect={setFromChain}
+        onSelect={handleNetworkChange}
         exclude={toChain}
         triggerRef={showChainSelector === 'from' ? fromChainTriggerRef : toChainTriggerRef}
       />
@@ -397,7 +648,7 @@ const Bridge = () => {
         isOpen={showChainSelector === 'to'}
         onClose={() => setShowChainSelector(null)}
         selectedChain={toChain}
-        onSelect={setToChain}
+        onSelect={handleToNetworkChange}
         exclude={fromChain}
         triggerRef={showChainSelector === 'to' ? toChainTriggerRef : fromChainTriggerRef}
       />

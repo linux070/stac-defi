@@ -2,7 +2,7 @@
 
 export const NETWORKS = {
   ARC_TESTNET: {
-    chainId: '0xCF4B1', // 848689 in decimal - Arc Testnet
+    chainId: '0x4D2B12', // 5042002 in decimal - Arc Testnet
     chainName: 'Arc Testnet',
     nativeCurrency: {
       name: 'ETH',

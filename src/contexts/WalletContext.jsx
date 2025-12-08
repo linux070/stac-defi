@@ -103,7 +103,7 @@ export const WalletProvider = ({ children }) => {
 
   const value = {
     walletAddress: address || '',
-    chainId: wagmiChainId ? '0x' + wagmiChainId.toString(16) : null,
+    chainId: wagmiChainId ? (typeof wagmiChainId === 'number' ? '0x' + wagmiChainId.toString(16) : wagmiChainId) : null,
     provider: publicClient,
     signer: walletClient,
     balance: balanceData ? ethers.formatEther(balanceData.value) : '0',
@@ -115,7 +115,7 @@ export const WalletProvider = ({ children }) => {
     switchToNetwork,
     sendTransaction,
     isConnected,
-    isNetworkSupported: wagmiChainId ? isNetworkSupported('0x' + wagmiChainId.toString(16)) : false,
+    isNetworkSupported: wagmiChainId ? isNetworkSupported(typeof wagmiChainId === 'number' ? '0x' + wagmiChainId.toString(16) : wagmiChainId) : false,
   };
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

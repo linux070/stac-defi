@@ -12,54 +12,33 @@ import { Analytics } from '@vercel/analytics/react';
 function App() {
   const [activeTab, setActiveTab] = useState('home');
 
-  const renderPage = () => {
-    try {
-      switch (activeTab) {
-        case 'home':
-          return <Home setActiveTab={setActiveTab} />;
-        case 'swap':
-          return <Swap />;
-        case 'bridge':
-          return <Bridge />;
-        case 'liquidity':
-          return <Liquidity />;
-        case 'activity':
-          return <Transactions />;
-        default:
-          return <Home setActiveTab={setActiveTab} />;
-      }
-    } catch (error) {
-      console.error('Error rendering page:', error);
-      return (
-        <div className="p-4 text-center text-red-500">
-          <h2>Error Loading Page</h2>
-          <p>{error.message}</p>
-        </div>
-      );
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return <Home setActiveTab={setActiveTab} />;
+      case 'swap':
+        return <Swap />;
+      case 'bridge':
+        return <Bridge />;
+      case 'liquidity':
+        return <Liquidity />;
+      case 'activity':
+        return <Transactions />;
+      default:
+        return <Home setActiveTab={setActiveTab} />;
     }
   };
 
-  try {
-    return (
-      <ThemeProvider>
-        <WalletProvider>
-          <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-            {renderPage()}
-          </Layout>
-          <Analytics />
-        </WalletProvider>
-      </ThemeProvider>
-    );
-  } catch (error) {
-    console.error('Error rendering App:', error);
-    return (
-      <div className="p-4 text-center text-red-500">
-        <h1>Application Error</h1>
-        <p>{error.message}</p>
-        <p>Please check the console for more details.</p>
-      </div>
-    );
-  }
+  return (
+    <ThemeProvider>
+      <WalletProvider>
+        <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+          {renderTabContent()}
+        </Layout>
+        <Analytics />
+      </WalletProvider>
+    </ThemeProvider>
+  );
 }
 
 export default App;

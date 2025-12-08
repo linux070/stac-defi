@@ -80,6 +80,11 @@
   .token-selector-description {
     @apply text-xs text-gray-500 dark:text-gray-400 truncate;
   }
+  
+  /* Switch button for bridge/swap */
+  .switch-button {
+    @apply p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group;
+  }
 }
 
 @layer utilities {
@@ -105,6 +110,12 @@
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 500ms;
   }
+  
+  /* Utility for better mobile touch targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 /* Media queries for responsive design */
@@ -124,6 +135,14 @@
   .token-icon {
     @apply w-8 h-8;
   }
+  
+  .card {
+    padding: 1rem;
+  }
+  
+  .switch-button {
+    @apply p-3;
+  }
 }
 
 @media (max-width: 480px) {
@@ -141,6 +160,61 @@
   
   .token-icon {
     @apply w-6 h-6 text-sm;
+  }
+  
+  .card {
+    padding: 0.75rem;
+  }
+  
+  .switch-button {
+    @apply p-2;
+  }
+  
+  /* Reduce padding on mobile for better fit */
+  .p-4 {
+    padding: 1rem;
+  }
+  
+  .p-6 {
+    padding: 1.25rem;
+  }
+  
+  .p-8 {
+    padding: 1.5rem;
+  }
+}
+
+/* Page transition animations */
+.page-transition {
+  animation-duration: 0.3s;
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: fadeIn;
+}
+
+.slide-in {
+  animation-name: slideIn;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
@@ -160,4 +234,11 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-dark-500 dark:bg-dark-600;
+}
+
+/* Ensure proper viewport settings for mobile */
+@viewport {
+  width: device-width;
+  initial-scale: 1;
+  user-zoom: fixed;
 }

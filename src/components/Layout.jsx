@@ -26,7 +26,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
     { id: 'activity', label: t('Activity'), icon: Clock },
   ];
 
-return (
+  return (
     <div className="min-h-screen flex flex-col">
       {/* Transparent Header Container */}
       <header className="fixed top-4 left-0 right-0 z-50 bg-transparent">
@@ -146,7 +146,7 @@ return (
                   }`}
               >
                 <Icon size={20} className="mb-1" />
-                <span>{item.label}</span>
+                <span className="text-[10px]">{item.label}</span>
               </button>
             );
           })}
@@ -198,7 +198,7 @@ return (
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-blue-900/20 dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-48 md:pt-32 pb-16 md:pb-0 overflow-visible">
+      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-blue-900/20 dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-48 md:pt-32 pb-24 md:pb-12 overflow-visible flex-grow">
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}
@@ -225,7 +225,7 @@ return (
             
             {/* Center Section - Copyright and Attribution */}
             <div className="text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
                 © {new Date().getFullYear()} Stac. All rights reserved. · 
                 Built by : <a 
                   href="https://x.com/linux_mode" 

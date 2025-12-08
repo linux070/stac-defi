@@ -379,10 +379,8 @@ const Swap = () => {
                           onClose();
                         }
                       }}
-                      disabled={token.symbol === exclude}
                       className={`px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-200
-                        ${token.symbol === selectedToken ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}
-                        ${token.symbol === exclude ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        ${token.symbol === selectedToken ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
                     >
                       {token.symbol === 'USDC' ? (
                         <img 
@@ -422,10 +420,8 @@ const Swap = () => {
                           onClose();
                         }
                       }}
-                      disabled={token.symbol === exclude}
                       className={`w-full p-4 rounded-lg flex items-center justify-between transition-all duration-200
-                        ${token.symbol === selectedToken ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}
-                        ${token.symbol === exclude ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        ${token.symbol === selectedToken ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                     >
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
@@ -479,16 +475,16 @@ const Swap = () => {
   };
   
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="max-w-lg mx-auto w-full">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card"
+        className="card p-4 md:p-8"
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
-            <h2 className="text-xl font-bold mb-1">{t('Swap Tokens')}</h2>
+            <h2 className="text-xl md:text-2xl font-bold mb-1">{t('Swap Tokens')}</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">{t('swap.tradeTokensTitle')}</p>
           </div>
           <div className="flex items-center space-x-2">
@@ -496,7 +492,7 @@ const Swap = () => {
               href="https://faucet.circle.com/" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="px-3 py-2 text-sm border-2 border-blue-400 text-blue-500 dark:text-blue-400 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center space-x-1"
+              className="px-3 py-2 text-xs md:text-sm border-2 border-blue-400 text-blue-500 dark:text-blue-400 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center space-x-1"
             >
               <span>Faucet</span>
             </a>
@@ -517,7 +513,7 @@ const Swap = () => {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="mb-6"
+              className="mb-4 md:mb-6"
             >
               <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-6">
                 {/* Slippage Tolerance */}
@@ -551,35 +547,35 @@ const Swap = () => {
                   value={fromAmount}
                   onChange={(e) => setFromAmount(sanitizeInput(e.target.value))}
                   placeholder="0.0"
-                  className="text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16"
+                  className="text-2xl md:text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16"
                 />
               </div>
               <button
                 ref={fromTokenTriggerRef}
                 onClick={() => setShowFromSelector(true)}
-                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[120px] w-auto flex-shrink-0"
+                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[100px] md:min-w-[120px] w-auto flex-shrink-0"
               >
-                <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl md:text-2xl">
                   {fromToken === 'USDC' ? (
                     <img 
                       src="/icons/usdc.png" 
                       alt={fromToken} 
-                      className="w-10 h-10 rounded-full object-contain"
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                     />
                   ) : fromToken === 'EURC' ? (
                     <img 
                       src="/icons/eurc.png" 
                       alt={fromToken} 
-                      className="w-10 h-10 rounded-full object-contain"
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                     />
                   ) : (
-                    <span className="text-xl">
+                    <span className="text-lg md:text-xl">
                       {fromToken}
                     </span>
                   )}
                 </div>
                 <div className="text-left min-w-0">
-                  <p className="font-bold text-base truncate">{fromToken}</p>
+                  <p className="font-bold text-sm md:text-base truncate">{fromToken}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{TOKENS[fromToken].name}</p>
                 </div>
                 <ChevronDown size={16} />
@@ -609,18 +605,18 @@ const Swap = () => {
         </div>
 
         {/* Switch Button */}
-        <div className="flex justify-center my-6 relative z-10">
+        <div className="flex justify-center my-4 md:my-6 relative z-10">
           <button
             onClick={handleSwitch}
-            className="switch-button p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group"
-            title={t('switchTokens')}
+            className="switch-button p-3 md:p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group"
+            title={t('Switch Tokens')}
           >
-            <ArrowDownUp size={24} className="group-hover:rotate-180 transition-transform duration-300" />
+            <ArrowDownUp size={20} className="group-hover:rotate-180 transition-transform duration-300" />
           </button>
         </div>
 
         {/* To Token */}
-        <div className="mb-6">
+        <div className="mb-4 md:mb-6">
           <label className="block text-sm font-medium mb-2">{t('To')}</label>
           <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
             <div className="flex items-center justify-between gap-2 w-full">
@@ -630,35 +626,35 @@ const Swap = () => {
                   value={toAmount}
                   readOnly
                   placeholder="0.0"
-                  className="text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16"
+                  className="text-2xl md:text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16"
                 />
               </div>
               <button
                 ref={toTokenTriggerRef}
                 onClick={() => setShowToSelector(true)}
-                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[120px] w-auto flex-shrink-0"
+                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[100px] md:min-w-[120px] w-auto flex-shrink-0"
               >
-                <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl md:text-2xl">
                   {toToken === 'USDC' ? (
                     <img 
                       src="/icons/usdc.png" 
                       alt={toToken} 
-                      className="w-10 h-10 rounded-full object-contain"
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                     />
                   ) : toToken === 'EURC' ? (
                     <img 
                       src="/icons/eurc.png" 
                       alt={toToken} 
-                      className="w-10 h-10 rounded-full object-contain"
-                  />
-                ) : (
-                  <span className="text-xl">
-                    {toToken}
-                  </span>
-                )}
-              </div>
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-lg md:text-xl">
+                      {toToken}
+                    </span>
+                  )}
+                </div>
                 <div className="text-left min-w-0">
-                  <p className="font-bold text-base truncate">{toToken}</p>
+                  <p className="font-bold text-sm md:text-base truncate">{toToken}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{TOKENS[toToken].name}</p>
                 </div>
                 <ChevronDown size={16} />
@@ -688,9 +684,9 @@ const Swap = () => {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="mb-6"
+              className="mb-4 md:mb-6"
             >
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-3 text-sm">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-3 text-xs md:text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">{t('Expected Output')}</span>
                   <span className="font-semibold">{swapQuote.expectedOutput} {toToken}</span>
@@ -733,23 +729,23 @@ const Swap = () => {
         <button
           onClick={handleSwap}
           disabled={!fromAmount || !toAmount || swapLoading || !isConnected}
-          className="w-full btn-primary py-5 text-xl font-bold flex items-center justify-center space-x-2 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-xl"
+          className="w-full btn-primary py-4 md:py-5 text-base md:text-xl font-bold flex items-center justify-center space-x-2 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-xl"
         >
           {swapLoading ? (
             <>
-              <Loader className="animate-spin" size={24} />
-              <span>{t('processing')}...</span>
+              <Loader className="animate-spin" size={20} />
+              <span className="text-sm md:text-base">{t('processing')}...</span>
             </>
           ) : !isConnected ? (
             <>
-              <Wallet size={24} />
-              <span>{t('connectWallet')}</span>
+              <Wallet size={20} />
+              <span className="text-sm md:text-base">{t('connectWallet')}</span>
             </>
           ) : !fromAmount || !toAmount ? (
-            <span>{t('Swap')}</span>
+            <span className="text-sm md:text-base">{t('Swap')}</span>
           ) : (
             <>
-              <span> {t('swap')}</span>
+              <span className="text-sm md:text-base"> {t('swap')}</span>
             </>
           )}
         </button>
