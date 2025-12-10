@@ -70,7 +70,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
         {/* Desktop Header - Floating Island */}
         <div className="hidden md:block md:fixed md:top-4 md:left-0 md:right-0 md:flex md:justify-center">
-          <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2 mx-auto w-fit max-w-full">
+          <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-6 py-3 mx-auto w-fit max-w-full md:min-w-[700px] md:max-w-6xl">
             {/* Logo - Standalone logo without text */}
             <a href="/" className="flex items-center pl-8 cursor-pointer">
               <img 
@@ -81,7 +81,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             </a>
 
             {/* Desktop Navigation */}
-            <nav className="flex items-center space-x-1">
+            <nav className="flex items-center gap-4 md:gap-6 ml-6">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
