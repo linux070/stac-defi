@@ -13,8 +13,10 @@
   "dependencies": {
     "@circle-fin/adapter-viem-v2": "^1.1.1",
     "@circle-fin/bridge-kit": "^1.1.2",
-    "@rainbow-me/rainbowkit": "^2.2.9",
-    "@tanstack/react-query": "^5.90.10",
+    "@rainbow-me/rainbowkit": "^2.2.0",
+    "@tanstack/react-query": "^5.60.0",
+    "@reown/appkit": "^1.6.0",
+    "@reown/appkit-adapter-wagmi": "^1.6.0",
     "@vercel/analytics": "^1.6.1",
     "core-js": "^3.47.0",
     "create-bridge-kit": "^1.0.3",
@@ -28,8 +30,9 @@
     "react-dom": "^18.3.1",
     "react-i18next": "^16.4.0",
     "recharts": "^2.12.0",
-    "viem": "^2.41.2",
-    "wagmi": "^2.19.5"
+    "viem": "2.21.0",
+    "wagmi": "2.12.0"
+
   },
   "devDependencies": {
     "@types/react": "^18.3.0",
