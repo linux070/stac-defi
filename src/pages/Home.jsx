@@ -222,9 +222,8 @@ const Home = ({ setActiveTab }) => {
       >
         <div className="mb-6">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Network Statistics')}</h2>
-          <p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">{t('Real-time metrics updated automatically')}</p>
+          <p p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">{t('Real-time metrics updated automatically')}</p>
         </div>
-        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {statCards.map((stat, index) => {
             const TrendIcon = stat.trend === 'up' ? ArrowUpRight : stat.trend === 'down' ? ArrowDownRight : null;
@@ -273,7 +272,7 @@ const Home = ({ setActiveTab }) => {
       >
         <div className="mb-6">
         <h2 className="text-xl md:text-2xl lg:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Quick Actions')}</h2>
-          <p className="text-xs md:text-sm text-gray-500 mt-1">
+          <p p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">
             {t('Everything you need to manage your assets on Arc')}
           </p>
         </div>
