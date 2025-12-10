@@ -35,11 +35,11 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         <div className="md:hidden fixed top-4 left-0 right-0 mx-auto w-[95%] mb-4">
           <div className="flex items-center justify-between rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2">
             {/* Logo - Standalone logo without text */}
-            <a href="/" className="flex items-center ml-1 cursor-pointer hover:opacity-80 transition-opacity">
+            <a href="/" className="flex items-center pl-8 cursor-pointer">
               <img 
-                src="/icons/stac.png" 
+                src="/stac.jpg" 
                 alt="Stac Logo" 
-                className="h-9 w-9 object-contain dark:brightness-0 dark:invert"
+                className="w-10 h-10 rounded-xl object-contain hover:opacity-90 transition"
               />
             </a>
 
@@ -72,11 +72,11 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         <div className="hidden md:block md:fixed md:top-4 md:left-0 md:right-0 md:flex md:justify-center">
           <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2 mx-auto w-fit max-w-full">
             {/* Logo - Standalone logo without text */}
-            <a href="/" className="flex items-center ml-2 mr-6 cursor-pointer hover:opacity-80 transition-opacity">
+            <a href="/" className="flex items-center pl-8 cursor-pointer">
               <img 
-                src="/icons/stac.png" 
+                src="/stac.jpg" 
                 alt="Stac Logo" 
-                className="h-11 w-11 object-contain dark:brightness-0 dark:invert"
+                className="w-10 h-10 rounded-xl object-contain hover:opacity-90 transition"
               />
             </a>
 
