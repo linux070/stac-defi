@@ -89,14 +89,14 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                     key={item.id}
                     data-nav={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center nav-link
+                    className={`px-3 py-2 rounded-full text-sm font-semibold transition-all duration-200 flex items-center nav-link
                       ${activeTab === item.id
                         ? 'bg-blue-100/50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                        : 'text-gray-600 hover:bg-gray-100/50 dark:text-gray-300 dark:hover:bg-gray-700/50'
+                        : 'text-gray-700 hover:bg-gray-100/50 dark:text-gray-200 dark:hover:bg-gray-700/50'
                       }`}
                   >
                     <Icon size={16} className="mr-2" />
-                    <span>{item.label}</span>
+                    <span className="font-semibold">{item.label}</span>
                   </button>
                 );
               })}
@@ -139,14 +139,14 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                 key={item.id}
                 data-nav={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`py-3 px-0 text-xs font-medium transition-all duration-200 flex flex-col items-center justify-center nav-link
+                className={`py-3 px-0 text-xs font-semibold transition-all duration-200 flex flex-col items-center justify-center nav-link
                   ${activeTab === item.id
                     ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-gray-500 dark:text-gray-400'
+                    : 'text-gray-700 dark:text-gray-200'
                   }`}
               >
                 <Icon size={20} className="mb-1" />
-                <span className="text-[10px]">{item.label}</span>
+                <span className="text-[10px] font-semibold">{item.label}</span>
               </button>
             );
           })}
@@ -180,14 +180,14 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                         setActiveTab(item.id);
                         setSidebarOpen(false);
                       }}
-                      className={`w-full px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-3
+                      className={`w-full px-4 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center space-x-3
                         ${activeTab === item.id
                           ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg'
-                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700'
+                          : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-gray-700'
                         }`}
                     >
                       <Icon size={20} />
-                      <span>{item.label}</span>
+                      <span className="font-semibold">{item.label}</span>
                     </button>
                   );
                 })}
