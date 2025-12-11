@@ -306,24 +306,22 @@ const Bridge = () => {
     }
   };
 
-  const handleBridge = async () => {
-    if (!isConnected) {
-      alert('Please connect your wallet first');
-      return;
-    }
-
-    if (!amount || parseFloat(amount) <= 0) {
-      alert('Please enter a valid amount');
-      return;
-    }
-
-    setBridgeLoading(true);
-    // Call the bridgeUSDC function from the hook with the specified amount
-    await bridgeUSDC(amount);
-    setBridgeLoading(false);
-    // alert('Transaction submitted' + '\nEstimated arrival: 2-5 minutes');
-    setAmount('');
-  };
+const handleBridge = async () => {
+  if (!isConnected) {
+    alert('Please connect your wallet first');
+    return;
+  }
+  if (!amount || parseFloat(amount) <= 0) {
+    alert('Please enter a valid amount');
+    return;
+  }
+  setBridgeLoading(true);
+  
+// Pass the chain state variables (fromChain, toChain)
+  await bridgeUSDC(amount, fromChain, toChain); 
+  setBridgeLoading(false);
+  setAmount(''); 
+};
 
   const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude, triggerRef }) => {
     const selectorRef = useRef(null);

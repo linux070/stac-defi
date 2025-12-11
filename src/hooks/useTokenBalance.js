@@ -1,91 +1,64 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ethers } from 'ethers';
-import { useWallet } from '../contexts/WalletContext';
-import { TOKENS } from '../config/networks';
+import { useAccount, useBalance, useChainId } from 'wagmi';
+import { NETWORKS } from '../config/networks';
 
-// ERC-20 ABI for balance and allowance
-const ERC20_ABI = [
-  'function balanceOf(address owner) view returns (uint256)',
-  'function decimals() view returns (uint8)',
-  'function symbol() view returns (string)',
-  'function allowance(address owner, address spender) view returns (uint256)',
-  'function approve(address spender, uint256 amount) returns (bool)',
-];
+// Official Circle USDC Contract on Sepolia Testnet
+const USDC_SEPOLIA_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
 
-export const useTokenBalance = (tokenSymbol) => {
-  const { provider, walletAddress, chainId } = useWallet();
-  const [balance, setBalance] = useState('0');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+const useTokenBalance = (tokenSymbol) => {
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId(); // Returns a number (e.g. 11155111)
 
-  const fetchBalance = useCallback(async () => {
-    if (!provider || !walletAddress || !chainId) {
-      setBalance('0');
-      return;
-    }
+  // Safety check: return early if not connected or chainId is not available
+  if (!isConnected || !chainId || !NETWORKS) {
+    return {
+      balance: '0.00',
+      symbol: tokenSymbol,
+      loading: false,
+      refetch: () => {}
+    };
+  }
 
-    setLoading(true);
-    setError(null);
+  // Parse Chain IDs from our config (which are in Hex strings) to Numbers
+  // Safety check: ensure NETWORKS properties exist before accessing chainId
+  const ARC_CHAIN_ID = NETWORKS.ARC_TESTNET ? parseInt(NETWORKS.ARC_TESTNET.chainId, 16) : null;
+  const SEPOLIA_CHAIN_ID = NETWORKS.ETHEREUM_SEPOLIA ? parseInt(NETWORKS.ETHEREUM_SEPOLIA.chainId, 16) : null;
 
-    try {
-      const token = TOKENS[tokenSymbol];
-      
-      if (!token) {
-        throw new Error(`Unknown token: ${tokenSymbol}`);
-      }
+  // Safety check: ensure chain IDs are valid
+  if (!ARC_CHAIN_ID || !SEPOLIA_CHAIN_ID) {
+    return {
+      balance: '0.00',
+      symbol: tokenSymbol,
+      loading: false,
+      refetch: () => {}
+    };
+  }
 
-      // Handle native ETH
-      if (token.address === '0x0000000000000000000000000000000000000000') {
-        const bal = await provider.getBalance(walletAddress);
-        setBalance(ethers.formatEther(bal));
-      } else {
-        // Handle ERC-20 tokens
-        const tokenAddress = typeof token.address === 'object' 
-          ? token.address[chainId] 
-          : token.address;
+  // LOGIC: Determine how to fetch the balance based on the network
+  // -------------------------------------------------------------
+  let fetchConfig = {
+    address: address,
+  };
 
-        if (!tokenAddress || tokenAddress === '0x') {
-          console.warn(`Token ${tokenSymbol} not available on this network`);
-          setBalance('0');
-          return;
-        }
+  if (chainId === ARC_CHAIN_ID) {
+    // 1. ON ARC: USDC is the "Native Token" (like ETH on Ethereum).
+    // We do NOT pass a token address. We just ask for the native balance.
+    // fetchConfig stays as { address }
+  } 
+  else if (chainId === SEPOLIA_CHAIN_ID && tokenSymbol === 'USDC') {
+    // 2. ON SEPOLIA: USDC is an ERC-20 Token.
+    // We MUST pass the specific contract address to find the balance.
+    fetchConfig.token = USDC_SEPOLIA_ADDRESS;
+  }
 
-        const tokenContract = new ethers.Contract(
-          tokenAddress,
-          ERC20_ABI,
-          provider
-        );
+  // Wagmi hook that fetches the data
+  const { data, isLoading, refetch } = useBalance(fetchConfig);
 
-        const bal = await tokenContract.balanceOf(walletAddress);
-        const decimals = token.decimals || 18;
-        setBalance(ethers.formatUnits(bal, decimals));
-      }
-    } catch (err) {
-      console.error('Error fetching token balance:', err);
-      setError(err.message);
-      setBalance('0');
-    } finally {
-      setLoading(false);
-    }
-  }, [provider, walletAddress, chainId, tokenSymbol]);
-
-  // Fetch balance on mount and when dependencies change
-  useEffect(() => {
-    fetchBalance();
-  }, [fetchBalance]);
-
-  // Refresh balance every 15 seconds
-  useEffect(() => {
-    if (!provider || !walletAddress) return;
-
-    const interval = setInterval(() => {
-      fetchBalance();
-    }, 15000);
-
-    return () => clearInterval(interval);
-  }, [provider, walletAddress, fetchBalance]);
-
-  return { balance, loading, error, refetch: fetchBalance };
+  return {
+    balance: data?.formatted || '0.00', // Returns string like "10.50"
+    symbol: data?.symbol,
+    loading: isLoading,
+    refetch
+  };
 };
 
 export default useTokenBalance;
