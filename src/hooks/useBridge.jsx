@@ -471,16 +471,28 @@ export function useBridge() {
       let errorMessage = err.message || 'Bridge transaction failed';
       
       if (err.message && err.message.includes('Insufficient funds')) {
-        const tokenInfo = SEPOLIA_TOKENS[token];
-        errorMessage = `❌ Wrong ${token} Contract Address!\n\n` +
-          `Bridge Kit requires ${token} at:\n` +
-          `📌 ${tokenInfo.contractAddress}\n\n` +
-          `⚠️ Your ${token} is at a different contract address\n\n` +
-          `💡 Solution:\n` +
-          `1. Get ${token} from the official Circle/Bridge Kit contract\n` +
-          `2. Or swap your current ${token} to the correct contract\n` +
-          `3. Use Sepolia ${token} Faucet that provides the correct contract\n\n` +
-          `Your current ${token} contract won't work with Bridge Kit.`;
+        // Determine which chain the error occurred on based on direction
+        const isSepoliaToArc = direction === 'sepolia-to-arc';
+        const sourceChainId = isSepoliaToArc ? SEPOLIA_CHAIN_ID : ARC_CHAIN_ID;
+        const sourceChainName = isSepoliaToArc ? 'Sepolia' : 'Arc Testnet';
+        
+        // Get the correct token info based on the source chain
+        const chainTokens = CHAIN_TOKENS[sourceChainId];
+        const tokenInfo = chainTokens ? chainTokens[token] : null;
+        
+        if (tokenInfo) {
+          errorMessage = `❌ Wrong ${token} Contract Address!\n\n` +
+            `Bridge Kit requires ${token} on ${sourceChainName} at:\n` +
+            `📌 ${tokenInfo.contractAddress}\n\n` +
+            `⚠️ Your ${token} is at a different contract address\n\n` +
+            `💡 Solution:\n` +
+            `1. Get ${token} from the official Circle/Bridge Kit contract\n` +
+            `2. Or swap your current ${token} to the correct contract\n` +
+            `3. Use ${sourceChainName} ${token} Faucet that provides the correct contract\n\n` +
+            `Your current ${token} contract won't work with Bridge Kit.`;
+        } else {
+          errorMessage = `Insufficient funds: Not enough ${token} balance on ${sourceChainName} to complete the bridge.`;
+        }
       }
       
       // Handle user rejection/cancellation

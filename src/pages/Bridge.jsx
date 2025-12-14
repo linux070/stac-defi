@@ -35,6 +35,12 @@ const Bridge = () => {
   // REMOVED - using bridge kit instead
   // const { balances } = useMultiChainBalances(address, isConnected);
 
+  const formatWholeAmount = (value) => {
+    const n = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(n)) return '0';
+    return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(Math.round(n));
+  };
+
   // Refs for trigger buttons
   const fromChainTriggerRef = useRef(null);
   const toChainTriggerRef = useRef(null);
@@ -112,6 +118,8 @@ const Bridge = () => {
   }, [state.step, reset]);
 
   // Effect to sync the Bridge networks with the global wallet network and fetch balance
+  // Note: We only include chainId and isConnected as dependencies to avoid loops
+  // when fromChain/toChain are updated inside this effect
   useEffect(() => {
     if (!chainId) return;
     
@@ -123,18 +131,34 @@ const Bridge = () => {
       
       if (chainIdDecimal === arcChainId) {
         // If wallet is on Arc Testnet, set it as the 'from' chain
-        setFromChain('Arc Testnet');
-        // Ensure 'to' chain is different
-        if (toChain === 'Arc Testnet') {
-          setToChain('Sepolia');
-        }
+        setFromChain(prevFromChain => {
+          if (prevFromChain !== 'Arc Testnet') {
+            return 'Arc Testnet';
+          }
+          return prevFromChain;
+        });
+        // Ensure 'to' chain is different (only if currently the same)
+        setToChain(prevToChain => {
+          if (prevToChain === 'Arc Testnet') {
+            return 'Sepolia';
+          }
+          return prevToChain;
+        });
       } else if (chainIdDecimal === sepoliaChainId) {
         // If wallet is on Sepolia, set it as the 'from' chain
-        setFromChain('Sepolia');
-        // Ensure 'to' chain is different
-        if (toChain === 'Sepolia') {
-          setToChain('Arc Testnet');
-        }
+        setFromChain(prevFromChain => {
+          if (prevFromChain !== 'Sepolia') {
+            return 'Sepolia';
+          }
+          return prevFromChain;
+        });
+        // Ensure 'to' chain is different (only if currently the same)
+        setToChain(prevToChain => {
+          if (prevToChain === 'Sepolia') {
+            return 'Arc Testnet';
+          }
+          return prevToChain;
+        });
       }
       
       // Fetch balance when chain changes
@@ -144,7 +168,7 @@ const Bridge = () => {
     } catch (error) {
       console.error('Error processing chainId:', error);
     }
-  }, [chainId, toChain, isConnected, fetchTokenBalance, fromChain]);
+  }, [chainId, isConnected, fetchTokenBalance]);
 
   // Effect to refresh balances after successful bridge transaction
   useEffect(() => {
@@ -410,7 +434,12 @@ const Bridge = () => {
       // Handle the result
       if (result.step === 'success') {
         setBridgeButtonText('Bridge Completed');
+        // Note: Keep the modal open to show success state with transaction details
+        // The modal will show the completed state via the state prop
+        // User can close it manually using the close button
       } else if (result.step === 'error') {
+        // Close the bridging modal before showing the error modal
+        setShowBridgingModal(false);
         throw new Error(result.error);
       }
     } catch (error) {
@@ -774,7 +803,7 @@ const Bridge = () => {
               </div>
             </div>
             {isConnected && (
-              <div className="flex items-center justify-end mt-2">
+              <div className="flex items-center justify-start mt-2">
                 <div className="flex items-center space-x-2">
                   <span className="text-xs text-gray-500 dark:text-gray-400">Bal:</span>
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -783,7 +812,7 @@ const Bridge = () => {
                     ) : balanceError ? (
                       <span className="text-red-500">Error</span>
                     ) : (
-                      `${tokenBalance || '0.00'} USDC`
+                      formatWholeAmount(tokenBalance || 0)
                     )}
                   </span>
                   <button 
@@ -842,15 +871,15 @@ const Bridge = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">{t('Bridge Fee')}</span>
-                <span className="font-semibold">0.1% ({(parseFloat(amount) * 0.001).toFixed(4)} USDC)</span>
+                <span className="font-semibold">0.1% ({formatWholeAmount(parseFloat(amount) * 0.001 || 0)})</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">{t('Gas Fee')}</span>
-                <span className="font-semibold">~$0.50 USDC</span>
+                <span className="font-semibold">~${formatWholeAmount(0.5)}</span>
               </div>
               <div className="flex justify-between pt-2 border-t border-gray-300 dark:border-gray-600">
                 <span className="text-gray-600 dark:text-gray-400">{t('You Will Receive')}</span>
-                <span className="font-bold">{(parseFloat(amount) * 0.999).toFixed(4)} USDC</span>
+                <span className="font-bold">{formatWholeAmount(parseFloat(amount) * 0.999 || 0)}</span>
               </div>
             </motion.div>
           )}
