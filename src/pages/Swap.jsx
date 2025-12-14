@@ -288,7 +288,7 @@ const Swap = () => {
     );
   };
 
-  const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, triggerRef }) => {
+  const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, triggerRef, tokenList, fromToken, toToken, fromBalance, toBalance }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const selectorRef = useRef(null);
     
@@ -314,7 +314,7 @@ const Swap = () => {
     // Handle ESC key press to close modal
     useEffect(() => {
       const handleEsc = (event) => {
-        if (event.keyCode === 27) {
+        if (event && event.key === 'Escape') {
           onClose();
         }
       };
@@ -766,6 +766,11 @@ const Swap = () => {
         onSelect={setFromToken}
         exclude={toToken}
         triggerRef={fromTokenTriggerRef}
+        tokenList={tokenList}
+        fromToken={fromToken}
+        toToken={toToken}
+        fromBalance={fromBalance}
+        toBalance={toBalance}
       />
       <TokenSelector
         isOpen={showToSelector}
@@ -774,6 +779,11 @@ const Swap = () => {
         onSelect={setToToken}
         exclude={fromToken}
         triggerRef={toTokenTriggerRef}
+        tokenList={tokenList}
+        fromToken={fromToken}
+        toToken={toToken}
+        fromBalance={fromBalance}
+        toBalance={toBalance}
       />
 
       {/* Toast Notifications */}

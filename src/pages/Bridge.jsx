@@ -2,37 +2,46 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
 import { useSwitchChain } from 'wagmi';
-import { ArrowLeftRight, ChevronDown, Loader, AlertCircle, Info, Wallet, X } from 'lucide-react';
+import { ArrowLeftRight, ChevronDown, Loader, AlertCircle, Info, Wallet, X, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
 import { sanitizeInput } from '../utils/blockchain';
-import useTokenBalance from '../hooks/useTokenBalance';
-import useBridge from '../hooks/useBridge';
+import { useBridge } from '../hooks/useBridge';
+import BridgingModal from '../components/BridgingModal';
+import BridgeFailedModal from '../components/BridgeFailedModal';
 
 const Bridge = () => {
   const { t } = useTranslation();
-  const { isConnected, chainId } = useWallet();
-  const { switchChain } = useSwitchChain(); // Add this hook
+  const { isConnected, address, chainId } = useWallet();
+  const { switchChain } = useSwitchChain();
   const [fromChain, setFromChain] = useState('Sepolia');
   const [toChain, setToChain] = useState('Arc Testnet');
   const [amount, setAmount] = useState('');
   const [bridgeLoading, setBridgeLoading] = useState(false);
   const [showChainSelector, setShowChainSelector] = useState(null);
+  const [showBridgingModal, setShowBridgingModal] = useState(false);
+  const [showBridgeFailedModal, setShowBridgeFailedModal] = useState(false);
+  const [bridgeStartTime, setBridgeStartTime] = useState(null);
+  const [showBridgeDetails, setShowBridgeDetails] = useState(false);
+  const [bridgeError, setBridgeError] = useState({ title: 'Error Details', message: '' });
+  const [bridgeButtonText, setBridgeButtonText] = useState('Bridge');
   
   // Initialize the useBridge hook
-  const { bridgeUSDC, status, logs } = useBridge();
+  const { bridge, state, reset, fetchTokenBalance, tokenBalance, isLoadingBalance, balanceError } = useBridge();
   
-  // Real-time token balance for USDC
-  const { balance, loading, refetch } = useTokenBalance('USDC');
+  // Real-time token balance for USDC - now using bridge kit
+  // const { balance, loading, refetch, error } = useTokenBalance('USDC'); // OLD IMPLEMENTATION
+  
+  // REMOVED - using bridge kit instead
+  // const { balances } = useMultiChainBalances(address, isConnected);
 
   // Refs for trigger buttons
   const fromChainTriggerRef = useRef(null);
   const toChainTriggerRef = useRef(null);
   
-  
   // Effect to handle body overflow when modals are open
   useEffect(() => {
-    const isModalOpen = showChainSelector;
+    const isModalOpen = showChainSelector || showBridgingModal || showBridgeFailedModal;
     if (isModalOpen) {
       // Prevent background scrolling when modal is open
       document.body.style.overflow = 'hidden';
@@ -45,9 +54,112 @@ const Bridge = () => {
     return () => {
       document.body.style.overflow = 'visible';
     };
-  }, [showChainSelector]);
+  }, [showChainSelector, showBridgingModal, showBridgeFailedModal]);
 
-  const chains = ['Sepolia', 'Arc Testnet'];
+  // Effect to listen for wallet events during bridging
+  useEffect(() => {
+    if (!window || !window.ethereum || state.step !== 'approving') return;
+
+    const handleAccountsChanged = (accounts) => {
+      if (accounts.length === 0 && state.step === 'approving') {
+        // User disconnected during transaction
+        setBridgeError({
+          title: 'Transaction Cancelled',
+          message: 'Transaction cancelled: Wallet disconnected during bridging.'
+        });
+        setShowBridgeFailedModal(true);
+        setBridgeButtonText('Bridge Failed');
+        reset();
+      }
+    };
+
+    const handleChainChanged = (_chainId) => {
+      if (state.step === 'approving') {
+        // User changed network during transaction
+        setBridgeError({
+          title: 'Transaction Cancelled',
+          message: 'Transaction cancelled: Network changed during bridging.'
+        });
+        setShowBridgeFailedModal(true);
+        setBridgeButtonText('Bridge Failed');
+        reset();
+      }
+    };
+
+    const handleDisconnect = () => {
+      if (state.step === 'approving') {
+        setBridgeError({
+          title: 'Transaction Cancelled',
+          message: 'Transaction cancelled: Wallet disconnected.'
+        });
+        setShowBridgeFailedModal(true);
+        setBridgeButtonText('Bridge Failed');
+        reset();
+      }
+    };
+
+    window.ethereum.on('accountsChanged', handleAccountsChanged);
+    window.ethereum.on('chainChanged', handleChainChanged);
+    window.ethereum.on('disconnect', handleDisconnect);
+
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        window.ethereum.removeListener('chainChanged', handleChainChanged);
+        window.ethereum.removeListener('disconnect', handleDisconnect);
+      }
+    };
+  }, [state.step, reset]);
+
+  // Effect to sync the Bridge networks with the global wallet network and fetch balance
+  useEffect(() => {
+    if (!chainId) return;
+    
+    try {
+      // Convert chainId to decimal if it's a hex string
+      const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
+      const arcChainId = parseInt(NETWORKS.ARC_TESTNET.chainId, 16);
+      const sepoliaChainId = parseInt(NETWORKS.ETHEREUM_SEPOLIA.chainId, 16);
+      
+      if (chainIdDecimal === arcChainId) {
+        // If wallet is on Arc Testnet, set it as the 'from' chain
+        setFromChain('Arc Testnet');
+        // Ensure 'to' chain is different
+        if (toChain === 'Arc Testnet') {
+          setToChain('Sepolia');
+        }
+      } else if (chainIdDecimal === sepoliaChainId) {
+        // If wallet is on Sepolia, set it as the 'from' chain
+        setFromChain('Sepolia');
+        // Ensure 'to' chain is different
+        if (toChain === 'Sepolia') {
+          setToChain('Arc Testnet');
+        }
+      }
+      
+      // Fetch balance when chain changes
+      if (isConnected) {
+        fetchTokenBalance('USDC', chainIdDecimal);
+      }
+    } catch (error) {
+      console.error('Error processing chainId:', error);
+    }
+  }, [chainId, toChain, isConnected, fetchTokenBalance, fromChain]);
+
+  // Effect to refresh balances after successful bridge transaction
+  useEffect(() => {
+    if (state.step === 'success') {
+      // Wait a bit for the blockchain to update
+      const timer = setTimeout(() => {
+        // Refresh balance using bridge kit
+        if (chainId) {
+          const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
+          fetchTokenBalance('USDC', chainIdDecimal);
+        }
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [state.step, chainId, fetchTokenBalance, fromChain]);
 
   // Helper function to map chain names to chain IDs
   const getChainIdByName = (chainName) => {
@@ -55,110 +167,16 @@ const Bridge = () => {
       case 'Arc Testnet':
         return parseInt(NETWORKS.ARC_TESTNET.chainId, 16);
       case 'Sepolia':
+      case 'Sepolia Testnet':
+      case 'Ethereum Sepolia':
+      case 'Sepolia Testnet (ETH)':
         return parseInt(NETWORKS.ETHEREUM_SEPOLIA.chainId, 16);
       default:
         return null;
     }
   };
 
-  // Effect to sync the Bridge networks with the global wallet network
-  // This ensures that when the user switches networks in their wallet directly,
-  // the Bridge component updates to reflect the current network
-  useEffect(() => {
-    if (chainId) {
-      // Map the hex chainId to a network name
-      const arcChainId = NETWORKS.ARC_TESTNET.chainId;
-      const sepoliaChainId = NETWORKS.ETHEREUM_SEPOLIA.chainId;
-      
-      if (chainId === arcChainId) {
-        setFromChain('Arc Testnet');
-        // If the 'From' chain is Arc Testnet, the 'To' chain should be Sepolia
-        setToChain('Sepolia');
-      } else if (chainId === sepoliaChainId) {
-        setFromChain('Sepolia');
-        // If the 'From' chain is Sepolia, the 'To' chain should be Arc Testnet
-        setToChain('Arc Testnet');
-      }
-    }
-  }, [chainId]);
-
-  const handleSwitchChains = async () => {
-    // When switching chains, we need to update both the 'from' and 'to' chains
-    // We'll switch the wallet network to match the new 'from' chain
-    
-    // Swap the local states first
-    const newFromChain = toChain;
-    const newToChain = fromChain;
-    
-    // Update both local states
-    setFromChain(newFromChain);
-    setToChain(newToChain);
-    
-    // If connected, trigger wallet network switch to match the new 'from' chain
-    if (isConnected) {
-      try {
-        // Get the chain ID for the new 'from' chain
-        const chainId = getChainIdByName(newFromChain);
-        
-        if (chainId) {
-          // Trigger wallet network switch
-          await switchChain({ chainId });
-        }
-      } catch (error) {
-        console.error('Failed to switch network:', error);
-        
-        // Handle the case where the chain needs to be added to the wallet (Error 4902)
-        if ((error?.code === 4902 || error?.message?.includes('wallet_addEthereumChain')) && window.ethereum) {
-          try {
-            // Add Arc Testnet to the wallet
-            if (newFromChain === 'Arc Testnet') {
-              await window.ethereum.request({
-                method: 'wallet_addEthereumChain',
-                params: [{
-                  chainId: NETWORKS.ARC_TESTNET.chainId,
-                  chainName: NETWORKS.ARC_TESTNET.chainName,
-                  nativeCurrency: NETWORKS.ARC_TESTNET.nativeCurrency,
-                  rpcUrls: NETWORKS.ARC_TESTNET.rpcUrls,
-                  blockExplorerUrls: NETWORKS.ARC_TESTNET.blockExplorerUrls,
-                }],
-              });
-              
-              // After adding, try to switch again
-              const chainId = getChainIdByName(newFromChain);
-              if (chainId) {
-                await switchChain({ chainId });
-                setFromChain(newFromChain);
-              }
-            } else if (newFromChain === 'Sepolia') {
-              // For Sepolia, just try to add it
-              await window.ethereum.request({
-                method: 'wallet_addEthereumChain',
-                params: [{
-                  chainId: NETWORKS.ETHEREUM_SEPOLIA.chainId,
-                  chainName: NETWORKS.ETHEREUM_SEPOLIA.chainName,
-                  nativeCurrency: NETWORKS.ETHEREUM_SEPOLIA.nativeCurrency,
-                  rpcUrls: NETWORKS.ETHEREUM_SEPOLIA.rpcUrls,
-                  blockExplorerUrls: NETWORKS.ETHEREUM_SEPOLIA.blockExplorerUrls,
-                }],
-              });
-              
-              // After adding, try to switch again
-              const chainId = getChainIdByName(newFromChain);
-              if (chainId) {
-                await switchChain({ chainId });
-                setFromChain(newFromChain);
-              }
-            }
-          } catch (addError) {
-            console.error('Failed to add network:', addError);
-          }
-        }
-        // The local state is already updated, so we don't need to revert it
-      }
-    }
-  };
-
-  // Updated function to handle network selection with auto-switch
+  // Handle network changes with auto-switch
   const handleNetworkChange = async (newChain) => {
     if (!isConnected) {
       // If not connected, just update the local state
@@ -176,12 +194,15 @@ const Bridge = () => {
         
         // Update local state (will be confirmed by the useEffect above)
         setFromChain(newChain);
+        
+        // Fetch balance for the new chain
+        fetchTokenBalance('USDC', chainId);
       }
     } catch (error) {
       console.error('Failed to switch network:', error);
       
       // Handle the case where the chain needs to be added to the wallet (Error 4902)
-      if ((error?.code === 4902 || error?.message?.includes('wallet_addEthereumChain')) && window.ethereum) {
+      if ((error?.code === 4902 || error?.message?.includes('wallet_addEthereumChain')) && window && window.ethereum) {
         try {
           // Add Arc Testnet to the wallet
           if (newChain === 'Arc Testnet') {
@@ -195,14 +216,15 @@ const Bridge = () => {
                 blockExplorerUrls: NETWORKS.ARC_TESTNET.blockExplorerUrls,
               }],
             });
-            
+                        
             // After adding, try to switch again
             const chainId = getChainIdByName(newChain);
             if (chainId) {
               await switchChain({ chainId });
               setFromChain(newChain);
+              fetchTokenBalance('USDC', chainId);
             }
-          } else if (newChain === 'Sepolia') {
+          } else if (newChain === 'Sepolia' || newChain === 'Sepolia Testnet' || newChain === 'Ethereum Sepolia' || newChain === 'Sepolia Testnet (ETH)') {
             // For Sepolia, just try to add it
             await window.ethereum.request({
               method: 'wallet_addEthereumChain',
@@ -214,12 +236,13 @@ const Bridge = () => {
                 blockExplorerUrls: NETWORKS.ETHEREUM_SEPOLIA.blockExplorerUrls,
               }],
             });
-            
+                        
             // After adding, try to switch again
             const chainId = getChainIdByName(newChain);
             if (chainId) {
               await switchChain({ chainId });
               setFromChain(newChain);
+              fetchTokenBalance('USDC', chainId);
             }
           }
         } catch (addError) {
@@ -230,9 +253,7 @@ const Bridge = () => {
       // Even if switching fails, update the local state for UI consistency
       setFromChain(newChain);
     }
-  };
-
-  // New function to handle 'To' network changes with auto-switch
+  };  // New function to handle 'To' network changes with auto-switch
   const handleToNetworkChange = async (newChain) => {
     if (!isConnected) {
       // If not connected, just update the local state
@@ -250,12 +271,14 @@ const Bridge = () => {
         
         // Update local state (will be confirmed by the useEffect above)
         setToChain(newChain);
+        
+        // Note: We don't fetch balance here since the 'from' chain determines the balance display
       }
     } catch (error) {
       console.error('Failed to switch network:', error);
       
       // Handle the case where the chain needs to be added to the wallet (Error 4902)
-      if ((error?.code === 4902 || error?.message?.includes('wallet_addEthereumChain')) && window.ethereum) {
+      if ((error?.code === 4902 || error?.message?.includes('wallet_addEthereumChain')) && window && window.ethereum) {
         try {
           // Add Arc Testnet to the wallet
           if (newChain === 'Arc Testnet') {
@@ -269,14 +292,14 @@ const Bridge = () => {
                 blockExplorerUrls: NETWORKS.ARC_TESTNET.blockExplorerUrls,
               }],
             });
-            
+                        
             // After adding, try to switch again
             const chainId = getChainIdByName(newChain);
             if (chainId) {
               await switchChain({ chainId });
               setToChain(newChain);
             }
-          } else if (newChain === 'Sepolia') {
+          } else if (newChain === 'Sepolia' || newChain === 'Sepolia Testnet' || newChain === 'Ethereum Sepolia' || newChain === 'Sepolia Testnet (ETH)') {
             // For Sepolia, just try to add it
             await window.ethereum.request({
               method: 'wallet_addEthereumChain',
@@ -288,7 +311,7 @@ const Bridge = () => {
                 blockExplorerUrls: NETWORKS.ETHEREUM_SEPOLIA.blockExplorerUrls,
               }],
             });
-            
+                        
             // After adding, try to switch again
             const chainId = getChainIdByName(newChain);
             if (chainId) {
@@ -304,24 +327,185 @@ const Bridge = () => {
       // Even if switching fails, update the local state for UI consistency
       setToChain(newChain);
     }
+  };  
+  
+  const handleBridge = async () => {
+    // Validation checks
+    if (!isConnected) {
+      setBridgeError({
+        title: 'Connection Error',
+        message: 'Please connect your wallet first'
+      });
+      setShowBridgeFailedModal(true);
+      return;
+    }
+    
+    const amountFloat = parseFloat(amount);
+    if (!amount || isNaN(amountFloat) || amountFloat <= 0) {
+      setBridgeError({
+        title: 'Invalid Amount',
+        message: `Invalid amount '${amount}': Amount must be a valid number string.`
+      });
+      setShowBridgeFailedModal(true);
+      return;
+    }
+    
+    // ADD THIS CHECK: Any value from 0.1 should result in "Bridge Failed"
+    if (amountFloat < 0.1) {
+      setBridgeError({
+        title: 'Invalid Amount',
+        message: 'Minimum bridge amount is 0.1 USDC.'
+      });
+      setShowBridgeFailedModal(true);
+      setBridgeButtonText('Bridge Failed');
+      return;
+    }
+    
+    // Check if amount exceeds balance - NOW USING BRIDGE KIT BALANCE
+    if (amountFloat > parseFloat(tokenBalance || '0')) {
+      setBridgeError({
+        title: 'Insufficient Balance',
+        message: `Insufficient balance: You have ${tokenBalance} but trying to bridge ${amount}.`
+      });
+      setShowBridgeFailedModal(true);
+      return;
+    }
+    
+    // Show bridging modal
+    setBridgeStartTime(Date.now());
+    setShowBridgingModal(true);
+    setBridgeLoading(true);
+    setBridgeButtonText('Bridging...');
+    
+    // Set up timeout detection
+    const BRIDGE_TIMEOUT = 120000; // 2 minutes
+    const timeoutId = setTimeout(() => {
+      if (state.step === 'approving') {
+        setBridgeError({
+          title: 'Transaction Timeout',
+          message: 'Transaction timeout: Please try again and confirm the transaction promptly.'
+        });
+        setShowBridgeFailedModal(true);
+        setBridgeButtonText('Bridge Failed');
+        reset();
+      }
+    }, BRIDGE_TIMEOUT);
+    
+    try {
+      // Determine direction based on fromChain and toChain
+      let direction;
+      if (fromChain === 'Sepolia' || fromChain === 'Sepolia Testnet' || fromChain === 'Ethereum Sepolia' || fromChain === 'Sepolia Testnet (ETH)') {
+        direction = 'sepolia-to-arc';
+      } else if (fromChain === 'Arc Testnet') {
+        direction = 'arc-to-sepolia';
+      } else {
+        throw new Error('Invalid source chain configuration');
+      }
+      
+      const result = await bridge('USDC', amount, direction);
+      
+      // Clear timeout since transaction completed
+      clearTimeout(timeoutId);
+      
+      // Handle the result
+      if (result.step === 'success') {
+        setBridgeButtonText('Bridge Completed');
+      } else if (result.step === 'error') {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('Bridge error:', error);
+      
+      // Clear timeout since we're handling the error
+      clearTimeout(timeoutId);
+      
+      // Detect user cancellation/rejection
+      if (error.code === 4001 || error.code === 'ACTION_REJECTED' || 
+          (error.message && (error.message.includes('user rejected') || error.message.includes('cancelled')))) {
+        setBridgeError({
+          title: 'Transaction Rejected',
+          message: 'Transaction rejected: User denied transaction signature.'
+        });
+        setBridgeButtonText('Bridge Failed');
+      }
+      // User closed wallet without action
+      else if (error.message && error.message.includes('User closed modal')) {
+        setBridgeError({
+          title: 'Transaction Cancelled',
+          message: 'Transaction cancelled: User closed wallet modal.'
+        });
+        setBridgeButtonText('Bridge Failed');
+      }
+      // Insufficient funds error
+      else if (error.code === -32000 || (error.message && error.message.includes('insufficient funds'))) {
+        setBridgeError({
+          title: 'Insufficient Funds',
+          message: 'Insufficient funds: Not enough balance to complete the bridge transaction including gas fees.'
+        });
+        setBridgeButtonText('Bridge Failed');
+      }
+      // Network/RPC errors
+      else if (error.code === -32603 || (error.message && error.message.includes('network'))) {
+        setBridgeError({
+          title: 'Network Error',
+          message: 'Network error: Unable to connect to blockchain. Please check your connection and try again.'
+        });
+        setBridgeButtonText('Bridge Failed');
+      }
+      // Gas estimation failed
+      else if (error.message && error.message.includes('gas')) {
+        setBridgeError({
+          title: 'Gas Estimation Failed',
+          message: 'Gas estimation failed: Transaction may fail or gas price too low.'
+        });
+        setBridgeButtonText('Bridge Failed');
+      }
+      // Generic fallback error
+      else {
+        setBridgeError({
+          title: 'Bridge Error',
+          message: error.message || 'An unexpected error occurred during the bridge transaction.'
+        });
+        setBridgeButtonText('Bridge Failed');
+      }
+      
+      setShowBridgeFailedModal(true);
+    } finally {
+      setBridgeLoading(false);
+      // Don't close the modal automatically, let user close it manually
+    }
   };
 
-const handleBridge = async () => {
-  if (!isConnected) {
-    alert('Please connect your wallet first');
-    return;
-  }
-  if (!amount || parseFloat(amount) <= 0) {
-    alert('Please enter a valid amount');
-    return;
-  }
-  setBridgeLoading(true);
-  
-// Pass the chain state variables (fromChain, toChain)
-  await bridgeUSDC(amount, fromChain, toChain); 
-  setBridgeLoading(false);
-  setAmount(''); 
-};
+  const closeBridgingModal = () => {
+    setShowBridgingModal(false);
+    setAmount('');
+    setBridgeButtonText('Bridge');
+    reset(); // Reset the bridge state
+  };
+
+  const closeBridgeFailedModal = () => {
+    setShowBridgeFailedModal(false);
+    setAmount('');
+    setBridgeButtonText('Bridge');
+    reset(); // Reset the bridge state
+  };
+
+  // Effect to show bridge failed modal when state indicates an error
+  useEffect(() => {
+    if (state.step === 'error' && state.error) {
+      setBridgeError({
+        title: 'Error Details',
+        message: state.error
+      });
+      setShowBridgeFailedModal(true);
+      setBridgeButtonText('Bridge Failed');
+    }
+  }, [state]);
+
+  // Toggle bridge details visibility
+  const toggleBridgeDetails = () => {
+    setShowBridgeDetails(!showBridgeDetails);
+  };
 
   const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude, triggerRef }) => {
     const selectorRef = useRef(null);
@@ -329,7 +513,7 @@ const handleBridge = async () => {
     // Handle ESC key press to close modal
     useEffect(() => {
       const handleEsc = (event) => {
-        if (event.keyCode === 27) {
+        if (event && event.key === 'Escape') {
           onClose();
         }
       };
@@ -341,8 +525,7 @@ const handleBridge = async () => {
       return () => {
         document.removeEventListener('keydown', handleEsc);
       };
-    }, [isOpen, onClose]);
-    
+    }, [isOpen, onClose]);    
     if (!isOpen) return null;
 
     const chainList = ['Arc Testnet', 'Sepolia'];
@@ -351,33 +534,30 @@ const handleBridge = async () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black bg-opacity-50"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
             onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
           >
             <motion.div
               ref={selectorRef}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 md:p-6 w-full max-w-md flex flex-col max-h-[80vh] overflow-hidden"
+              className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md flex flex-col max-h-[80vh] overflow-hidden"
               onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
             >
-              <div className="flex justify-between items-center mb-3 md:mb-4 flex-shrink-0">
-                <h3 className="text-lg md:text-xl font-bold">{t('Select Network')}</h3>
+              <div className="flex justify-between items-center mb-4 flex-shrink-0">
+                <h3 className="text-xl font-bold">{t('Select Network')}</h3>
                 <button 
                   onClick={onClose}
-                  className="p-1 md:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
-                  <X size={16} />
+                  <X size={20} />
                 </button>
               </div>
               
-              <div className="flex-1 overflow-y-auto -mx-2 md:-mx-6 px-2 md:px-6">
+              <div className="flex-1 overflow-y-auto -mx-6 px-6">
                 {/* Chain List */}
-                <div className="space-y-1 md:space-y-2">
+                <div className="space-y-2">
                   {chainList.map((chain) => (
                     <button
                       key={chain}
@@ -385,33 +565,46 @@ const handleBridge = async () => {
                         onSelect(chain);
                         onClose();
                       }}
-                      className={`w-full p-2 md:p-4 rounded-lg flex items-center justify-between transition-all duration-200
+                      className={`w-full p-4 rounded-lg flex items-center justify-between transition-all duration-200
                         ${chain === selectedChain ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                     >
-                      <div className="flex items-center space-x-2 md:space-x-3">
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center">
                           {chain.includes('Arc') ? (
                             <img 
                               src="/icons/Arc.png" 
                               alt="Arc Testnet" 
-                              className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
+                              className="w-10 h-10 rounded-full object-contain"
                             />
-                          ) : (
+                          ) : chain.includes('Sepolia') ? (
                             <img 
                               src="/icons/eth.png" 
                               alt="Sepolia" 
-                              className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
+                              className="w-10 h-10 rounded-full object-contain"
                             />
-                          )}
+                          ) : null}
                         </div>
                         <div className="text-left">
-                          <p className="font-semibold text-sm md:text-base">{chain}</p>
+                          <p className="font-semibold">{chain}</p>
                           <p className="text-xs text-gray-500">{t('Testnet')}</p>
                         </div>
                       </div>
+                      {chain === exclude && (
+                        <div className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 rounded">
+                          {t('Selected')}
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
+              </div>
+              
+              {/* Info Box */}
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start space-x-2 flex-shrink-0">
+                <Info className="text-blue-500 dark:text-blue-400 flex-shrink-0 mt-0.5" size={16} />
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  {t('Select a different network for your destination chain. The same network cannot be used for both source and destination.')}
+                </p>
               </div>
             </motion.div>
           </motion.div>
@@ -425,214 +618,266 @@ const handleBridge = async () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card p-4 md:p-8"
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
       >
-        <div className="flex items-center justify-between mb-4 md:mb-6">
-          <h2 className="text-xl md:text-2xl font-bold">{t('Bridge Assets')}</h2>
-        </div>
-      
+        {/* Header */}
+        <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Bridge Assets</h2>
+
         {/* Info Banner */}
-        <div className="mb-4 md:mb-6 p-3 md:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start space-x-2 md:space-x-3">
-          <Info className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={16} />
-          <div className="text-[10px] md:text-sm text-blue-600 dark:text-blue-400">
-            <p className="font-semibold mb-1">{t('Cross-Chain Bridging')}</p>
-            <p>{t('Transfer assets securely between Sepolia and Arc Testnet. Estimated time: 2-5 minutes.')}</p>
+        <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-100 dark:border-blue-800 rounded-lg p-4 mb-6">
+          <div className="flex items-start">
+            <Info className="flex-shrink-0 mt-0.5 mr-2" size={16} />
+            <p className="text-sm">
+              Cross-Chain Bridging: Transfer assets securely between Sepolia and Arc Testnet. Estimated time: 2-5 minutes.
+            </p>
           </div>
         </div>
 
-        {/* From Chain */}
-        <div className="mb-2 md:mb-2">
-          <label className="block text-sm font-medium mb-1 md:mb-2">{t('From')}</label>
-          <button
-            ref={fromChainTriggerRef}
-            onClick={() => setShowChainSelector('from')}
-            className="w-full p-3 md:p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
-          >
-            <div className="flex items-center space-x-2 md:space-x-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center">
-                {fromChain.includes('Arc') ? (
-                  <img 
-                    src="/icons/Arc.png" 
-                    alt="Arc Testnet" 
-                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
-                  />
-                ) : (
-                  <img 
-                    src="/icons/eth.png" 
-                    alt={fromChain} 
-                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
-                  />
-                )}
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-sm md:text-base">{fromChain}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t('Source Network')}</p>
-              </div>
-            </div>
-            <ChevronDown size={16} />
-          </button>
-        </div>
-
-        {/* Switch Button */}
-        <div className="flex justify-center my-4 md:my-6 relative z-10">
-          <button
-            onClick={handleSwitchChains}
-            className="switch-button p-3 md:p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group"
-            title="Switch Chains"
-          >
-            <ArrowLeftRight size={20} className="group-hover:rotate-180 transition-transform duration-300" />
-          </button>
-        </div>
-
-        {/* To Chain */}
-        <div className="mb-4 md:mb-6">
-          <label className="block text-sm font-medium mb-1 md:mb-2">{t('To')}</label>
-          <button
-            ref={toChainTriggerRef}
-            onClick={() => setShowChainSelector('to')}
-            className="w-full p-3 md:p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
-          >
-            <div className="flex items-center space-x-2 md:space-x-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center">
-                {toChain.includes('Arc') ? (
-                  <img 
-                    src="/icons/Arc.png" 
-                    alt="Arc Testnet" 
-                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
-                  />
-                ) : (
-                  <img 
-                    src="/icons/eth.png" 
-                    alt={toChain} 
-                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
-                  />
-                )}
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-sm md:text-base">{toChain}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t('Destination Network')}</p>
+        {/* Network Selection Section */}
+        <div className="space-y-6">
+          {/* From Network */}
+          <div>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                    {fromChain.includes('Arc') ? (
+                      <img 
+                        src="/icons/Arc.png" 
+                        alt="Arc Testnet" 
+                        className="w-10 h-10 rounded-full object-contain"
+                      />
+                    ) : fromChain.includes('Sepolia') ? (
+                      <img 
+                        src="/icons/eth.png" 
+                        alt="Sepolia" 
+                        className="w-10 h-10 rounded-full object-contain"
+                      />
+                    ) : null}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">{fromChain}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Source Network</p>
+                  </div>
+                </div>
               </div>
             </div>
-            <ChevronDown size={16} />
-          </button>
+          </div>
+
+          {/* Switch Button */}
+          <div className="flex justify-center relative -my-3 z-10">
+            <button
+              onClick={() => {
+                try {
+                  // Store current values temporarily
+                  const tempFromChain = fromChain;
+                  const tempToChain = toChain;
+                  
+                  // Swap the chains in UI first
+                  setFromChain(tempToChain);
+                  setToChain(tempFromChain);
+                  
+                  // Add animation class for smooth transition
+                  const switchButton = document.querySelector('.switch-button');
+                  if (switchButton) {
+                    switchButton.classList.add('rotate-180');
+                    setTimeout(() => {
+                      switchButton.classList.remove('rotate-180');
+                    }, 300);
+                  }
+                  
+                  // Also swap in wallet if connected
+                  if (isConnected) {
+                    // Get the chain ID for the new 'from' chain (which was previously the 'to' chain)
+                    const newFromChainId = getChainIdByName(tempToChain);
+                    if (newFromChainId) {
+                      switchChain({ chainId: newFromChainId }).catch(err => {
+                        console.warn('Failed to switch network in wallet:', err);
+                        // Even if wallet switch fails, UI has already been updated
+                      });
+                    } else {
+                      console.warn('Could not get chain ID for:', tempToChain);
+                    }
+                  }
+                  
+                  // Refresh balance for the new 'from' chain
+                  if (isConnected) {
+                    const newFromChainId = getChainIdByName(tempToChain);
+                    if (newFromChainId) {
+                      fetchTokenBalance('USDC', newFromChainId);
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error swapping chains:', error);
+                }
+              }}
+              aria-label="Switch Networks"
+              className="switch-button p-3 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group"
+            >
+              <ArrowLeftRight size={20} className="text-gray-600 dark:text-gray-300 group-hover:rotate-180 transition-transform duration-300" />
+            </button>
+          </div>
+
+          {/* To Network */}
+          <div>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                    {toChain.includes('Arc') ? (
+                      <img 
+                        src="/icons/Arc.png" 
+                        alt="Arc Testnet" 
+                        className="w-10 h-10 rounded-full object-contain"
+                      />
+                    ) : toChain.includes('Sepolia') ? (
+                      <img 
+                        src="/icons/eth.png" 
+                        alt="Sepolia" 
+                        className="w-10 h-10 rounded-full object-contain"
+                      />
+                    ) : null}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">{toChain}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Destination Network</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Token Selection */}
-        <div className="mb-3 md:mb-4">
-          <label className="block text-sm font-medium mb-1 md:mb-2">{t('Asset')}</label>
-          <div className="p-3 md:p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
-            <div className="flex items-center justify-between gap-2 w-full">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={amount}
-                  onChange={(e) => setAmount(sanitizeInput(e.target.value))}
-                  placeholder="0.0"
-                  className="text-2xl md:text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16"
-                />
-
-              </div>
-              {/* Static USDC Token Display - Removed dropdown functionality */}
-              <div className="flex items-center space-x-2 px-2 py-1 md:px-3 md:py-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm self-end min-w-[100px] md:min-w-[120px] w-auto flex-shrink-0">
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center">
+        {/* Asset Input Section */}
+        <div className="mt-6">
+          <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Asset</label>
+          <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-800">
+            <div className="flex items-center justify-between">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(sanitizeInput(e.target.value))}
+                placeholder="0.0"
+                className="text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full"
+              />
+              {/* Token Pill */}
+              <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-full py-2 px-3">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center">
                   <img 
                     src="/icons/usdc.png" 
                     alt="USDC" 
-                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
+                    className="w-6 h-6 rounded-full object-contain"
                   />
                 </div>
-                <div className="text-left min-w-0">
-                  <p className="font-bold text-sm md:text-base truncate">USDC</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{t('USD Coin')}</p>
-                </div>
+                <span className="font-medium text-gray-900 dark:text-white">USDC</span>
               </div>
             </div>
             {isConnected && (
-              <div className="flex items-center justify-end mt-1 md:mt-2">
-                <div className="flex items-center space-x-1 md:space-x-2">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{t('Balance')}:</span>
-                  <span className="text-xs md:text-sm font-semibold">
-                    {loading ? (
-                      <Loader className="animate-spin" size={12} />
+              <div className="flex items-center justify-end mt-2">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Bal:</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {isLoadingBalance ? (
+                      <Loader className="animate-spin" size={14} />
+                    ) : balanceError ? (
+                      <span className="text-red-500">Error</span>
                     ) : (
-                      `${balance || '0.00'} USDC`
+                      `${tokenBalance || '0.00'} USDC`
                     )}
                   </span>
+                  <button 
+                    onClick={() => {
+                      if (tokenBalance && parseFloat(tokenBalance) > 0) {
+                        setAmount(tokenBalance);
+                      }
+                    }}
+                    className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+                    disabled={isLoadingBalance || balanceError}
+                  >
+                    Max
+                  </button>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Bridge Details */}
-        {amount && parseFloat(amount) > 0 && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            className="mb-4 md:mb-6 p-3 md:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-1 md:space-y-2 text-xs md:text-sm"
-          >
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">{t('Estimated Time')}</span>
-              <span className="font-semibold">2-5 minutes</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">{t('Bridge Fee')}</span>
-              <span className="font-semibold">0.1% ({(parseFloat(amount) * 0.001).toFixed(4)} USDC)</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">{t('Gas Fee')}</span>
-              <span className="font-semibold">~$0.50 USDC</span>
-            </div>
-            <div className="flex justify-between pt-1 md:pt-2 border-t border-gray-300 dark:border-gray-600">
-              <span className="text-gray-600 dark:text-gray-400">{t('You Will Receive')}</span>
-              <span className="font-bold">{(parseFloat(amount) * 0.999).toFixed(4)} USDC</span>
-            </div>
-          </motion.div>
-        )}
-
         {/* Security Notice */}
-        <div className="mb-4 md:mb-6 p-2 md:p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start space-x-1 md:space-x-2">
-          <AlertCircle className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" size={14} />
-          <p className="text-[10px] md:text-xs text-yellow-700 dark:text-yellow-300">
+        <div className="mt-6 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded-lg flex items-start space-x-2">
+          <AlertCircle size={16} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-yellow-700 dark:text-yellow-300">
             {t('Cross-chain transfers are irreversible. Please verify all details before confirming the transaction.')}
           </p>
         </div>
 
+        {/* Bridge Details Toggle */}
+        {amount && parseFloat(amount) > 0 && (
+          <button 
+            onClick={toggleBridgeDetails}
+            className="flex items-center justify-between w-full p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg mb-4"
+          >
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('Bridge Details')}</span>
+            <motion.div
+              animate={{ rotate: showBridgeDetails ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronDown size={20} className="text-gray-500 dark:text-gray-400" />
+            </motion.div>
+          </button>
+        )}
+
+        {/* Bridge Details */}
+        <AnimatePresence>
+          {showBridgeDetails && amount && parseFloat(amount) > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3 text-sm"
+            >
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">{t('Estimated Time')}</span>
+                <span className="font-semibold">1-2 minutes</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">{t('Bridge Fee')}</span>
+                <span className="font-semibold">0.1% ({(parseFloat(amount) * 0.001).toFixed(4)} USDC)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">{t('Gas Fee')}</span>
+                <span className="font-semibold">~$0.50 USDC</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-gray-300 dark:border-gray-600">
+                <span className="text-gray-600 dark:text-gray-400">{t('You Will Receive')}</span>
+                <span className="font-bold">{(parseFloat(amount) * 0.999).toFixed(4)} USDC</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Bridge Button */}
         <button
           onClick={handleBridge}
-          disabled={!amount || bridgeLoading || !isConnected || status === 'loading'}
-          className="w-full btn-primary py-3 md:py-5 text-base md:text-xl font-bold flex items-center justify-center space-x-2 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-xl"
+          disabled={!amount || bridgeLoading || !isConnected || state.isLoading}
+          className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {bridgeLoading || status === 'loading' ? (
+          {bridgeLoading || state.isLoading ? (
             <>
-              <Loader className="animate-spin" size={20} />
-              <span className="text-sm md:text-base">Bridging</span>
+              <Loader className="animate-spin inline mr-2" size={20} />
+              <span>{t('Bridging')}...</span>
             </>
           ) : !isConnected ? (
             <>
-              <Wallet size={20} />
-              <span className="text-sm md:text-base">{t('Connect Wallet')}</span>
+              <Wallet size={20} className="inline mr-2" />
+              <span>{t('Connect Wallet')}</span>
             </>
           ) : (
-            <>
-              <span className="text-sm md:text-base">{t('Bridge')}</span>
-            </>
+            <span>{bridgeButtonText}</span>
           )}
         </button>
-        
-        {/* Logs Display - Unobtrusive debugging information */}
-        {logs.length > 0 && (
-          <div className="mt-3 md:mt-4 p-2 md:p-3 bg-gray-100 dark:bg-gray-700 rounded-lg text-[10px] md:text-xs text-gray-700 dark:text-gray-300 max-h-24 md:max-h-32 overflow-y-auto">
-            <h4 className="font-semibold mb-1">Bridge Logs:</h4>
-            {logs.map((log, index) => (
-              <div key={index} className="mb-1 last:mb-0">{log}</div>
-            ))}
-          </div>
-        )}
       </motion.div>
-
+      
       {/* Chain Selectors */}
       <ChainSelector
         isOpen={showChainSelector === 'from'}
@@ -649,6 +894,26 @@ const handleBridge = async () => {
         onSelect={handleToNetworkChange}
         exclude={fromChain}
         triggerRef={showChainSelector === 'to' ? toChainTriggerRef : fromChainTriggerRef}
+      />
+      
+      {/* Bridging Modal */}
+      <BridgingModal 
+        isOpen={showBridgingModal}
+        onClose={closeBridgingModal}
+        fromChain={fromChain}
+        toChain={toChain}
+        startTime={bridgeStartTime}
+        state={state}
+      />
+      
+      {/* Bridge Failed Modal */}
+      <BridgeFailedModal
+        isOpen={showBridgeFailedModal}
+        onClose={closeBridgeFailedModal}
+        fromChain={fromChain}
+        toChain={toChain}
+        errorTitle={bridgeError.title}
+        errorMessage={bridgeError.message}
       />
     </div>
   );

@@ -85,6 +85,78 @@
   .switch-button {
     @apply p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110;
   }
+  
+  /* Wallet container */
+  .wallet-container {
+    @apply relative;
+  }
+  
+  /* Wallet dropdown menu */
+  .wallet-dropdown-menu {
+    @apply absolute top-full right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50;
+  }
+  
+  /* Chain option in wallet dropdown */
+  .chain-option {
+    @apply flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer;
+  }
+  
+  /* Bridge failed modal styles */
+  .bridge-failed-modal-overlay {
+    @apply fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black bg-opacity-50;
+  }
+  
+  .bridge-failed-modal-container {
+    @apply relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md;
+  }
+  
+  .bridge-failed-modal-close-btn {
+    @apply absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
+  }
+  
+  .bridge-failed-modal-icon-container {
+    @apply w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center;
+  }
+  
+  .bridge-failed-modal-x-overlay {
+    @apply absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center;
+  }
+  
+  .bridge-failed-modal-chain-icon {
+    @apply w-8 h-8 rounded-full object-contain;
+  }
+  
+  .bridge-failed-modal-chain-item {
+    @apply w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-2;
+  }
+  
+  .bridge-failed-modal-flow-line {
+    @apply flex-1 h-px bg-gray-200 dark:bg-gray-700 relative;
+  }
+  
+  .bridge-failed-modal-flow-icon {
+    @apply absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-red-500 flex items-center justify-center;
+  }
+  
+  .bridge-failed-modal-error-box {
+    @apply bg-red-50 dark:bg-red-900/20 rounded-lg p-4 text-left mb-6;
+  }
+  
+  .bridge-failed-modal-error-title {
+    @apply font-semibold text-red-800 dark:text-red-200 mb-2;
+  }
+  
+  .bridge-failed-modal-error-message {
+    @apply text-sm text-red-600 dark:text-red-300;
+  }
+  
+  .bridge-failed-modal-help-text {
+    @apply text-sm text-gray-500 dark:text-gray-400 mb-6;
+  }
+  
+  .bridge-failed-modal-retry-btn {
+    @apply w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors;
+  }
 }
 
 @layer utilities {

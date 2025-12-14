@@ -2,7 +2,7 @@
 
 export const NETWORKS = {
   ARC_TESTNET: {
-    chainId: '0x4D2B12', // 5042002 in decimal - Arc Testnet
+    chainId: '0x4cef52', // 5042002 in decimal - Arc Testnet
     chainName: 'Arc Testnet',
     nativeCurrency: {
       name: 'ETH',
@@ -24,26 +24,39 @@ export const NETWORKS = {
     rpcUrls: ['https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161'],
     blockExplorerUrls: ['https://sepolia.etherscan.io/'],
   },
-};
-
-export const SUPPORTED_CHAINS = [
+};export const SUPPORTED_CHAINS = [
   NETWORKS.ARC_TESTNET.chainId,
   NETWORKS.ETHEREUM_SEPOLIA.chainId,
 ];
 
 export const DEFAULT_CHAIN = NETWORKS.ARC_TESTNET;
 
-// Token configuration
+// Token configuration - Updated with official Circle USDC addresses
 export const TOKENS = {
   USDC: {
     symbol: 'USDC',
     name: 'USD Coin',
     decimals: 6,
     address: {
-      [NETWORKS.ARC_TESTNET.chainId]: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // USDC on Arc Testnet
-      [NETWORKS.ETHEREUM_SEPOLIA.chainId]: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // USDC on Sepolia
+      [NETWORKS.ARC_TESTNET.chainId]: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d', // Official Circle USDC on Arc Testnet
+      [NETWORKS.ETHEREUM_SEPOLIA.chainId]: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Official Circle USDC on Sepolia
     },
     logo: 'usd-circle', // FAIcon name (Circle USDC)
+  },
+  // NEW: Added structured format for Bridge component
+  ETHEREUM_SEPOLIA: {
+    USDC: {
+      address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Official Circle USDC on Sepolia
+      decimals: 6,
+      symbol: 'USDC',
+    },
+  },
+  ARC_TESTNET: {
+    USDC: {
+      address: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d', // Official Circle USDC on Arc Testnet
+      decimals: 6,
+      symbol: 'USDC',
+    },
   },
   EURC: {
     symbol: 'EURC',
@@ -59,7 +72,6 @@ export const TOKENS = {
 
 // Mock token prices (would be fetched from oracles in production)
 export const TOKEN_PRICES = {
-  ETH: 2700,
   USDC: 1,
   EUR: 1.1,
 };

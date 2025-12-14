@@ -18,11 +18,11 @@ import {
   rabbyWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 
-// Define Arc Testnet chain
+// Define Arc Testnet chain - Fixed to match config/networks.js
 const arcTestnet = defineChain({
-  id: 5042002,
+  id: 5042002, // 0x4cef52
   name: 'Arc Testnet',
-  nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
+  nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
     default: { http: ['https://rpc-testnet.arc.network'] },
   },
@@ -30,9 +30,7 @@ const arcTestnet = defineChain({
     default: { name: 'ArcScan', url: 'https://testnet.arcscan.app/' },
   },
   testnet: true,
-});
-
-// Define Sepolia Testnet chain
+});// Define Sepolia Testnet chain
 const sepolia = defineChain({
   id: 11155111,
   name: 'Sepolia',
