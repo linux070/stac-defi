@@ -4,10 +4,29 @@ import { Loader, CheckCircle, X, AlertCircle } from 'lucide-react';
 
 const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }) => {
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [finalTime, setFinalTime] = useState(null);
+
+  // Reset timer when modal opens with a new startTime (new transaction)
+  useEffect(() => {
+    if (isOpen && startTime) {
+      setElapsedTime(0);
+      setFinalTime(null);
+    }
+  }, [isOpen, startTime]);
+
+  // Stop and capture final time immediately when success or error
+  useEffect(() => {
+    if (state?.step === 'success' || state?.step === 'error') {
+      if (finalTime === null && startTime) {
+        setFinalTime(Math.floor((Date.now() - startTime) / 1000));
+      }
+    }
+  }, [state?.step, startTime, finalTime]);
 
   useEffect(() => {
     let interval;
-    if (isOpen && startTime && state?.step !== 'success' && state?.step !== 'error') {
+    // Only run timer if in progress (not success, not error)
+    if (isOpen && startTime && state?.step !== 'success' && state?.step !== 'error' && finalTime === null) {
       interval = setInterval(() => {
         setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
       }, 1000);
@@ -17,7 +36,10 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }
         clearInterval(interval);
       }
     };
-  }, [isOpen, startTime, state?.step]);
+  }, [isOpen, startTime, state?.step, finalTime]);
+
+  // Use finalTime if available (transaction completed), otherwise use live elapsedTime
+  const displayTime = finalTime !== null ? finalTime : elapsedTime;
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -156,12 +178,12 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }
                   <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-6">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 dark:text-gray-400">Elapsed Time</span>
-                      <span className="font-semibold">{formatTime(elapsedTime)}</span>
+                      <span className="font-semibold">{formatTime(displayTime)}</span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 mt-2">
                       <div 
                         className="bg-blue-500 h-2 rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: `${Math.min(100, (elapsedTime / 120) * 100)}%` }}
+                        style={{ width: `${Math.min(100, (displayTime / 120) * 100)}%` }}
                       ></div>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
@@ -178,7 +200,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }
               {modalState === 'completed' && (
                 <div className="space-y-4">
                   <p className="text-gray-600 dark:text-gray-400">
-                    Bridge completed successfully in {formatTime(elapsedTime)}
+                    Bridge completed successfully in {formatTime(displayTime)}
                   </p>
                   
                   <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-left">

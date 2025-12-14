@@ -108,7 +108,7 @@ const Liquidity = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto w-full flex items-center justify-center h-full">
+    <div className="max-w-6xl mx-auto w-full px-4 sm:px-0 flex items-center justify-center h-full">
       <div className="text-center py-16 md:py-20 flex flex-col items-center">
         <div className="flex justify-center mb-6">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center animate-pulse">

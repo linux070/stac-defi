@@ -467,6 +467,14 @@ export function useBridge() {
 
     } catch (err) {
       console.error('Bridge error:', err);
+      console.log('Bridge error details:', {
+        code: err.code,
+        message: err.message,
+        name: err.name,
+        reason: err.reason,
+        data: err.data,
+        stack: err.stack?.substring(0, 200)
+      });
       
       let errorMessage = err.message || 'Bridge transaction failed';
       
@@ -495,8 +503,30 @@ export function useBridge() {
         }
       }
       
-      // Handle user rejection/cancellation
-      if (err.code === 4001 || err.code === 'ACTION_REJECTED' || (err.message && (err.message.includes('user rejected') || err.message.includes('cancelled')))) {
+      // Handle user rejection/cancellation - check multiple patterns
+      // Also check nested error objects (some SDKs wrap errors)
+      const originalError = err.error || err.cause || err;
+      const errorMsg = (err.message || originalError?.message || '').toLowerCase();
+      const errorCode = err.code || originalError?.code;
+      
+      const isUserRejection = 
+        errorCode === 4001 || 
+        errorCode === 'ACTION_REJECTED' ||
+        (errorCode === -32603 && errorMsg.includes('user rejected')) ||
+        errorMsg.includes('user rejected') ||
+        errorMsg.includes('user denied') ||
+        errorMsg.includes('transaction rejected') ||
+        errorMsg.includes('user cancelled') ||
+        errorMsg.includes('user canceled') ||
+        errorMsg.includes('rejected the request') ||
+        errorMsg.includes('user refused') ||
+        errorMsg.includes('user declined') ||
+        errorMsg.includes('rejected') ||
+        errorMsg.includes('denied') ||
+        errorMsg.includes('cancelled') ||
+        errorMsg.includes('canceled');
+      
+      if (isUserRejection) {
         errorMessage = 'Transaction rejected: User denied transaction signature.';
       }
       
@@ -544,6 +574,12 @@ export function useBridge() {
     setBalanceError('');
   }, []);
 
+  // Clear only balance (for disconnect scenarios)
+  const clearBalance = useCallback(() => {
+    setTokenBalance('0');
+    setBalanceError('');
+  }, []);
+
   return {
     state,
     tokenBalance,
@@ -552,6 +588,7 @@ export function useBridge() {
     fetchTokenBalance,
     bridge,
     reset,
+    clearBalance,
     isOnSepolia: chainId === SEPOLIA_CHAIN_ID,
     isOnArc: chainId === ARC_CHAIN_ID,
     currentChainId: chainId,

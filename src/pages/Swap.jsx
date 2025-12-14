@@ -27,6 +27,12 @@ const Swap = () => {
   const [slippageWarning, setSlippageWarning] = useState('');
   const [toast, setToast] = useState({ visible: false, type: 'info', message: '' });
 
+  const getTokenLabel = (symbol) => {
+    if (symbol === 'USDC') return 'USD Coin';
+    if (symbol === 'EURC') return 'Euro Coin';
+    return symbol || 'Token';
+  };
+
   // Refs for trigger buttons
   const fromTokenTriggerRef = useRef(null);
   const toTokenTriggerRef = useRef(null);
@@ -284,7 +290,7 @@ const Swap = () => {
     return (
       <div>
         <label className="block text-sm font-medium mb-2">{t('Slippage Tolerance')}</label>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[0.1, 0.5, 1.0].map((value) => (
             <button
               key={value}
@@ -292,10 +298,10 @@ const Swap = () => {
                 setSlippage(value);
                 setCustomSlippage('');
               }}
-              className={`py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center
+              className={`py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center border
                 ${slippage === value 
-                  ? 'bg-blue-500 text-white shadow-md' 
-                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                  ? 'bg-blue-500 text-white shadow-md border-blue-500' 
+                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border-transparent hover:border-blue-200 dark:hover:border-blue-500/50'}`}
             >
               {value}%
             </button>
@@ -533,16 +539,16 @@ const Swap = () => {
   };
   
   return (
-    <div className="max-w-lg mx-auto w-full">
+    <div className="max-w-lg mx-auto w-full px-4 sm:px-0">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card p-4 md:p-8"
+        className="bg-white/80 dark:bg-gray-900/70 backdrop-blur rounded-2xl border border-gray-200 dark:border-white/10 shadow-lg dark:shadow-black/30 p-4 md:p-8 space-y-4 md:space-y-6"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
-            <h2 className="text-xl md:text-2xl font-bold mb-1">{t('Swap Tokens')}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-1 text-gray-900 dark:text-white">{t('Swap Tokens')}</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">{t('swap.tradeTokensTitle')}</p>
           </div>
           <div className="flex items-center space-x-2">
@@ -550,13 +556,13 @@ const Swap = () => {
               href="https://faucet.circle.com/" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="px-3 py-2 text-xs md:text-sm border-2 border-blue-400 text-blue-500 dark:text-blue-400 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center space-x-1"
+              className="px-3 py-2 text-xs md:text-sm border border-blue-300/70 text-blue-600 dark:text-blue-400 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-md flex items-center space-x-1"
             >
               <span>Faucet</span>
             </a>
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 hover:scale-110"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 hover:scale-110 hover:ring-2 ring-primary-300/60 dark:ring-primary-500/50"
               title="Settings"
             >
               <Settings size={20} />
@@ -596,7 +602,7 @@ const Swap = () => {
         {/* From Token */}
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">{t('From')}</label>
-          <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
+          <div className="p-4 bg-white/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
             <div className="flex items-center justify-between gap-2 w-full">
               <div className="relative flex-1">
                 <input
@@ -605,13 +611,13 @@ const Swap = () => {
                   value={fromAmount}
                   onChange={(e) => setFromAmount(sanitizeInput(e.target.value))}
                   placeholder="0.0"
-                  className="text-2xl md:text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16"
+                  className="text-3xl md:text-4xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16 focus:ring-0 focus:border-primary-500"
                 />
               </div>
               <button
                 ref={fromTokenTriggerRef}
                 onClick={() => setShowFromSelector(true)}
-                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[100px] md:min-w-[120px] w-auto flex-shrink-0"
+                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md hover:ring-2 ring-primary-300/60 dark:ring-primary-500/40 self-end min-w-[110px] md:min-w-[130px] w-auto flex-shrink-0 border border-gray-200 dark:border-gray-700"
               >
                 <div className="w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl md:text-2xl">
                   {fromToken === 'USDC' ? (
@@ -633,8 +639,8 @@ const Swap = () => {
                   )}
                 </div>
                 <div className="text-left min-w-0">
-                  <p className="font-bold text-sm md:text-base truncate">&nbsp;</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">&nbsp;</p>
+                  <p className="font-bold text-sm md:text-base truncate">{fromToken}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{getTokenLabel(fromToken)}</p>
                 </div>
                 <ChevronDown size={16} />
               </button>
@@ -647,7 +653,7 @@ const Swap = () => {
                     {fromLoading ? (
                       <Loader className="animate-spin" size={14} />
                     ) : (
-                      `${fromBalance || '0.00'} ${fromToken}`
+                      `${fromBalance || '0.00'}`
                     )}
                   </span>
                 </div>
@@ -663,10 +669,10 @@ const Swap = () => {
         </div>
 
         {/* Switch Button */}
-        <div className="flex justify-center my-4 md:my-6 relative z-10">
+          <div className="flex justify-center my-4 md:my-6 relative z-10">
           <button
             onClick={handleSwitch}
-            className="switch-button p-3 md:p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group"
+            className="switch-button p-3 md:p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group hover:ring-2 ring-primary-300/60 dark:ring-primary-500/40"
             title={t('Switch Tokens')}
           >
             <ArrowDownUp size={20} className="group-hover:rotate-180 transition-transform duration-300" />
@@ -676,7 +682,7 @@ const Swap = () => {
         {/* To Token */}
         <div className="mb-4 md:mb-6">
           <label className="block text-sm font-medium mb-2">{t('To')}</label>
-          <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
+          <div className="p-4 bg-white/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
             <div className="flex items-center justify-between gap-2 w-full">
               <div className="relative flex-1">
                 <input
@@ -684,13 +690,13 @@ const Swap = () => {
                   value={toAmount}
                   readOnly
                   placeholder="0.0"
-                  className="text-2xl md:text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16"
+                  className="text-3xl md:text-4xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16 focus:ring-0 focus:border-primary-500"
                 />
               </div>
               <button
                 ref={toTokenTriggerRef}
                 onClick={() => setShowToSelector(true)}
-                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[100px] md:min-w-[120px] w-auto flex-shrink-0"
+                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md hover:ring-2 ring-primary-300/60 dark:ring-primary-500/40 self-end min-w-[110px] md:min-w-[130px] w-auto flex-shrink-0 border border-gray-200 dark:border-gray-700"
               >
                 <div className="w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl md:text-2xl">
                   {toToken === 'USDC' ? (
@@ -712,8 +718,8 @@ const Swap = () => {
                   )}
                 </div>
                 <div className="text-left min-w-0">
-                  <p className="font-bold text-sm md:text-base truncate">&nbsp;</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">&nbsp;</p>
+                  <p className="font-bold text-sm md:text-base truncate">{toToken}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{getTokenLabel(toToken)}</p>
                 </div>
                 <ChevronDown size={16} />
               </button>
@@ -726,7 +732,7 @@ const Swap = () => {
                     {toLoading ? (
                       <Loader className="animate-spin" size={14} />
                     ) : (
-                      `${toBalance || '0.00'} ${toToken}`
+                      `${toBalance || '0.00'}`
                     )}
                   </span>
                 </div>
@@ -744,40 +750,40 @@ const Swap = () => {
               exit={{ height: 0, opacity: 0 }}
               className="mb-4 md:mb-6"
             >
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-3 text-xs md:text-sm">
-                <div className="flex justify-between">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-xs md:text-sm divide-y divide-gray-200 dark:divide-gray-700">
+                <div className="flex justify-between pb-2">
                   <span className="text-gray-600 dark:text-gray-400">{t('Expected Output')}</span>
-                  <span className="font-semibold">{swapQuote.expectedOutput} {toToken}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{swapQuote.expectedOutput} {toToken}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between py-2">
                   <span className="text-gray-600 dark:text-gray-400">{t('Min Received')}</span>
-                  <span className="font-semibold">{swapQuote.minReceived} {toToken}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{swapQuote.minReceived} {toToken}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between py-2">
                   <span className="text-gray-600 dark:text-gray-400">{t('Price Impact')}</span>
-                  <span className={`font-semibold ${parseFloat(swapQuote.priceImpact) > 1 ? 'text-red-600' : 'text-green-600'}`}>
+                  <span className={`font-semibold ${parseFloat(swapQuote.priceImpact) > 1 ? 'text-red-600' : 'text-green-500'}`}>
                     {swapQuote.priceImpact}%
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between py-2">
                   <span className="text-gray-600 dark:text-gray-400">{t('liquidityProviderFee')}</span>
-                  <span className="font-semibold">${swapQuote.tradingFee}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">${swapQuote.tradingFee}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between py-2">
                   <span className="text-gray-600 dark:text-gray-400">{t('route')}</span>
-                  <span className="font-semibold">
+                  <span className="font-semibold text-gray-900 dark:text-white">
                     {Array.isArray(swapQuote?.route) ? swapQuote.route.join(' → ') : 'Direct'}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between py-2">
                   <span className="text-gray-600 dark:text-gray-400">{t('exchangeRate')}</span>
-                  <span className="font-semibold">1 {fromToken} = {swapQuote.exchangeRate} {toToken}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">1 {fromToken} = {swapQuote.exchangeRate} {toToken}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between py-2">
                   <span className="text-gray-600 dark:text-gray-400">{t('networkFee')}</span>
-                  <span className="font-semibold">${swapQuote.gasFee} USDC</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">${swapQuote.gasFee} USDC</span>
                 </div>
-                <div className="pt-2 border-t border-gray-300 dark:border-gray-600 text-xs text-gray-500 dark:text-gray-400">
+                <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
                   {t('outputEstimatedInfo')}
                 </div>
               </div>
@@ -789,7 +795,7 @@ const Swap = () => {
         <button
           onClick={handleSwap}
           disabled={!fromAmount || !toAmount || swapLoading || !isConnected}
-          className="w-full btn-primary py-4 md:py-5 text-base md:text-xl font-bold flex items-center justify-center space-x-2 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-xl"
+          className="w-full py-4 md:py-5 text-base md:text-xl font-bold flex items-center justify-center space-x-2 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white transition-all duration-200"
         >
           {swapLoading ? (
             <>

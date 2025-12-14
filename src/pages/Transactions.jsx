@@ -64,7 +64,7 @@ const Transactions = () => {
   const filteredActivity = currentActivity;
 
   return (
-    <div className="max-w-6xl mx-auto w-full">
+    <div className="max-w-6xl mx-auto w-full px-4 sm:px-0">
       {/* Header with Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
         <div>
@@ -73,8 +73,8 @@ const Transactions = () => {
             {activeTab === 'my' ? t('My Transactions') : t('All Transactions')}
           </p>
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="flex gap-4 md:gap-8 bg-transparent">
+        <div className="flex items-center flex-wrap gap-2 sm:gap-4">
+          <div className="flex flex-wrap gap-4 md:gap-8 bg-transparent">
             <button
               onClick={() => setActiveTab('my')}
               className={`pb-3 text-sm font-medium ${activeTab === 'my' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700 dark:hover:text-white'}`}

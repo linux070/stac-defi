@@ -27,7 +27,7 @@ const Bridge = () => {
   const [bridgeButtonText, setBridgeButtonText] = useState('Bridge');
   
   // Initialize the useBridge hook
-  const { bridge, state, reset, fetchTokenBalance, tokenBalance, isLoadingBalance, balanceError } = useBridge();
+  const { bridge, state, reset, fetchTokenBalance, tokenBalance, isLoadingBalance, balanceError, clearBalance } = useBridge();
   
   // Real-time token balance for USDC - now using bridge kit
   // const { balance, loading, refetch, error } = useTokenBalance('USDC'); // OLD IMPLEMENTATION
@@ -63,59 +63,63 @@ const Bridge = () => {
   }, [showChainSelector, showBridgingModal, showBridgeFailedModal]);
 
   // Effect to listen for wallet events during bridging
+  // Note: Network changes are allowed during bridging (needs confirmation on destination chain)
   useEffect(() => {
-    if (!window || !window.ethereum || state.step !== 'approving') return;
+    if (!window || !window.ethereum) return;
 
     const handleAccountsChanged = (accounts) => {
-      if (accounts.length === 0 && state.step === 'approving') {
-        // User disconnected during transaction
-        setBridgeError({
-          title: 'Transaction Cancelled',
-          message: 'Transaction cancelled: Wallet disconnected during bridging.'
-        });
-        setShowBridgeFailedModal(true);
-        setBridgeButtonText('Bridge Failed');
-        reset();
-      }
-    };
-
-    const handleChainChanged = (_chainId) => {
-      if (state.step === 'approving') {
-        // User changed network during transaction
-        setBridgeError({
-          title: 'Transaction Cancelled',
-          message: 'Transaction cancelled: Network changed during bridging.'
-        });
-        setShowBridgeFailedModal(true);
-        setBridgeButtonText('Bridge Failed');
-        reset();
+      if (accounts.length === 0) {
+        // User disconnected - close any open modals and show failure
+        if (showBridgingModal || state.step === 'approving') {
+          setShowBridgingModal(false);
+          setBridgeError({
+            title: 'Error Details',
+            message: 'Transaction cancelled: Wallet disconnected during bridging.'
+          });
+          setShowBridgeFailedModal(true);
+          setBridgeButtonText('Bridge'); // Reset to default
+          setBridgeLoading(false);
+          reset();
+        }
       }
     };
 
     const handleDisconnect = () => {
-      if (state.step === 'approving') {
+      if (showBridgingModal || state.step === 'approving') {
+        setShowBridgingModal(false);
         setBridgeError({
-          title: 'Transaction Cancelled',
+          title: 'Error Details',
           message: 'Transaction cancelled: Wallet disconnected.'
         });
         setShowBridgeFailedModal(true);
-        setBridgeButtonText('Bridge Failed');
+        setBridgeButtonText('Bridge'); // Reset to default
+        setBridgeLoading(false);
         reset();
       }
     };
 
     window.ethereum.on('accountsChanged', handleAccountsChanged);
-    window.ethereum.on('chainChanged', handleChainChanged);
     window.ethereum.on('disconnect', handleDisconnect);
 
     return () => {
       if (window.ethereum) {
         window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum.removeListener('chainChanged', handleChainChanged);
         window.ethereum.removeListener('disconnect', handleDisconnect);
       }
     };
-  }, [state.step, reset]);
+  }, [state.step, reset, showBridgingModal]);
+
+  // Effect to handle wallet disconnect (clear balance) and reconnect (refresh balance)
+  useEffect(() => {
+    if (!isConnected) {
+      // Wallet disconnected - clear balance
+      clearBalance();
+    } else if (isConnected && chainId) {
+      // Wallet connected/reconnected - refresh balance
+      const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
+      fetchTokenBalance('USDC', chainIdDecimal);
+    }
+  }, [isConnected, chainId, clearBalance, fetchTokenBalance]);
 
   // Effect to sync the Bridge networks with the global wallet network and fetch balance
   // Note: We only include chainId and isConnected as dependencies to avoid loops
@@ -357,8 +361,8 @@ const Bridge = () => {
     // Validation checks
     if (!isConnected) {
       setBridgeError({
-        title: 'Connection Error',
-        message: 'Please connect your wallet first'
+        title: 'Error Details',
+        message: 'Please connect your wallet first.'
       });
       setShowBridgeFailedModal(true);
       return;
@@ -367,29 +371,28 @@ const Bridge = () => {
     const amountFloat = parseFloat(amount);
     if (!amount || isNaN(amountFloat) || amountFloat <= 0) {
       setBridgeError({
-        title: 'Invalid Amount',
+        title: 'Error Details',
         message: `Invalid amount '${amount}': Amount must be a valid number string.`
       });
       setShowBridgeFailedModal(true);
       return;
     }
     
-    // ADD THIS CHECK: Any value from 0.1 should result in "Bridge Failed"
+    // Minimum amount check - below 0.1 USDC shows Bridge Failed
     if (amountFloat < 0.1) {
       setBridgeError({
-        title: 'Invalid Amount',
-        message: 'Minimum bridge amount is 0.1 USDC.'
+        title: 'Error Details',
+        message: 'Minimum bridge amount is 0.1 USDC. Please enter a higher amount.'
       });
       setShowBridgeFailedModal(true);
-      setBridgeButtonText('Bridge Failed');
       return;
     }
     
-    // Check if amount exceeds balance - NOW USING BRIDGE KIT BALANCE
+    // Check if amount exceeds balance - show Bridge Failed with insufficient balance error
     if (amountFloat > parseFloat(tokenBalance || '0')) {
       setBridgeError({
-        title: 'Insufficient Balance',
-        message: `Insufficient balance: You have ${tokenBalance} but trying to bridge ${amount}.`
+        title: 'Error Details',
+        message: `Insufficient balance: You have ${tokenBalance || '0'} USDC but trying to bridge ${amount} USDC.`
       });
       setShowBridgeFailedModal(true);
       return;
@@ -405,12 +408,14 @@ const Bridge = () => {
     const BRIDGE_TIMEOUT = 120000; // 2 minutes
     const timeoutId = setTimeout(() => {
       if (state.step === 'approving') {
+        setShowBridgingModal(false);
         setBridgeError({
-          title: 'Transaction Timeout',
+          title: 'Error Details',
           message: 'Transaction timeout: Please try again and confirm the transaction promptly.'
         });
         setShowBridgeFailedModal(true);
-        setBridgeButtonText('Bridge Failed');
+        setBridgeButtonText('Bridge'); // Reset to default
+        setBridgeLoading(false);
         reset();
       }
     }, BRIDGE_TIMEOUT);
@@ -433,72 +438,109 @@ const Bridge = () => {
       
       // Handle the result
       if (result.step === 'success') {
-        setBridgeButtonText('Bridge Completed');
-        // Note: Keep the modal open to show success state with transaction details
+        // Keep button as "Bridge" - success is shown in the modal
         // The modal will show the completed state via the state prop
         // User can close it manually using the close button
       } else if (result.step === 'error') {
-        // Close the bridging modal before showing the error modal
+        // Handle error result directly - show Bridge Failed modal immediately
         setShowBridgingModal(false);
-        throw new Error(result.error);
+        setBridgeLoading(false);
+        
+        // Set the error and show the failed modal immediately
+        setBridgeError({
+          title: 'Error Details',
+          message: result.error || 'Transaction failed. Please try again.'
+        });
+        setShowBridgeFailedModal(true);
+        setBridgeButtonText('Bridge'); // Reset to default
+        
+        // Also reset the bridge state
+        reset();
+        return; // Exit early, don't throw
       }
     } catch (error) {
       console.error('Bridge error:', error);
+      console.log('Error details:', {
+        code: error.code,
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
       
       // Clear timeout since we're handling the error
       clearTimeout(timeoutId);
+      // Close the in-progress modal before showing the failure modal
+      setShowBridgingModal(false);
       
-      // Detect user cancellation/rejection
-      if (error.code === 4001 || error.code === 'ACTION_REJECTED' || 
-          (error.message && (error.message.includes('user rejected') || error.message.includes('cancelled')))) {
+      // Detect user cancellation/rejection from wallet
+      // Check for various rejection patterns from different wallets/SDKs
+      const isUserRejection = 
+        error.code === 4001 || 
+        error.code === 'ACTION_REJECTED' ||
+        (error.message && (
+          error.message.toLowerCase().includes('user rejected') ||
+          error.message.toLowerCase().includes('user denied') ||
+          error.message.toLowerCase().includes('transaction rejected') ||
+          error.message.toLowerCase().includes('cancelled') ||
+          error.message.toLowerCase().includes('canceled') ||
+          error.message.toLowerCase().includes('rejected the request') ||
+          error.message.toLowerCase().includes('user refused') ||
+          error.message.toLowerCase().includes('user declined')
+        ));
+      
+      if (isUserRejection) {
         setBridgeError({
-          title: 'Transaction Rejected',
+          title: 'Error Details',
           message: 'Transaction rejected: User denied transaction signature.'
         });
-        setBridgeButtonText('Bridge Failed');
       }
       // User closed wallet without action
-      else if (error.message && error.message.includes('User closed modal')) {
+      else if (error.message && (
+        error.message.includes('User closed modal') ||
+        error.message.includes('closed the modal') ||
+        error.message.includes('popup closed')
+      )) {
         setBridgeError({
-          title: 'Transaction Cancelled',
+          title: 'Error Details',
           message: 'Transaction cancelled: User closed wallet modal.'
         });
-        setBridgeButtonText('Bridge Failed');
       }
       // Insufficient funds error
       else if (error.code === -32000 || (error.message && error.message.includes('insufficient funds'))) {
         setBridgeError({
-          title: 'Insufficient Funds',
+          title: 'Error Details',
           message: 'Insufficient funds: Not enough balance to complete the bridge transaction including gas fees.'
         });
-        setBridgeButtonText('Bridge Failed');
       }
       // Network/RPC errors
       else if (error.code === -32603 || (error.message && error.message.includes('network'))) {
         setBridgeError({
-          title: 'Network Error',
+          title: 'Error Details',
           message: 'Network error: Unable to connect to blockchain. Please check your connection and try again.'
         });
-        setBridgeButtonText('Bridge Failed');
       }
       // Gas estimation failed
       else if (error.message && error.message.includes('gas')) {
         setBridgeError({
-          title: 'Gas Estimation Failed',
+          title: 'Error Details',
           message: 'Gas estimation failed: Transaction may fail or gas price too low.'
         });
-        setBridgeButtonText('Bridge Failed');
       }
-      // Generic fallback error
+      // Generic fallback error - show modal for ANY error
       else {
         setBridgeError({
-          title: 'Bridge Error',
+          title: 'Error Details',
           message: error.message || 'An unexpected error occurred during the bridge transaction.'
         });
-        setBridgeButtonText('Bridge Failed');
       }
       
+      // ALWAYS show the failed modal for any error in catch block
+      // Reset button to default state
+      setBridgeButtonText('Bridge');
       setShowBridgeFailedModal(true);
+      
+      // Log that we're showing the modal
+      console.log('Showing Bridge Failed modal - Error caught:', error.message || error);
     } finally {
       setBridgeLoading(false);
       // Don't close the modal automatically, let user close it manually
@@ -506,9 +548,25 @@ const Bridge = () => {
   };
 
   const closeBridgingModal = () => {
+    // If transaction is still in progress (not completed), show Bridge Failed
+    if (state.step !== 'success' && bridgeLoading) {
+      setShowBridgingModal(false);
+      setBridgeError({
+        title: 'Error Details',
+        message: 'Transaction cancelled: User closed the bridging modal.'
+      });
+      setShowBridgeFailedModal(true);
+      setBridgeButtonText('Bridge'); // Reset to default
+      setBridgeLoading(false);
+      reset();
+      return;
+    }
+    
+    // Transaction completed successfully, just close
     setShowBridgingModal(false);
     setAmount('');
-    setBridgeButtonText('Bridge');
+    setBridgeButtonText('Bridge'); // Always reset to default
+    setBridgeLoading(false);
     reset(); // Reset the bridge state
   };
 
@@ -522,12 +580,25 @@ const Bridge = () => {
   // Effect to show bridge failed modal when state indicates an error
   useEffect(() => {
     if (state.step === 'error' && state.error) {
+      console.log('useEffect detected state.step === error, showing Bridge Failed modal:', state.error);
+      
+      // Close the in-progress modal first
+      setShowBridgingModal(false);
+      
+      // Check if this is a wallet rejection (the error message will contain our formatted message)
+      const isWalletRejection = state.error.toLowerCase().includes('transaction rejected') ||
+                                state.error.toLowerCase().includes('user denied') ||
+                                state.error.toLowerCase().includes('user rejected');
+      
       setBridgeError({
         title: 'Error Details',
         message: state.error
       });
       setShowBridgeFailedModal(true);
-      setBridgeButtonText('Bridge Failed');
+      setBridgeButtonText('Bridge'); // Reset to default
+      setBridgeLoading(false);
+      
+      console.log('Bridge Failed modal should now be visible');
     }
   }, [state]);
 
@@ -643,21 +714,21 @@ const Bridge = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto w-full">
+    <div className="max-w-lg mx-auto w-full px-4 sm:px-0">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
+        className="bg-white/80 dark:bg-gray-900/70 backdrop-blur rounded-2xl border border-gray-200 dark:border-white/10 shadow-lg dark:shadow-black/30 p-6 space-y-6"
       >
         {/* Header */}
-        <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Bridge Assets</h2>
+        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900 dark:text-white">Bridge Assets</h2>
 
         {/* Info Banner */}
-        <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-100 dark:border-blue-800 rounded-lg p-4 mb-6">
+        <div className="bg-blue-50/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-100 dark:border-blue-800 rounded-xl p-4 mb-6 shadow-sm">
           <div className="flex items-start">
             <Info className="flex-shrink-0 mt-0.5 mr-2" size={16} />
             <p className="text-sm">
-              Cross-Chain Bridging: Transfer assets securely between Sepolia and Arc Testnet. Estimated time: 2-5 minutes.
+              Cross-Chain Bridging: Transfer assets securely between Sepolia and Arc Testnet. Estimated time: 1-2 minutes.
             </p>
           </div>
         </div>
@@ -666,7 +737,8 @@ const Bridge = () => {
         <div className="space-y-6">
           {/* From Network */}
           <div>
-            <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-800">
+            <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">From</label>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white/80 dark:bg-gray-900/60 shadow-sm transition-all duration-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center">
@@ -741,7 +813,7 @@ const Bridge = () => {
                 }
               }}
               aria-label="Switch Networks"
-              className="switch-button p-3 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group"
+              className="switch-button p-3 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group hover:ring-2 ring-primary-300/60 dark:ring-primary-500/40"
             >
               <ArrowLeftRight size={20} className="text-gray-600 dark:text-gray-300 group-hover:rotate-180 transition-transform duration-300" />
             </button>
@@ -749,7 +821,8 @@ const Bridge = () => {
 
           {/* To Network */}
           <div>
-            <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-800">
+            <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">To</label>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white/80 dark:bg-gray-900/60 shadow-sm transition-all duration-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center">
@@ -780,55 +853,57 @@ const Bridge = () => {
         {/* Asset Input Section */}
         <div className="mt-6">
           <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Asset</label>
-          <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-800">
-            <div className="flex items-center justify-between">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white/80 dark:bg-gray-900/60 shadow-sm transition-all duration-200">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <input
                 type="text"
                 inputMode="decimal"
                 value={amount}
                 onChange={(e) => setAmount(sanitizeInput(e.target.value))}
                 placeholder="0.0"
-                className="text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full"
+                className="text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full focus:ring-0 focus:border-primary-500"
               />
-              {/* Token Pill */}
-              <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-full py-2 px-3">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center">
-                  <img 
-                    src="/icons/usdc.png" 
-                    alt="USDC" 
-                    className="w-6 h-6 rounded-full object-contain"
-                  />
+              {/* Right side: Token Pill and Balance */}
+              <div className="flex flex-col items-end gap-2">
+                {/* Token Pill */}
+                <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-full py-2 px-3 border border-gray-200 dark:border-gray-600">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center">
+                    <img 
+                      src="/icons/usdc.png" 
+                      alt="USDC" 
+                      className="w-6 h-6 rounded-full object-contain"
+                    />
+                  </div>
+                  <span className="font-medium text-gray-900 dark:text-white">USDC</span>
                 </div>
-                <span className="font-medium text-gray-900 dark:text-white">USDC</span>
+                {/* Balance and Max */}
+                {isConnected && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Bal:</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {isLoadingBalance ? (
+                        <Loader className="animate-spin" size={14} />
+                      ) : balanceError ? (
+                        <span className="text-red-500">Error</span>
+                      ) : (
+                        formatWholeAmount(tokenBalance || 0)
+                      )}
+                    </span>
+                    <button 
+                      onClick={() => {
+                        if (tokenBalance && parseFloat(tokenBalance) > 0) {
+                          setAmount(tokenBalance);
+                        }
+                      }}
+                      className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+                      disabled={isLoadingBalance || balanceError}
+                    >
+                      Max
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-            {isConnected && (
-              <div className="flex items-center justify-start mt-2">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Bal:</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {isLoadingBalance ? (
-                      <Loader className="animate-spin" size={14} />
-                    ) : balanceError ? (
-                      <span className="text-red-500">Error</span>
-                    ) : (
-                      formatWholeAmount(tokenBalance || 0)
-                    )}
-                  </span>
-                  <button 
-                    onClick={() => {
-                      if (tokenBalance && parseFloat(tokenBalance) > 0) {
-                        setAmount(tokenBalance);
-                      }
-                    }}
-                    className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
-                    disabled={isLoadingBalance || balanceError}
-                  >
-                    Max
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -889,7 +964,7 @@ const Bridge = () => {
         <button
           onClick={handleBridge}
           disabled={!amount || bridgeLoading || !isConnected || state.isLoading}
-          className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full mt-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {bridgeLoading || state.isLoading ? (
             <>
