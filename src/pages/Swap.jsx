@@ -194,6 +194,26 @@ const Swap = () => {
     }
   };
 
+  const handleToMaxClick = () => {
+    try {
+      const safeBalance = toBalance || '0.00';
+      const balanceNum = parseFloat(safeBalance);
+
+      if (!safeBalance || isNaN(balanceNum) || balanceNum === 0) {
+        setToast({ visible: true, type: 'warning', message: 'No balance available' });
+        setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
+        return;
+      }
+
+      // Set the to amount to the full balance
+      setToAmount(safeBalance);
+    } catch (error) {
+      console.error('Error in handleToMaxClick:', error);
+      setToast({ visible: true, type: 'error', message: 'Failed to set maximum amount' });
+      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
+    }
+  };
+
   const handleSwap = async () => {
     if (!isConnected) {
       setToast({ visible: true, type: 'error', message: t('connectWalletFirst') });
@@ -602,47 +622,50 @@ const Swap = () => {
         {/* From Token */}
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">{t('From')}</label>
-          <div className="p-4 bg-white/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
+          <div className="p-3 sm:p-4 bg-white/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
             <div className="flex items-center justify-between gap-2 w-full">
-              <div className="relative flex-1">
+              <div className="relative flex-1 min-w-0">
                 <input
                   type="text"
                   inputMode="decimal"
                   value={fromAmount}
                   onChange={(e) => setFromAmount(sanitizeInput(e.target.value))}
                   placeholder="0.0"
-                  className="text-3xl md:text-4xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16 focus:ring-0 focus:border-primary-500"
+                  className="text-2xl sm:text-3xl md:text-4xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-2 sm:pr-4 md:pr-16 focus:ring-0 focus:border-primary-500"
                 />
               </div>
               <button
                 ref={fromTokenTriggerRef}
                 onClick={() => setShowFromSelector(true)}
-                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md hover:ring-2 ring-primary-300/60 dark:ring-primary-500/40 self-end min-w-[110px] md:min-w-[130px] w-auto flex-shrink-0 border border-gray-200 dark:border-gray-700"
+                className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md hover:ring-2 ring-primary-300/60 dark:ring-primary-500/40 self-end min-w-[80px] sm:min-w-[110px] md:min-w-[130px] w-auto flex-shrink-0 border border-gray-200 dark:border-gray-700"
               >
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl md:text-2xl">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-lg sm:text-xl md:text-2xl flex-shrink-0">
                   {fromToken === 'USDC' ? (
                     <img 
                       src="/icons/usdc.png" 
                       alt={fromToken} 
-                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
+                      className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full object-contain"
                     />
                   ) : fromToken === 'EURC' ? (
                     <img 
                       src="/icons/eurc.png" 
                       alt={fromToken} 
-                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
+                      className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full object-contain"
                     />
                   ) : (
-                    <span className="text-lg md:text-xl">
+                    <span className="text-base sm:text-lg md:text-xl">
                       {fromToken}
                     </span>
                   )}
                 </div>
-                <div className="text-left min-w-0">
+                <div className="text-left min-w-0 hidden sm:block">
                   <p className="font-bold text-sm md:text-base truncate">{fromToken}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{getTokenLabel(fromToken)}</p>
                 </div>
-                <ChevronDown size={16} />
+                <div className="text-left min-w-0 sm:hidden">
+                  <p className="font-bold text-xs truncate">{fromToken}</p>
+                </div>
+                <ChevronDown size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
               </button>
             </div>
             {isConnected && (
@@ -682,46 +705,49 @@ const Swap = () => {
         {/* To Token */}
         <div className="mb-4 md:mb-6">
           <label className="block text-sm font-medium mb-2">{t('To')}</label>
-          <div className="p-4 bg-white/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
+          <div className="p-3 sm:p-4 bg-white/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
             <div className="flex items-center justify-between gap-2 w-full">
-              <div className="relative flex-1">
+              <div className="relative flex-1 min-w-0">
                 <input
                   type="text"
                   value={toAmount}
                   readOnly
                   placeholder="0.0"
-                  className="text-3xl md:text-4xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16 focus:ring-0 focus:border-primary-500"
+                  className="text-2xl sm:text-3xl md:text-4xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-2 sm:pr-4 md:pr-16 focus:ring-0 focus:border-primary-500"
                 />
               </div>
               <button
                 ref={toTokenTriggerRef}
                 onClick={() => setShowToSelector(true)}
-                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md hover:ring-2 ring-primary-300/60 dark:ring-primary-500/40 self-end min-w-[110px] md:min-w-[130px] w-auto flex-shrink-0 border border-gray-200 dark:border-gray-700"
+                className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md hover:ring-2 ring-primary-300/60 dark:ring-primary-500/40 self-end min-w-[80px] sm:min-w-[110px] md:min-w-[130px] w-auto flex-shrink-0 border border-gray-200 dark:border-gray-700"
               >
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl md:text-2xl">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-lg sm:text-xl md:text-2xl flex-shrink-0">
                   {toToken === 'USDC' ? (
                     <img 
                       src="/icons/usdc.png" 
                       alt={toToken} 
-                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
+                      className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full object-contain"
                     />
                   ) : toToken === 'EURC' ? (
                     <img 
                       src="/icons/eurc.png" 
                       alt={toToken} 
-                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
+                      className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full object-contain"
                     />
                   ) : (
-                    <span className="text-lg md:text-xl">
+                    <span className="text-base sm:text-lg md:text-xl">
                       {toToken}
                     </span>
                   )}
                 </div>
-                <div className="text-left min-w-0">
+                <div className="text-left min-w-0 hidden sm:block">
                   <p className="font-bold text-sm md:text-base truncate">{toToken}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{getTokenLabel(toToken)}</p>
                 </div>
-                <ChevronDown size={16} />
+                <div className="text-left min-w-0 sm:hidden">
+                  <p className="font-bold text-xs truncate">{toToken}</p>
+                </div>
+                <ChevronDown size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
               </button>
             </div>
             {isConnected && (
@@ -736,6 +762,12 @@ const Swap = () => {
                     )}
                   </span>
                 </div>
+                <button
+                  onClick={handleToMaxClick}
+                  className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors ml-2"
+                >
+                  {t('Max')}
+                </button>
               </div>
             )}
           </div>

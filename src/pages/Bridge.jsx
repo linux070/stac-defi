@@ -189,6 +189,14 @@ const Bridge = () => {
     }
   }, [state.step, chainId, fetchTokenBalance, fromChain]);
 
+  // Effect to reset timer when bridge completes or errors
+  useEffect(() => {
+    if (state.step === 'success' || state.step === 'error') {
+      // Reset timer when bridge completes or errors
+      setBridgeStartTime(null);
+    }
+  }, [state.step]);
+
   // Helper function to map chain names to chain IDs
   const getChainIdByName = (chainName) => {
     switch (chainName) {
@@ -853,19 +861,21 @@ const Bridge = () => {
         {/* Asset Input Section */}
         <div className="mt-6">
           <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Asset</label>
-          <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white/80 dark:bg-gray-900/60 shadow-sm transition-all duration-200">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <input
-                type="text"
-                inputMode="decimal"
-                value={amount}
-                onChange={(e) => setAmount(sanitizeInput(e.target.value))}
-                placeholder="0.0"
-                className="text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full focus:ring-0 focus:border-primary-500"
-              />
+          <div className="p-3 sm:p-4 bg-white/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
+            <div className="flex items-center justify-between gap-2 w-full">
+              <div className="relative flex-1 min-w-0">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(e) => setAmount(sanitizeInput(e.target.value))}
+                  placeholder="0.0"
+                  className="text-2xl sm:text-3xl md:text-4xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-2 sm:pr-4 md:pr-16 focus:ring-0 focus:border-primary-500"
+                />
+              </div>
               {/* Right side: Token Pill and Balance */}
-              <div className="flex flex-col items-end gap-2">
-                {/* Token Pill */}
+              <div className="flex flex-col items-end w-full sm:w-auto">
+                {/* Token Pill - Static, no dropdown */}
                 <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-full py-2 px-3 border border-gray-200 dark:border-gray-600">
                   <div className="w-6 h-6 rounded-full flex items-center justify-center">
                     <img 
@@ -876,34 +886,25 @@ const Bridge = () => {
                   </div>
                   <span className="font-medium text-gray-900 dark:text-white">USDC</span>
                 </div>
-                {/* Balance and Max */}
-                {isConnected && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Bal:</span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {isLoadingBalance ? (
-                        <Loader className="animate-spin" size={14} />
-                      ) : balanceError ? (
-                        <span className="text-red-500">Error</span>
-                      ) : (
-                        formatWholeAmount(tokenBalance || 0)
-                      )}
-                    </span>
-                    <button 
-                      onClick={() => {
-                        if (tokenBalance && parseFloat(tokenBalance) > 0) {
-                          setAmount(tokenBalance);
-                        }
-                      }}
-                      className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
-                      disabled={isLoadingBalance || balanceError}
-                    >
-                      Max
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
+            {/* Balance - Underneath the pill */}
+            {isConnected && (
+              <div className="flex items-center justify-end mt-2">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Bal:</span>
+                  <span className="text-sm font-semibold">
+                    {isLoadingBalance ? (
+                      <Loader className="animate-spin" size={14} />
+                    ) : balanceError ? (
+                      <span className="text-red-500">Error</span>
+                    ) : (
+                      formatWholeAmount(tokenBalance || 0)
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

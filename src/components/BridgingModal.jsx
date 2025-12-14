@@ -6,6 +6,17 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }
   const [elapsedTime, setElapsedTime] = useState(0);
   const [finalTime, setFinalTime] = useState(null);
 
+  // Close modal immediately when error is detected - BridgeFailedModal will handle errors
+  // Don't call onClose here - let the parent component handle the error state via useEffect
+  // This prevents double-handling and ensures BridgeFailedModal is shown properly
+  useEffect(() => {
+    if (isOpen && state?.step === 'error') {
+      console.log('🚨 BridgingModal detected error state - will close to show BridgeFailedModal');
+      // The parent component's useEffect will handle closing this and showing BridgeFailedModal
+      // We just need to ensure this modal doesn't render when there's an error
+    }
+  }, [isOpen, state?.step]);
+
   // Reset timer when modal opens with a new startTime (new transaction)
   useEffect(() => {
     if (isOpen && startTime) {
@@ -14,14 +25,27 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }
     }
   }, [isOpen, startTime]);
 
-  // Stop and capture final time immediately when success or error
+  // Stop and capture final time immediately when success (not error - errors are handled by BridgeFailedModal)
   useEffect(() => {
-    if (state?.step === 'success' || state?.step === 'error') {
+    if (state?.step === 'success') {
       if (finalTime === null && startTime) {
         setFinalTime(Math.floor((Date.now() - startTime) / 1000));
       }
     }
   }, [state?.step, startTime, finalTime]);
+
+  // Reset timer when bridge completes or errors
+  useEffect(() => {
+    if (state?.step === 'success' || state?.step === 'error') {
+      // Reset elapsed time when bridge completes or errors
+      // Note: finalTime is preserved for success to show completion time
+      setElapsedTime(0);
+      // Only reset finalTime on error, keep it for success to display completion time
+      if (state?.step === 'error') {
+        setFinalTime(null);
+      }
+    }
+  }, [state?.step]);
 
   useEffect(() => {
     let interval;
@@ -48,10 +72,9 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }
   };
 
   // Determine modal state based on bridge state
+  // Note: Errors are handled by BridgeFailedModal, so this modal only shows in-progress or success
   const getModalState = () => {
-    if (state?.step === 'error') {
-      return 'failed';
-    } else if (state?.step === 'success') {
+    if (state?.step === 'success') {
       return 'completed';
     } else {
       return 'inProgress';
@@ -59,6 +82,11 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }
   };
 
   const modalState = getModalState();
+  
+  // Don't render if there's an error - BridgeFailedModal will handle it
+  if (state?.step === 'error') {
+    return null;
+  }
 
   return (
     <AnimatePresence>
@@ -91,30 +119,23 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }
                     <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                       <Loader className="animate-spin text-blue-500" size={32} />
                     </div>
-                  ) : modalState === 'completed' ? (
+                  ) : (
                     <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                       <CheckCircle size={32} className="text-green-500" />
-                    </div>
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                      <AlertCircle size={32} className="text-red-500" />
                     </div>
                   )}
                   <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
                     {modalState === 'inProgress' ? (
                       <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    ) : modalState === 'completed' ? (
-                      <CheckCircle size={16} className="text-white" />
                     ) : (
-                      <X size={16} className="text-white" />
+                      <CheckCircle size={16} className="text-white" />
                     )}
                   </div>
                 </div>
               </div>
 
               <h3 className="text-xl font-bold mb-2">
-                {modalState === 'inProgress' ? 'Bridging in Progress' : 
-                 modalState === 'completed' ? 'Bridge Completed' : 'Bridge Failed'}
+                {modalState === 'inProgress' ? 'Bridging in Progress' : 'Bridge Completed'}
               </h3>
               
               <div className="flex items-center justify-center space-x-4 my-6">
@@ -141,10 +162,8 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
                     {modalState === 'inProgress' ? (
                       <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    ) : modalState === 'completed' ? (
-                      <CheckCircle size={16} className="text-white" />
                     ) : (
-                      <X size={16} className="text-white" />
+                      <CheckCircle size={16} className="text-white" />
                     )}
                   </div>
                 </div>
@@ -243,24 +262,6 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }
                 </div>
               )}
 
-              {modalState === 'failed' && (
-                <div className="space-y-4">
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Bridge transaction failed
-                  </p>
-                  
-                  <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 text-left">
-                    <h4 className="font-semibold text-red-800 dark:text-red-200 mb-2">Error Details</h4>
-                    <p className="text-sm text-red-600 dark:text-red-300">
-                      {state?.error || 'Transaction was rejected or cancelled by user'}
-                    </p>
-                  </div>
-                  
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Please try again or contact support if the issue persists.
-                  </p>
-                </div>
-              )}
             </div>
           </motion.div>
         </motion.div>

@@ -4,48 +4,37 @@ import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
 import { BridgeKit } from '@circle-fin/bridge-kit';
 import { createPublicClient, http, formatUnits } from 'viem';
 import { sepolia } from 'viem/chains';
+import { arcTestnet } from 'viem/chains';
 import { NETWORKS, TOKENS } from '../config/networks'; // Import the same config
 
 // --- Configuration & Constants ---
 
-// Chain IDs - Make sure these match the hex values in networks.js
-export const SEPOLIA_CHAIN_ID = 11155111; // 0xaa36a7
-export const ARC_CHAIN_ID = 5042002; // 0x4cef52
-
-console.log('Chain IDs:', {
-  SEPOLIA_CHAIN_ID,
-  ARC_CHAIN_ID,
-  sepoliaHex: '0xaa36a7',
-  arcHex: '0x4cef52',
-  sepoliaParsed: parseInt('0xaa36a7', 16),
-  arcParsed: parseInt('0x4cef52', 16)
-});
-
 // Token configurations for both chains
-// Using the same contract addresses as defined in networks.js for consistency
 export const CHAIN_TOKENS = {
-  [SEPOLIA_CHAIN_ID]: { // Sepolia
+  [11155111]: { // Sepolia
     USDC: {
       symbol: 'USDC',
       name: 'USD Coin',
       decimals: 6,
-      contractAddress: TOKENS.ETHEREUM_SEPOLIA.USDC.address, // Use the same address from config
+      contractAddress: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Bridge Kit USDC on Sepolia
     },
   },
-  [ARC_CHAIN_ID]: { // Arc Testnet
+  [5042002]: { // Arc Testnet
     USDC: {
       symbol: 'USDC',
       name: 'USD Coin',
       decimals: 6,
-      contractAddress: TOKENS.ARC_TESTNET.USDC.address, // Use the same address from config
+      contractAddress: '0x3600000000000000000000000000000000000000', // Bridge Kit USDC on Arc Testnet
     },
   },
 };
 
-console.log('CHAIN_TOKENS:', CHAIN_TOKENS);
-
 // Legacy export for backward compatibility
-export const SEPOLIA_TOKENS = CHAIN_TOKENS[SEPOLIA_CHAIN_ID];
+export const SEPOLIA_TOKENS = CHAIN_TOKENS[11155111];
+
+// Chain IDs
+export const SEPOLIA_CHAIN_ID = 11155111;
+export const ARC_CHAIN_ID = 5042002;
 
 // RPC URLs for balance fetching
 const ARC_RPC_URLS = [
@@ -466,19 +455,81 @@ export function useBridge() {
       return finalState;
 
     } catch (err) {
-      console.error('Bridge error:', err);
-      console.log('Bridge error details:', {
+      console.error('🔴 Bridge error caught:', err);
+      
+      // Enhanced error logging for debugging
+      const errorDetails = {
         code: err.code,
         message: err.message,
         name: err.name,
         reason: err.reason,
         data: err.data,
+        error: err.error,
+        cause: err.cause,
+        shortMessage: err.shortMessage,
         stack: err.stack?.substring(0, 200)
-      });
+      };
+      console.log('📋 Bridge error details:', errorDetails);
       
       let errorMessage = err.message || 'Bridge transaction failed';
       
-      if (err.message && err.message.includes('Insufficient funds')) {
+      // Handle user rejection/cancellation FIRST - check multiple patterns
+      // Also check nested error objects (some SDKs wrap errors)
+      const originalError = err.error || err.cause || err;
+      const errorMsg = (err.message || originalError?.message || err.shortMessage || '').toLowerCase();
+      const errorCode = err.code || originalError?.code;
+      
+      // Enhanced user rejection detection - check for all possible patterns
+      const isUserRejection = 
+        errorCode === 4001 || // MetaMask user rejection
+        errorCode === 'ACTION_REJECTED' || // WalletConnect/other wallets
+        errorCode === 'USER_REJECTED' ||
+        errorCode === 'USER_CANCELLED' ||
+        errorCode === 'USER_CANCELED' ||
+        (errorCode === -32603 && errorMsg.includes('user rejected')) || // JSON-RPC error with user rejection
+        errorCode === 'CANCELLED' ||
+        errorCode === 'CANCELED' ||
+        // Message-based detection (comprehensive patterns)
+        errorMsg.includes('user rejected') ||
+        errorMsg.includes('user denied') ||
+        errorMsg.includes('user cancelled') ||
+        errorMsg.includes('user canceled') ||
+        errorMsg.includes('transaction rejected') ||
+        errorMsg.includes('rejected the request') ||
+        errorMsg.includes('user refused') ||
+        errorMsg.includes('user declined') ||
+        errorMsg.includes('user aborted') ||
+        errorMsg.includes('request rejected') ||
+        errorMsg.includes('request denied') ||
+        errorMsg.includes('signature rejected') ||
+        errorMsg.includes('signature denied') ||
+        errorMsg.includes('signature cancelled') ||
+        errorMsg.includes('signature canceled') ||
+        errorMsg.includes('wallet rejected') ||
+        errorMsg.includes('wallet denied') ||
+        errorMsg.includes('wallet cancelled') ||
+        errorMsg.includes('wallet canceled') ||
+        errorMsg.includes('metamask') && (errorMsg.includes('rejected') || errorMsg.includes('denied') || errorMsg.includes('cancelled') || errorMsg.includes('canceled')) ||
+        // Generic patterns (check last to avoid false positives)
+        (errorMsg.includes('rejected') && !errorMsg.includes('execution reverted')) ||
+        (errorMsg.includes('denied') && !errorMsg.includes('execution reverted')) ||
+        (errorMsg.includes('cancelled') && !errorMsg.includes('execution reverted')) ||
+        (errorMsg.includes('canceled') && !errorMsg.includes('execution reverted'));
+      
+      console.log('🔍 User rejection detection:', {
+        isUserRejection,
+        errorCode,
+        errorMsg: errorMsg.substring(0, 100), // Log first 100 chars
+        originalMessage: err.message
+      });
+      
+      if (isUserRejection) {
+        errorMessage = 'Transaction rejected: User denied transaction signature.';
+        console.log('✅ Detected user cancellation - will show Bridge Failed modal');
+      }
+      
+      // Handle insufficient funds (only if not user rejection)
+      if (!isUserRejection && err.message && err.message.includes('Insufficient funds')) {
         // Determine which chain the error occurred on based on direction
         const isSepoliaToArc = direction === 'sepolia-to-arc';
         const sourceChainId = isSepoliaToArc ? SEPOLIA_CHAIN_ID : ARC_CHAIN_ID;
@@ -503,45 +554,18 @@ export function useBridge() {
         }
       }
       
-      // Handle user rejection/cancellation - check multiple patterns
-      // Also check nested error objects (some SDKs wrap errors)
-      const originalError = err.error || err.cause || err;
-      const errorMsg = (err.message || originalError?.message || '').toLowerCase();
-      const errorCode = err.code || originalError?.code;
-      
-      const isUserRejection = 
-        errorCode === 4001 || 
-        errorCode === 'ACTION_REJECTED' ||
-        (errorCode === -32603 && errorMsg.includes('user rejected')) ||
-        errorMsg.includes('user rejected') ||
-        errorMsg.includes('user denied') ||
-        errorMsg.includes('transaction rejected') ||
-        errorMsg.includes('user cancelled') ||
-        errorMsg.includes('user canceled') ||
-        errorMsg.includes('rejected the request') ||
-        errorMsg.includes('user refused') ||
-        errorMsg.includes('user declined') ||
-        errorMsg.includes('rejected') ||
-        errorMsg.includes('denied') ||
-        errorMsg.includes('cancelled') ||
-        errorMsg.includes('canceled');
-      
-      if (isUserRejection) {
-        errorMessage = 'Transaction rejected: User denied transaction signature.';
-      }
-      
-      // Handle insufficient funds
-      if (err.code === 'INSUFFICIENT_FUNDS' || (err.message && err.message.includes('insufficient funds'))) {
+      // Handle insufficient funds (only if not user rejection)
+      if (!isUserRejection && (err.code === 'INSUFFICIENT_FUNDS' || (err.message && err.message.includes('insufficient funds')))) {
         errorMessage = 'Insufficient funds: Not enough balance to complete the bridge.';
       }
       
-      // Handle network errors
-      if (err.code === 'NETWORK_ERROR' || (err.message && (err.message.includes('network') || err.message.includes('timeout')))) {
+      // Handle network errors (only if not user rejection)
+      if (!isUserRejection && (err.code === 'NETWORK_ERROR' || (err.message && (err.message.includes('network') || err.message.includes('timeout'))))) {
         errorMessage = 'Network error: Unable to connect to blockchain. Please check your connection.';
       }
       
-      // Handle network switch errors
-      if (err.message && (err.message.includes('network') || err.message.includes('chain'))) {
+      // Handle network switch errors (only if not user rejection)
+      if (!isUserRejection && err.message && (err.message.includes('network') || err.message.includes('chain'))) {
         errorMessage = 'Network switch failed. Please manually switch to the correct network in your wallet.';
       }
       
@@ -554,6 +578,12 @@ export function useBridge() {
         receiveTxHash: undefined,
         direction: undefined,
       };
+      
+      console.log('📤 Returning error state:', {
+        step: errorState.step,
+        error: errorState.error.substring(0, 100), // Log first 100 chars
+        isUserRejection
+      });
       
       setState(errorState);
       return errorState;
