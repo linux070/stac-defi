@@ -863,14 +863,16 @@ const Bridge = () => {
           <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Asset</label>
           <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 bg-white/80 dark:bg-gray-900/60 shadow-sm transition-all duration-200">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <input
-                type="text"
-                inputMode="decimal"
-                value={amount}
-                onChange={(e) => setAmount(sanitizeInput(e.target.value))}
-                placeholder="0.0"
-                className="text-2xl sm:text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full focus:ring-0 focus:border-primary-500"
-              />
+              <div className="relative flex-1 min-w-0">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(e) => setAmount(sanitizeInput(e.target.value))}
+                  placeholder="0.0"
+                  className="text-2xl sm:text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-2 sm:pr-4 focus:ring-0 focus:border-primary-500"
+                />
+              </div>
               {/* Right side: Token Pill and Balance */}
               <div className="flex flex-col items-end gap-2 w-full sm:w-auto">
                 {/* Token Pill - Static, no dropdown */}
