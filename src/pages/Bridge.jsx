@@ -722,7 +722,7 @@ const Bridge = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto w-full px-4 sm:px-0">
+    <div className="max-w-lg mx-auto w-full px-2 sm:px-0">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -861,8 +861,8 @@ const Bridge = () => {
         {/* Asset Input Section */}
         <div className="mt-6">
           <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Asset</label>
-          <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 bg-white/80 dark:bg-gray-900/60 shadow-sm transition-all duration-200">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="p-3 sm:p-4 bg-white/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
+            <div className="flex items-center justify-between gap-2 w-full">
               <div className="relative flex-1 min-w-0">
                 <input
                   type="text"

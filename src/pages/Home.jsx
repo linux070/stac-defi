@@ -122,7 +122,7 @@ const Home = ({ setActiveTab }) => {
   ];
 
   return (
-    <div className="space-y-8 px-4 sm:px-0">
+    <div className="space-y-8 px-2 sm:px-0">
       {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
