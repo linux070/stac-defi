@@ -34,13 +34,16 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         {/* Top Bar: Logo & Wallet */}
         <div className="md:hidden fixed top-4 left-0 right-0 mx-auto w-[95%] mb-4">
           <div className="flex items-center justify-between rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2">
-            {/* Logo - Standalone logo without text */}
-            <a href="/" className="flex items-center pl-8 cursor-pointer">
+            {/* Logo with text */}
+            <a href="/" className="flex items-center gap-2 pl-3 cursor-pointer flex-shrink-0">
               <img 
-                src="/stac.jpg" 
+                src="/icons/pixel-stack.svg" 
                 alt="Stac Logo" 
-                className="w-10 h-10 rounded-xl object-contain hover:opacity-90 transition"
+                className="w-6 h-6 hover:opacity-90 transition-all duration-200 dark:invert"
               />
+              <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                Stac
+              </span>
             </a>
 
             {/* Controls - Theme Toggle */}
@@ -71,13 +74,16 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         {/* Desktop Header - Floating Island */}
         <div className="hidden md:block md:fixed md:top-4 md:left-0 md:right-0 md:flex md:justify-center">
           <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-6 py-3 mx-auto w-fit max-w-full md:min-w-[700px] md:max-w-6xl">
-            {/* Logo - Standalone logo without text */}
-            <a href="/" className="flex items-center pl-8 cursor-pointer">
+            {/* Logo with text */}
+            <a href="/" className="flex items-center gap-3 pl-4 cursor-pointer flex-shrink-0">
               <img 
-                src="/stac.jpg" 
+                src="/icons/pixel-stack.svg" 
                 alt="Stac Logo" 
-                className="w-10 h-10 rounded-xl object-contain hover:opacity-90 transition"
+                className="w-6 h-6 hover:opacity-90 transition-all duration-200 dark:invert"
               />
+              <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                Stac
+              </span>
             </a>
 
             {/* Desktop Navigation */}

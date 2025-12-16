@@ -16,6 +16,9 @@ import {
   walletConnectWallet, 
   coinbaseWallet, 
   rabbyWallet,
+  safeWallet,
+  rainbowWallet,
+  baseAccount,
 } from '@rainbow-me/rainbowkit/wallets';
 
 // Define Arc Testnet chain - Fixed to match config/networks.js
@@ -56,7 +59,10 @@ const config = getDefaultConfig({
         metaMaskWallet,
         walletConnectWallet,
         coinbaseWallet,
-        rabbyWallet
+        rabbyWallet,
+        safeWallet,
+        rainbowWallet,
+        baseAccount
       ]
     }
   ]

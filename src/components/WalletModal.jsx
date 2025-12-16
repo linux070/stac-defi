@@ -13,7 +13,10 @@ const WalletModal = ({ isOpen, onClose }) => {
     { id: 'metamask', name: 'MetaMask', icon: '🦊', available: typeof window !== 'undefined' && window.ethereum?.isMetaMask },
     { id: 'walletconnect', name: 'WalletConnect', icon: '🔗', available: true },
     { id: 'coinbase', name: 'Coinbase Wallet', icon: '💼', available: typeof window !== 'undefined' && window.ethereum?.isCoinbaseWallet },
-    { id: 'rabby', name: 'Rabby', icon: '🐰', available: typeof window !== 'undefined' && window.ethereum?.isRabby }
+    { id: 'rabby', name: 'Rabby', icon: '🐰', available: typeof window !== 'undefined' && window.ethereum?.isRabby },
+    { id: 'safe', name: 'Safe Wallet', icon: '🛡️', available: typeof window !== 'undefined' && (window.ethereum?.isSafe || window.parent !== window) },
+    { id: 'rainbow', name: 'Rainbow', icon: '🌈', available: typeof window !== 'undefined' && window.ethereum?.isRainbow },
+    { id: 'base', name: 'Base', icon: '🔷', available: typeof window !== 'undefined' && (window.ethereum?.isBase || window.ethereum?.isCoinbaseWallet) }
   ];
 
   const handleConnect = async (walletId) => {

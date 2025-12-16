@@ -27,12 +27,6 @@ const Swap = () => {
   const [slippageWarning, setSlippageWarning] = useState('');
   const [toast, setToast] = useState({ visible: false, type: 'info', message: '' });
 
-  const getTokenLabel = (symbol) => {
-    if (symbol === 'USDC') return 'USD Coin';
-    if (symbol === 'EURC') return 'Euro Coin';
-    return symbol || 'Token';
-  };
-
   // Refs for trigger buttons
   const fromTokenTriggerRef = useRef(null);
   const toTokenTriggerRef = useRef(null);
@@ -59,24 +53,8 @@ const Swap = () => {
   const { balance: toBalance, loading: toLoading, refetch: refetchTo } = useTokenBalance(toToken);
 
   const tokenList = useMemo(() => {
-    try {
-      if (!TOKENS || typeof TOKENS !== 'object') {
-        return [];
-      }
-      // Filter to only include valid token objects with symbol property
-      // Exclude nested chain-specific configs like ETHEREUM_SEPOLIA and ARC_TESTNET
-      const allTokens = Object.values(TOKENS).filter(token => 
-        token && 
-        typeof token === 'object' && 
-        typeof token.symbol === 'string' &&
-        token.symbol.length > 0
-      );
-      const filtered = getFilteredTokens(allTokens, chainId);
-      return Array.isArray(filtered) ? filtered : [];
-    } catch (error) {
-      console.error('Error building token list:', error);
-      return [];
-    }
+    const allTokens = Object.values(TOKENS);
+    return getFilteredTokens(allTokens, chainId);
   }, [chainId]);
 
   // Reset selected tokens when network changes to ARC or Sepolia and ETH was selected
@@ -113,24 +91,19 @@ const Swap = () => {
   useEffect(() => {
     setValidationError('');
     
-    if (fromAmount && parseFloat(fromAmount) > 0 && fromToken && toToken) {
+    if (fromAmount && parseFloat(fromAmount) > 0) {
       try {
-        // Validate amount with safe balance value
-        const safeBalance = fromBalance && !isNaN(parseFloat(fromBalance)) ? fromBalance : '0.00';
-        validateAmount(fromAmount, safeBalance);
+        // Validate amount
+        validateAmount(fromAmount, fromBalance);
         
         const quote = calculateSwapQuote(fromToken, toToken, fromAmount, slippage);
         setSwapQuote(quote);
-        if (quote && quote.expectedOutput) {
+        if (quote) {
           setToAmount(quote.expectedOutput);
           setShowSwapDetails(true);
-        } else {
-          setSwapQuote(null);
-          setToAmount('');
-          setShowSwapDetails(false);
         }
       } catch (err) {
-        setValidationError(err?.message || 'Invalid swap parameters');
+        setValidationError(err.message);
         setSwapQuote(null);
         setToAmount('');
         setShowSwapDetails(false);
@@ -143,75 +116,33 @@ const Swap = () => {
   }, [fromAmount, fromToken, toToken, slippage, fromBalance]);
 
   const handleSwitch = () => {
-    try {
-      // Add animation class for smooth transition
-      const switchButton = document.querySelector('.switch-button');
-      if (switchButton) {
-        switchButton.classList.add('rotate-180');
-        setTimeout(() => {
-          switchButton.classList.remove('rotate-180');
-        }, 300);
-      }
-      
-      // Store current values safely
-      const currentFromToken = fromToken || 'USDC';
-      const currentToToken = toToken || 'EURC';
-      const currentFromAmount = fromAmount || '';
-      const currentToAmount = toAmount || '';
-      
-      // Swap tokens
-      setFromToken(currentToToken);
-      setToToken(currentFromToken);
-      
-      // Preserve amounts if possible
-      setFromAmount(currentToAmount);
-      setToAmount(currentFromAmount);
-    } catch (error) {
-      console.error('Error in handleSwitch:', error);
-      // Don't crash, just show a toast
-      setToast({ visible: true, type: 'error', message: 'Failed to switch tokens' });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
+    // Add animation class for smooth transition
+    const switchButton = document.querySelector('.switch-button');
+    if (switchButton) {
+      switchButton.classList.add('rotate-180');
+      setTimeout(() => {
+        switchButton.classList.remove('rotate-180');
+      }, 300);
     }
+    
+    // Swap tokens
+    setFromToken(toToken);
+    setToToken(fromToken);
+    
+    // Preserve amounts if possible
+    setFromAmount(toAmount);
+    setToAmount(fromAmount);
   };
 
   const handleMaxClick = () => {
-    try {
-      const safeBalance = fromBalance || '0.00';
-      const balanceNum = parseFloat(safeBalance);
-
-      if (!safeBalance || isNaN(balanceNum) || balanceNum === 0) {
-        setToast({ visible: true, type: 'warning', message: 'No balance available' });
-        setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
-        return;
-      }
-
-      // For all tokens, use full balance
-      setFromAmount(safeBalance);
-    } catch (error) {
-      console.error('Error in handleMaxClick:', error);
-      setToast({ visible: true, type: 'error', message: 'Failed to set maximum amount' });
+    if (!fromBalance || parseFloat(fromBalance) === 0) {
+      setToast({ visible: true, type: 'warning', message: 'No balance available' });
       setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
+      return;
     }
-  };
-
-  const handleToMaxClick = () => {
-    try {
-      const safeBalance = toBalance || '0.00';
-      const balanceNum = parseFloat(safeBalance);
-
-      if (!safeBalance || isNaN(balanceNum) || balanceNum === 0) {
-        setToast({ visible: true, type: 'warning', message: 'No balance available' });
-        setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
-        return;
-      }
-
-      // Set the to amount to the full balance
-      setToAmount(safeBalance);
-    } catch (error) {
-      console.error('Error in handleToMaxClick:', error);
-      setToast({ visible: true, type: 'error', message: 'Failed to set maximum amount' });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
-    }
+    
+    // For all tokens (including ETH when available), use full balance
+    setFromAmount(fromBalance);
   };
 
   const handleSwap = async () => {
@@ -310,7 +241,7 @@ const Swap = () => {
     return (
       <div>
         <label className="block text-sm font-medium mb-2">{t('Slippage Tolerance')}</label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {[0.1, 0.5, 1.0].map((value) => (
             <button
               key={value}
@@ -318,10 +249,10 @@ const Swap = () => {
                 setSlippage(value);
                 setCustomSlippage('');
               }}
-              className={`py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center border
+              className={`py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center
                 ${slippage === value 
-                  ? 'bg-blue-500 text-white shadow-md border-blue-500' 
-                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border-transparent hover:border-blue-200 dark:hover:border-blue-500/50'}`}
+                  ? 'bg-blue-500 text-white shadow-md' 
+                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
             >
               {value}%
             </button>
@@ -357,42 +288,33 @@ const Swap = () => {
     );
   };
 
-  const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, triggerRef, tokenList, fromToken, toToken, fromBalance, toBalance }) => {
+  const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, triggerRef }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const selectorRef = useRef(null);
     
-    // Ensure tokenList is a valid array
-    const safeTokenList = Array.isArray(tokenList) ? tokenList : [];
-    
     // Filter tokens based on search query
     const filteredTokens = useMemo(() => {
-      if (!safeTokenList || safeTokenList.length === 0) return [];
-      if (!searchQuery) return safeTokenList;
+      if (!searchQuery) return tokenList;
       
       const query = searchQuery.toLowerCase();
-      return safeTokenList.filter(token => {
-        if (!token || typeof token !== 'object') return false;
-        const symbolMatch = token.symbol && typeof token.symbol === 'string' && token.symbol.toLowerCase().includes(query);
-        const nameMatch = token.name && typeof token.name === 'string' && token.name.toLowerCase().includes(query);
-        const addressMatch = token.address && typeof token.address === 'string' && token.address.toLowerCase().includes(query);
-        const objectAddressMatch = token.address && typeof token.address === 'object' && 
-          Object.values(token.address).some(addr => typeof addr === 'string' && addr.toLowerCase().includes(query));
-        return symbolMatch || nameMatch || addressMatch || objectAddressMatch;
-      });
-    }, [searchQuery, safeTokenList]);
+      return tokenList.filter(token => 
+        token.symbol.toLowerCase().includes(query) || 
+        token.name.toLowerCase().includes(query) ||
+        (token.address && typeof token.address === 'string' && token.address.toLowerCase().includes(query)) ||
+        (token.address && typeof token.address === 'object' && 
+          Object.values(token.address).some(addr => addr.toLowerCase().includes(query)))
+      );
+    }, [searchQuery, tokenList]);
     
     // Popular tokens for quick selection.
     const popularTokens = useMemo(() => {
-      if (!safeTokenList || safeTokenList.length === 0) return [];
-      return safeTokenList.filter(token => 
-        token && token.symbol && ['USDC', 'EURC'].includes(token.symbol)
-      );
-    }, [safeTokenList]);
+      return tokenList.filter(token => ['USDC', 'EURC'].includes(token.symbol));
+    }, [tokenList]);
     
     // Handle ESC key press to close modal
     useEffect(() => {
       const handleEsc = (event) => {
-        if (event && event.key === 'Escape') {
+        if (event.keyCode === 27) {
           onClose();
         }
       };
@@ -448,43 +370,40 @@ const Swap = () => {
               <div className="mb-4 flex-shrink-0">
                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('Your Tokens')}</h4>
                 <div className="flex flex-wrap gap-2">
-                  {popularTokens.map((token) => {
-                    if (!token || !token.symbol) return null;
-                    return (
-                      <button
-                        key={`popular-${token.symbol}`}
-                        onClick={() => {
-                          if (token.symbol !== exclude) {
-                            onSelect(token.symbol);
-                            onClose();
-                          }
-                        }}
-                        className={`px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-200
-                          ${token.symbol === selectedToken ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-                      >
-                        {token.symbol === 'USDC' ? (
-                          <img 
-                            src="/icons/usdc.png" 
-                            alt={token.symbol} 
-                            className="w-10 h-10 rounded-full object-contain"
-                          />
-                        ) : token.symbol === 'EURC' ? (
-                          <img 
-                            src="/icons/eurc.png" 
-                            alt={token.symbol} 
-                            className="w-10 h-10 rounded-full object-contain"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                            <span className="text-lg font-bold">
-                              {token.symbol?.charAt(0) || '?'}
-                            </span>
-                          </div>
-                        )}
-                        <span className="font-medium">{token.symbol}</span>
-                      </button>
-                    );
-                  })}
+                  {popularTokens.map((token) => (
+                    <button
+                      key={`popular-${token.symbol}`}
+                      onClick={() => {
+                        if (token.symbol !== exclude) {
+                          onSelect(token.symbol);
+                          onClose();
+                        }
+                      }}
+                      className={`px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-200
+                        ${token.symbol === selectedToken ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                    >
+                      {token.symbol === 'USDC' ? (
+                        <img 
+                          src="/icons/usdc.png" 
+                          alt={token.symbol} 
+                          className="w-10 h-10 rounded-full object-contain"
+                        />
+                      ) : token.symbol === 'EURC' ? (
+                        <img 
+                          src="/icons/eurc.png" 
+                          alt={token.symbol} 
+                          className="w-10 h-10 rounded-full object-contain"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                          <span className="text-lg font-bold">
+                            {token.symbol.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                      <span className="font-medium">{token.symbol}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
               
@@ -492,57 +411,54 @@ const Swap = () => {
               <div className="flex-1 overflow-y-auto -mx-6 px-6">
                 {/* Token List */}
                 <div className="space-y-2">
-                  {filteredTokens.map((token) => {
-                    if (!token || !token.symbol) return null;
-                    return (
-                      <button
-                        key={token.symbol}
-                        onClick={() => {
-                          if (token.symbol !== exclude) {
-                            onSelect(token.symbol);
-                            onClose();
-                          }
-                        }}
-                        className={`w-full p-4 rounded-lg flex items-center justify-between transition-all duration-200
-                          ${token.symbol === selectedToken ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
-                            {token.symbol === 'USDC' ? (
-                              <img 
-                                src="/icons/usdc.png" 
-                                alt={token.symbol} 
-                                className="w-10 h-10 rounded-full object-contain"
-                              />
-                            ) : token.symbol === 'EURC' ? (
-                              <img 
-                                src="/icons/eurc.png" 
-                                alt={token.symbol} 
-                                className="w-10 h-10 rounded-full object-contain"
-                              />
-                            ) : (
-                              <span className="text-xl">
-                                {token.symbol?.charAt(0) || '?'}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-left">
-                            <p className="font-semibold">{token.symbol || 'Unknown'}</p>
-                            <p className="text-xs text-gray-500">{token.name || 'Token'}</p>
-                          </div>
+                  {filteredTokens.map((token) => (
+                    <button
+                      key={token.symbol}
+                      onClick={() => {
+                        if (token.symbol !== exclude) {
+                          onSelect(token.symbol);
+                          onClose();
+                        }
+                      }}
+                      className={`w-full p-4 rounded-lg flex items-center justify-between transition-all duration-200
+                        ${token.symbol === selectedToken ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
+                          {token.symbol === 'USDC' ? (
+                            <img 
+                              src="/icons/usdc.png" 
+                              alt={token.symbol} 
+                              className="w-10 h-10 rounded-full object-contain"
+                            />
+                          ) : token.symbol === 'EURC' ? (
+                            <img 
+                              src="/icons/eurc.png" 
+                              alt={token.symbol} 
+                              className="w-10 h-10 rounded-full object-contain"
+                            />
+                          ) : (
+                            <span className="text-xl">
+                              {token.symbol.charAt(0)}
+                            </span>
+                          )}
                         </div>
-                        {/* Token Balance */}
-                        {isConnected && (
-                          <div className="text-right">
-                            <p className="text-sm font-medium">
-                              {token.symbol === fromToken ? (fromBalance || '0.00') : token.symbol === toToken ? (toBalance || '0.00') : '0.00'}
-                            </p>
-                            <p className="text-xs text-gray-500">{t('balance')}</p>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                        <div className="text-left">
+                          <p className="font-semibold">{token.symbol}</p>
+                          <p className="text-xs text-gray-500">{token.name}</p>
+                        </div>
+                      </div>
+                      {/* Token Balance */}
+                      {isConnected && (
+                        <div className="text-right">
+                          <p className="text-sm font-medium">
+                            {token.symbol === fromToken ? fromBalance : token.symbol === toToken ? toBalance : '0.00'}
+                          </p>
+                          <p className="text-xs text-gray-500">{t('balance')}</p>
+                        </div>
+                      )}
+                    </button>
+                  ))}
                   
                   {filteredTokens.length === 0 && searchQuery && (
                     <div className="text-center py-8 text-gray-500">
@@ -559,16 +475,16 @@ const Swap = () => {
   };
   
   return (
-    <div className="max-w-lg mx-auto w-full px-2 sm:px-0">
+    <div className="max-w-lg mx-auto w-full">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white/80 dark:bg-gray-900/70 backdrop-blur rounded-2xl border border-gray-200 dark:border-white/10 shadow-lg dark:shadow-black/30 p-4 md:p-8 space-y-4 md:space-y-6"
+        className="card p-4 md:p-8"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-1 text-gray-900 dark:text-white">{t('Swap Tokens')}</h2>
+            <h2 className="text-xl md:text-2xl font-bold mb-1">{t('Swap Tokens')}</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">{t('swap.tradeTokensTitle')}</p>
           </div>
           <div className="flex items-center space-x-2">
@@ -576,13 +492,13 @@ const Swap = () => {
               href="https://faucet.circle.com/" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="px-3 py-2 text-xs md:text-sm border border-blue-300/70 text-blue-600 dark:text-blue-400 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-md flex items-center space-x-1"
+              className="px-3 py-2 text-xs md:text-sm border-2 border-blue-400 text-blue-500 dark:text-blue-400 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center space-x-1"
             >
               <span>Faucet</span>
             </a>
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 hover:scale-110 hover:ring-2 ring-primary-300/60 dark:ring-primary-500/50"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 hover:scale-110"
               title="Settings"
             >
               <Settings size={20} />
@@ -622,50 +538,47 @@ const Swap = () => {
         {/* From Token */}
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">{t('From')}</label>
-          <div className="p-3 sm:p-4 bg-white/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
+          <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
             <div className="flex items-center justify-between gap-2 w-full">
-              <div className="relative flex-1 min-w-0">
+              <div className="relative flex-1">
                 <input
                   type="text"
                   inputMode="decimal"
                   value={fromAmount}
                   onChange={(e) => setFromAmount(sanitizeInput(e.target.value))}
                   placeholder="0.0"
-                  className="text-2xl sm:text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-2 sm:pr-4 focus:ring-0 focus:border-primary-500"
+                  className="text-2xl md:text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16"
                 />
               </div>
               <button
                 ref={fromTokenTriggerRef}
                 onClick={() => setShowFromSelector(true)}
-                className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md hover:ring-2 ring-primary-300/60 dark:ring-primary-500/40 self-end min-w-[80px] sm:min-w-[110px] w-auto flex-shrink-0 border border-gray-200 dark:border-gray-700"
+                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[100px] md:min-w-[120px] w-auto flex-shrink-0"
               >
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-lg sm:text-xl flex-shrink-0">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl md:text-2xl">
                   {fromToken === 'USDC' ? (
                     <img 
                       src="/icons/usdc.png" 
                       alt={fromToken} 
-                      className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-contain"
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                     />
                   ) : fromToken === 'EURC' ? (
                     <img 
                       src="/icons/eurc.png" 
                       alt={fromToken} 
-                      className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-contain"
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                     />
                   ) : (
-                    <span className="text-base sm:text-lg">
+                    <span className="text-lg md:text-xl">
                       {fromToken}
                     </span>
                   )}
                 </div>
-                <div className="text-left min-w-0 hidden sm:block">
-                  <p className="font-bold text-sm truncate">{fromToken}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{getTokenLabel(fromToken)}</p>
+                <div className="text-left min-w-0">
+                  <p className="font-bold text-sm md:text-base truncate">{fromToken}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{TOKENS[fromToken].name}</p>
                 </div>
-                <div className="text-left min-w-0 sm:hidden">
-                  <p className="font-bold text-xs truncate">{fromToken}</p>
-                </div>
-                <ChevronDown size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
+                <ChevronDown size={16} />
               </button>
             </div>
             {isConnected && (
@@ -676,7 +589,7 @@ const Swap = () => {
                     {fromLoading ? (
                       <Loader className="animate-spin" size={14} />
                     ) : (
-                      `${fromBalance || '0.00'}`
+                      `${fromBalance || '0.00'} ${fromToken}`
                     )}
                   </span>
                 </div>
@@ -692,10 +605,10 @@ const Swap = () => {
         </div>
 
         {/* Switch Button */}
-          <div className="flex justify-center my-4 md:my-6 relative z-10">
+        <div className="flex justify-center my-4 md:my-6 relative z-10">
           <button
             onClick={handleSwitch}
-            className="switch-button p-3 md:p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group hover:ring-2 ring-primary-300/60 dark:ring-primary-500/40"
+            className="switch-button p-3 md:p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110 group"
             title={t('Switch Tokens')}
           >
             <ArrowDownUp size={20} className="group-hover:rotate-180 transition-transform duration-300" />
@@ -705,49 +618,46 @@ const Swap = () => {
         {/* To Token */}
         <div className="mb-4 md:mb-6">
           <label className="block text-sm font-medium mb-2">{t('To')}</label>
-          <div className="p-3 sm:p-4 bg-white/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
+          <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-200 flex flex-col relative">
             <div className="flex items-center justify-between gap-2 w-full">
-              <div className="relative flex-1 min-w-0">
+              <div className="relative flex-1">
                 <input
                   type="text"
                   value={toAmount}
                   readOnly
                   placeholder="0.0"
-                  className="text-2xl sm:text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-2 sm:pr-4 focus:ring-0 focus:border-primary-500"
+                  className="text-2xl md:text-3xl font-semibold bg-transparent outline-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white w-full pr-16"
                 />
               </div>
               <button
                 ref={toTokenTriggerRef}
                 onClick={() => setShowToSelector(true)}
-                className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md hover:ring-2 ring-primary-300/60 dark:ring-primary-500/40 self-end min-w-[80px] sm:min-w-[110px] w-auto flex-shrink-0 border border-gray-200 dark:border-gray-700"
+                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[100px] md:min-w-[120px] w-auto flex-shrink-0"
               >
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-lg sm:text-xl flex-shrink-0">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center text-xl md:text-2xl">
                   {toToken === 'USDC' ? (
                     <img 
                       src="/icons/usdc.png" 
                       alt={toToken} 
-                      className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-contain"
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                     />
                   ) : toToken === 'EURC' ? (
                     <img 
                       src="/icons/eurc.png" 
                       alt={toToken} 
-                      className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-contain"
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-contain"
                     />
                   ) : (
-                    <span className="text-base sm:text-lg">
+                    <span className="text-lg md:text-xl">
                       {toToken}
                     </span>
                   )}
                 </div>
-                <div className="text-left min-w-0 hidden sm:block">
-                  <p className="font-bold text-sm truncate">{toToken}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{getTokenLabel(toToken)}</p>
+                <div className="text-left min-w-0">
+                  <p className="font-bold text-sm md:text-base truncate">{toToken}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{TOKENS[toToken].name}</p>
                 </div>
-                <div className="text-left min-w-0 sm:hidden">
-                  <p className="font-bold text-xs truncate">{toToken}</p>
-                </div>
-                <ChevronDown size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
+                <ChevronDown size={16} />
               </button>
             </div>
             {isConnected && (
@@ -758,16 +668,10 @@ const Swap = () => {
                     {toLoading ? (
                       <Loader className="animate-spin" size={14} />
                     ) : (
-                      `${toBalance || '0.00'}`
+                      `${toBalance || '0.00'} ${toToken}`
                     )}
                   </span>
                 </div>
-                <button
-                  onClick={handleToMaxClick}
-                  className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors ml-2"
-                >
-                  {t('Max')}
-                </button>
               </div>
             )}
           </div>
@@ -782,40 +686,38 @@ const Swap = () => {
               exit={{ height: 0, opacity: 0 }}
               className="mb-4 md:mb-6"
             >
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-xs md:text-sm divide-y divide-gray-200 dark:divide-gray-700">
-                <div className="flex justify-between pb-2">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-3 text-xs md:text-sm">
+                <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">{t('Expected Output')}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{swapQuote.expectedOutput} {toToken}</span>
+                  <span className="font-semibold">{swapQuote.expectedOutput} {toToken}</span>
                 </div>
-                <div className="flex justify-between py-2">
+                <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">{t('Min Received')}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{swapQuote.minReceived} {toToken}</span>
+                  <span className="font-semibold">{swapQuote.minReceived} {toToken}</span>
                 </div>
-                <div className="flex justify-between py-2">
+                <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">{t('Price Impact')}</span>
-                  <span className={`font-semibold ${parseFloat(swapQuote.priceImpact) > 1 ? 'text-red-600' : 'text-green-500'}`}>
+                  <span className={`font-semibold ${parseFloat(swapQuote.priceImpact) > 1 ? 'text-red-600' : 'text-green-600'}`}>
                     {swapQuote.priceImpact}%
                   </span>
                 </div>
-                <div className="flex justify-between py-2">
+                <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">{t('liquidityProviderFee')}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">${swapQuote.tradingFee}</span>
+                  <span className="font-semibold">${swapQuote.tradingFee}</span>
                 </div>
-                <div className="flex justify-between py-2">
+                <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">{t('route')}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {Array.isArray(swapQuote?.route) ? swapQuote.route.join(' → ') : 'Direct'}
-                  </span>
+                  <span className="font-semibold">{swapQuote.route.join(' → ')}</span>
                 </div>
-                <div className="flex justify-between py-2">
+                <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">{t('exchangeRate')}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">1 {fromToken} = {swapQuote.exchangeRate} {toToken}</span>
+                  <span className="font-semibold">1 {fromToken} = {swapQuote.exchangeRate} {toToken}</span>
                 </div>
-                <div className="flex justify-between py-2">
+                <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">{t('networkFee')}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">${swapQuote.gasFee} USDC</span>
+                  <span className="font-semibold">${swapQuote.gasFee} USDC</span>
                 </div>
-                <div className="pt-2 text-xs text-gray-500 dark:text-gray-400">
+                <div className="pt-2 border-t border-gray-300 dark:border-gray-600 text-xs text-gray-500 dark:text-gray-400">
                   {t('outputEstimatedInfo')}
                 </div>
               </div>
@@ -827,7 +729,7 @@ const Swap = () => {
         <button
           onClick={handleSwap}
           disabled={!fromAmount || !toAmount || swapLoading || !isConnected}
-          className="w-full py-4 md:py-5 text-base md:text-xl font-bold flex items-center justify-center space-x-2 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white transition-all duration-200"
+          className="w-full btn-primary py-4 md:py-5 text-base md:text-xl font-bold flex items-center justify-center space-x-2 rounded-2xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-xl"
         >
           {swapLoading ? (
             <>
@@ -864,11 +766,6 @@ const Swap = () => {
         onSelect={setFromToken}
         exclude={toToken}
         triggerRef={fromTokenTriggerRef}
-        tokenList={tokenList}
-        fromToken={fromToken}
-        toToken={toToken}
-        fromBalance={fromBalance}
-        toBalance={toBalance}
       />
       <TokenSelector
         isOpen={showToSelector}
@@ -877,11 +774,6 @@ const Swap = () => {
         onSelect={setToToken}
         exclude={fromToken}
         triggerRef={toTokenTriggerRef}
-        tokenList={tokenList}
-        fromToken={fromToken}
-        toToken={toToken}
-        fromBalance={fromBalance}
-        toBalance={toBalance}
       />
 
       {/* Toast Notifications */}
