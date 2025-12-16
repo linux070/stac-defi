@@ -507,7 +507,10 @@ const Bridge = () => {
       const result = await bridge('USDC', amount, direction);
       
       // Clear timeout since transaction completed
-      clearTimeout(timeoutId);
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
       
       // Handle the result
       if (result.step === 'success') {
@@ -543,8 +546,15 @@ const Bridge = () => {
         stack: error.stack
       });
       
+      // Stop the timer
+      setStopTimer(true);
+      
       // Clear timeout since we're handling the error
-      clearTimeout(timeoutId);
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
+      
       // Close the in-progress modal before showing the failure modal
       setShowBridgingModal(false);
       

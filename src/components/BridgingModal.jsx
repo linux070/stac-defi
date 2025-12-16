@@ -224,44 +224,6 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                   <p className="text-gray-600 dark:text-gray-400">
                     Bridge completed successfully in {formatTime(displayTime)}
                   </p>
-                  
-                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-left">
-                    <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2">Transaction Details</h4>
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <p className="text-gray-600 dark:text-gray-400">Source Transaction</p>
-                        <p className="font-mono text-xs truncate bg-gray-100 dark:bg-gray-700 p-2 rounded">
-                          {state?.sourceTxHash || 'N/A'}
-                        </p>
-                        <a 
-                          href={fromChain.includes('Arc') ? 
-                            `https://testnet.arcscan.app/tx/${state?.sourceTxHash}` : 
-                            `https://sepolia.etherscan.io/tx/${state?.sourceTxHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline text-xs"
-                        >
-                          View on explorer
-                        </a>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 dark:text-gray-400">Destination Transaction</p>
-                        <p className="font-mono text-xs truncate bg-gray-100 dark:bg-gray-700 p-2 rounded">
-                          {state?.receiveTxHash || 'N/A'}
-                        </p>
-                        <a 
-                          href={toChain.includes('Arc') ? 
-                            `https://testnet.arcscan.app/tx/${state?.receiveTxHash}` : 
-                            `https://sepolia.etherscan.io/tx/${state?.receiveTxHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline text-xs"
-                        >
-                          View on explorer
-                        </a>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               )}
 

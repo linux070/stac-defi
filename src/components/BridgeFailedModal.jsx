@@ -99,11 +99,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                   Close
                 </button>
                 <button
-                  onClick={() => {
-                    onClose();
-                    // The parent component will handle retry logic
-                    window.location.reload();
-                  }}
+                  onClick={onClose}
                   className="flex-1 py-3 px-4 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
                 >
                   <RefreshCw size={18} />
