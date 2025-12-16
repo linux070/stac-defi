@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader, CheckCircle, X, AlertCircle } from 'lucide-react';
 
-const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }) => {
+const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, stopTimer }) => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [finalTime, setFinalTime] = useState(null);
 
@@ -49,18 +49,21 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state }
 
   useEffect(() => {
     let interval;
-    // Only run timer if in progress (not success, not error)
-    if (isOpen && startTime && state?.step !== 'success' && state?.step !== 'error' && finalTime === null) {
+    // Only run timer if in progress (not success, not error, and not stopped)
+    if (isOpen && startTime && state?.step !== 'success' && state?.step !== 'error' && finalTime === null && !stopTimer) {
       interval = setInterval(() => {
         setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
       }, 1000);
+    } else if (stopTimer && finalTime === null) {
+      // Stop timer at current value when cancelled
+      setFinalTime(elapsedTime);
     }
     return () => {
       if (interval) {
         clearInterval(interval);
       }
     };
-  }, [isOpen, startTime, state?.step, finalTime]);
+  }, [isOpen, startTime, state?.step, finalTime, stopTimer, elapsedTime]);
 
   // Use finalTime if available (transaction completed), otherwise use live elapsedTime
   const displayTime = finalTime !== null ? finalTime : elapsedTime;

@@ -53,8 +53,21 @@ const Swap = () => {
   const { balance: toBalance, loading: toLoading, refetch: refetchTo } = useTokenBalance(toToken);
 
   const tokenList = useMemo(() => {
-    const allTokens = Object.values(TOKENS);
-    return getFilteredTokens(allTokens, chainId);
+    try {
+      const allTokens = Object.values(TOKENS);
+      const filtered = getFilteredTokens(allTokens, chainId);
+      // Filter out any invalid tokens that don't have a symbol
+      return Array.isArray(filtered) ? filtered.filter(token => 
+        token && 
+        typeof token === 'object' && 
+        token.symbol && 
+        typeof token.symbol === 'string' &&
+        token.symbol.length > 0
+      ) : [];
+    } catch (error) {
+      console.error('Error building token list:', error);
+      return [];
+    }
   }, [chainId]);
 
   // Reset selected tokens when network changes to ARC or Sepolia and ETH was selected
@@ -288,7 +301,7 @@ const Swap = () => {
     );
   };
 
-  const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, triggerRef }) => {
+  const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, triggerRef, fromToken, toToken, fromBalance, toBalance }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const selectorRef = useRef(null);
     
@@ -298,17 +311,25 @@ const Swap = () => {
       
       const query = searchQuery.toLowerCase();
       return tokenList.filter(token => 
-        token.symbol.toLowerCase().includes(query) || 
-        token.name.toLowerCase().includes(query) ||
+        token && 
+        token.symbol && 
+        typeof token.symbol === 'string' &&
+        (token.symbol.toLowerCase().includes(query) || 
+        (token.name && typeof token.name === 'string' && token.name.toLowerCase().includes(query)) ||
         (token.address && typeof token.address === 'string' && token.address.toLowerCase().includes(query)) ||
         (token.address && typeof token.address === 'object' && 
-          Object.values(token.address).some(addr => addr.toLowerCase().includes(query)))
+          Object.values(token.address).some(addr => typeof addr === 'string' && addr.toLowerCase().includes(query))))
       );
     }, [searchQuery, tokenList]);
     
     // Popular tokens for quick selection.
     const popularTokens = useMemo(() => {
-      return tokenList.filter(token => ['USDC', 'EURC'].includes(token.symbol));
+      return tokenList.filter(token => 
+        token && 
+        token.symbol && 
+        typeof token.symbol === 'string' &&
+        ['USDC', 'EURC'].includes(token.symbol)
+      );
     }, [tokenList]);
     
     // Handle ESC key press to close modal
@@ -370,40 +391,47 @@ const Swap = () => {
               <div className="mb-4 flex-shrink-0">
                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('Your Tokens')}</h4>
                 <div className="flex flex-wrap gap-2">
-                  {popularTokens.map((token) => (
-                    <button
-                      key={`popular-${token.symbol}`}
-                      onClick={() => {
-                        if (token.symbol !== exclude) {
-                          onSelect(token.symbol);
-                          onClose();
-                        }
-                      }}
-                      className={`px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-200
-                        ${token.symbol === selectedToken ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
-                    >
-                      {token.symbol === 'USDC' ? (
-                        <img 
-                          src="/icons/usdc.png" 
-                          alt={token.symbol} 
-                          className="w-10 h-10 rounded-full object-contain"
-                        />
-                      ) : token.symbol === 'EURC' ? (
-                        <img 
-                          src="/icons/eurc.png" 
-                          alt={token.symbol} 
-                          className="w-10 h-10 rounded-full object-contain"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                          <span className="text-lg font-bold">
-                            {token.symbol.charAt(0)}
-                          </span>
-                        </div>
-                      )}
-                      <span className="font-medium">{token.symbol}</span>
-                    </button>
-                  ))}
+                  {popularTokens.map((token) => {
+                    // Safety check: skip invalid tokens
+                    if (!token || !token.symbol || typeof token.symbol !== 'string') {
+                      return null;
+                    }
+                    
+                    return (
+                      <button
+                        key={`popular-${token.symbol}`}
+                        onClick={() => {
+                          if (token.symbol !== exclude) {
+                            onSelect(token.symbol);
+                            onClose();
+                          }
+                        }}
+                        className={`px-3 py-2 rounded-lg flex items-center space-x-2 transition-all duration-200
+                          ${token.symbol === selectedToken ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                      >
+                        {token.symbol === 'USDC' ? (
+                          <img 
+                            src="/icons/usdc.png" 
+                            alt={token.symbol} 
+                            className="w-10 h-10 rounded-full object-contain"
+                          />
+                        ) : token.symbol === 'EURC' ? (
+                          <img 
+                            src="/icons/eurc.png" 
+                            alt={token.symbol} 
+                            className="w-10 h-10 rounded-full object-contain"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                            <span className="text-lg font-bold">
+                              {token.symbol && token.symbol.length > 0 ? token.symbol.charAt(0) : '?'}
+                            </span>
+                          </div>
+                        )}
+                        <span className="font-medium">{token.symbol}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               
@@ -411,54 +439,61 @@ const Swap = () => {
               <div className="flex-1 overflow-y-auto -mx-6 px-6">
                 {/* Token List */}
                 <div className="space-y-2">
-                  {filteredTokens.map((token) => (
-                    <button
-                      key={token.symbol}
-                      onClick={() => {
-                        if (token.symbol !== exclude) {
-                          onSelect(token.symbol);
-                          onClose();
-                        }
-                      }}
-                      className={`w-full p-4 rounded-lg flex items-center justify-between transition-all duration-200
-                        ${token.symbol === selectedToken ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
-                          {token.symbol === 'USDC' ? (
-                            <img 
-                              src="/icons/usdc.png" 
-                              alt={token.symbol} 
-                              className="w-10 h-10 rounded-full object-contain"
-                            />
-                          ) : token.symbol === 'EURC' ? (
-                            <img 
-                              src="/icons/eurc.png" 
-                              alt={token.symbol} 
-                              className="w-10 h-10 rounded-full object-contain"
-                            />
-                          ) : (
-                            <span className="text-xl">
-                              {token.symbol.charAt(0)}
-                            </span>
-                          )}
+                  {filteredTokens.map((token) => {
+                    // Safety check: skip invalid tokens
+                    if (!token || !token.symbol || typeof token.symbol !== 'string') {
+                      return null;
+                    }
+                    
+                    return (
+                      <button
+                        key={token.symbol}
+                        onClick={() => {
+                          if (token.symbol !== exclude) {
+                            onSelect(token.symbol);
+                            onClose();
+                          }
+                        }}
+                        className={`w-full p-4 rounded-lg flex items-center justify-between transition-all duration-200
+                          ${token.symbol === selectedToken ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500' : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl">
+                            {token.symbol === 'USDC' ? (
+                              <img 
+                                src="/icons/usdc.png" 
+                                alt={token.symbol} 
+                                className="w-10 h-10 rounded-full object-contain"
+                              />
+                            ) : token.symbol === 'EURC' ? (
+                              <img 
+                                src="/icons/eurc.png" 
+                                alt={token.symbol} 
+                                className="w-10 h-10 rounded-full object-contain"
+                              />
+                            ) : (
+                              <span className="text-xl">
+                                {token.symbol && token.symbol.length > 0 ? token.symbol.charAt(0) : '?'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-left">
+                            <p className="font-semibold">{token.symbol || 'Unknown'}</p>
+                            <p className="text-xs text-gray-500">{token.name || 'Token'}</p>
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <p className="font-semibold">{token.symbol}</p>
-                          <p className="text-xs text-gray-500">{token.name}</p>
-                        </div>
-                      </div>
-                      {/* Token Balance */}
-                      {isConnected && (
-                        <div className="text-right">
-                          <p className="text-sm font-medium">
-                            {token.symbol === fromToken ? fromBalance : token.symbol === toToken ? toBalance : '0.00'}
-                          </p>
-                          <p className="text-xs text-gray-500">{t('balance')}</p>
-                        </div>
-                      )}
-                    </button>
-                  ))}
+                        {/* Token Balance */}
+                        {isConnected && (
+                          <div className="text-right">
+                            <p className="text-sm font-medium">
+                              {token.symbol === fromToken ? fromBalance : token.symbol === toToken ? toBalance : '0.00'}
+                            </p>
+                            <p className="text-xs text-gray-500">{t('balance')}</p>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                   
                   {filteredTokens.length === 0 && searchQuery && (
                     <div className="text-center py-8 text-gray-500">
@@ -766,6 +801,10 @@ const Swap = () => {
         onSelect={setFromToken}
         exclude={toToken}
         triggerRef={fromTokenTriggerRef}
+        fromToken={fromToken}
+        toToken={toToken}
+        fromBalance={fromBalance}
+        toBalance={toBalance}
       />
       <TokenSelector
         isOpen={showToSelector}
@@ -774,6 +813,10 @@ const Swap = () => {
         onSelect={setToToken}
         exclude={fromToken}
         triggerRef={toTokenTriggerRef}
+        fromToken={fromToken}
+        toToken={toToken}
+        fromBalance={fromBalance}
+        toBalance={toBalance}
       />
 
       {/* Toast Notifications */}

@@ -39,7 +39,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               <img 
                 src="/icons/pixel-stack.svg" 
                 alt="Stac Logo" 
-                className="w-6 h-6 hover:opacity-90 transition-all duration-200 dark:invert"
+                className="w-6 h-6 hover:opacity-90 transition-all duration-200"
               />
               <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap">
                 Stac
@@ -79,7 +79,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               <img 
                 src="/icons/pixel-stack.svg" 
                 alt="Stac Logo" 
-                className="w-6 h-6 hover:opacity-90 transition-all duration-200 dark:invert"
+                className="w-6 h-6 hover:opacity-90 transition-all duration-200"
               />
               <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap">
                 Stac

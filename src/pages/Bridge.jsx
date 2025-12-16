@@ -25,9 +25,13 @@ const Bridge = () => {
   const [showBridgeDetails, setShowBridgeDetails] = useState(false);
   const [bridgeError, setBridgeError] = useState({ title: 'Error Details', message: '' });
   const [bridgeButtonText, setBridgeButtonText] = useState('Bridge');
+  const [stopTimer, setStopTimer] = useState(false);
   
   // Initialize the useBridge hook
   const { bridge, state, reset, fetchTokenBalance, tokenBalance, isLoadingBalance, balanceError, clearBalance } = useBridge();
+  
+  // Ref for timeout ID
+  const timeoutIdRef = useRef(null);
   
   // Real-time token balance for USDC - now using bridge kit
   // const { balance, loading, refetch, error } = useTokenBalance
@@ -63,17 +67,49 @@ const Bridge = () => {
   useEffect(() => {
     if (!window || !window.ethereum) return;
 
+    const handleTransactionRejection = () => {
+      if (showBridgingModal || bridgeLoading || state.step === 'approving') {
+        // Stop the timer
+        setStopTimer(true);
+        
+        // Clear timeout if exists
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+          timeoutIdRef.current = null;
+        }
+        
+        setShowBridgingModal(false);
+        setBridgeError({
+          title: 'Transaction Rejected',
+          message: 'Transaction cancelled: User rejected the transaction in wallet.'
+        });
+        setShowBridgeFailedModal(true);
+        setBridgeButtonText('Bridge Failed');
+        setBridgeLoading(false);
+        reset();
+      }
+    };
+
     const handleAccountsChanged = (accounts) => {
       if (accounts.length === 0) {
         // User disconnected - close any open modals and show failure
-        if (showBridgingModal || state.step === 'approving') {
+        if (showBridgingModal || state.step === 'approving' || bridgeLoading) {
+          // Stop the timer
+          setStopTimer(true);
+          
+          // Clear timeout if exists
+          if (timeoutIdRef.current) {
+            clearTimeout(timeoutIdRef.current);
+            timeoutIdRef.current = null;
+          }
+          
           setShowBridgingModal(false);
           setBridgeError({
             title: 'Error Details',
             message: 'Transaction cancelled: Wallet disconnected during bridging.'
           });
           setShowBridgeFailedModal(true);
-          setBridgeButtonText('Bridge'); // Reset to default
+          setBridgeButtonText('Bridge Failed');
           setBridgeLoading(false);
           reset();
         }
@@ -81,29 +117,53 @@ const Bridge = () => {
     };
 
     const handleDisconnect = () => {
-      if (showBridgingModal || state.step === 'approving') {
+      if (showBridgingModal || state.step === 'approving' || bridgeLoading) {
+        // Stop the timer
+        setStopTimer(true);
+        
+        // Clear timeout if exists
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+          timeoutIdRef.current = null;
+        }
+        
         setShowBridgingModal(false);
         setBridgeError({
           title: 'Error Details',
           message: 'Transaction cancelled: Wallet disconnected.'
         });
         setShowBridgeFailedModal(true);
-        setBridgeButtonText('Bridge'); // Reset to default
+        setBridgeButtonText('Bridge Failed');
         setBridgeLoading(false);
         reset();
       }
     };
 
+    // Listen for wallet rejection events
     window.ethereum.on('accountsChanged', handleAccountsChanged);
     window.ethereum.on('disconnect', handleDisconnect);
+    
+    // Listen for message events that might indicate rejection
+    const handleMessage = (event) => {
+      if (event.data && typeof event.data === 'object') {
+        // Check for rejection patterns in message data
+        const messageStr = JSON.stringify(event.data).toLowerCase();
+        if (messageStr.includes('reject') || messageStr.includes('cancel') || messageStr.includes('deny')) {
+          handleTransactionRejection();
+        }
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
 
     return () => {
       if (window.ethereum) {
         window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
         window.ethereum.removeListener('disconnect', handleDisconnect);
       }
+      window.removeEventListener('message', handleMessage);
     };
-  }, [state.step, reset, showBridgingModal]);
+  }, [state.step, reset, showBridgingModal, bridgeLoading]);
 
   // Effect to handle wallet disconnect (clear balance) and reconnect (refresh balance)
   useEffect(() => {
@@ -402,6 +462,14 @@ const Bridge = () => {
       return;
     }
     
+    // Prevent transaction if Bridge Failed is displayed
+    if (bridgeButtonText === 'Bridge Failed') {
+      return;
+    }
+    
+    // Reset timer stop flag
+    setStopTimer(false);
+    
     // Show bridging modal
     setBridgeStartTime(Date.now());
     setShowBridgingModal(true);
@@ -410,15 +478,16 @@ const Bridge = () => {
     
     // Set up timeout detection
     const BRIDGE_TIMEOUT = 120000; // 2 minutes
-    const timeoutId = setTimeout(() => {
+    timeoutIdRef.current = setTimeout(() => {
       if (state.step === 'approving') {
+        setStopTimer(true);
         setShowBridgingModal(false);
         setBridgeError({
           title: 'Error Details',
           message: 'Transaction timeout: Please try again and confirm the transaction promptly.'
         });
         setShowBridgeFailedModal(true);
-        setBridgeButtonText('Bridge'); // Reset to default
+        setBridgeButtonText('Bridge Failed');
         setBridgeLoading(false);
         reset();
       }
@@ -446,6 +515,9 @@ const Bridge = () => {
         // The modal will show the completed state via the state prop
         // User can close it manually using the close button
       } else if (result.step === 'error') {
+        // Stop the timer
+        setStopTimer(true);
+        
         // Handle error result directly - show Bridge Failed modal immediately
         setShowBridgingModal(false);
         setBridgeLoading(false);
@@ -456,7 +528,7 @@ const Bridge = () => {
           message: result.error || 'Transaction failed. Please try again.'
         });
         setShowBridgeFailedModal(true);
-        setBridgeButtonText('Bridge'); // Reset to default
+        setBridgeButtonText('Bridge Failed');
         
         // Also reset the bridge state
         reset();
@@ -539,8 +611,8 @@ const Bridge = () => {
       }
       
       // ALWAYS show the failed modal for any error in catch block
-      // Reset button to default state
-      setBridgeButtonText('Bridge');
+      // Set button to Bridge Failed state
+      setBridgeButtonText('Bridge Failed');
       setShowBridgeFailedModal(true);
       
       // Log that we're showing the modal
@@ -554,13 +626,22 @@ const Bridge = () => {
   const closeBridgingModal = () => {
     // If transaction is still in progress (not completed), show Bridge Failed
     if (state.step !== 'success' && bridgeLoading) {
+      // Stop the timer
+      setStopTimer(true);
+      
+      // Clear timeout if exists
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
+      
       setShowBridgingModal(false);
       setBridgeError({
         title: 'Error Details',
         message: 'Transaction cancelled: User closed the bridging modal.'
       });
       setShowBridgeFailedModal(true);
-      setBridgeButtonText('Bridge'); // Reset to default
+      setBridgeButtonText('Bridge Failed');
       setBridgeLoading(false);
       reset();
       return;
@@ -968,8 +1049,12 @@ const Bridge = () => {
         {/* Bridge Button */}
         <button
           onClick={handleBridge}
-          disabled={!amount || bridgeLoading || !isConnected || state.isLoading}
-          className="w-full mt-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={!amount || bridgeLoading || !isConnected || state.isLoading || bridgeButtonText === 'Bridge Failed'}
+          className={`w-full mt-6 font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+            bridgeButtonText === 'Bridge Failed' 
+              ? 'bg-red-500 hover:bg-red-600 text-white' 
+              : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white'
+          }`}
         >
           {bridgeLoading || state.isLoading ? (
             <>
@@ -1013,6 +1098,7 @@ const Bridge = () => {
         toChain={toChain}
         startTime={bridgeStartTime}
         state={state}
+        stopTimer={stopTimer}
       />
       
       {/* Bridge Failed Modal */}
