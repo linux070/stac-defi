@@ -37,11 +37,11 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             {/* Logo with text */}
             <a href="/" className="flex items-center gap-2 pl-3 cursor-pointer flex-shrink-0">
               <img 
-                src="/icons/pixel-stack.svg" 
+                src="/icons/stac.png" 
                 alt="Stac Logo" 
-                className="w-6 h-6 hover:opacity-90 transition-all duration-200"
+                className="w-8 h-8 rounded-lg object-cover dark:invert dark:brightness-110"
               />
-              <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap">
+              <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap tracking-tight">
                 Stac
               </span>
             </a>
@@ -75,14 +75,16 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         <div className="hidden md:block md:fixed md:top-4 md:left-0 md:right-0 md:flex md:justify-center">
           <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-6 py-3 mx-auto w-fit max-w-full md:min-w-[700px] md:max-w-6xl">
             {/* Logo with text */}
+            <a href="/" className="flex items-center gap-2 cursor-pointer flex-shrink-0">
               <img 
-                src="/icons/pixel-stack.svg" 
+                src="/icons/stac.png" 
                 alt="Stac Logo" 
-                className="w-6 h-6 hover:opacity-90 transition-all duration-200"
+                className="w-8 h-8 rounded-lg object-cover dark:invert dark:brightness-110"
               />
-              <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap">
+              <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap tracking-tight">
                 Stac
               </span>
+            </a>
 
             {/* Desktop Navigation */}
             <nav className="flex items-center gap-4 md:gap-6 ml-6">

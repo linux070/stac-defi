@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader, CheckCircle, X, AlertCircle } from 'lucide-react';
+import { Loader, CheckCircle, X, AlertCircle, Clock, Info } from 'lucide-react';
 
 const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, stopTimer }) => {
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -85,18 +85,6 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
   };
 
   const modalState = getModalState();
-
-  // Calculate progress percentage for dot animation (0% = source, 100% = destination)
-  // Based on elapsed time with estimated completion of 120 seconds (2 minutes)
-  const calculateDotProgress = () => {
-    if (modalState === 'completed') {
-      return 100; // Dot reaches destination when completed
-    }
-    // Calculate progress based on elapsed time, capped at 100%
-    return Math.min(100, (displayTime / 120) * 100);
-  };
-
-  const dotProgress = calculateDotProgress();
   
   // Don't render if there's an error - BridgeFailedModal will handle it
   if (state?.step === 'error') {
@@ -114,102 +102,122 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
           onClick={onClose}
         >
           <motion.div
-            className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-md mx-4"
+            className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <X size={20} className="text-gray-500 dark:text-gray-400" />
-            </button>
+            {/* Gradient Header */}
+            <div className={`relative px-6 py-5 ${
+              modalState === 'inProgress' 
+                ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600' 
+                : 'bg-gradient-to-r from-green-500 via-emerald-500 to-emerald-600'
+            }`}>
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-white/20 transition-all duration-200"
+              >
+                <X size={20} className="text-white" />
+              </button>
 
-            <div className="text-center">
-              <div className="flex justify-center mb-4">
-                <div className="relative">
+              <div className="flex flex-col items-center text-white">
+                <motion.div 
+                  className="relative mb-3"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1, type: 'spring' }}
+                >
                   {modalState === 'inProgress' ? (
-                    <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                      <Loader className="animate-spin text-blue-500" size={32} />
+                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                      <Loader className="animate-spin text-white" size={32} strokeWidth={2.5} />
                     </div>
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                      <CheckCircle size={32} className="text-green-500" />
+                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                      <CheckCircle size={32} className="text-white" strokeWidth={2.5} />
                     </div>
                   )}
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                    {modalState === 'inProgress' ? (
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    ) : (
-                      <CheckCircle size={16} className="text-white" />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900 dark:text-white">
-                {modalState === 'inProgress' ? 'Bridging in Progress' : 'Bridge Completed'}
-              </h3>
-              
-              <div className="flex items-center justify-center space-x-2 sm:space-x-4 my-4 sm:my-6">
-                <div className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-2">
-                    {fromChain.includes('Arc') ? (
-                      <img 
-                        src="/icons/Arc.png" 
-                        alt="Arc Testnet" 
-                        className="w-8 h-8 rounded-full object-contain"
-                      />
-                    ) : (
-                      <img 
-                        src="/icons/eth.png" 
-                        alt="Sepolia" 
-                        className="w-8 h-8 rounded-full object-contain"
-                      />
-                    )}
-                  </div>
-                  <p className="text-sm font-medium">{fromChain}</p>
-                </div>
-                
-                <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700 relative">
-                  <motion.div
-                    className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center"
-                    initial={{ left: '0%' }}
-                    animate={{ left: `${dotProgress}%` }}
-                    transition={{ 
-                      type: 'tween',
-                      ease: 'linear',
-                      duration: 0.5 // Smooth animation when progress updates
-                    }}
-                    style={{ 
-                      transform: 'translateX(-50%) translateY(-50%)', // Center the dot on its position
-                    }}
+                  <motion.div 
+                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-lg"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.3, type: 'spring' }}
                   >
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  </motion.div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-2">
-                    {toChain.includes('Arc') ? (
-                      <img 
-                        src="/icons/Arc.png" 
-                        alt="Arc Testnet" 
-                        className="w-8 h-8 rounded-full object-contain"
+                    {modalState === 'inProgress' ? (
+                      <motion.div 
+                        className="w-2 h-2 bg-blue-500 rounded-full"
+                        animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
                       />
                     ) : (
-                      <img 
-                        src="/icons/eth.png" 
-                        alt="Sepolia" 
-                        className="w-8 h-8 rounded-full object-contain"
-                      />
+                      <CheckCircle size={16} className="text-green-500" />
                     )}
-                  </div>
-                  <p className="text-sm font-medium">{toChain}</p>
-                </div>
+                  </motion.div>
+                </motion.div>
+                <motion.h3 
+                  className="text-xl sm:text-2xl font-bold tracking-tight"
+                  initial={{ y: -10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  {modalState === 'inProgress' ? 'Bridging in Progress' : 'Bridge Completed'}
+                </motion.h3>
               </div>
+            </div>
+
+            <div className="p-6">
+              {/* Network Visualization Card */}
+              <motion.div 
+                className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700/40 dark:to-gray-800/40 rounded-xl p-5 mb-6 border border-gray-200/50 dark:border-gray-600/30 shadow-sm"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <div className="flex items-center justify-center space-x-4 sm:space-x-6">
+                  <div className="text-center flex-shrink-0">
+                    <div className="w-16 h-16 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mx-auto mb-2.5 shadow-md border-2 border-gray-200 dark:border-gray-600">
+                      {fromChain.includes('Arc') ? (
+                        <img 
+                          src="/icons/Arc.png" 
+                          alt="Arc Testnet" 
+                          className="w-11 h-11 rounded-full object-contain"
+                        />
+                      ) : (
+                        <img 
+                          src="/icons/eth.png" 
+                          alt="Sepolia" 
+                          className="w-11 h-11 rounded-full object-contain"
+                        />
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{fromChain}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">Source</p>
+                  </div>
+                  
+                  <div className="flex-1 h-0.5 bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300 dark:from-gray-600 dark:via-gray-500 dark:to-gray-600"></div>
+                  
+                  <div className="text-center flex-shrink-0">
+                    <div className="w-16 h-16 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mx-auto mb-2.5 shadow-md border-2 border-gray-200 dark:border-gray-600">
+                      {toChain.includes('Arc') ? (
+                        <img 
+                          src="/icons/Arc.png" 
+                          alt="Arc Testnet" 
+                          className="w-11 h-11 rounded-full object-contain"
+                        />
+                      ) : (
+                        <img 
+                          src="/icons/eth.png" 
+                          alt="Sepolia" 
+                          className="w-11 h-11 rounded-full object-contain"
+                        />
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{toChain}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">Destination</p>
+                  </div>
+                </div>
+              </motion.div>
 
               {modalState === 'inProgress' && (
                 <>
@@ -240,13 +248,28 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
               )}
 
               {modalState === 'completed' && (
-                <div className="space-y-4">
-                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 px-2">
-                    Bridge completed successfully in {formatTime(displayTime)}
-                  </p>
-                </div>
+                <motion.div 
+                  className="space-y-4"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  {/* Success Stats Card */}
+                  <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-teal-900/20 rounded-2xl p-6 border border-green-200/60 dark:border-green-800/40 shadow-lg">
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                      <CheckCircle size={20} className="text-green-600 dark:text-green-400" strokeWidth={2.5} />
+                      <span className="text-sm font-bold text-green-900 dark:text-green-200 uppercase tracking-wide">Bridge Completed</span>
+                    </div>
+                    <div className="bg-white/80 dark:bg-slate-700/60 rounded-xl p-5 text-center shadow-sm border border-slate-200/50 dark:border-slate-600/40">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <Clock size={16} className="text-green-600 dark:text-green-400" />
+                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Completion Time</span>
+                      </div>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{formatTime(displayTime)}</p>
+                    </div>
+                  </div>
+                </motion.div>
               )}
-
             </div>
           </motion.div>
         </motion.div>
