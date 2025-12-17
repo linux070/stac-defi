@@ -153,7 +153,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
               <div className="flex flex-col sm:flex-row gap-3">
                 <motion.button
                   onClick={onClose}
-                  className="flex-1 py-3.5 px-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 text-sm sm:text-base shadow-md hover:shadow-lg"
+                  className="flex-1 py-3.5 px-5 text-sm sm:text-base border-2 border-blue-400 text-blue-500 dark:text-blue-400 rounded-xl transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-semibold"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -161,7 +161,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                 </motion.button>
                 <motion.button
                   onClick={onClose}
-                  className="flex-1 py-3.5 px-5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition-all duration-200 text-sm sm:text-base shadow-sm hover:shadow-md"
+                  className="flex-1 py-3.5 px-5 text-sm sm:text-base border-2 border-gray-400 text-gray-500 dark:text-gray-400 rounded-xl transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-900/20 font-semibold"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
