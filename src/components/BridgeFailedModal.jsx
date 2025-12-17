@@ -7,14 +7,14 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black bg-opacity-50"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black bg-opacity-50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md"
+            className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-md mx-4"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -34,11 +34,11 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                 </div>
               </div>
 
-              <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
+              <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900 dark:text-white">
                 {errorTitle || 'Bridge Failed'}
               </h3>
 
-              <div className="flex items-center justify-center space-x-4 my-6">
+              <div className="flex items-center justify-center space-x-2 sm:space-x-4 my-4 sm:my-6">
                 <div className="text-center">
                   <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-2">
                     {fromChain?.includes('Arc') ? (
@@ -84,23 +84,23 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                 </div>
               </div>
 
-              <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 mb-6 text-left">
-                <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-2">Error Details:</p>
-                <p className="text-sm text-red-700 dark:text-red-300">
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-left">
+                <p className="text-xs sm:text-sm text-red-800 dark:text-red-200 font-medium mb-2">Error Details:</p>
+                <p className="text-xs sm:text-sm text-red-700 dark:text-red-300 break-words">
                   {errorMessage || 'An unknown error occurred during the bridge transaction.'}
                 </p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="w-full sm:flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm sm:text-base touch-manipulation"
                 >
                   Close
                 </button>
                 <button
                   onClick={onClose}
-                  className="flex-1 py-3 px-4 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+                  className="w-full sm:flex-1 py-3 px-4 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation"
                 >
                   <RefreshCw size={18} />
                   Retry

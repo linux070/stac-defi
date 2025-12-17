@@ -175,10 +175,15 @@ export function useBridge() {
       });
 
       const formattedBalance = formatUnits(balance, tokenInfo.decimals);
-      setTokenBalance(formattedBalance);
+      // Round to 2 decimal places
+      const roundedBalance = parseFloat(formattedBalance).toFixed(2);
+      setTokenBalance(roundedBalance);
+      setBalanceError(''); // Clear error on successful fetch
     } catch (err) {
       console.error(`❌ Error fetching balance for chain ${sourceChainId}:`, err);
-      setTokenBalance('0');
+      // Don't reset balance to '0' on error - keep previous value to avoid showing zero
+      // Only set to '0' if we don't have a previous balance value
+      setTokenBalance(prevBalance => prevBalance || '0');
       
       if (err.message && (err.message.includes('timeout') || err.message.includes('took too long'))) {
         setBalanceError('RPC timeout - balance may not be accurate.');
@@ -589,7 +594,7 @@ export function useBridge() {
       return errorState;
     }  }, [address, isConnected, chainId, switchChain]);
 
-  // Reset bridge state
+  // Reset bridge state (but preserve balance - refresh it instead)
   const reset = useCallback(() => {
     setState({
       step: 'idle',
@@ -600,9 +605,15 @@ export function useBridge() {
       receiveTxHash: undefined,
       direction: undefined,
     });
-    setTokenBalance('0');
+    // Don't clear balance - refresh it instead if we have address and chainId
+    if (address && chainId) {
+      const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
+      fetchTokenBalance('USDC', chainIdDecimal).catch(err => {
+        console.error('Error refreshing balance after reset:', err);
+      });
+    }
     setBalanceError('');
-  }, []);
+  }, [address, chainId, fetchTokenBalance]);
 
   // Clear only balance (for disconnect scenarios)
   const clearBalance = useCallback(() => {

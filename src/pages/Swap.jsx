@@ -541,20 +541,68 @@ const Swap = () => {
           </div>
         </div>
 
-        {/* Settings Panel */}
+        {/* Settings Panel - Desktop: Inline Expandable */}
         <AnimatePresence>
           {showSettings && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="mb-4 md:mb-6"
+              className="mb-4 md:mb-6 hidden md:block"
             >
               <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-6">
                 {/* Slippage Tolerance */}
                 <SlippageTolerance />
               </div>
             </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Settings Bottom Sheet Modal - Mobile Only */}
+        <AnimatePresence>
+          {showSettings && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
+                onClick={() => setShowSettings(false)}
+              />
+              
+              {/* Bottom Sheet - Mobile Only */}
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl md:hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Drag Handle for Mobile */}
+                <div className="flex justify-center pt-3 pb-2">
+                  <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full" />
+                </div>
+                
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 sm:px-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Settings</h3>
+                  <button
+                    onClick={() => setShowSettings(false)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
+                  >
+                    <X size={20} className="text-gray-500 dark:text-gray-400" />
+                  </button>
+                </div>
+                
+                {/* Content */}
+                <div className="p-4 sm:p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                  {/* Slippage Tolerance */}
+                  <SlippageTolerance />
+                </div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
 
@@ -624,7 +672,7 @@ const Swap = () => {
                     {fromLoading ? (
                       <Loader className="animate-spin" size={14} />
                     ) : (
-                      `${fromBalance || '0.00'} ${fromToken}`
+                      fromBalance || '0.00'
                     )}
                   </span>
                 </div>
@@ -703,10 +751,34 @@ const Swap = () => {
                     {toLoading ? (
                       <Loader className="animate-spin" size={14} />
                     ) : (
-                      `${toBalance || '0.00'} ${toToken}`
+                      toBalance || '0.00'
                     )}
                   </span>
                 </div>
+                <button
+                  onClick={() => {
+                    if (!toBalance || parseFloat(toBalance) === 0) {
+                      setToast({ visible: true, type: 'warning', message: 'No balance available' });
+                      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
+                      return;
+                    }
+                    // Set the "To" amount to maximum balance
+                    // Note: This will trigger the swap calculation in reverse
+                    setToAmount(toBalance);
+                    // Calculate the required "From" amount based on the "To" amount
+                    try {
+                      const reverseQuote = calculateSwapQuote(toToken, fromToken, toBalance, slippage);
+                      if (reverseQuote) {
+                        setFromAmount(reverseQuote.expectedOutput);
+                      }
+                    } catch (err) {
+                      console.error('Error calculating reverse quote:', err);
+                    }
+                  }}
+                  className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors ml-2"
+                >
+                  {t('Max')}
+                </button>
               </div>
             )}
           </div>

@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { useAccount, useBalance, useChainId } from 'wagmi';
 import { NETWORKS, TOKENS } from '../config/networks';
 
@@ -10,10 +11,17 @@ const USDC_ARC_ADDRESS = TOKENS?.ARC_TESTNET?.USDC?.address || '0x75faf114eafb1B
 const ARC_CHAIN_ID = NETWORKS?.ARC_TESTNET ? parseInt(NETWORKS.ARC_TESTNET.chainId, 16) : 5042002;
 const SEPOLIA_CHAIN_ID = NETWORKS?.ETHEREUM_SEPOLIA ? parseInt(NETWORKS.ETHEREUM_SEPOLIA.chainId, 16) : 11155111;
 
+// Timeout duration in milliseconds (10 seconds)
+const BALANCE_FETCH_TIMEOUT = 10000;
+
 const useTokenBalance = (tokenSymbol) => {
   // IMPORTANT: All hooks must be called unconditionally at the top level
   const { address, isConnected } = useAccount();
   const chainId = useChainId(); // Returns a number (e.g. 11155111)
+  
+  // State to track timeout
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const timeoutRef = useRef(null);
   
   // Convert chainId to number if it's a hex string
   const chainIdNumber = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
@@ -45,6 +53,34 @@ const useTokenBalance = (tokenSymbol) => {
   // Wagmi hook - MUST be called unconditionally (no early returns before this)
   const { data, isLoading, refetch, error } = useBalance(fetchConfig);
 
+  // Timeout mechanism to prevent infinite loading
+  useEffect(() => {
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    // Set timeout if loading starts
+    if (isLoading && shouldFetch && isConnected && address) {
+      setLoadingTimeout(false);
+      timeoutRef.current = setTimeout(() => {
+        console.warn(`Balance fetch timeout for ${tokenSymbol} on chain ${chainIdNumber}`);
+        setLoadingTimeout(true);
+      }, BALANCE_FETCH_TIMEOUT);
+    } else {
+      setLoadingTimeout(false);
+    }
+
+    // Cleanup timeout on unmount or when loading completes
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [isLoading, shouldFetch, isConnected, address, tokenSymbol, chainIdNumber]);
+
   // Now we can return based on conditions
   if (!isConnected || !address) {
     return {
@@ -66,12 +102,23 @@ const useTokenBalance = (tokenSymbol) => {
     };
   }
 
+  // Stop loading if timeout occurred or if there's an error
+  const isActuallyLoading = isLoading && !loadingTimeout && !error;
+
+  // Format balance to 2 decimal places
+  const formatBalance = (balanceStr) => {
+    if (!balanceStr || balanceStr === '0.00') return '0.00';
+    const num = parseFloat(balanceStr);
+    if (!Number.isFinite(num)) return '0.00';
+    return num.toFixed(2);
+  };
+
   return {
-    balance: data?.formatted || '0.00',
+    balance: formatBalance(data?.formatted) || '0.00',
     symbol: data?.symbol || tokenSymbol,
-    loading: isLoading,
+    loading: isActuallyLoading,
     refetch: refetch || (() => {}),
-    error: error?.message || null
+    error: error?.message || (loadingTimeout ? 'Balance fetch timeout' : null)
   };
 };
 

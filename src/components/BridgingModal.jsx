@@ -85,6 +85,18 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
   };
 
   const modalState = getModalState();
+
+  // Calculate progress percentage for dot animation (0% = source, 100% = destination)
+  // Based on elapsed time with estimated completion of 120 seconds (2 minutes)
+  const calculateDotProgress = () => {
+    if (modalState === 'completed') {
+      return 100; // Dot reaches destination when completed
+    }
+    // Calculate progress based on elapsed time, capped at 100%
+    return Math.min(100, (displayTime / 120) * 100);
+  };
+
+  const dotProgress = calculateDotProgress();
   
   // Don't render if there's an error - BridgeFailedModal will handle it
   if (state?.step === 'error') {
@@ -95,14 +107,14 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black bg-opacity-50"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black bg-opacity-50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md"
+            className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-md mx-4"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -137,11 +149,11 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                 </div>
               </div>
 
-              <h3 className="text-xl font-bold mb-2">
+              <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900 dark:text-white">
                 {modalState === 'inProgress' ? 'Bridging in Progress' : 'Bridge Completed'}
               </h3>
               
-              <div className="flex items-center justify-center space-x-4 my-6">
+              <div className="flex items-center justify-center space-x-2 sm:space-x-4 my-4 sm:my-6">
                 <div className="text-center">
                   <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-2">
                     {fromChain.includes('Arc') ? (
@@ -162,13 +174,21 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                 </div>
                 
                 <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700 relative">
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                    {modalState === 'inProgress' ? (
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    ) : (
-                      <CheckCircle size={16} className="text-white" />
-                    )}
-                  </div>
+                  <motion.div
+                    className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center"
+                    initial={{ left: '0%' }}
+                    animate={{ left: `${dotProgress}%` }}
+                    transition={{ 
+                      type: 'tween',
+                      ease: 'linear',
+                      duration: 0.5 // Smooth animation when progress updates
+                    }}
+                    style={{ 
+                      transform: 'translateX(-50%) translateY(-50%)', // Center the dot on its position
+                    }}
+                  >
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                  </motion.div>
                 </div>
                 
                 <div className="text-center">
@@ -193,14 +213,14 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
 
               {modalState === 'inProgress' && (
                 <>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 px-2">
                     Bridging from {fromChain} to {toChain}
                   </p>
 
-                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-6">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 dark:text-gray-400">Elapsed Time</span>
-                      <span className="font-semibold">{formatTime(displayTime)}</span>
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Elapsed Time</span>
+                      <span className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">{formatTime(displayTime)}</span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 mt-2">
                       <div 
@@ -209,11 +229,11 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                       ></div>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-                      Estimated completion: 1-2 minutes
+                      Estimated completion time : 1-2 minutes.
                     </p>
                   </div>
 
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 px-2">
                     Please keep this window open until the transaction completes.
                   </p>
                 </>
@@ -221,7 +241,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
 
               {modalState === 'completed' && (
                 <div className="space-y-4">
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 px-2">
                     Bridge completed successfully in {formatTime(displayTime)}
                   </p>
                 </div>

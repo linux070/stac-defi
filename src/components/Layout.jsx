@@ -75,7 +75,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         <div className="hidden md:block md:fixed md:top-4 md:left-0 md:right-0 md:flex md:justify-center">
           <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-6 py-3 mx-auto w-fit max-w-full md:min-w-[700px] md:max-w-6xl">
             {/* Logo with text */}
-            <a href="/" className="flex items-center gap-3 pl-4 cursor-pointer flex-shrink-0">
               <img 
                 src="/icons/pixel-stack.svg" 
                 alt="Stac Logo" 
@@ -84,7 +83,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap">
                 Stac
               </span>
-            </a>
 
             {/* Desktop Navigation */}
             <nav className="flex items-center gap-4 md:gap-6 ml-6">
