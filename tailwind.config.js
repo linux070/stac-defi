@@ -8,6 +8,19 @@ export default {
   theme: {
     extend: {
       colors: {
+        // CSS Variable support for theme tokens
+        theme: {
+          primary: 'var(--theme-primary)',
+          focus: 'var(--theme-focus)',
+          'text-default': 'var(--theme-text-default)',
+          'text-subtle': 'var(--theme-text-subtle)',
+          'text-muted': 'var(--theme-text-muted)',
+          'bg-default': 'var(--theme-bg-default)',
+          'bg-secondary': 'var(--theme-bg-secondary)',
+          'bg-tertiary': 'var(--theme-bg-tertiary)',
+          'border-default': 'var(--theme-border-default)',
+          'border-subtle': 'var(--theme-border-subtle)',
+        },
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',

@@ -1,0 +1,552 @@
+/* Dark Mode Theme - Bridge Component Only */
+
+/* CSS Variables - Dark Mode (Default) */
+:root {
+  --bridge-bg-primary: #0a0a0a;
+  --bridge-bg-secondary: #141414;
+  --bridge-bg-tertiary: #1a1a1a;
+  --bridge-surface-card: rgba(255, 255, 255, 0.03);
+  --bridge-surface-hover: rgba(255, 255, 255, 0.05);
+  --bridge-border-light: rgba(255, 255, 255, 0.06);
+  --bridge-border-medium: rgba(255, 255, 255, 0.08);
+  --bridge-border-focus: rgba(59, 130, 246, 0.3);
+  --bridge-text-primary: #ffffff;
+  --bridge-text-secondary: #888888;
+  --bridge-text-tertiary: #666666;
+  --bridge-accent-primary: #3b82f6;
+  --bridge-accent-secondary: #60a5fa;
+  --bridge-alert-bg: rgba(59, 130, 246, 0.08);
+  --bridge-alert-border: rgba(59, 130, 246, 0.2);
+  --bridge-alert-text: #60a5fa;
+}
+
+/* Light Mode Variables */
+:root:not(.dark),
+html:not(.dark),
+.light {
+  --bridge-bg-primary: #ffffff;
+  --bridge-bg-secondary: #f8f9fa;
+  --bridge-bg-tertiary: #f1f3f5;
+  --bridge-surface-card: rgba(0, 0, 0, 0.03);
+  --bridge-surface-hover: rgba(0, 0, 0, 0.05);
+  --bridge-border-light: rgba(0, 0, 0, 0.1);
+  --bridge-border-medium: rgba(0, 0, 0, 0.12);
+  --bridge-border-focus: rgba(59, 130, 246, 0.4);
+  --bridge-text-primary: #1a1a1a;
+  --bridge-text-secondary: #4a5568;
+  --bridge-text-tertiary: #718096;
+  --bridge-accent-primary: #3b82f6;
+  --bridge-accent-secondary: #60a5fa;
+  --bridge-alert-bg: rgba(59, 130, 246, 0.1);
+  --bridge-alert-border: rgba(59, 130, 246, 0.3);
+  --bridge-alert-text: #2563eb;
+}
+
+/* Dark Mode Override */
+html.dark,
+.dark {
+  --bridge-bg-primary: #0a0a0a;
+  --bridge-bg-secondary: #141414;
+  --bridge-bg-tertiary: #1a1a1a;
+  --bridge-surface-card: rgba(255, 255, 255, 0.03);
+  --bridge-surface-hover: rgba(255, 255, 255, 0.05);
+  --bridge-border-light: rgba(255, 255, 255, 0.06);
+  --bridge-border-medium: rgba(255, 255, 255, 0.08);
+  --bridge-border-focus: rgba(59, 130, 246, 0.3);
+  --bridge-text-primary: #ffffff;
+  --bridge-text-secondary: #888888;
+  --bridge-text-tertiary: #666666;
+  --bridge-accent-primary: #3b82f6;
+  --bridge-accent-secondary: #60a5fa;
+  --bridge-alert-bg: rgba(59, 130, 246, 0.08);
+  --bridge-alert-border: rgba(59, 130, 246, 0.2);
+  --bridge-alert-text: #60a5fa;
+}
+
+/* Main Bridge Container */
+.bridge-container {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bridge-bg-secondary);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  position: relative;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Settings Button */
+.settings-button {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 32px;
+  height: 32px;
+  background: var(--bridge-surface-hover);
+  border: 1px solid var(--bridge-border-medium);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--bridge-text-primary);
+}
+
+.settings-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--bridge-border-focus);
+}
+
+/* Section Labels */
+.section-label {
+  font-size: 11px;
+  color: var(--bridge-text-secondary);
+  margin-bottom: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  display: block;
+}
+
+/* Network Selector Row */
+.network-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.network-card {
+  flex: 1;
+  background: var(--bridge-surface-card);
+  border: 1px solid var(--bridge-border-medium);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.network-card:hover {
+  background: var(--bridge-surface-hover);
+  border-color: var(--bridge-border-focus);
+}
+
+.network-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.network-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.network-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bridge-text-primary);
+  margin-bottom: 2px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.network-chain {
+  font-size: 11px;
+  color: var(--bridge-text-secondary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.arrow-divider {
+  color: var(--bridge-text-tertiary);
+  font-size: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Switch Button (Arrow Divider as Button) */
+.arrow-divider-button {
+  background: var(--bridge-surface-hover);
+  border: 2px solid var(--bridge-border-medium);
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--bridge-text-primary);
+  flex-shrink: 0;
+}
+
+.arrow-divider-button:hover:not(:disabled) {
+  background: var(--bridge-bg-tertiary);
+  border-color: var(--bridge-border-focus);
+  transform: scale(1.05);
+}
+
+.arrow-divider-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.arrow-divider-button svg {
+  transition: transform 0.3s ease;
+}
+
+.arrow-divider-button:hover:not(:disabled) svg {
+  transform: rotate(180deg);
+}
+
+/* Switch Button */
+.switch-button-bridge {
+  width: 40px;
+  height: 40px;
+  background: var(--bridge-surface-hover);
+  border: 2px solid var(--bridge-border-medium);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--bridge-text-primary);
+  flex-shrink: 0;
+}
+
+.switch-button-bridge:hover:not(:disabled) {
+  background: var(--bridge-bg-tertiary);
+  border-color: var(--bridge-border-focus);
+  transform: scale(1.05);
+}
+
+.switch-button-bridge:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Input Groups */
+.input-group {
+  background: var(--bridge-surface-card);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.input-group:focus-within {
+  border-color: var(--bridge-border-focus);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.input-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.input-label {
+  font-size: 12px;
+  color: var(--bridge-text-primary);
+  font-weight: 500;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  opacity: 0.85;
+}
+
+.balance-text {
+  font-size: 11px;
+  color: var(--bridge-text-secondary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.balance-text span {
+  color: var(--bridge-text-primary);
+  font-weight: 600;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.amount-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--bridge-text-primary);
+  font-size: 24px;
+  font-weight: 600;
+  outline: none;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-width: 0;
+}
+
+.amount-input::placeholder {
+  color: var(--bridge-text-tertiary);
+}
+
+.token-selector {
+  background: var(--bridge-surface-hover);
+  border: 1px solid var(--bridge-border-medium);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.token-selector:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--bridge-border-focus);
+}
+
+.token-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.token-symbol {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bridge-text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.dropdown-arrow {
+  color: var(--bridge-text-tertiary);
+  font-size: 12px;
+}
+
+/* Max Button */
+.max-button {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bridge-accent-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.max-button:hover {
+  background: var(--bridge-surface-hover);
+  color: var(--bridge-accent-primary);
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.info-card {
+  background: var(--bridge-surface-card);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.info-card-label {
+  font-size: 11px;
+  color: var(--bridge-text-secondary);
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  opacity: 0.9;
+}
+
+.info-card-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bridge-text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Alert Box */
+.alert-box {
+  background: var(--bridge-alert-bg);
+  border: 1px solid var(--bridge-alert-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.alert-icon {
+  color: var(--bridge-alert-text);
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-text {
+  font-size: 12px;
+  color: var(--bridge-text-primary);
+  line-height: 1.5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  opacity: 0.9;
+}
+
+/* Primary Bridge Button */
+.bridge-button {
+  width: 100%;
+  background: linear-gradient(135deg, var(--bridge-accent-primary), var(--bridge-accent-secondary));
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bridge-text-primary);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridge-button:hover:not(:disabled) {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
+.bridge-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.bridge-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Bridge Button Failed State */
+.bridge-button-failed {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.bridge-button-failed:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+  filter: none;
+}
+
+/* Header Title */
+.bridge-header {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--bridge-text-primary);
+  margin-bottom: 20px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Powered By Badge */
+.powered-by-badge {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--bridge-text-primary);
+  border: 1px solid var(--bridge-border-medium);
+  border-radius: 8px;
+  background: var(--bridge-surface-card);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .bridge-container {
+    padding: 16px;
+    border-radius: 12px;
+    margin: 0 16px;
+  }
+  
+  .network-selector {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .arrow-divider-button {
+    transform: rotate(90deg);
+  }
+  
+  .arrow-divider-button svg {
+    transform: rotate(90deg);
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .settings-button {
+    top: 16px;
+    right: 16px;
+    width: 28px;
+    height: 28px;
+  }
+  
+  .powered-by-badge {
+    top: 16px;
+    right: 16px;
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+  
+  .bridge-header {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .input-group {
+    padding: 12px;
+  }
+  
+  .amount-input {
+    font-size: 20px;
+  }
+  
+  .network-card {
+    padding: 12px;
+  }
+  
+  .bridge-button {
+    padding: 12px;
+    font-size: 13px;
+  }
+}
