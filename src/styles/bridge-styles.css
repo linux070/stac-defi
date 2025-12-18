@@ -495,26 +495,27 @@ html.dark,
 
 /* Responsive Design - Mobile First  */
 @media (max-width: 640px) {
+  /* Override parent wrapper constraints on mobile - target the div wrapping bridge-container */
+  div.max-w-lg.mx-auto {
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+  }
+  
+  /* Ensure parent wrapper doesn't add padding on mobile */
   .bridge-container {
     padding: 16px;
     border-radius: 0;
-    margin: 0;
-    max-width: 100%;
-    width: 100%;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
     box-sizing: border-box;
     border-left: none;
     border-right: none;
     box-shadow: none;
-    min-height: 100vh;
-  }
-  
-  /* Header adjustments */
-  .bridge-header {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    padding-right: 100px;
-    line-height: 1.2;
   }
   
   /* Settings and badge positioning */
@@ -525,17 +526,39 @@ html.dark,
     height: 36px;
     min-width: 36px;
     min-height: 36px;
+    z-index: 10;
   }
   
+  /* Powered by badge - keep in top right, responsive sizing */
   .powered-by-badge {
-    top: 16px;
-    right: 60px;
-    font-size: 10px;
+    position: absolute !important;
+    top: 16px !important;
+    right: 60px !important; /* Position to left of settings button */
     padding: 6px 10px;
-    max-width: calc(100% - 180px);
+    font-size: 9px;
+    max-width: calc(100% - 120px); /* Prevent overflow, account for padding and settings button */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    z-index: 5;
+  }
+  
+  .powered-by-badge span {
+    display: inline-block;
+  }
+  
+  /* Header adjustments - ensure it doesn't overlap with badge */
+  .bridge-header {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-right: 0;
+    padding-top: 0;
+    line-height: 1.2;
+    width: 100%;
+    box-sizing: border-box;
+    /* Add top margin to prevent overlap with badge on very small screens */
+    margin-top: 0;
   }
   
   /* Network selector - full width cards */
@@ -730,7 +753,22 @@ html.dark,
   
   .bridge-header {
     font-size: 18px;
-    padding-right: 90px;
+    padding-right: 0;
+  }
+  
+  .powered-by-badge {
+    top: 12px !important;
+    right: 52px !important;
+    font-size: 8px;
+    padding: 5px 8px;
+    max-width: calc(100% - 100px);
+  }
+  
+  .settings-button {
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
   }
   
   .network-card {
@@ -749,5 +787,714 @@ html.dark,
     padding: 14px;
     font-size: 15px;
     min-height: 52px;
+  }
+}
+
+/* Bridging Modal Styles  */
+.bridging-modal-backdrop {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.bridging-modal-container {
+  background: var(--bridge-bg-secondary);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  max-width: 480px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.bridging-modal-header {
+  background: linear-gradient(135deg, var(--bridge-accent-primary), var(--bridge-accent-secondary));
+  padding: 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bridging-modal-header-completed {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.bridging-modal-header-failed {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.bridging-modal-close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.bridging-modal-close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.bridging-modal-loader-container {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.bridging-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridging-modal-content {
+  padding: 24px;
+  background: var(--bridge-bg-secondary);
+}
+
+.bridging-modal-network-container {
+  background: var(--bridge-surface-card);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.bridging-modal-network-container > div {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.bridging-modal-network-card {
+  background: var(--bridge-bg-secondary);
+  border: 1px solid var(--bridge-border-medium);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bridging-modal-network-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+}
+
+.bridging-modal-network-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bridge-text-primary);
+  text-align: center;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridging-modal-arrow {
+  color: var(--bridge-text-tertiary);
+  flex-shrink: 0;
+}
+
+.bridging-modal-bridge-text {
+  font-size: 13px;
+  color: var(--bridge-text-secondary);
+  margin-bottom: 20px;
+  text-align: center;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridging-modal-progress-card {
+  background: var(--bridge-surface-card);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.bridging-modal-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bridging-modal-progress-label {
+  font-size: 12px;
+  color: var(--bridge-text-secondary);
+  font-weight: 500;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridging-modal-progress-time {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bridge-text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridging-modal-progress-bar-container {
+  width: 100%;
+  background: var(--bridge-border-light);
+  border-radius: 8px;
+  height: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.bridging-modal-progress-bar {
+  background: linear-gradient(90deg, var(--bridge-accent-primary), var(--bridge-accent-secondary));
+  height: 100%;
+  border-radius: 8px;
+  transition: width 1s ease-out;
+}
+
+.bridging-modal-progress-estimate {
+  font-size: 11px;
+  color: var(--bridge-text-tertiary);
+  text-align: center;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridging-modal-notice {
+  background: rgba(251, 191, 36, 0.1);
+  border-left: 4px solid #fbbf24;
+  border-radius: 0 12px 12px 0;
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+/* Light mode notice */
+:root:not(.dark) .bridging-modal-notice,
+html:not(.dark) .bridging-modal-notice,
+.light .bridging-modal-notice {
+  background: rgba(251, 191, 36, 0.15);
+  border-left-color: #f59e0b;
+}
+
+/* Dark mode notice */
+html.dark .bridging-modal-notice,
+.dark .bridging-modal-notice {
+  background: rgba(251, 191, 36, 0.1);
+  border-left-color: #fbbf24;
+}
+
+.bridging-modal-notice-icon {
+  color: #fbbf24;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+:root:not(.dark) .bridging-modal-notice-icon,
+html:not(.dark) .bridging-modal-notice-icon,
+.light .bridging-modal-notice-icon {
+  color: #f59e0b;
+}
+
+.bridging-modal-notice-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bridge-text-primary);
+  margin-bottom: 6px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridging-modal-notice-text {
+  font-size: 12px;
+  color: var(--bridge-text-secondary);
+  line-height: 1.5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridging-modal-success-message {
+  font-size: 14px;
+  color: var(--bridge-text-secondary);
+  margin-bottom: 20px;
+  text-align: center;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridging-modal-success-card {
+  background: var(--bridge-surface-card);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.bridging-modal-success-label {
+  font-size: 11px;
+  color: var(--bridge-text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridging-modal-success-time {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--bridge-text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Bridge Failed Modal Error Card */
+.bridging-modal-error-card {
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid #ef4444;
+  border-radius: 0 12px 12px 0;
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+/* Light mode error card */
+:root:not(.dark) .bridging-modal-error-card,
+html:not(.dark) .bridging-modal-error-card,
+.light .bridging-modal-error-card {
+  background: rgba(239, 68, 68, 0.15);
+  border-left-color: #dc2626;
+}
+
+/* Dark mode error card */
+html.dark .bridging-modal-error-card,
+.dark .bridging-modal-error-card {
+  background: rgba(239, 68, 68, 0.1);
+  border-left-color: #ef4444;
+}
+
+.bridging-modal-error-icon {
+  color: #ef4444;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+:root:not(.dark) .bridging-modal-error-icon,
+html:not(.dark) .bridging-modal-error-icon,
+.light .bridging-modal-error-icon {
+  color: #dc2626;
+}
+
+.bridging-modal-error-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bridge-text-primary);
+  margin-bottom: 6px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridging-modal-error-text {
+  font-size: 12px;
+  color: var(--bridge-text-secondary);
+  line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Bridge Failed Modal Buttons */
+.bridging-modal-buttons-container {
+  display: flex;
+  gap: 12px;
+  flex-direction: row;
+  margin-top: 8px;
+}
+
+.bridging-modal-retry-button {
+  flex: 1;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 2px solid var(--bridge-accent-primary);
+  color: var(--bridge-accent-primary);
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bridging-modal-retry-button:hover {
+  background: var(--bridge-surface-hover);
+  border-color: var(--bridge-accent-secondary);
+  color: var(--bridge-accent-secondary);
+  transform: scale(1.02);
+}
+
+.bridging-modal-retry-button:active {
+  transform: scale(0.98);
+}
+
+.bridging-modal-close-button-secondary {
+  flex: 1;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 2px solid var(--bridge-border-medium);
+  color: var(--bridge-text-secondary);
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bridging-modal-close-button-secondary:hover {
+  background: var(--bridge-surface-hover);
+  border-color: var(--bridge-border-focus);
+  color: var(--bridge-text-primary);
+  transform: scale(1.02);
+}
+
+.bridging-modal-close-button-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Mobile Responsive for Bridging Modal */
+@media (max-width: 640px) {
+  .bridging-modal-backdrop {
+    padding: 0;
+    align-items: flex-start;
+    padding-top: 0;
+  }
+  
+  .bridging-modal-container {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    max-height: 100vh;
+    overflow-y: auto;
+    position: relative;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .bridging-modal-header {
+    padding: 16px;
+    flex-shrink: 0;
+  }
+  
+  .bridging-modal-close-button {
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+  
+  .bridging-modal-close-button svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .bridging-modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+    padding: 0 40px;
+  }
+  
+  .bridging-modal-loader-container {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 10px;
+  }
+  
+  .bridging-modal-loader-container svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .bridging-modal-loader-container .w-8 {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .bridging-modal-content {
+    padding: 16px;
+  }
+  
+  .bridging-modal-network-container {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .bridging-modal-network-container > div {
+    gap: 8px;
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+  }
+  
+  .bridging-modal-network-card {
+    padding: 10px;
+    min-width: 70px;
+    flex: 1;
+    max-width: calc(50% - 6px);
+    width: auto;
+  }
+  
+  .bridging-modal-network-icon {
+    width: 28px;
+    height: 28px;
+    margin-bottom: 4px;
+  }
+  
+  .bridging-modal-network-name {
+    font-size: 9px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.2;
+  }
+  
+  .bridging-modal-arrow {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  
+  .bridging-modal-bridge-text {
+    font-size: 12px;
+    margin-bottom: 16px;
+    padding: 0 4px;
+  }
+  
+  .bridging-modal-progress-card {
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  
+  .bridging-modal-progress-header {
+    margin-bottom: 10px;
+  }
+  
+  .bridging-modal-progress-label {
+    font-size: 11px;
+  }
+  
+  .bridging-modal-progress-time {
+    font-size: 13px;
+  }
+  
+  .bridging-modal-progress-bar-container {
+    height: 6px;
+    margin-bottom: 6px;
+  }
+  
+  .bridging-modal-progress-estimate {
+    font-size: 10px;
+  }
+  
+  .bridging-modal-notice {
+    padding: 12px;
+    gap: 10px;
+  }
+  
+  .bridging-modal-notice-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  
+  .bridging-modal-notice-title {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  
+  .bridging-modal-notice-text {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  
+  .bridging-modal-success-message {
+    font-size: 13px;
+    margin-bottom: 16px;
+    padding: 0 4px;
+  }
+  
+  .bridging-modal-success-card {
+    padding: 16px;
+  }
+  
+  .bridging-modal-success-label {
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+  
+  .bridging-modal-success-time {
+    font-size: 24px;
+  }
+  
+  /* Keep network cards side-by-side on mobile (Relay.link style) - override any column layout */
+  .bridging-modal-network-container > div {
+    flex-direction: row !important;
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .bridging-modal-network-card {
+    flex: 1;
+    max-width: calc(50% - 6px);
+    width: auto;
+  }
+  
+  .bridging-modal-arrow {
+    transform: none !important;
+    margin: 0;
+    flex-shrink: 0;
+  }
+  
+  /* Ensure text doesn't overflow */
+  .bridging-modal-bridge-text,
+  .bridging-modal-success-message {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 375px) {
+  .bridging-modal-header {
+    padding: 14px;
+  }
+  
+  .bridging-modal-title {
+    font-size: 15px;
+  }
+  
+  .bridging-modal-loader-container {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .bridging-modal-content {
+    padding: 12px;
+  }
+  
+  .bridging-modal-network-container {
+    padding: 12px;
+  }
+  
+  .bridging-modal-network-container > div {
+    gap: 6px;
+  }
+  
+  .bridging-modal-network-card {
+    padding: 8px;
+    min-width: 60px;
+    flex: 1;
+    max-width: calc(50% - 5px);
+  }
+  
+  .bridging-modal-network-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .bridging-modal-network-name {
+    font-size: 8px;
+  }
+  
+  .bridging-modal-arrow {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .bridging-modal-progress-card {
+    padding: 12px;
+  }
+  
+  .bridging-modal-notice {
+    padding: 10px;
+    gap: 8px;
+  }
+  
+  .bridging-modal-notice-icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .bridging-modal-success-time {
+    font-size: 22px;
+  }
+  
+  .bridging-modal-title {
+    font-size: 14px;
+    padding: 0 36px;
+  }
+  
+  .bridging-modal-error-card {
+    padding: 12px;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  
+  .bridging-modal-error-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .bridging-modal-error-title {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  
+  .bridging-modal-error-text {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  
+  .bridging-modal-buttons-container {
+    flex-direction: row;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  
+  .bridging-modal-retry-button,
+  .bridging-modal-close-button-secondary {
+    padding: 12px 14px;
+    font-size: 13px;
+    min-height: 44px;
   }
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader, CheckCircle, X, AlertCircle, Clock, Info, ArrowRight } from 'lucide-react';
+import '../styles/bridge-styles.css';
 
 const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, stopTimer }) => {
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -95,14 +96,14 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black bg-opacity-50"
+          className="fixed inset-0 z-[100] flex items-center justify-center bridging-modal-backdrop"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
+            className="relative bridging-modal-container overflow-hidden"
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -110,14 +111,10 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
             onClick={(e) => e.stopPropagation()}
           >
             {/* Gradient Header */}
-            <div className={`relative px-6 py-5 ${
-              modalState === 'inProgress' 
-                ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600' 
-                : 'bg-gradient-to-r from-green-500 via-emerald-500 to-emerald-600'
-            }`}>
+            <div className={`bridging-modal-header ${modalState === 'completed' ? 'bridging-modal-header-completed' : ''}`}>
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-white/20 transition-all duration-200"
+                className="bridging-modal-close-button"
               >
                 <X size={20} className="text-white" />
               </button>
@@ -130,12 +127,12 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                   transition={{ delay: 0.1, type: 'spring' }}
                 >
                   {modalState === 'inProgress' ? (
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                      <Loader className="animate-spin text-white w-6 h-6 sm:w-8 sm:h-8" strokeWidth={2.5} />
+                    <div className="bridging-modal-loader-container">
+                      <Loader className="animate-spin text-white" size={24} strokeWidth={2.5} />
                     </div>
                   ) : (
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                      <CheckCircle size={24} className="text-white sm:w-8 sm:h-8" strokeWidth={2.5} />
+                    <div className="bridging-modal-loader-container">
+                      <CheckCircle size={24} className="text-white" strokeWidth={2.5} />
                     </div>
                   )}
                   <motion.div 
@@ -146,7 +143,8 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                   >
                     {modalState === 'inProgress' ? (
                       <motion.div 
-                        className="w-2 h-2 bg-blue-500 rounded-full"
+                        className="w-2 h-2 rounded-full"
+                        style={{ background: 'var(--bridge-accent-primary)' }}
                         animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
                         transition={{ duration: 1.5, repeat: Infinity }}
                       />
@@ -156,7 +154,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                   </motion.div>
                 </motion.div>
                 <motion.h3 
-                  className="text-xl sm:text-2xl font-bold tracking-tight"
+                  className="bridging-modal-title"
                   initial={{ y: -10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
@@ -166,95 +164,95 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
               </div>
             </div>
 
-            <div className="p-4 sm:p-6">
+            <div className="bridging-modal-content">
               {/* Network Visualization Card */}
               <motion.div 
-                className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700/40 dark:to-gray-800/40 rounded-xl p-3 sm:p-5 mb-4 sm:mb-6 border border-gray-200/50 dark:border-gray-600/30 shadow-sm"
+                className="bridging-modal-network-container"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                <div className="flex flex-col sm:flex-row items-center justify-between px-4 sm:px-10 md:px-12 gap-3 sm:gap-0">
+                <div className="flex flex-row items-center justify-between gap-3">
                   {/* Source Chain Card */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-2.5 sm:p-3 shadow-md border border-gray-200 dark:border-gray-600 dark:shadow-lg dark:shadow-gray-900/50 flex flex-col items-center w-full sm:w-auto min-w-[80px] sm:min-w-[100px]">
+                  <div className="bridging-modal-network-card">
                     {fromChain.includes('Arc') ? (
                       <img 
                         src="/icons/Arc.png" 
                         alt="Arc Testnet" 
-                        className="w-9 h-9 sm:w-10 sm:h-10 mb-1.5 object-contain dark:brightness-110 dark:drop-shadow-[0_0_6px_rgba(147,51,234,0.4)]"
+                        className="bridging-modal-network-icon object-contain"
                       />
                     ) : (
                       <img 
                         src="/icons/eth.png" 
                         alt="Sepolia" 
-                        className="w-9 h-9 sm:w-10 sm:h-10 mb-1.5 object-contain dark:brightness-110 dark:drop-shadow-[0_0_6px_rgba(255,255,255,0.3)]"
+                        className="bridging-modal-network-icon object-contain"
                       />
                     )}
-                    <p className="text-[10px] sm:text-xs font-semibold text-gray-900 dark:text-white text-center">{fromChain}</p>
+                    <p className="bridging-modal-network-name">{fromChain}</p>
                   </div>
                   
                   {/* Arrow Connector */}
                   <div className="flex items-center justify-center flex-shrink-0">
-                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-300 dark:drop-shadow-[0_0_4px_rgba(255,255,255,0.3)] rotate-90 sm:rotate-0" strokeWidth={2} />
+                    <ArrowRight className="bridging-modal-arrow w-4 h-4" strokeWidth={2} />
                   </div>
                   
                   {/* Destination Chain Card */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-2.5 sm:p-3 shadow-md border border-gray-200 dark:border-gray-700 flex flex-col items-center w-full sm:w-auto min-w-[80px] sm:min-w-[100px]">
+                  <div className="bridging-modal-network-card">
                     {toChain.includes('Arc') ? (
                       <img 
                         src="/icons/Arc.png" 
                         alt="Arc Testnet" 
-                        className="w-9 h-9 sm:w-10 sm:h-10 mb-1.5 object-contain"
+                        className="bridging-modal-network-icon object-contain"
                       />
                     ) : (
                       <img 
                         src="/icons/eth.png" 
                         alt="Sepolia" 
-                        className="w-9 h-9 sm:w-10 sm:h-10 mb-1.5 object-contain"
+                        className="bridging-modal-network-icon object-contain"
                       />
                     )}
-                    <p className="text-[10px] sm:text-xs font-semibold text-gray-900 dark:text-white text-center">{toChain}</p>
+                    <p className="bridging-modal-network-name">{toChain}</p>
                   </div>
                 </div>
               </motion.div>
 
               {modalState === 'inProgress' && (
                 <>
-                  <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400 mb-3 sm:mb-4 md:mb-6 px-2 text-center sm:text-left">
+                  <p className="bridging-modal-bridge-text">
                     Bridging from {fromChain} to {toChain}
                   </p>
 
-                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 md:mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Elapsed Time</span>
-                      <span className="text-xs sm:text-sm md:text-base font-semibold text-gray-900 dark:text-white">{formatTime(displayTime)}</span>
+                  <div className="bridging-modal-progress-card">
+                    <div className="bridging-modal-progress-header">
+                      <span className="bridging-modal-progress-label">Elapsed Time</span>
+                      <span className="bridging-modal-progress-time">{formatTime(displayTime)}</span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5 sm:h-2 mt-2">
+                    <div className="bridging-modal-progress-bar-container">
                       <div 
-                        className="bg-blue-500 h-1.5 sm:h-2 rounded-full transition-all duration-1000 ease-out"
+                        className="bridging-modal-progress-bar"
                         style={{ width: `${Math.min(100, (displayTime / 120) * 100)}%` }}
                       ></div>
                     </div>
-                    <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                    <p className="bridging-modal-progress-estimate">
                       Estimated completion time : 1-2 minutes.
                     </p>
                   </div>
 
                   {/* Important Notice */}
                   <motion.div 
-                    className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 dark:border-yellow-400 rounded-r-xl p-3 sm:p-5 flex items-start gap-2 sm:gap-4 shadow-sm"
+                    className="bridging-modal-notice"
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
                     <div className="flex-shrink-0">
-                      <Info size={20} className="text-yellow-600 dark:text-yellow-300 dark:drop-shadow-[0_0_6px_rgba(234,179,8,0.5)] sm:w-6 sm:h-6" strokeWidth={2.5} />
+                      <Info size={20} className="bridging-modal-notice-icon" strokeWidth={2.5} />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs sm:text-sm font-bold text-yellow-900 dark:text-yellow-200 mb-1 sm:mb-1.5">
+                      <p className="bridging-modal-notice-title">
                         Important Notice
                       </p>
-                      <p className="text-[11px] sm:text-xs md:text-sm text-yellow-800 dark:text-yellow-300 leading-relaxed">
+                      <p className="bridging-modal-notice-text">
                         Please keep this window open until the transaction completes. Closing it may interrupt the bridging process.
                       </p>
                     </div>
@@ -271,7 +269,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                 >
                   {/* Success Message */}
                   <motion.p 
-                    className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-400 mb-4 text-center sm:text-left"
+                    className="bridging-modal-success-message"
                     initial={{ y: 10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.4 }}
@@ -280,17 +278,17 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                   </motion.p>
 
                   {/* Success Stats Card */}
-                  <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-teal-900/20 rounded-2xl p-4 sm:p-6 border border-green-200/60 dark:border-green-800/40 shadow-lg">
-                    <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
-                      <CheckCircle size={18} className="text-green-600 dark:text-green-300 dark:drop-shadow-[0_0_6px_rgba(34,197,94,0.5)] sm:w-5 sm:h-5" strokeWidth={2.5} />
-                      <span className="text-xs sm:text-sm font-bold text-green-900 dark:text-green-200 uppercase tracking-wide">Bridge Completed</span>
+                  <div className="bridging-modal-success-card">
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                      <CheckCircle size={20} className="text-green-500" strokeWidth={2.5} />
+                      <span className="bridging-modal-success-label">Bridge Completed</span>
                     </div>
-                    <div className="bg-white/80 dark:bg-slate-700/60 rounded-xl p-4 sm:p-5 text-center shadow-sm border border-slate-200/50 dark:border-slate-600/40">
+                    <div className="bg-white/80 dark:bg-slate-700/60 rounded-xl p-5 text-center shadow-sm border border-slate-200/50 dark:border-slate-600/40">
                       <div className="flex items-center justify-center gap-2 mb-2">
-                        <Clock size={14} className="text-green-600 dark:text-green-300 dark:drop-shadow-[0_0_4px_rgba(34,197,94,0.4)] sm:w-4 sm:h-4" />
-                        <span className="text-[10px] sm:text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Completion Time</span>
+                        <Clock size={16} className="text-green-500" />
+                        <span className="bridging-modal-success-label">Completion Time</span>
                       </div>
-                      <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{formatTime(displayTime)}</p>
+                      <p className="bridging-modal-success-time">{formatTime(displayTime)}</p>
                     </div>
                   </div>
                 </motion.div>

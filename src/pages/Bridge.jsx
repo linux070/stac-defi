@@ -991,7 +991,7 @@ const Bridge = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto w-full px-2 sm:px-0">
+    <div className="max-w-lg mx-auto w-full px-0 sm:px-0">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
