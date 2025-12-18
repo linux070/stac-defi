@@ -10,5 +10,10 @@ export default defineConfig({
     react(),
     nodePolyfills(), // Add this function call to the plugins array
   ],
+  //    server: {
+  //   host: true
+  // }
   // ... rest of your config
 })
+
+// 

@@ -347,8 +347,8 @@ html.dark,
   font-size: 12px;
   font-weight: 600;
   color: var(--bridge-accent-secondary);
-  background: transparent;
-  border: none;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 6px;
@@ -357,8 +357,14 @@ html.dark,
 }
 
 .max-button:hover {
-  background: var(--bridge-surface-hover);
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
   color: var(--bridge-accent-primary);
+  transform: scale(1.05);
+}
+
+.max-button:active {
+  transform: scale(0.95);
 }
 
 /* Info Grid */
@@ -508,14 +514,14 @@ html.dark,
   /* Ensure parent wrapper doesn't add padding on mobile */
   .bridge-container {
     padding: 16px;
-    border-radius: 0;
-    margin: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
+    border-radius: 16px;
+    margin: 16px auto !important;
+    max-width: calc(100% - 32px) !important;
+    width: calc(100% - 32px) !important;
     box-sizing: border-box;
-    border-left: none;
-    border-right: none;
-    box-shadow: none;
+    border-left: 1px solid var(--bridge-border-light);
+    border-right: 1px solid var(--bridge-border-light);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   }
   
   /* Settings and badge positioning */
@@ -1136,9 +1142,9 @@ html:not(.dark) .bridging-modal-error-icon,
   padding: 14px 20px;
   font-size: 14px;
   font-weight: 600;
-  border: 2px solid var(--bridge-accent-primary);
-  color: var(--bridge-accent-primary);
-  background: transparent;
+  border: none;
+  color: var(--bridge-text-primary);
+  background: linear-gradient(135deg, var(--bridge-accent-primary), var(--bridge-accent-secondary));
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1150,10 +1156,8 @@ html:not(.dark) .bridging-modal-error-icon,
 }
 
 .bridging-modal-retry-button:hover {
-  background: var(--bridge-surface-hover);
-  border-color: var(--bridge-accent-secondary);
-  color: var(--bridge-accent-secondary);
   transform: scale(1.02);
+  filter: brightness(1.1);
 }
 
 .bridging-modal-retry-button:active {
@@ -1165,9 +1169,9 @@ html:not(.dark) .bridging-modal-error-icon,
   padding: 14px 20px;
   font-size: 14px;
   font-weight: 600;
-  border: 2px solid var(--bridge-border-medium);
+  border: 1px solid var(--bridge-border-medium);
   color: var(--bridge-text-secondary);
-  background: transparent;
+  background: var(--bridge-surface-card);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1192,20 +1196,21 @@ html:not(.dark) .bridging-modal-error-icon,
 /* Mobile Responsive for Bridging Modal */
 @media (max-width: 640px) {
   .bridging-modal-backdrop {
-    padding: 0;
-    align-items: flex-start;
-    padding-top: 0;
+    padding: 16px;
+    align-items: center;
+    padding-top: 16px;
   }
   
   .bridging-modal-container {
-    max-width: 100%;
-    width: 100%;
-    margin: 0;
-    border-radius: 0;
-    max-height: 100vh;
+    max-width: calc(100% - 32px);
+    width: calc(100% - 32px);
+    margin: 0 auto;
+    border-radius: 16px;
+    max-height: calc(100vh - 32px);
     overflow-y: auto;
     position: relative;
-    height: 100vh;
+    height: auto;
+    min-height: auto;
     display: flex;
     flex-direction: column;
   }
@@ -1395,6 +1400,17 @@ html:not(.dark) .bridging-modal-error-icon,
 
 /* Extra small devices */
 @media (max-width: 375px) {
+  .bridging-modal-backdrop {
+    padding: 12px;
+  }
+  
+  .bridging-modal-container {
+    max-width: calc(100% - 24px);
+    width: calc(100% - 24px);
+    max-height: calc(100vh - 24px);
+    border-radius: 16px;
+  }
+  
   .bridging-modal-header {
     padding: 14px;
   }
