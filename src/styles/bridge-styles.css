@@ -493,7 +493,9 @@ html.dark,
   .bridge-container {
     padding: 16px;
     border-radius: 12px;
-    margin: 0 16px;
+    margin: 0 8px;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .network-selector {
@@ -503,10 +505,15 @@ html.dark,
   
   .arrow-divider-button {
     transform: rotate(90deg);
+    width: 36px;
+    height: 36px;
+    padding: 8px;
   }
   
   .arrow-divider-button svg {
     transform: rotate(90deg);
+    width: 16px;
+    height: 16px;
   }
   
   .info-grid {
@@ -526,27 +533,109 @@ html.dark,
     right: 16px;
     font-size: 10px;
     padding: 4px 8px;
+    max-width: calc(100% - 120px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .bridge-header {
     font-size: 16px;
     margin-bottom: 16px;
+    padding-right: 80px;
   }
   
   .input-group {
     padding: 12px;
   }
   
+  .input-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .input-label {
+    font-size: 11px;
+  }
+  
+  .balance-text {
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  
+  .input-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
   .amount-input {
-    font-size: 20px;
+    font-size: 18px;
+    min-width: 100px;
+    flex: 1 1 auto;
+  }
+  
+  .token-selector {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    min-width: 70px;
+  }
+  
+  .token-symbol {
+    font-size: 12px;
+  }
+  
+  .token-icon {
+    width: 18px;
+    height: 18px;
   }
   
   .network-card {
     padding: 12px;
   }
   
+  .network-name {
+    font-size: 12px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .network-chain {
+    font-size: 10px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .alert-box {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  
+  .alert-text {
+    font-size: 11px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .alert-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  
+  .max-button {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+  
   .bridge-button {
     padding: 12px;
     font-size: 13px;
+    min-height: 44px;
+  }
+  
+  .network-icon {
+    width: 28px;
+    height: 28px;
   }
 }
