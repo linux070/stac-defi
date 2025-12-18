@@ -204,7 +204,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-blue-900/20 dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-48 md:pt-32 pb-24 md:pb-12 overflow-visible flex-grow">
+      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-black dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-48 md:pt-32 pb-24 md:pb-12 overflow-visible flex-grow">
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}
