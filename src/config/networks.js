@@ -73,6 +73,7 @@ export const TOKENS = {
 // Mock token prices (would be fetched from oracles in production)
 export const TOKEN_PRICES = {
   USDC: 1,
+  EURC: 1.1,
   EUR: 1.1,
 };
 

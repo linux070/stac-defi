@@ -270,11 +270,20 @@ export const isValidAddress = (address) => {
 
 // Get explorer URL
 export const getExplorerUrl = (hash, chainId, type = 'tx') => {
+  // Convert chainId to hex string if it's a number
+  let chainIdHex = chainId;
+  if (typeof chainId === 'number') {
+    chainIdHex = '0x' + chainId.toString(16);
+  }
+  
+  // Normalize to lowercase for comparison
+  const normalizedChainId = chainIdHex?.toLowerCase();
+  
   const explorers = {
-    '0x4E454152': 'https://testnet.arcscan.app',
-    '0xaa36a7': 'https://sepolia.etherscan.io',
+    '0x4cef52': 'https://testnet.arcscan.app', // Arc Testnet (5042002)
+    '0xaa36a7': 'https://sepolia.etherscan.io', // Sepolia (11155111)
   };
   
-  const baseUrl = explorers[chainId] || explorers['0xaa36a7'];
+  const baseUrl = explorers[normalizedChainId] || explorers['0xaa36a7'];
   return `${baseUrl}/${type}/${hash}`;
 };

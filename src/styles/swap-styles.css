@@ -256,6 +256,17 @@ html.dark,
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+.swap-token-chevron {
+  color: var(--swap-text-secondary);
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.swap-token-selector:hover .swap-token-chevron {
+  opacity: 1;
+}
+
 /* Swap Direction Button */
 .swap-direction-container {
   text-align: center;
@@ -269,7 +280,7 @@ html.dark,
   height: 40px;
   margin: 0 auto;
   background: var(--swap-surface-hover);
-  border: 2px solid rgba(59, 130, 246, 0.3);
+  border: 2px solid var(--swap-border-medium);
   border-radius: 10px;
   display: flex;
   align-items: center;

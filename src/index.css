@@ -45,8 +45,13 @@
     --theme-card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   }
 
+  /* Instant theme changes for html and body - no transition delay */
+  html, body {
+    transition: none !important;
+  }
+  
   body {
-    @apply bg-white dark:bg-dark-950 text-gray-900 dark:text-white transition-colors duration-1000;
+    @apply bg-white dark:bg-black text-gray-900 dark:text-white;
     font-family: var(--theme-font);
     background-color: var(--theme-bg-default);
     color: var(--theme-text-default);
@@ -54,10 +59,14 @@
   
   /* Custom dark mode background color defined in tailwind.config.js */
   html.dark {
-    @apply bg-dark-950;
+    @apply bg-black;
   }
   
-  /* Smooth transitions for theme changes */
+  html {
+    @apply bg-white dark:bg-black;
+  }
+  
+  /* Smooth transitions for other elements */
   * {
     transition-property: background-color, border-color, color, fill, stroke;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -88,8 +97,8 @@
     border: 1px solid #e2e8f0;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
     
-    /* Dark mode styles (Frosted Glass) */
-    @apply dark:bg-slate-900/50 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-2xl dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)];
+    /* Dark mode styles */
+    @apply dark:bg-black dark:border-gray-800;
   }
   
   /* Hover effect for cards */

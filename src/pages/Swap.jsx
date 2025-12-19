@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
-import { ArrowDownUp, Settings, ChevronDown, ChevronUp, Info, Loader, Wallet, AlertTriangle, X } from 'lucide-react';
+import { ArrowDownUp, Settings, Info, Loader, Wallet, AlertTriangle, X, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TOKENS, TOKEN_PRICES } from '../config/networks';
 import { sanitizeInput, calculateSwapQuote, validateAmount, validateSlippage, getFilteredTokens } from '../utils/blockchain';
@@ -346,11 +346,10 @@ const Swap = () => {
         document.removeEventListener('keydown', handleEsc);
       };
     }, [isOpen, onClose]);
-    
-    if (!isOpen) return null;
 
     return (
       <AnimatePresence mode="wait">
+        {isOpen && (
         <motion.div 
           key="token-selector-modal"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 swap-token-selector-modal-backdrop"
@@ -668,7 +667,7 @@ const Swap = () => {
                 )}
               </div>
               <span className="swap-token-symbol">{fromToken}</span>
-              <ChevronDown size={16} className="swap-dropdown-arrow" />
+              <ChevronDown size={16} className="swap-token-chevron" />
             </button>
           </div>
           {isConnected && (
@@ -717,7 +716,6 @@ const Swap = () => {
               readOnly
               placeholder="0.0"
               className="swap-amount-input"
-              disabled
             />
             <button
               ref={toTokenTriggerRef}
@@ -744,7 +742,7 @@ const Swap = () => {
                 )}
               </div>
               <span className="swap-token-symbol">{toToken}</span>
-              <ChevronDown size={16} className="swap-dropdown-arrow" />
+              <ChevronDown size={16} className="swap-token-chevron" />
             </button>
           </div>
           {isConnected && (

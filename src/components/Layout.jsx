@@ -27,7 +27,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-black">
       {/* Transparent Header Container */}
       <header className="fixed top-4 left-0 right-0 z-50 bg-transparent">
         {/* Mobile Header - Dual-Stack Layout */}
@@ -204,7 +204,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-[#050508] dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-black dark:via-slate-950/50 dark:to-[#050508] dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-48 md:pt-32 pb-24 md:pb-12 overflow-visible flex-grow">
+      <main className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-black dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-48 md:pt-32 pb-24 md:pb-12 overflow-visible flex-grow">
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}
@@ -220,7 +220,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       <WalletModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
       
       {/* Footer */}
-      <footer className="mt-auto py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 relative z-10">
+      <footer className="mt-auto py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-black relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Flex container that stacks on mobile and aligns horizontally on desktop */}
           <div className="flex flex-col md:flex-row items-center justify-between min-h-[60px] gap-4 md:gap-0">

@@ -311,9 +311,48 @@ const Bridge = () => {
     }
   }, [chainId, isConnected, fetchTokenBalance, bridgeLoading, state.isLoading, state.step]);
 
-  // Effect to refresh balances after successful bridge transaction
+  // Effect to refresh balances after successful bridge transaction and save transaction
   useEffect(() => {
-    if (state.step === 'success') {
+    if (state.step === 'success' && state.sourceTxHash) {
+      // Save bridge transaction to localStorage for immediate display
+      const saveBridgeTransaction = () => {
+        try {
+          const saved = localStorage.getItem('myTransactions');
+          const existing = saved ? JSON.parse(saved) : [];
+          
+          // Check if transaction already exists
+          const exists = existing.some(tx => 
+            tx.hash === state.sourceTxHash || tx.hash === state.receiveTxHash
+          );
+          
+          if (!exists) {
+            const bridgeTx = {
+              id: state.sourceTxHash || `bridge-${Date.now()}`,
+              type: 'Bridge',
+              from: fromChain,
+              to: toChain,
+              amount: amount || '0.00',
+              timestamp: Date.now(),
+              status: 'success',
+              hash: state.sourceTxHash || state.receiveTxHash || '',
+              chainId: getChainIdByName(fromChain),
+              address: address?.toLowerCase(),
+            };
+            
+            existing.unshift(bridgeTx);
+            // Keep only last 100 transactions
+            const trimmed = existing.slice(0, 100);
+            localStorage.setItem('myTransactions', JSON.stringify(trimmed));
+            // Dispatch custom event to notify bridge count hook
+            window.dispatchEvent(new CustomEvent('bridgeTransactionSaved'));
+          }
+        } catch (err) {
+          console.error('Error saving bridge transaction:', err);
+        }
+      };
+      
+      saveBridgeTransaction();
+      
       // Refresh balance immediately, then again after delay to ensure blockchain has updated
       if (chainId && isConnected) {
         const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
@@ -335,7 +374,7 @@ const Bridge = () => {
         };
       }
     }
-  }, [state.step, chainId, fetchTokenBalance, isConnected]);
+  }, [state.step, state.sourceTxHash, state.receiveTxHash, chainId, fetchTokenBalance, isConnected, fromChain, toChain, amount, address]);
   
   // Effect to refresh balance after bridge error/cancellation
   useEffect(() => {

@@ -91,7 +91,7 @@ const LanguageSelector = ({ placement = 'header' }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className={`${getDropdownPosition()} z-50 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden`}
+            className={`${getDropdownPosition()} z-50 w-48 bg-white dark:bg-black rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 overflow-hidden`}
             style={{ zIndex: 1000 }}
           >
             {languages.map((lang) => (

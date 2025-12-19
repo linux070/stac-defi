@@ -4,15 +4,22 @@ import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, 
 import { motion } from 'framer-motion';
 import { formatCurrency, formatNumber } from '../utils/blockchain';
 import { ArrowUpDown } from "lucide-react";
+import { useDappTransactionCount } from '../hooks/useDappTransactionCount';
+import { useDappBridgeCount } from '../hooks/useDappBridgeCount';
+import { useActiveUsers } from '../hooks/useActiveUsers';
 
 const Home = ({ setActiveTab }) => {
   const { t } = useTranslation();
+  const { transactionCount, change, trend, loading: txLoading } = useDappTransactionCount();
+  const { bridgeCount, change: bridgeChange, trend: bridgeTrend } = useDappBridgeCount();
+  const { activeUsers, change: usersChange, trend: usersTrend } = useActiveUsers();
+  
   const [stats, setStats] = useState({
     volume: { value: 847200, change: 15.3, trend: 'up' },
     tvl: { value: 3200000, change: 8.7, trend: 'up' },
-    users: { value: 1247, change: 12.4, trend: 'up' },
-    transactions: { value: 8934, change: 5.2, trend: 'up' },
-    crossChain: { value: 342, change: 22.1, trend: 'up' },
+    users: { value: activeUsers || 1247, change: usersChange || 12.4, trend: usersTrend || 'up' },
+    transactions: { value: transactionCount || 8934, change: change || 5.2, trend: trend || 'up' },
+    crossChain: { value: bridgeCount || 342, change: bridgeChange || 22.1, trend: bridgeTrend || 'up' },
     tokens: { value: 24, change: 0, trend: 'stable' },
   });
 
@@ -21,7 +28,52 @@ const Home = ({ setActiveTab }) => {
     setActiveTab('swap');
   };
 
-  // Simulate live data updates
+  // Update transaction count, change, and trend when real data is available
+  useEffect(() => {
+    if (transactionCount !== null) {
+      setStats(prevStats => ({
+        ...prevStats,
+        transactions: {
+          ...prevStats.transactions,
+          value: transactionCount,
+          change: change !== null ? change : prevStats.transactions.change,
+          trend: trend !== 'stable' ? trend : prevStats.transactions.trend,
+        },
+      }));
+    }
+  }, [transactionCount, change, trend]);
+
+  // Update bridge count, change, and trend when real data is available
+  useEffect(() => {
+    if (bridgeCount !== null) {
+      setStats(prevStats => ({
+        ...prevStats,
+        crossChain: {
+          ...prevStats.crossChain,
+          value: bridgeCount,
+          change: bridgeChange !== null ? bridgeChange : prevStats.crossChain.change,
+          trend: bridgeTrend !== 'stable' ? bridgeTrend : prevStats.crossChain.trend,
+        },
+      }));
+    }
+  }, [bridgeCount, bridgeChange, bridgeTrend]);
+
+  // Update active users count, change, and trend when real data is available
+  useEffect(() => {
+    if (activeUsers !== null) {
+      setStats(prevStats => ({
+        ...prevStats,
+        users: {
+          ...prevStats.users,
+          value: activeUsers,
+          change: usersChange !== null ? usersChange : prevStats.users.change,
+          trend: usersTrend !== 'stable' ? usersTrend : prevStats.users.trend,
+        },
+      }));
+    }
+  }, [activeUsers, usersChange, usersTrend]);
+
+  // Simulate live data updates (excluding transactions which now use real data)
   useEffect(() => {
     const interval = setInterval(() => {
       setStats(prevStats => ({
@@ -41,11 +93,7 @@ const Home = ({ setActiveTab }) => {
           value: prevStats.users.value + Math.floor(Math.random() * 5),
           change: parseFloat((prevStats.users.change + (Math.random() * 0.3 - 0.15)).toFixed(1))
         },
-        transactions: {
-          ...prevStats.transactions,
-          value: prevStats.transactions.value + Math.floor(Math.random() * 15),
-          change: parseFloat((prevStats.transactions.change + (Math.random() * 0.1 - 0.05)).toFixed(1))
-        }
+        // Transactions now use real data from Arc network
       }));
     }, 30000); // Update every 30 seconds
 
@@ -233,29 +281,35 @@ const Home = ({ setActiveTab }) => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * index }}
-                className="relative overflow-hidden rounded-2xl p-5 md:p-6 bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all dark:bg-slate-900/50 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-2xl dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]"
+                className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br ${stat.color} neon-icon-container flex items-center justify-center text-white`}>
-                    {stat.lucideIcon && React.createElement(stat.lucideIcon, { size: 20, className: "text-white" })}
-                  </div>
-                  {stat.trend !== 'stable' && (
-                    <div className={`flex items-center space-x-1 text-xs font-semibold px-2 py-1 rounded-full
-                      ${stat.trend === 'up' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}
-                    >
-                      {TrendIcon && <TrendIcon size={14} />}
-                      <span>{stat.change}%</span>
-                    </div>
-                  )}
-                </div>
-                <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white dark:drop-shadow-[0_0_10px_rgba(255,255,255,0.15)] mb-1">{stat.value}</h3>
-                <p className="text-xs md:text-sm leading-relaxed text-slate-500 dark:text-slate-400 mb-1">{stat.label}</p>
-                <p className="text-xs md:text-sm leading-relaxed text-slate-500 dark:text-slate-400">{stat.description}</p>
+                {/* Subtle gradient overlay on hover */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
                 
-                {/* Data source indicator */}
-                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center text-xs text-gray-500 dark:text-gray-400">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                  <span>{t('Live Data')}</span>
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} neon-icon-container flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                      {stat.lucideIcon && React.createElement(stat.lucideIcon, { size: 20, className: "text-white" })}
+                    </div>
+                    {stat.trend !== 'stable' && (
+                      <div className={`flex items-center space-x-1 text-xs font-semibold px-2.5 py-1.5 rounded-full shadow-sm
+                        ${stat.trend === 'up' ? 'bg-green-50 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-400'}`}
+                      >
+                        {TrendIcon && <TrendIcon size={14} />}
+                        <span>{stat.change}%</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-2 font-mono tabular-nums tracking-tight">{stat.value}</h3>
+                  <p className="text-sm md:text-base font-semibold text-slate-700 dark:text-slate-200 mb-1.5">{stat.label}</p>
+                  <p className="text-xs md:text-sm leading-relaxed text-slate-500 dark:text-slate-400 mb-4">{stat.description}</p>
+                  
+                  {/* Data source indicator - no border */}
+                  <div className="flex items-center text-xs text-slate-400 dark:text-slate-500">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse shadow-sm shadow-green-500/50"></div>
+                    <span className="font-medium">{t('Live Data')}</span>
+                  </div>
                 </div>
               </motion.div>
             );
@@ -280,58 +334,67 @@ const Home = ({ setActiveTab }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           <div 
             onClick={() => setActiveTab('swap')}
-            className="group p-5 md:p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-blue-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-dark-900 cursor-pointer hover:-translate-y-1"
+            className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1 cursor-pointer"
           >
-            <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <ArrowUpDown size={24} className="text-white" />
-            </div>
-            <h3 className="font-bold text-lg md:text-xl mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-              {t('Swap Tokens')}
-            </h3>
-            <p className="text-xs md:text-sm text-gray-600 dark:text-dark-400 mb-4">
-              {t('Exchange tokens instantly at the best rates')}
-            </p>
-            <div className="flex items-center text-blue-600 dark:text-blue-400 text-xs md:text-sm font-semibold">
-              <span>{t('Start swapping')}</span>
-              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={14} />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+            <div className="relative z-10">
+              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <ArrowUpDown size={20} className="text-white" />
+              </div>
+              <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                {t('Swap Tokens')}
+              </h3>
+              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">
+                {t('Exchange tokens instantly at the best rates')}
+              </p>
+              <div className="flex items-center text-blue-600 dark:text-blue-400 text-xs md:text-sm font-semibold">
+                <span>{t('Start swapping')}</span>
+                <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={14} />
+              </div>
             </div>
           </div>
 
           <div 
             onClick={() => setActiveTab('bridge')}
-            className="group p-5 md:p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-green-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-dark-900 cursor-pointer hover:-translate-y-1"
+            className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1 cursor-pointer"
           >
-            <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <Link size={24} className="text-white" />
-            </div>
-            <h3 className="font-bold text-lg md:text-xl mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-              {t('Bridge Assets')}
-            </h3>
-            <p className="text-xs md:text-sm text-gray-600 dark:text-dark-400 mb-4">
-              {t('Transfer assets between Sepolia and Arc Testnet')}
-            </p>
-            <div className="flex items-center text-green-600 dark:text-green-400 text-xs md:text-sm font-semibold">
-              <span>{t('Start bridging')}</span>
-              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={14} />
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-green-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+            <div className="relative z-10">
+              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Link size={20} className="text-white" />
+              </div>
+              <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                {t('Bridge Assets')}
+              </h3>
+              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">
+                {t('Transfer assets between Sepolia and Arc Testnet')}
+              </p>
+              <div className="flex items-center text-green-600 dark:text-green-400 text-xs md:text-sm font-semibold">
+                <span>{t('Start bridging')}</span>
+                <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={14} />
+              </div>
             </div>
           </div>
 
           <div 
             onClick={() => setActiveTab('liquidity')}
-            className="group p-5 md:p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 hover:border-purple-500 hover:shadow-2xl hover:scale-105 transition-all duration-300 text-left bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-dark-900 cursor-pointer hover:-translate-y-1"
+            className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1 cursor-pointer"
           >
-            <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <Droplets size={24} className="text-white" />
-            </div>
-            <h3 className="font-bold text-lg md:text-xl mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-              {t('Add Liquidity')}
-            </h3>
-            <p className="text-xs md:text-sm text-gray-600 dark:text-dark-400 mb-4">
-              {t('Provide liquidity to earn passive income')}
-            </p>
-            <div className="flex items-center text-purple-600 dark:text-purple-400 text-xs md:text-sm font-semibold">
-              <span>{t('Start earning')}</span>
-              <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={14} />
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+            <div className="relative z-10">
+              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Droplets size={20} className="text-white" />
+              </div>
+              <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                {t('Add Liquidity')}
+              </h3>
+              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">
+                {t('Provide liquidity to earn passive income')}
+              </p>
+              <div className="flex items-center text-purple-600 dark:text-purple-400 text-xs md:text-sm font-semibold">
+                <span>{t('Start earning')}</span>
+                <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={14} />
+              </div>
             </div>
           </div>
         </div>
@@ -350,28 +413,37 @@ const Home = ({ setActiveTab }) => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            <div className="p-5 md:p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 text-left bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-dark-900">
-              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mb-4 shadow-lg">
-                <Zap size={24} className="text-white" />
+            <div className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Zap size={20} className="text-white" />
+                </div>
+                <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white">{t('Lightning Fast')}</h3>
+                <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">{t('Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.')}</p>
               </div>
-              <h3 className="font-bold text-lg md:text-xl mb-2">{t('Lightning Fast')}</h3>
-              <p className="text-xs md:text-sm text-gray-600 dark:text-dark-400 mb-4">{t('Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.')}</p>
             </div>
             
-            <div className="p-5 md:p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 text-left bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-dark-900">
-              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-4 shadow-lg">
-                <DollarSign size={24} className="text-white" />
+            <div className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-green-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <DollarSign size={20} className="text-white" />
+                </div>
+                <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white">{t('USDC Gas Fee')}</h3>
+                <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">{t('Predictable transaction costs with stablecoin-based gas fees for better UX.')}</p>
               </div>
-              <h3 className="font-bold text-lg md:text-xl mb-2">{t('USDC Gas Fee')}</h3>
-              <p className="text-xs md:text-sm text-gray-600 dark:text-dark-400 mb-4">{t('Predictable transaction costs with stablecoin-based gas fees for better UX.')}</p>
             </div>
             
-            <div className="p-5 md:p-6 rounded-2xl border-2 border-gray-200 dark:border-dark-700 text-left bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-dark-900">
-              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-4 shadow-lg">
-                <Shield size={24} className="text-white" />
+            <div className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Shield size={20} className="text-white" />
+                </div>
+                <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white">{t('Enterprise Grade')}</h3>
+                <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">{t('Built for institutional use with advanced security and compliance features.')}</p>
               </div>
-              <h3 className="font-bold text-lg md:text-xl mb-2">{t('Enterprise Grade')}</h3>
-              <p className="text-xs md:text-sm text-gray-600 dark:text-dark-400 mb-4">{t('Built for institutional use with advanced security and compliance features.')}</p>
             </div>
           </div>
         </motion.div>
