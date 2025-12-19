@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins, Zap, ExternalLink, Link, Droplets, Shield } from 'lucide-react';
+import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins, Zap, ExternalLink, Link, Droplets, Shield, Wifi } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatCurrency, formatNumber } from '../utils/blockchain';
 import { ArrowUpDown } from "lucide-react";
 import { useDappTransactionCount } from '../hooks/useDappTransactionCount';
 import { useDappBridgeCount } from '../hooks/useDappBridgeCount';
 import { useActiveUsers } from '../hooks/useActiveUsers';
+import { useNetworkUptime } from '../hooks/useNetworkUptime';
 
 const Home = ({ setActiveTab }) => {
   const { t } = useTranslation();
   const { transactionCount, change, trend, loading: txLoading } = useDappTransactionCount();
   const { bridgeCount, change: bridgeChange, trend: bridgeTrend } = useDappBridgeCount();
   const { activeUsers, change: usersChange, trend: usersTrend } = useActiveUsers();
+  const { uptime, change: uptimeChange, trend: uptimeTrend } = useNetworkUptime();
   
   const [stats, setStats] = useState({
     volume: { value: 847200, change: 15.3, trend: 'up' },
@@ -20,7 +22,7 @@ const Home = ({ setActiveTab }) => {
     users: { value: activeUsers || 1247, change: usersChange || 12.4, trend: usersTrend || 'up' },
     transactions: { value: transactionCount || 8934, change: change || 5.2, trend: trend || 'up' },
     crossChain: { value: bridgeCount || 342, change: bridgeChange || 22.1, trend: bridgeTrend || 'up' },
-    tokens: { value: 24, change: 0, trend: 'stable' },
+    uptime: { value: uptime || 0, change: uptimeChange || 0, trend: uptimeTrend || 'stable' },
   });
 
   // Gatekeeping function to enter the app
@@ -73,6 +75,21 @@ const Home = ({ setActiveTab }) => {
     }
   }, [activeUsers, usersChange, usersTrend]);
 
+  // Update network uptime, change, and trend when real data is available
+  useEffect(() => {
+    if (uptime !== null) {
+      setStats(prevStats => ({
+        ...prevStats,
+        uptime: {
+          ...prevStats.uptime,
+          value: uptime,
+          change: uptimeChange !== null ? uptimeChange : prevStats.uptime.change,
+          trend: uptimeTrend !== 'stable' ? uptimeTrend : prevStats.uptime.trend,
+        },
+      }));
+    }
+  }, [uptime, uptimeChange, uptimeTrend]);
+
   // Simulate live data updates (excluding transactions which now use real data)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -102,15 +119,15 @@ const Home = ({ setActiveTab }) => {
 
   const statCards = [
     {
-      id: 'tvl',
-      label: t('Total Value Locked'),
-      value: formatCurrency(stats.tvl.value, 0),
-      change: stats.tvl.change,
-      trend: stats.tvl.trend,
-      icon: TrendingUp,
-      lucideIcon: TrendingUp,
-      color: 'from-blue-500 to-blue-600',
-      description: t('Aggregate from all liquidity pools')
+      id: 'users',
+      label: t('Active Users'),
+      value: formatNumber(stats.users.value),
+      change: stats.users.change,
+      trend: stats.users.trend,
+      icon: Users,
+      lucideIcon: Users,
+      color: 'from-orange-500 to-orange-600',
+      description: t('Unique wallet addresses in 24h')
     },
     {
       id: 'volume',
@@ -124,28 +141,6 @@ const Home = ({ setActiveTab }) => {
       description: t('Sum of swap transactions in last 24h')
     },
     {
-      id: 'transactions',
-      label: t('Transaction Count'),
-      value: formatNumber(stats.transactions.value),
-      change: stats.transactions.change,
-      trend: stats.transactions.trend,
-      icon: Activity,
-      lucideIcon: Activity,
-      color: 'from-purple-500 to-purple-600',
-      description: t('Count from indexer')
-    },
-    {
-      id: 'users',
-      label: t('Active Users'),
-      value: formatNumber(stats.users.value),
-      change: stats.users.change,
-      trend: stats.users.trend,
-      icon: Users,
-      lucideIcon: Users,
-      color: 'from-orange-500 to-orange-600',
-      description: t('Unique wallet addresses in 24h')
-    },
-    {
       id: 'Cross-Chain',
       label: t('Cross Chain Transfers'),
       value: formatNumber(stats.crossChain.value),
@@ -157,15 +152,37 @@ const Home = ({ setActiveTab }) => {
       description: t('Bridge transaction count')
     },
     {
-      id: 'tokens',
-      label: t('Supported Tokens'),
-      value: formatNumber(stats.tokens.value),
-      change: stats.tokens.change,
-      trend: stats.tokens.trend,
-      icon: Coins,
-      lucideIcon: Coins,
-      color: 'from-pink-500 to-pink-600',
-      description: t('Token registry count')
+      id: 'transactions',
+      label: t('Transaction Count'),
+      value: formatNumber(stats.transactions.value),
+      change: stats.transactions.change,
+      trend: stats.transactions.trend,
+      icon: Activity,
+      lucideIcon: Activity,
+      color: 'from-purple-500 to-purple-600',
+      description: t('Count from indexer')
+    },
+    {
+      id: 'tvl',
+      label: t('Total Value Locked'),
+      value: formatCurrency(stats.tvl.value, 0),
+      change: stats.tvl.change,
+      trend: stats.tvl.trend,
+      icon: TrendingUp,
+      lucideIcon: TrendingUp,
+      color: 'from-blue-500 to-blue-600',
+      description: t('Aggregate from all liquidity pools')
+    },
+    {
+      id: 'uptime',
+      label: t('Network Uptime'),
+      value: `${stats.uptime.value}%`,
+      change: stats.uptime.change,
+      trend: stats.uptime.trend,
+      icon: Wifi,
+      lucideIcon: Wifi,
+      color: 'from-cyan-500 to-cyan-600',
+      description: t('Operational reliability')
     },
   ];
 
@@ -317,8 +334,8 @@ const Home = ({ setActiveTab }) => {
         </div>
       </motion.div>
 
-       {/* Quick Actions */}
-       <motion.div 
+      {/* Quick Actions */}
+      <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -400,13 +417,13 @@ const Home = ({ setActiveTab }) => {
         </div>
       </motion.div>
         
-        {/* Why Arc Network Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="card mt-8 md:mt-12"
-        >
+      {/* Why Arc Network Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="card mt-8 md:mt-12"
+      >
           <div className="mb-6">
             <h2 className="text-xl md:text-2xl lg:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Why Arc Network')}</h2>
             <p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">{t('Experience the next generation of blockchain infrastructure')}</p>
