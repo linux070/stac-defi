@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
 import { sanitizeInput } from '../utils/blockchain';
 import { useBridge } from '../hooks/useBridge';
+import { getItem, setItem } from '../utils/indexedDB';
 import BridgingModal from '../components/BridgingModal';
 import BridgeFailedModal from '../components/BridgeFailedModal';
 import '../styles/bridge-styles.css';
@@ -314,11 +315,11 @@ const Bridge = () => {
   // Effect to refresh balances after successful bridge transaction and save transaction
   useEffect(() => {
     if (state.step === 'success' && state.sourceTxHash) {
-      // Save bridge transaction to localStorage for immediate display
-      const saveBridgeTransaction = () => {
+      // Save bridge transaction to IndexedDB for persistent storage (web3-native)
+      const saveBridgeTransaction = async () => {
         try {
-          const saved = localStorage.getItem('myTransactions');
-          const existing = saved ? JSON.parse(saved) : [];
+          const saved = await getItem('myTransactions');
+          const existing = saved && Array.isArray(saved) ? saved : [];
           
           // Check if transaction already exists
           const exists = existing.some(tx => 
@@ -342,7 +343,7 @@ const Bridge = () => {
             existing.unshift(bridgeTx);
             // Keep only last 100 transactions
             const trimmed = existing.slice(0, 100);
-            localStorage.setItem('myTransactions', JSON.stringify(trimmed));
+            await setItem('myTransactions', trimmed);
             // Dispatch custom event to notify bridge count hook
             window.dispatchEvent(new CustomEvent('bridgeTransactionSaved'));
           }

@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
+import { useAccount } from 'wagmi';
 import { ArrowDownUp, Settings, Info, Loader, Wallet, AlertTriangle, X, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TOKENS, TOKEN_PRICES } from '../config/networks';
 import { sanitizeInput, calculateSwapQuote, validateAmount, validateSlippage, getFilteredTokens } from '../utils/blockchain';
 import useTokenBalance from '../hooks/useTokenBalance';
+import useMultiChainBalances from '../hooks/useMultiChainBalances';
 import Toast from '../components/Toast';
 import '../styles/swap-styles.css';
 
 const Swap = () => {
   const { t } = useTranslation();
   const { isConnected, balance, chainId } = useWallet();
+  const { address } = useAccount();
   const [fromToken, setFromToken] = useState('USDC');
   const [toToken, setToToken] = useState('EURC');
   const [fromAmount, setFromAmount] = useState('');
@@ -32,6 +35,9 @@ const Swap = () => {
   const fromTokenTriggerRef = useRef(null);
   const toTokenTriggerRef = useRef(null);
   
+  // Multi-chain balances for USDC (fetches both chains simultaneously)
+  const { balances: multiChainBalances } = useMultiChainBalances(address, isConnected);
+  
   // Effect to handle body overflow when modals are open
   useEffect(() => {
     const isModalOpen = showFromSelector || showToSelector;
@@ -50,8 +56,67 @@ const Swap = () => {
   }, [showFromSelector, showToSelector]);
 
   // Real-time token balances
-  const { balance: fromBalance, loading: fromLoading, refetch: refetchFrom } = useTokenBalance(fromToken);
-  const { balance: toBalance, loading: toLoading, refetch: refetchTo } = useTokenBalance(toToken);
+  // For USDC and EURC, use multi-chain balances; for other tokens, use regular balance hook
+  const { balance: fromBalanceRegular, loading: fromLoadingRegular, refetch: refetchFrom } = useTokenBalance((fromToken === 'USDC' || fromToken === 'EURC') ? null : fromToken);
+  const { balance: toBalanceRegular, loading: toLoadingRegular, refetch: refetchTo } = useTokenBalance((toToken === 'USDC' || toToken === 'EURC') ? null : toToken);
+  
+  // Get balance based on token type and current chain
+  const getFromBalance = () => {
+    if (fromToken === 'USDC' || fromToken === 'EURC') {
+      // Use current chain's balance from multi-chain hook
+      const chainIdNum = chainId ? parseInt(chainId, 16) : null;
+      const tokenKey = fromToken.toLowerCase(); // 'usdc' or 'eurc'
+      
+      if (chainIdNum === 5042002) { // Arc Testnet
+        return {
+          balance: multiChainBalances?.arcTestnet?.[tokenKey] || '0.00',
+          loading: multiChainBalances?.arcTestnet?.loading || false,
+        };
+      } else if (chainIdNum === 11155111) { // Sepolia
+        return {
+          balance: multiChainBalances?.sepolia?.[tokenKey] || '0.00',
+          loading: multiChainBalances?.sepolia?.loading || false,
+        };
+      }
+      return { balance: '0.00', loading: false };
+    }
+    return {
+      balance: fromBalanceRegular || '0.00',
+      loading: fromLoadingRegular || false,
+    };
+  };
+  
+  const getToBalance = () => {
+    if (toToken === 'USDC' || toToken === 'EURC') {
+      // Use current chain's balance from multi-chain hook
+      const chainIdNum = chainId ? parseInt(chainId, 16) : null;
+      const tokenKey = toToken.toLowerCase(); // 'usdc' or 'eurc'
+      
+      if (chainIdNum === 5042002) { // Arc Testnet
+        return {
+          balance: multiChainBalances?.arcTestnet?.[tokenKey] || '0.00',
+          loading: multiChainBalances?.arcTestnet?.loading || false,
+        };
+      } else if (chainIdNum === 11155111) { // Sepolia
+        return {
+          balance: multiChainBalances?.sepolia?.[tokenKey] || '0.00',
+          loading: multiChainBalances?.sepolia?.loading || false,
+        };
+      }
+      return { balance: '0.00', loading: false };
+    }
+    return {
+      balance: toBalanceRegular || '0.00',
+      loading: toLoadingRegular || false,
+    };
+  };
+  
+  const fromBalanceData = getFromBalance();
+  const toBalanceData = getToBalance();
+  const fromBalance = fromBalanceData.balance;
+  const fromLoading = fromBalanceData.loading;
+  const toBalance = toBalanceData.balance;
+  const toLoading = toBalanceData.loading;
 
   const tokenList = useMemo(() => {
     try {

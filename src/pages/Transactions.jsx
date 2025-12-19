@@ -5,6 +5,7 @@ import { Copy, ExternalLink, CheckCircle, Clock, XCircle, ArrowLeftRight, Refres
 import { motion } from 'framer-motion';
 import { timeAgo, formatAddress, copyToClipboard, getExplorerUrl } from '../utils/blockchain';
 import { useTransactionHistory } from '../hooks/useTransactionHistory';
+import { getItem, setItem } from '../utils/indexedDB';
 
 const Transactions = () => {
   const { t } = useTranslation();
@@ -14,13 +15,28 @@ const Transactions = () => {
   // Fetch real-time transactions from blockchain (auto-updates every 30 seconds)
   const { transactions: blockchainTransactions, loading: transactionsLoading } = useTransactionHistory();
 
-  // Activity data - stored in localStorage for persistence (legacy)
-  const [myTransactions, setMyTransactions] = useState(() => {
-    const saved = localStorage.getItem('myTransactions');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Activity data - stored in IndexedDB for persistence (web3-native)
+  const [myTransactions, setMyTransactions] = useState([]);
+  const [loadingLocalTransactions, setLoadingLocalTransactions] = useState(true);
 
-  // Merge blockchain transactions with localStorage transactions
+  // Load transactions from IndexedDB on mount
+  useEffect(() => {
+    const loadTransactions = async () => {
+      try {
+        const saved = await getItem('myTransactions');
+        if (saved && Array.isArray(saved)) {
+          setMyTransactions(saved);
+        }
+      } catch (err) {
+        console.error('Error loading transactions from IndexedDB:', err);
+      } finally {
+        setLoadingLocalTransactions(false);
+      }
+    };
+    loadTransactions();
+  }, []);
+
+  // Merge blockchain transactions with IndexedDB transactions
   const mergedTransactions = useMemo(() => {
     const blockchainSet = new Set(blockchainTransactions.map(tx => tx.hash));
     const localOnly = myTransactions.filter(tx => !blockchainSet.has(tx.hash));
@@ -31,10 +47,48 @@ const Transactions = () => {
     });
   }, [blockchainTransactions, myTransactions]);
 
-  // Persist my activity (for legacy transactions)
+  // Persist transactions to IndexedDB (web3-native persistence)
   useEffect(() => {
-    localStorage.setItem('myTransactions', JSON.stringify(myTransactions));
-  }, [myTransactions]);
+    if (!loadingLocalTransactions) {
+      // Always save, even if empty array (to ensure IndexedDB is initialized)
+      setItem('myTransactions', myTransactions).then(() => {
+        console.log(`Saved ${myTransactions.length} transactions to IndexedDB`);
+      }).catch(err => {
+        console.error('Error saving transactions to IndexedDB:', err);
+        // Fallback to localStorage
+        try {
+          localStorage.setItem('myTransactions', JSON.stringify(myTransactions));
+        } catch (localErr) {
+          console.error('Error saving to localStorage fallback:', localErr);
+        }
+      });
+    }
+  }, [myTransactions, loadingLocalTransactions]);
+  
+  // Listen for new transactions from other pages (Bridge, Swap, etc.)
+  useEffect(() => {
+    const handleTransactionSaved = async () => {
+      // Reload transactions when a new one is saved
+      try {
+        const saved = await getItem('myTransactions');
+        if (saved && Array.isArray(saved)) {
+          setMyTransactions(saved);
+        }
+      } catch (err) {
+        console.error('Error reloading transactions:', err);
+      }
+    };
+    
+    window.addEventListener('bridgeTransactionSaved', handleTransactionSaved);
+    window.addEventListener('swapTransactionSaved', handleTransactionSaved);
+    window.addEventListener('lpTransactionSaved', handleTransactionSaved);
+    
+    return () => {
+      window.removeEventListener('bridgeTransactionSaved', handleTransactionSaved);
+      window.removeEventListener('swapTransactionSaved', handleTransactionSaved);
+      window.removeEventListener('lpTransactionSaved', handleTransactionSaved);
+    };
+  }, []);
 
   const handleCopyHash = async (hash) => {
     const success = await copyToClipboard(hash);
