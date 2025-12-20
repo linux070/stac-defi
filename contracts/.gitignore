@@ -1,0 +1,21 @@
+# Hardhat files
+cache/
+artifacts/
+typechain-types/
+
+# Environment variables
+.env
+.env.local
+
+# Node modules
+node_modules/
+
+# Coverage reports
+coverage/
+coverage.json
+
+# Deployment scripts output
+deployments/
+
+# Test output
+test-results/

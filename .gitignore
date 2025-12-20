@@ -25,9 +25,4 @@ dist-ssr
 *.sw?
 
 .vercel
-=======
-content: node_modules/
-dist/
 .env
-.DS_Store
->>>>>>> 961b91c47000b2416c330c11042cee64bad94bef

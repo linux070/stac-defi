@@ -514,6 +514,7 @@ html.dark,
   /* Ensure parent wrapper doesn't add padding on mobile */
   .bridge-container {
     padding: 16px;
+    padding-bottom: 50px; /* Add extra bottom padding for badge */
     border-radius: 16px;
     margin: 16px auto !important;
     max-width: calc(100% - 32px) !important;
@@ -535,14 +536,15 @@ html.dark,
     z-index: 10;
   }
   
-  /* Powered by badge - keep in top right, responsive sizing */
+  /* Powered by badge - move to bottom on mobile to avoid collision */
   .powered-by-badge {
     position: absolute !important;
-    top: 16px !important;
-    right: 60px !important; /* Position to left of settings button */
+    bottom: 16px !important;
+    right: 16px !important;
+    top: auto !important;
     padding: 6px 10px;
     font-size: 9px;
-    max-width: calc(100% - 120px); /* Prevent overflow, account for padding and settings button */
+    max-width: calc(100% - 32px);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -553,7 +555,7 @@ html.dark,
     display: inline-block;
   }
   
-  /* Header adjustments - ensure it doesn't overlap with badge */
+  /* Header adjustments - no collision with badge on mobile */
   .bridge-header {
     font-size: 20px;
     font-weight: 600;
@@ -563,7 +565,6 @@ html.dark,
     line-height: 1.2;
     width: 100%;
     box-sizing: border-box;
-    /* Add top margin to prevent overlap with badge on very small screens */
     margin-top: 0;
   }
   
@@ -755,6 +756,7 @@ html.dark,
 @media (max-width: 375px) {
   .bridge-container {
     padding: 12px;
+    padding-bottom: 45px; /* Add extra bottom padding for badge */
   }
   
   .bridge-header {
@@ -763,11 +765,12 @@ html.dark,
   }
   
   .powered-by-badge {
-    top: 12px !important;
-    right: 52px !important;
+    bottom: 12px !important;
+    right: 12px !important;
+    top: auto !important;
     font-size: 8px;
     padding: 5px 8px;
-    max-width: calc(100% - 100px);
+    max-width: calc(100% - 24px);
   }
   
   .settings-button {

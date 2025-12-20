@@ -1,0 +1,219 @@
+/**
+ * @title SwapRouter Test Suite
+ * @notice Example test file for SwapRouter contract
+ * @dev Run with: npx hardhat test test/SwapRouter.test.js
+ */
+
+const { expect } = require("chai");
+const { ethers } = require("hardhat");
+
+describe("SwapRouter", function () {
+  let swapFactory;
+  let swapRouter;
+  let tokenA; // USDC mock
+  let tokenB; // EURC mock
+  let owner;
+  let user1;
+  let user2;
+
+  const DECIMALS = 6; // USDC/EURC use 6 decimals
+  const INITIAL_SUPPLY = ethers.utils.parseUnits("1000000", DECIMALS); // 1M tokens
+
+  beforeEach(async function () {
+    [owner, user1, user2] = await ethers.getSigners();
+
+    // Deploy mock ERC20 tokens
+    const MockERC20 = await ethers.getContractFactory("MockERC20");
+    tokenA = await MockERC20.deploy("USD Coin", "USDC", DECIMALS, INITIAL_SUPPLY);
+    tokenB = await MockERC20.deploy("Euro Coin", "EURC", DECIMALS, INITIAL_SUPPLY);
+
+    // Deploy SwapFactory
+    const SwapFactory = await ethers.getContractFactory("SwapFactory");
+    swapFactory = await SwapFactory.deploy(owner.address);
+    await swapFactory.deployed();
+
+    // Deploy SwapRouter
+    const SwapRouter = await ethers.getContractFactory("SwapRouter");
+    swapRouter = await SwapRouter.deploy(
+      swapFactory.address,
+      owner.address,
+      30 // 0.3% fee
+    );
+    await swapRouter.deployed();
+
+    // Create pair
+    await swapFactory.createPair(tokenA.address, tokenB.address);
+  });
+
+  describe("Deployment", function () {
+    it("Should set the correct factory address", async function () {
+      expect(await swapRouter.factory()).to.equal(swapFactory.address);
+    });
+
+    it("Should set the correct swap fee", async function () {
+      expect(await swapRouter.swapFeeBps()).to.equal(30);
+    });
+
+    it("Should set the correct fee recipient", async function () {
+      expect(await swapRouter.feeRecipient()).to.equal(owner.address);
+    });
+  });
+
+  describe("Swap Functions", function () {
+    beforeEach(async function () {
+      // Add liquidity to pair (simplified - would need actual LP contract)
+      const amountA = ethers.utils.parseUnits("1000", DECIMALS);
+      const amountB = ethers.utils.parseUnits("1100", DECIMALS); // 1:1.1 ratio
+
+      await tokenA.transfer(user1.address, amountA.mul(10));
+      await tokenB.transfer(user1.address, amountB.mul(10));
+    });
+
+    it("Should swap exact tokens for tokens", async function () {
+      const amountIn = ethers.utils.parseUnits("100", DECIMALS);
+      const path = [tokenA.address, tokenB.address];
+      const deadline = Math.floor(Date.now() / 1000) + 1200; // 20 minutes
+
+      // Get quote
+      const amounts = await swapRouter.getAmountsOut(amountIn, path);
+      const amountOutMin = amounts[1].mul(95).div(100); // 5% slippage tolerance
+
+      // Approve and swap
+      await tokenA.connect(user1).approve(swapRouter.address, amountIn);
+      await expect(
+        swapRouter
+          .connect(user1)
+          .swapExactTokensForTokens(
+            amountIn,
+            amountOutMin,
+            path,
+            user1.address,
+            deadline
+          )
+      ).to.emit(swapRouter, "Swap");
+    });
+
+    it("Should revert if deadline expired", async function () {
+      const amountIn = ethers.utils.parseUnits("100", DECIMALS);
+      const path = [tokenA.address, tokenB.address];
+      const expiredDeadline = Math.floor(Date.now() / 1000) - 100; // Past deadline
+
+      await tokenA.connect(user1).approve(swapRouter.address, amountIn);
+
+      await expect(
+        swapRouter
+          .connect(user1)
+          .swapExactTokensForTokens(
+            amountIn,
+            0,
+            path,
+            user1.address,
+            expiredDeadline
+          )
+      ).to.be.revertedWith("EXPIRED");
+    });
+
+    it("Should revert if insufficient output amount", async function () {
+      const amountIn = ethers.utils.parseUnits("100", DECIMALS);
+      const path = [tokenA.address, tokenB.address];
+      const deadline = Math.floor(Date.now() / 1000) + 1200;
+      const unrealisticMinOut = ethers.utils.parseUnits("1000", DECIMALS); // Too high
+
+      await tokenA.connect(user1).approve(swapRouter.address, amountIn);
+
+      await expect(
+        swapRouter
+          .connect(user1)
+          .swapExactTokensForTokens(
+            amountIn,
+            unrealisticMinOut,
+            path,
+            user1.address,
+            deadline
+          )
+      ).to.be.revertedWith("InsufficientOutputAmount");
+    });
+  });
+
+  describe("Quote Functions", function () {
+    it("Should return correct amounts out", async function () {
+      const amountIn = ethers.utils.parseUnits("100", DECIMALS);
+      const path = [tokenA.address, tokenB.address];
+
+      const amounts = await swapRouter.getAmountsOut(amountIn, path);
+      expect(amounts.length).to.equal(2);
+      expect(amounts[0]).to.equal(amountIn);
+      expect(amounts[1]).to.be.gt(0);
+    });
+
+    it("Should revert for invalid path", async function () {
+      const amountIn = ethers.utils.parseUnits("100", DECIMALS);
+      const invalidPath = [tokenA.address]; // Only one token
+
+      await expect(
+        swapRouter.getAmountsOut(amountIn, invalidPath)
+      ).to.be.revertedWith("InvalidPath");
+    });
+  });
+
+  describe("Admin Functions", function () {
+    it("Should allow owner to update swap fee", async function () {
+      await expect(swapRouter.connect(owner).setSwapFee(50))
+        .to.emit(swapRouter, "FeeUpdated")
+        .withArgs(30, 50);
+
+      expect(await swapRouter.swapFeeBps()).to.equal(50);
+    });
+
+    it("Should revert if non-owner tries to update fee", async function () {
+      await expect(
+        swapRouter.connect(user1).setSwapFee(50)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("Should allow owner to pause contract", async function () {
+      await swapRouter.connect(owner).pause();
+      expect(await swapRouter.paused()).to.be.true;
+    });
+
+    it("Should allow owner to unpause contract", async function () {
+      await swapRouter.connect(owner).pause();
+      await swapRouter.connect(owner).unpause();
+      expect(await swapRouter.paused()).to.be.false;
+    });
+  });
+
+  describe("Security", function () {
+    it("Should prevent reentrancy attacks", async function () {
+      // This would require a malicious contract that tries to reenter
+      // Implementation depends on your specific attack vector
+    });
+
+    it("Should validate all inputs", async function () {
+      const amountIn = ethers.utils.parseUnits("100", DECIMALS);
+      const deadline = Math.floor(Date.now() / 1000) + 1200;
+
+      // Test zero address
+      await expect(
+        swapRouter.swapExactTokensForTokens(
+          amountIn,
+          0,
+          [tokenA.address, tokenB.address],
+          ethers.constants.AddressZero,
+          deadline
+        )
+      ).to.be.revertedWith("ZeroAddress");
+
+      // Test identical tokens
+      await expect(
+        swapRouter.swapExactTokensForTokens(
+          amountIn,
+          0,
+          [tokenA.address, tokenA.address],
+          user1.address,
+          deadline
+        )
+      ).to.be.revertedWith("IdenticalAddresses");
+    });
+  });
+});

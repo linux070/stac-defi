@@ -29,18 +29,31 @@ export const BRIDGE_ABI = [
 
 export const SWAP_ROUTER_ABI = [
   // Events
-  'event Swap(address indexed sender, uint256 amountIn, uint256 amountOut, address[] path, address indexed to, uint256 timestamp)',
+  'event Swap(address indexed sender, address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut, address to, uint256 timestamp)',
+  'event FeeUpdated(uint256 oldFee, uint256 newFee)',
+  'event FeeRecipientUpdated(address oldRecipient, address newRecipient)',
   
   // Read functions
-  'function getAmountsOut(uint256 amountIn, address[] path) view returns (uint256[] amounts)',
-  'function getAmountsIn(uint256 amountOut, address[] path) view returns (uint256[] amounts)',
-  'function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) pure returns (uint256 amountB)',
+  'function factory() view returns (address)',
+  'function swapFeeBps() view returns (uint256)',
+  'function feeRecipient() view returns (address)',
+  'function getAmountsOut(uint256 amountIn, address[] calldata path) view returns (uint256[] amounts)',
+  'function getAmountsIn(uint256 amountOut, address[] calldata path) view returns (uint256[] amounts)',
+  'function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) view returns (uint256 amountOut)',
+  'function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut) view returns (uint256 amountIn)',
+  'function getReserves(address tokenA, address tokenB) view returns (uint256 reserveA, uint256 reserveB)',
+  'function paused() view returns (bool)',
   
   // Write functions (protected by ReentrancyGuard)
-  'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline) returns (uint256[] amounts)',
-  'function swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline) returns (uint256[] amounts)',
-  'function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) payable returns (uint256[] amounts)',
-  'function swapTokensForExactETH(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline) returns (uint256[] amounts)',
+  'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline) returns (uint256[] amounts)',
+  'function swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] calldata path, address to, uint256 deadline) returns (uint256[] amounts)',
+  
+  // Admin functions
+  'function setSwapFee(uint256 _swapFeeBps)',
+  'function setFeeRecipient(address _feeRecipient)',
+  'function pause()',
+  'function unpause()',
+  'function recoverTokens(address token, uint256 amount)',
 ];
 
 export const LP_MANAGER_ABI = [
@@ -55,6 +68,26 @@ export const LP_MANAGER_ABI = [
   // Write functions (protected by ReentrancyGuard)
   'function addLiquidity(address tokenA, address tokenB, uint256 amountADesired, uint256 amountBDesired, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity)',
   'function removeLiquidity(address tokenA, address tokenB, uint256 liquidity, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline) returns (uint256 amountA, uint256 amountB)',
+];
+
+// Standard ERC20 ABI for token interactions (approve, allowance, balanceOf, etc.)
+export const ERC20_ABI = [
+  // Read functions
+  'function balanceOf(address owner) view returns (uint256)',
+  'function allowance(address owner, address spender) view returns (uint256)',
+  'function decimals() view returns (uint8)',
+  'function symbol() view returns (string)',
+  'function name() view returns (string)',
+  'function totalSupply() view returns (uint256)',
+  
+  // Write functions
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function transfer(address to, uint256 amount) returns (bool)',
+  'function transferFrom(address from, address to, uint256 amount) returns (bool)',
+  
+  // Events
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+  'event Approval(address indexed owner, address indexed spender, uint256 value)',
 ];
 
 // Security utilities
@@ -88,5 +121,6 @@ export default {
   BRIDGE_ABI,
   SWAP_ROUTER_ABI,
   LP_MANAGER_ABI,
+  ERC20_ABI,
   SECURITY_CHECKS,
 };

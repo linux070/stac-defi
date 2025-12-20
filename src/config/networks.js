@@ -63,8 +63,8 @@ export const TOKENS = {
     name: 'Euro Coin',
     decimals: 6,
     address: {
-      [NETWORKS.ARC_TESTNET.chainId]: '0x', // Placeholder
-      [NETWORKS.ETHEREUM_SEPOLIA.chainId]: '0x', // Placeholder
+      [NETWORKS.ARC_TESTNET.chainId]: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a', 
+      [NETWORKS.ETHEREUM_SEPOLIA.chainId]: '0x08210F9170F89Ab7658F0B5E3fF39b0E03C594D4', 
     },
     logo: 'euro-sign', // FAIcon name
   },
@@ -77,16 +77,18 @@ export const TOKEN_PRICES = {
   EUR: 1.1,
 };
 
-// Contract addresses (placeholders - to be replaced with actual deployed contracts)
+// Contract addresses - Updated with deployed contracts
 export const CONTRACTS = {
   [NETWORKS.ARC_TESTNET.chainId]: {
-    SWAP_ROUTER: '0x',
-    SWAP_FACTORY: '0x',
-    BRIDGE: '0x',
-    LP_MANAGER: '0x',
+    SWAP_ROUTER: '0x94d3398e7Eba1B4486B6e80138E820abFcF3Fef8', // Deployed SwapRouter
+    SWAP_FACTORY: '0x2ab5A54A25AD34Aaefb8038A1832fAd639d911A5', // Deployed SwapFactory
+    BRIDGE: '0x', // Bridge contract (not deployed yet)
+    LP_MANAGER: '0x', // LP Manager (not deployed yet)
   },
   [NETWORKS.ETHEREUM_SEPOLIA.chainId]: {
-    BRIDGE: '0x',
+    SWAP_ROUTER: '0x94d3398e7Eba1B4486B6e80138E820abFcF3Fef8', // Deployed SwapRouter
+    SWAP_FACTORY: '0x2ab5A54A25AD34Aaefb8038A1832fAd639d911A5', // Deployed SwapFactory
+    BRIDGE: '0x', // Bridge contract (not deployed yet)
   },
 };
 

@@ -312,47 +312,46 @@ const Bridge = () => {
     }
   }, [chainId, isConnected, fetchTokenBalance, bridgeLoading, state.isLoading, state.step]);
 
+  // Reusable function to save bridge transaction (success or failure)
+  const saveBridgeTransaction = async (txHash, txStatus = 'success') => {
+    try {
+      const saved = await getItem('myTransactions');
+      const existing = saved && Array.isArray(saved) ? saved : [];
+      
+      // Check if transaction already exists
+      const exists = existing.some(tx => tx.hash === txHash);
+      
+      if (!exists && txHash) {
+        const bridgeTx = {
+          id: txHash || `bridge-${Date.now()}`,
+          type: 'Bridge',
+          from: fromChain,
+          to: toChain,
+          amount: amount || '0.00',
+          timestamp: Date.now(),
+          status: txStatus,
+          hash: txHash,
+          chainId: getChainIdByName(fromChain),
+          address: address?.toLowerCase(),
+        };
+        
+        existing.unshift(bridgeTx);
+        // Keep only last 100 transactions
+        const trimmed = existing.slice(0, 100);
+        await setItem('myTransactions', trimmed);
+        // Dispatch custom event to notify bridge count hook
+        window.dispatchEvent(new CustomEvent('bridgeTransactionSaved'));
+      }
+    } catch (err) {
+      console.error('Error saving bridge transaction:', err);
+    }
+  };
+
   // Effect to refresh balances after successful bridge transaction and save transaction
   useEffect(() => {
     if (state.step === 'success' && state.sourceTxHash) {
-      // Save bridge transaction to IndexedDB for persistent storage (web3-native)
-      const saveBridgeTransaction = async () => {
-        try {
-          const saved = await getItem('myTransactions');
-          const existing = saved && Array.isArray(saved) ? saved : [];
-          
-          // Check if transaction already exists
-          const exists = existing.some(tx => 
-            tx.hash === state.sourceTxHash || tx.hash === state.receiveTxHash
-          );
-          
-          if (!exists) {
-            const bridgeTx = {
-              id: state.sourceTxHash || `bridge-${Date.now()}`,
-              type: 'Bridge',
-              from: fromChain,
-              to: toChain,
-              amount: amount || '0.00',
-              timestamp: Date.now(),
-              status: 'success',
-              hash: state.sourceTxHash || state.receiveTxHash || '',
-              chainId: getChainIdByName(fromChain),
-              address: address?.toLowerCase(),
-            };
-            
-            existing.unshift(bridgeTx);
-            // Keep only last 100 transactions
-            const trimmed = existing.slice(0, 100);
-            await setItem('myTransactions', trimmed);
-            // Dispatch custom event to notify bridge count hook
-            window.dispatchEvent(new CustomEvent('bridgeTransactionSaved'));
-          }
-        } catch (err) {
-          console.error('Error saving bridge transaction:', err);
-        }
-      };
-      
-      saveBridgeTransaction();
+      // Save successful bridge transaction
+      saveBridgeTransaction(state.sourceTxHash || state.receiveTxHash, 'success');
       
       // Refresh balance immediately, then again after delay to ensure blockchain has updated
       if (chainId && isConnected) {
@@ -706,6 +705,23 @@ const Bridge = () => {
         // Stop the timer
         setStopTimer(true);
         
+        // Try to extract transaction hash from error result
+        let failedTxHash = null;
+        if (result.sourceTxHash) {
+          failedTxHash = result.sourceTxHash;
+        } else if (result.receiveTxHash) {
+          failedTxHash = result.receiveTxHash;
+        } else if (result.transaction?.hash) {
+          failedTxHash = result.transaction.hash;
+        } else if (result.hash) {
+          failedTxHash = result.hash;
+        }
+        
+        // Save failed transaction if we have a hash
+        if (failedTxHash) {
+          saveBridgeTransaction(failedTxHash, 'failed');
+        }
+        
         // Handle error result directly - show Bridge Failed modal immediately
         setShowBridgingModal(false);
         setBridgeLoading(false);
@@ -730,6 +746,27 @@ const Bridge = () => {
         name: error.name,
         stack: error.stack
       });
+      
+      // Try to extract transaction hash from error for failed transactions
+      let failedTxHash = null;
+      if (state.sourceTxHash) {
+        failedTxHash = state.sourceTxHash;
+      } else if (state.receiveTxHash) {
+        failedTxHash = state.receiveTxHash;
+      } else if (error.transaction?.hash) {
+        failedTxHash = error.transaction.hash;
+      } else if (error.receipt?.hash) {
+        failedTxHash = error.receipt.hash;
+      } else if (error.hash) {
+        failedTxHash = error.hash;
+      } else if (error.transactionHash) {
+        failedTxHash = error.transactionHash;
+      }
+      
+      // Save failed transaction if we have a hash
+      if (failedTxHash) {
+        saveBridgeTransaction(failedTxHash, 'failed');
+      }
       
       // Stop the timer
       setStopTimer(true);
@@ -868,6 +905,11 @@ const Bridge = () => {
   useEffect(() => {
     if (state.step === 'error' && state.error) {
       console.log('useEffect detected state.step === error, showing Bridge Failed modal:', state.error);
+      
+      // Save failed transaction if we have a transaction hash
+      if (state.sourceTxHash || state.receiveTxHash) {
+        saveBridgeTransaction(state.sourceTxHash || state.receiveTxHash, 'failed');
+      }
       
       // Close the in-progress modal first
       setShowBridgingModal(false);

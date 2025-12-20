@@ -140,6 +140,91 @@ const Transactions = () => {
     }
   };
 
+  // Helper functions to format swap transaction data
+  const getSwapFromToken = (tx) => {
+    if (tx.type !== 'Swap') return tx.from || '';
+    if (!tx.from) return '';
+    
+    const fromStr = String(tx.from).trim();
+    
+    // If it's already just a token symbol (no spaces, no numbers), return it
+    if (!fromStr.includes(' ') && !/^\d/.test(fromStr)) return fromStr;
+    
+    // Extract token symbol from formats like "1.0 USDC", "1 EURC", etc.
+    // Split by space and get the last part (token symbol)
+    const parts = fromStr.split(/\s+/).filter(p => p.length > 0);
+    if (parts.length > 1) {
+      // Return the last part which should be the token symbol
+      return parts[parts.length - 1];
+    }
+    
+    // If only one part, check if it's a token (contains letters) or a number
+    if (/[A-Za-z]/.test(parts[0])) {
+      return parts[0];
+    }
+    
+    return fromStr;
+  };
+
+  const getSwapToToken = (tx) => {
+    if (tx.type !== 'Swap') return tx.to || '';
+    if (!tx.to) return '';
+    
+    const toStr = String(tx.to).trim();
+    
+    // If it's already just a token symbol (no spaces, no numbers at start), return it
+    if (!toStr.includes(' ') && !/^\d/.test(toStr)) return toStr;
+    
+    // Extract token symbol from formats like "1.096700 USDC", "1.1 EURC", etc.
+    // Split by space and get the last part (token symbol)
+    const parts = toStr.split(/\s+/).filter(p => p && p.length > 0);
+    if (parts.length > 1) {
+      // Return the last part which should be the token symbol
+      const token = parts[parts.length - 1];
+      return token || toStr;
+    }
+    
+    // If only one part, check if it's a token (contains letters) or a number
+    if (parts.length > 0 && /[A-Za-z]/.test(parts[0])) {
+      return parts[0];
+    }
+    
+    return toStr;
+  };
+
+  const getSwapAmount = (tx) => {
+    if (tx.type !== 'Swap') return tx.amount || '';
+    if (!tx.amount) return '';
+    
+    const amountStr = String(tx.amount).trim();
+    
+    // If it's already just a number (no arrow, no letters), return it
+    const cleanNumber = parseFloat(amountStr);
+    if (!isNaN(cleanNumber) && !amountStr.includes('→') && !/[a-zA-Z]/.test(amountStr)) {
+      return String(cleanNumber);
+    }
+    
+    // If it contains an arrow, extract the first number before the arrow
+    if (amountStr.includes('→')) {
+      // Format: "1 EURC → 1.096700 USDC" - extract first number
+      const parts = amountStr.split('→');
+      const firstPart = parts[0].trim();
+      const numberMatch = firstPart.match(/^([\d.]+)/);
+      if (numberMatch && numberMatch[1]) {
+        return numberMatch[1];
+      }
+    }
+    
+    // Otherwise, extract the first number from the string
+    // Format: "1 EURC" or "1.096700 USDC" - extract number
+    const numberMatch = amountStr.match(/^([\d.]+)/);
+    if (numberMatch && numberMatch[1]) {
+      return numberMatch[1];
+    }
+    
+    return amountStr;
+  };
+
   return (
     <div className="max-w-6xl mx-auto w-full px-3 sm:px-4 md:px-0">
       {/* Header */}
@@ -172,7 +257,7 @@ const Transactions = () => {
                   className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                 >
                   <td className="py-3 md:py-4">
-                    {tx.type === 'Bridge' ? (
+                    {tx.type === 'Bridge' || tx.type === 'Swap' ? (
                       <span className="text-xs md:text-sm font-medium">{tx.type}</span>
                     ) : (
                       <span className={`inline-flex items-center px-2 py-1 md:px-3 md:py-1 rounded-full text-xs font-semibold ${getTypeColor(tx.type)}`}>
@@ -181,9 +266,9 @@ const Transactions = () => {
                     </span>
                     )}
                   </td>
-                  <td className="py-3 md:py-4 text-xs md:text-sm font-medium">{tx.from}</td>
-                  <td className="py-3 md:py-4 text-xs md:text-sm font-medium">{tx.to}</td>
-                  <td className="py-3 md:py-4 text-xs md:text-sm font-semibold">{tx.amount}</td>
+                  <td className="py-3 md:py-4 text-xs md:text-sm font-medium">{getSwapFromToken(tx)}</td>
+                  <td className="py-3 md:py-4 text-xs md:text-sm font-medium">{getSwapToToken(tx)}</td>
+                  <td className="py-3 md:py-4 text-xs md:text-sm font-semibold">{getSwapAmount(tx)}</td>
                   <td className="py-3 md:py-4 text-xs md:text-sm text-gray-500">{timeAgo(tx.timestamp)}</td>
                   <td className="py-3 md:py-4">
                     {tx.status === 'success' ? (
@@ -270,7 +355,7 @@ const Transactions = () => {
               {/* Header Row */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {tx.type === 'Bridge' ? (
+                  {tx.type === 'Bridge' || tx.type === 'Swap' ? (
                     <span className="text-sm font-medium">{tx.type}</span>
                   ) : (
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getTypeColor(tx.type)}`}>
@@ -305,19 +390,19 @@ const Transactions = () => {
               <div className="flex items-center justify-between text-sm">
                 <div className="flex-1">
                   <span className="text-gray-500 dark:text-gray-400 text-xs">From:</span>
-                  <span className="ml-1 font-medium">{tx.from}</span>
+                  <span className="ml-1 font-medium">{getSwapFromToken(tx)}</span>
                 </div>
                 <ArrowLeftRight size={16} className="mx-2 text-gray-400" />
                 <div className="flex-1 text-right">
                   <span className="text-gray-500 dark:text-gray-400 text-xs">To:</span>
-                  <span className="ml-1 font-medium">{tx.to}</span>
+                  <span className="ml-1 font-medium">{getSwapToToken(tx)}</span>
                 </div>
               </div>
 
               {/* Amount */}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500 dark:text-gray-400">Amount:</span>
-                <span className="text-sm font-semibold">{tx.amount}</span>
+                <span className="text-sm font-semibold">{getSwapAmount(tx)}</span>
               </div>
 
               {/* Transaction Hash */}

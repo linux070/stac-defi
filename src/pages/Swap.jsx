@@ -2,13 +2,30 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
 import { useAccount } from 'wagmi';
+import { ethers } from 'ethers';
 import { ArrowDownUp, Settings, Info, Loader, Wallet, AlertTriangle, X, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TOKENS, TOKEN_PRICES } from '../config/networks';
+import { TOKENS, TOKEN_PRICES, NETWORKS } from '../config/networks';
 import { sanitizeInput, calculateSwapQuote, validateAmount, validateSlippage, getFilteredTokens } from '../utils/blockchain';
+import { getContractAddresses } from '../config/contracts';
+import {
+  getEthersProvider,
+  getSwapRouterContract,
+  getERC20Contract,
+  formatTokenAmount,
+  parseTokenAmount,
+  getSwapQuote,
+  checkApproval,
+  approveToken,
+  executeSwap,
+  getDeadline,
+  calculateMinReceived,
+  createSwapPath,
+} from '../utils/swapContract';
 import useTokenBalance from '../hooks/useTokenBalance';
 import useMultiChainBalances from '../hooks/useMultiChainBalances';
 import Toast from '../components/Toast';
+import { getItem, setItem } from '../utils/indexedDB';
 import '../styles/swap-styles.css';
 
 const Swap = () => {
@@ -30,6 +47,27 @@ const Swap = () => {
   const [validationError, setValidationError] = useState('');
   const [slippageWarning, setSlippageWarning] = useState('');
   const [toast, setToast] = useState({ visible: false, type: 'info', message: '' });
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  
+  // Helper function to get token address for current chain
+  const getTokenAddress = (tokenSymbol) => {
+    if (!chainId || !TOKENS[tokenSymbol]) return null;
+    const token = TOKENS[tokenSymbol];
+    if (token.address && typeof token.address === 'object') {
+      const addr = token.address[chainId] || null;
+      // Return null for placeholder addresses ('0x' or '0x0...')
+      return (addr && addr !== '0x' && addr !== '0x0000000000000000000000000000000000000000') ? addr : null;
+    }
+    const addr = token.address || null;
+    // Return null for placeholder addresses
+    return (addr && addr !== '0x' && addr !== '0x0000000000000000000000000000000000000000') ? addr : null;
+  };
+  
+  // Helper function to get token decimals
+  const getTokenDecimals = (tokenSymbol) => {
+    if (!TOKENS[tokenSymbol]) return 18;
+    return TOKENS[tokenSymbol].decimals || 18;
+  };
 
   // Refs for trigger buttons
   const fromTokenTriggerRef = useRef(null);
@@ -67,14 +105,26 @@ const Swap = () => {
       const chainIdNum = chainId ? parseInt(chainId, 16) : null;
       const tokenKey = fromToken.toLowerCase(); // 'usdc' or 'eurc'
       
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Swap.jsx:97',message:'getFromBalance for USDC/EURC',data:{fromToken,chainId,chainIdNum,tokenKey,multiChainBalances:multiChainBalances?{arcTestnet:multiChainBalances.arcTestnet?.[tokenKey],sepolia:multiChainBalances.sepolia?.[tokenKey]}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      
       if (chainIdNum === 5042002) { // Arc Testnet
+        const balance = multiChainBalances?.arcTestnet?.[tokenKey] || '0.00';
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Swap.jsx:104',message:'getFromBalance Arc Testnet result',data:{fromToken,balance},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         return {
-          balance: multiChainBalances?.arcTestnet?.[tokenKey] || '0.00',
+          balance,
           loading: multiChainBalances?.arcTestnet?.loading || false,
         };
       } else if (chainIdNum === 11155111) { // Sepolia
+        const balance = multiChainBalances?.sepolia?.[tokenKey] || '0.00';
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Swap.jsx:111',message:'getFromBalance Sepolia result',data:{fromToken,balance},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         return {
-          balance: multiChainBalances?.sepolia?.[tokenKey] || '0.00',
+          balance,
           loading: multiChainBalances?.sepolia?.loading || false,
         };
       }
@@ -166,33 +216,149 @@ const Swap = () => {
     }
   }, [slippage]);
 
-  // Calculate swap quote when amount changes
+  // Calculate swap quote when amount changes - fetch from contract if connected
   useEffect(() => {
     setValidationError('');
+    setQuoteLoading(false);
     
     if (fromAmount && parseFloat(fromAmount) > 0) {
       try {
         // Validate amount
         validateAmount(fromAmount, fromBalance);
         
-        const quote = calculateSwapQuote(fromToken, toToken, fromAmount, slippage);
-        setSwapQuote(quote);
-        if (quote) {
-          setToAmount(quote.expectedOutput);
-          setShowSwapDetails(true);
+        // Try to fetch real quote from contract if connected and on supported network
+        if (isConnected && chainId && window.ethereum) {
+          const contractAddresses = getContractAddresses(chainId);
+          const routerAddress = contractAddresses?.router;
+          const fromTokenAddr = getTokenAddress(fromToken);
+          const toTokenAddr = getTokenAddress(toToken);
+          
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Swap.jsx:213',message:'Quote fetch check',data:{isConnected,chainId,hasEthereum:!!window.ethereum,contractAddresses,routerAddress,fromToken,fromTokenAddr,toToken,toTokenAddr,allAddressesPresent:!!(routerAddress&&fromTokenAddr&&toTokenAddr)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B,C,D,E'})}).catch(()=>{});
+          // #endregion
+          
+          // Only fetch from contract if we have all required addresses
+          if (routerAddress && fromTokenAddr && toTokenAddr) {
+            setQuoteLoading(true);
+            fetchContractQuote(fromAmount, fromToken, toToken, routerAddress, fromTokenAddr, toTokenAddr)
+              .then(quote => {
+                if (quote) {
+                  setSwapQuote(quote);
+                  setToAmount(quote.expectedOutput);
+                  setShowSwapDetails(true);
+                }
+              })
+              .catch(err => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Swap.jsx:230',message:'Quote fetch failed',data:{error:err.message,stack:err.stack,fromToken,toToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion
+                console.warn('Failed to fetch contract quote, using fallback:', err);
+                // Fallback to mock quote
+                const fallbackQuote = calculateSwapQuote(fromToken, toToken, fromAmount, slippage);
+                if (fallbackQuote) {
+                  // Ensure quote has required fields for swap details
+                  const formattedQuote = {
+                    ...fallbackQuote,
+                    priceImpact: fallbackQuote.priceImpact || '0.00',
+                    networkFee: fallbackQuote.gasFee || '0.00',
+                  };
+                  setSwapQuote(formattedQuote);
+                  setToAmount(formattedQuote.expectedOutput);
+                  setShowSwapDetails(true);
+                }
+              })
+              .finally(() => {
+                setQuoteLoading(false);
+              });
+          } else {
+            // Fallback to mock quote if contract not available
+            const quote = calculateSwapQuote(fromToken, toToken, fromAmount, slippage);
+            if (quote) {
+              // Ensure quote has required fields for swap details
+              const formattedQuote = {
+                ...quote,
+                priceImpact: quote.priceImpact || '0.00',
+                networkFee: quote.gasFee || '0.00',
+              };
+              setSwapQuote(formattedQuote);
+              setToAmount(formattedQuote.expectedOutput);
+              setShowSwapDetails(true);
+            }
+          }
+        } else {
+          // Not connected or no provider, use mock quote
+          const quote = calculateSwapQuote(fromToken, toToken, fromAmount, slippage);
+          if (quote) {
+            // Ensure quote has required fields for swap details
+            const formattedQuote = {
+              ...quote,
+              priceImpact: quote.priceImpact || '0.00',
+              networkFee: quote.gasFee || '0.00',
+            };
+            setSwapQuote(formattedQuote);
+            setToAmount(formattedQuote.expectedOutput);
+            setShowSwapDetails(true);
+          }
         }
       } catch (err) {
         setValidationError(err.message);
         setSwapQuote(null);
         setToAmount('');
         setShowSwapDetails(false);
+        setQuoteLoading(false);
       }
     } else {
       setSwapQuote(null);
       setToAmount('');
       setShowSwapDetails(false);
+      setQuoteLoading(false);
     }
-  }, [fromAmount, fromToken, toToken, slippage, fromBalance]);
+  }, [fromAmount, fromToken, toToken, slippage, fromBalance, isConnected, chainId]);
+  
+  // Helper function to fetch quote from contract
+  const fetchContractQuote = async (amount, fromTokenSymbol, toTokenSymbol, routerAddress, fromTokenAddr, toTokenAddr) => {
+    try {
+      const { provider } = await getEthersProvider();
+      const routerContract = getSwapRouterContract(routerAddress, provider);
+      const fromDecimals = getTokenDecimals(fromTokenSymbol);
+      const toDecimals = getTokenDecimals(toTokenSymbol);
+      
+      // Format input amount
+      const amountIn = formatTokenAmount(amount, fromDecimals);
+      
+      // Create swap path
+      const path = createSwapPath(fromTokenAddr, toTokenAddr);
+      
+      // Get quote from contract
+      const amounts = await getSwapQuote(routerContract, amountIn, path);
+      
+      // Parse output amount
+      const amountOut = amounts[amounts.length - 1]; // Last element is the output
+      const expectedOutput = parseTokenAmount(amountOut, toDecimals);
+      
+      // Calculate min received with slippage
+      const slippageBps = slippage * 100; // Convert percentage to basis points
+      const minReceived = calculateMinReceived(expectedOutput, slippageBps);
+      
+      // Calculate network fee estimate (gas fee in USDC equivalent)
+      // Rough estimate: ~150k gas * gas price
+      const estimatedGas = 150000n;
+      const feeData = await provider.getFeeData();
+      const gasCost = estimatedGas * (feeData.gasPrice || 0n);
+      // Convert to USDC (assuming 1 ETH = 2000 USDC for estimation, adjust as needed)
+      const networkFeeEstimate = Number(gasCost) / 1e18 * 2000; // Rough USDC estimate
+      
+      return {
+        expectedOutput,
+        minReceived,
+        priceImpact: '0.00', // Could calculate from reserves if needed
+        networkFee: networkFeeEstimate.toFixed(6),
+      };
+    } catch (error) {
+      console.error('Error fetching contract quote:', error);
+      throw error;
+    }
+  };
 
   const handleSwitch = () => {
     // Add animation class for smooth transition
@@ -237,58 +403,124 @@ const Swap = () => {
       return;
     }
 
-    // Check if token approval is needed
-    setSwapLoading(true);
-    try {
-      // In a real implementation, you would get the provider and signer from the wallet context
-      // const provider = new ethers.providers.Web3Provider(window.ethereum);
-      // const signer = provider.getSigner();
-      
-      // For demo purposes, we'll simulate the approval process
-      setToast({ visible: true, type: 'info', message: t('approvalRequired') });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
-      
-      // Simulate approval process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setToast({ visible: true, type: 'success', message: t('approvalCompleted') });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
-    } catch (err) {
-      setToast({ visible: true, type: 'error', message: err.message });
+    if (!window.ethereum) {
+      setToast({ visible: true, type: 'error', message: 'No Web3 wallet found. Please install MetaMask.' });
       setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
-      setSwapLoading(false);
+      return;
+    }
+
+    // Get contract addresses for current network
+    const contractAddresses = getContractAddresses(chainId);
+    const routerAddress = contractAddresses?.router;
+    const fromTokenAddr = getTokenAddress(fromToken);
+    const toTokenAddr = getTokenAddress(toToken);
+
+    // Check for missing addresses and provide specific error messages
+    if (!routerAddress) {
+      setToast({ visible: true, type: 'error', message: 'Swap router not available on this network. Please switch to Arc Testnet.' });
+      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
+      return;
+    }
+
+    if (!fromTokenAddr) {
+      setToast({ visible: true, type: 'error', message: `${fromToken} token address not configured on this network.` });
+      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
+      return;
+    }
+
+    if (!toTokenAddr) {
+      setToast({ visible: true, type: 'error', message: `${toToken} token address not configured on this network.` });
+      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
       return;
     }
 
     setSwapLoading(true);
+    
     try {
-      // In a real implementation, you would execute the swap using our contract functions
-      // const provider = new ethers.providers.Web3Provider(window.ethereum);
-      // const signer = provider.getSigner();
-      // 
-      // const amounts = await getAmountsOut(
-      //   SWAP_CONTRACT_ADDRESS,
-      //   ethers.utils.parseUnits(fromAmount, TOKENS[fromToken].decimals),
-      //   [TOKENS[fromToken].address, TOKENS[toToken].address],
-      //   provider
-      // );
-      // 
-      // const tx = await swapExactTokensForTokens(
-      //   SWAP_CONTRACT_ADDRESS,
-      //   ethers.utils.parseUnits(fromAmount, TOKENS[fromToken].decimals),
-      //   amounts[1].mul(100 - slippage).div(100), // minAmountOut with slippage
-      //   [TOKENS[fromToken].address, TOKENS[toToken].address],
-      //   signer.getAddress(),
-      //   Math.floor(Date.now() / 1000) + 60 * 10, // 10 minutes deadline
-      //   provider,
-      //   signer
-      // );
+      // Get provider and signer
+      const { provider, signer } = await getEthersProvider();
+      const routerContract = getSwapRouterContract(routerAddress, provider);
+      const tokenContract = getERC20Contract(fromTokenAddr, provider);
       
-      // Simulate swap transaction
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const fromDecimals = getTokenDecimals(fromToken);
+      const toDecimals = getTokenDecimals(toToken);
       
-      setToast({ visible: true, type: 'success', message: t('transactionSubmitted') });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
+      // Format amounts
+      const amountIn = formatTokenAmount(fromAmount, fromDecimals);
+      const slippageBps = slippage * 100; // Convert percentage to basis points
+      const minAmountOut = formatTokenAmount(swapQuote?.minReceived || calculateMinReceived(toAmount, slippageBps), toDecimals);
+      
+      // Create swap path
+      const path = createSwapPath(fromTokenAddr, toTokenAddr);
+      const deadline = getDeadline();
+      
+      // Check if approval is needed - use actual amount for better wallet display
+      const needsApproval = await checkApproval(tokenContract, address, routerAddress, amountIn);
+      
+      if (needsApproval) {
+        // Request approval with actual amount (wallet will show the real amount)
+        const approveTx = await approveToken(tokenContract, routerAddress, amountIn, signer);
+        
+        // Wait for approval transaction (wallet shows progress)
+        await approveTx.wait();
+      }
+      
+      // Execute swap (wallet will show the transaction)
+      const swapTx = await executeSwap(
+        routerContract,
+        amountIn,
+        minAmountOut,
+        path,
+        address,
+        deadline,
+        signer
+      );
+      
+      // Wait for transaction confirmation (wallet shows progress)
+      const receipt = await swapTx.wait();
+      
+      // Save swap transaction to IndexedDB (success case)
+      const saveSwapTransaction = async (txHash, txStatus = 'success', receiptData = null) => {
+        try {
+          const saved = await getItem('myTransactions');
+          const existing = saved && Array.isArray(saved) ? saved : [];
+          
+          // Check if transaction already exists
+          const exists = existing.some(tx => tx.hash === txHash);
+          
+          if (!exists && txHash) {
+            // Get network name from chainId
+            const chainIdNum = chainId ? parseInt(chainId, 16) : null;
+            
+            const swapTxData = {
+              id: txHash,
+              type: 'Swap',
+              from: fromToken, // Just the token symbol
+              to: toToken, // Just the token symbol
+              amount: fromAmount, // Just the number
+              timestamp: Date.now(),
+              status: txStatus,
+              hash: txHash,
+              chainId: chainIdNum || chainId,
+              address: address?.toLowerCase(),
+            };
+            
+            existing.unshift(swapTxData);
+            // Keep only last 100 transactions
+            const trimmed = existing.slice(0, 100);
+            await setItem('myTransactions', trimmed);
+            // Dispatch custom event to notify Transactions page
+            window.dispatchEvent(new CustomEvent('swapTransactionSaved'));
+          }
+        } catch (err) {
+          console.error('Error saving swap transaction:', err);
+        }
+      };
+      
+      // Save successful transaction
+      const txHash = receipt.hash || swapTx.hash;
+      const txStatus = receipt.status === 1 ? 'success' : receipt.status === 0 ? 'failed' : 'pending';
+      await saveSwapTransaction(txHash, txStatus, receipt);
       
       // Reset form after successful swap
       setFromAmount('');
@@ -300,8 +532,79 @@ const Swap = () => {
       refetchFrom();
       refetchTo();
     } catch (err) {
-      setToast({ visible: true, type: 'error', message: err.message });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
+      console.error('Swap error:', err);
+      let errorMessage = 'Swap failed. Please try again.';
+      
+      if (err.message) {
+        errorMessage = err.message;
+      } else if (err.reason) {
+        errorMessage = err.reason;
+      } else if (err.data?.message) {
+        errorMessage = err.data.message;
+      }
+      
+      // Try to extract transaction hash from error for failed transactions
+      // Check if swapTx was created before the error (transaction was submitted)
+      let failedTxHash = null;
+      if (swapTx?.hash) {
+        failedTxHash = swapTx.hash;
+      } else if (err.transaction?.hash) {
+        failedTxHash = err.transaction.hash;
+      } else if (err.receipt?.hash) {
+        failedTxHash = err.receipt.hash;
+      } else if (err.hash) {
+        failedTxHash = err.hash;
+      } else if (err.transactionHash) {
+        failedTxHash = err.transactionHash;
+      }
+      
+      // Save failed transaction if we have a hash
+      if (failedTxHash) {
+        const saveSwapTransaction = async (txHash, txStatus = 'failed') => {
+          try {
+            const saved = await getItem('myTransactions');
+            const existing = saved && Array.isArray(saved) ? saved : [];
+            
+            // Check if transaction already exists
+            const exists = existing.some(tx => tx.hash === txHash);
+            
+            if (!exists && txHash) {
+              // Get network name from chainId
+              const chainIdNum = chainId ? parseInt(chainId, 16) : null;
+              
+              const swapTxData = {
+                id: txHash,
+                type: 'Swap',
+                from: fromToken, // Just the token symbol
+                to: toToken, // Just the token symbol
+                amount: fromAmount, // Just the number
+                timestamp: Date.now(),
+                status: txStatus,
+                hash: txHash,
+                chainId: chainIdNum || chainId,
+                address: address?.toLowerCase(),
+              };
+              
+              existing.unshift(swapTxData);
+              // Keep only last 100 transactions
+              const trimmed = existing.slice(0, 100);
+              await setItem('myTransactions', trimmed);
+              // Dispatch custom event to notify Transactions page
+              window.dispatchEvent(new CustomEvent('swapTransactionSaved'));
+            }
+          } catch (saveErr) {
+            console.error('Error saving failed swap transaction:', saveErr);
+          }
+        };
+        
+        await saveSwapTransaction(failedTxHash, 'failed');
+      }
+      
+      // Handle user rejection - only show error if not user cancellation
+      if (!errorMessage.includes('user rejected') && !errorMessage.includes('User denied') && !errorMessage.includes('User rejected')) {
+        setToast({ visible: true, type: 'error', message: errorMessage });
+        setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
+      }
     } finally {
       setSwapLoading(false);
     }
@@ -851,37 +1154,22 @@ const Swap = () => {
             >
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-3 text-xs md:text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('Expected Output')}</span>
+                  <span className="text-gray-600 dark:text-gray-400">Expected Output</span>
                   <span className="font-semibold">{swapQuote.expectedOutput} {toToken}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('Min Received')}</span>
+                  <span className="text-gray-600 dark:text-gray-400">Min Received</span>
                   <span className="font-semibold">{swapQuote.minReceived} {toToken}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('Price Impact')}</span>
-                  <span className={`font-semibold ${parseFloat(swapQuote.priceImpact) > 1 ? 'text-red-600' : 'text-green-600'}`}>
-                    {swapQuote.priceImpact}%
+                  <span className="text-gray-600 dark:text-gray-400">Price Impact</span>
+                  <span className={`font-semibold ${parseFloat(swapQuote.priceImpact || '0') > 1 ? 'text-red-600' : 'text-green-600'}`}>
+                    {swapQuote.priceImpact || '0.00'}%
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('liquidityProviderFee')}</span>
-                  <span className="font-semibold">${swapQuote.tradingFee}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('route')}</span>
-                  <span className="font-semibold">{swapQuote.route.join(' → ')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('exchangeRate')}</span>
-                  <span className="font-semibold">1 {fromToken} = {swapQuote.exchangeRate} {toToken}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('networkFee')}</span>
-                  <span className="font-semibold">${swapQuote.gasFee} USDC</span>
-                </div>
-                <div className="pt-2 border-t border-gray-300 dark:border-gray-600 text-xs text-gray-500 dark:text-gray-400">
-                  {t('outputEstimatedInfo')}
+                  <span className="text-gray-600 dark:text-gray-400">Network Fee</span>
+                  <span className="font-semibold">~{swapQuote.networkFee || swapQuote.gasFee || '0.00'} USDC</span>
                 </div>
               </div>
             </motion.div>
