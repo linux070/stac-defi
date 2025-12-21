@@ -82,6 +82,13 @@ html.dark,
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
+/* Desktop: Increase height with more vertical padding */
+@media (min-width: 768px) {
+  .bridge-container {
+    padding: 32px 24px;
+  }
+}
+
 /* Settings Button */
 .settings-button {
   position: absolute;
@@ -497,6 +504,13 @@ html.dark,
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   opacity: 0.8;
   font-weight: 500;
+}
+
+/* Desktop: Align badge with container top padding */
+@media (min-width: 768px) {
+  .powered-by-badge {
+    top: 32px;
+  }
 }
 
 /* Responsive Design - Mobile First  */

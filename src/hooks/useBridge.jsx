@@ -195,6 +195,10 @@ export function useBridge() {
     }
   }, [address]);  // Execute bridge transaction (bidirectional)
   const bridge = useCallback(async (token, amount, direction) => {
+    // Declare variables at function scope for error handling
+    let destinationChain = null;
+    let destinationChainId = null;
+    
     try {
       if (!isConnected || !address) {
         setState({
@@ -224,8 +228,16 @@ export function useBridge() {
       }
 
       // Create adapter from browser wallet provider
+      // Ensure the provider is ready and can handle chain switching
+      const provider = window.ethereum;
+      
+      // Ensure provider has chain switching capabilities
+      if (!provider || !provider.request) {
+        throw new Error('Wallet provider is not properly configured. Please ensure your wallet is connected.');
+      }
+      
       const adapter = await createAdapterFromProvider({
-        provider: window.ethereum,
+        provider: provider,
       });
 
       // Initialize Bridge Kit
@@ -235,7 +247,7 @@ export function useBridge() {
       // Determine source and destination chains based on direction
       const isSepoliaToArc = direction === 'sepolia-to-arc';
       const sourceChainId = isSepoliaToArc ? SEPOLIA_CHAIN_ID : ARC_CHAIN_ID;
-      const destinationChainId = isSepoliaToArc ? ARC_CHAIN_ID : SEPOLIA_CHAIN_ID;
+      destinationChainId = isSepoliaToArc ? ARC_CHAIN_ID : SEPOLIA_CHAIN_ID;
 
       // Find source chain
       let sourceChain = supportedChains.find(c => {
@@ -302,6 +314,9 @@ export function useBridge() {
         const chainName = destinationChainId === SEPOLIA_CHAIN_ID ? 'Ethereum Sepolia' : 'Arc Testnet';
         throw new Error(`${chainName} (chain ID ${destinationChainId}) is not supported by Bridge Kit.`);
       }
+      
+      // Store destinationChain name for error handling
+      const destinationChainName = destinationChain.name;
 
       // Verify source chain ID
       const actualSourceChainId = sourceChain.chainId;
@@ -331,18 +346,142 @@ export function useBridge() {
       // Step 2: Approving token (if needed)
       setState(prev => ({ ...prev, step: 'approving' }));
 
-      // Execute the bridge
-      const result = await kit.bridge({
-        from: {
-          adapter: adapter,
-          chain: sourceChain.chain,
-        },
-        to: {
-          adapter: adapter,
-          chain: destinationChain.chain,
-        },
-        amount: amount,
-      });
+      // Ensure destination chain is added to wallet (but don't switch yet - Bridge Kit will handle that)
+      // This ensures the wallet can switch to destination chain when Bridge Kit prompts for mint step
+      try {
+        if (window.ethereum) {
+          // Try to add destination chain if not already added (this won't switch, just adds it)
+          try {
+            if (destinationChainId === ARC_CHAIN_ID) {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: `0x${ARC_CHAIN_ID.toString(16)}`,
+                  chainName: 'Arc Testnet',
+                  nativeCurrency: {
+                    name: 'ETH',
+                    symbol: 'ETH',
+                    decimals: 18,
+                  },
+                  rpcUrls: ['https://rpc.testnet.arc.network/'],
+                  blockExplorerUrls: ['https://testnet.arcscan.app'],
+                }],
+              });
+              console.log('✅ Ensured Arc Testnet is added to wallet');
+            } else if (destinationChainId === SEPOLIA_CHAIN_ID) {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: `0x${SEPOLIA_CHAIN_ID.toString(16)}`,
+                  chainName: 'Sepolia',
+                  nativeCurrency: {
+                    name: 'ETH',
+                    symbol: 'ETH',
+                    decimals: 18,
+                  },
+                  rpcUrls: ['https://rpc.sepolia.org'],
+                  blockExplorerUrls: ['https://sepolia.etherscan.io'],
+                }],
+              });
+              console.log('✅ Ensured Sepolia is added to wallet');
+            }
+          } catch (addError) {
+            // Chain might already be added, or user rejected - that's okay
+            // Error 4902 means chain already exists, which is fine
+            if (addError.code !== 4902) {
+              console.log('Note: Could not ensure destination chain is added (may already exist):', addError.message);
+            }
+          }
+        }
+      } catch (chainSetupError) {
+        console.warn('Error setting up destination chain, but continuing with bridge:', chainSetupError);
+        // Don't throw - Bridge Kit should handle chain switching
+      }
+
+      // Execute the bridge with step monitoring
+      let mintStepCompleted = false;
+      let mintStepError = null;
+      
+      // Execute the bridge - Bridge Kit should automatically prompt for chain switch when mint step is needed
+      // We wrap it to handle potential chain switching issues and ensure wallet prompts properly
+      const bridgePromise = (async () => {
+        try {
+          // Bridge Kit should handle chain switching automatically when it reaches the mint step
+          // It will prompt the user to switch to destination chain via the adapter
+          // The adapter uses the provider which should trigger wallet prompts
+          console.log('Starting bridge execution - Bridge Kit will prompt for chain switch when mint step is needed');
+          
+          const bridgeResult = await kit.bridge({
+            from: {
+              adapter: adapter,
+              chain: sourceChain.chain,
+            },
+            to: {
+              adapter: adapter,
+              chain: destinationChain.chain,
+            },
+            amount: amount,
+          });
+          
+          console.log('Bridge execution completed');
+          return bridgeResult;
+        } catch (bridgeError) {
+          console.error('Bridge execution error:', bridgeError);
+          
+          // If bridge fails, check if it's a chain-related error
+          const errorMsg = (bridgeError.message || '').toLowerCase();
+          const isChainError = errorMsg.includes('chain') || 
+                              errorMsg.includes('network') || 
+                              errorMsg.includes('wrong network') ||
+                              errorMsg.includes('unsupported chain') ||
+                              errorMsg.includes('switch') ||
+                              errorMsg.includes('mint');
+          
+          if (isChainError) {
+            console.log('⚠️ Bridge error appears to be chain-related, this might indicate the wallet did not prompt for chain switch during mint step');
+            console.log('Attempting to manually ensure destination chain is available...');
+            
+            // Try to explicitly switch to destination chain
+            // This might help if Bridge Kit didn't properly trigger the wallet prompt
+            try {
+              setState(prev => ({ ...prev, step: 'switching-network' }));
+              await switchChain({ chainId: destinationChainId });
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              console.log('Manually switched to destination chain');
+              
+              // Note: We can't retry the bridge here because it's already in progress
+              // But this helps ensure the chain is available for future attempts
+            } catch (switchErr) {
+              console.warn('Could not manually switch to destination chain:', switchErr);
+            }
+          }
+          
+          // Re-throw the original error with enhanced message if it's mint-related
+          if (errorMsg.includes('mint')) {
+            throw new Error(`Mint transaction failed: The wallet may not have prompted for the network switch to ${destinationChain?.name || 'destination chain'}. Please ensure you approve network switch requests in your wallet when bridging. Original error: ${bridgeError.message}`);
+          }
+          
+          throw bridgeError;
+        }
+      })();
+
+      // Set up a promise that monitors for mint step completion with timeout
+      // Increased timeout to 4 minutes to allow for chain switching and mint transaction
+      const bridgeWithMintMonitoring = Promise.race([
+        bridgePromise,
+        // Add a timeout to detect if mint step is stuck
+        new Promise((_, reject) => {
+          setTimeout(() => {
+            // Check if we're past the burn step but mint hasn't completed
+            // This is a fallback - Bridge Kit should handle this, but we add safety
+            const destChainName = destinationChain?.name || (destinationChainId === ARC_CHAIN_ID ? 'Arc Testnet' : destinationChainId === SEPOLIA_CHAIN_ID ? 'Sepolia' : 'destination chain');
+            reject(new Error(`Bridge transaction timeout: Mint step on ${destChainName} may be stuck. The wallet may not have prompted for the network switch. Please check your wallet for pending transaction approvals and manually switch to ${destChainName} if needed.`));
+          }, 240000); // 4 minutes total timeout (increased from 3 minutes)
+        })
+      ]);
+
+      const result = await bridgeWithMintMonitoring;
+
       // Helper function to safely stringify BigInt values
       const safeStringify = (obj) => {
         return JSON.stringify(obj, (key, value) => {
@@ -372,7 +511,7 @@ export function useBridge() {
         if (result.steps && Array.isArray(result.steps)) {
           console.log('Found steps array with', result.steps.length, 'steps');
           
-          // Loop through steps to find transaction hashes
+          // Loop through steps to find transaction hashes and verify mint step
           result.steps.forEach((step, index) => {
             console.log(`Step ${index}: ${step.name} - ${step.state}`, step);
             
@@ -383,7 +522,12 @@ export function useBridge() {
             } else if (step.name === 'mint' && step.txHash) {
               // Mint/receive transaction on destination chain
               receiveTxHash = step.txHash;
-              console.log('Found receiveTxHash from mint step:', receiveTxHash);
+              mintStepCompleted = true;
+              console.log('✅ Found receiveTxHash from mint step:', receiveTxHash);
+            } else if (step.name === 'mint' && step.state === 'error') {
+              // Mint step failed
+              mintStepError = step.error || 'Mint transaction failed on destination chain';
+              console.error('❌ Mint step error:', mintStepError);
             } else if (step.name === 'approve' && step.txHash) {
               // Approval transaction - we could use this as fallback for source
               if (!sourceTxHash) {
@@ -392,6 +536,27 @@ export function useBridge() {
               }
             }
           });
+
+          // Verify mint step completed successfully
+          if (!mintStepCompleted && !mintStepError) {
+            // Check if mint step exists but doesn't have a txHash
+            const mintStep = result.steps.find(s => s.name === 'mint');
+            if (mintStep) {
+              if (mintStep.state === 'pending' || mintStep.state === 'in-progress') {
+                throw new Error('Mint transaction is still pending. Please wait and check your wallet for pending transactions on the destination chain.');
+              } else if (mintStep.state === 'error') {
+                throw new Error(mintStep.error || 'Mint transaction failed on destination chain. Please ensure you are on the correct network and try again.');
+              }
+            } else {
+              console.warn('⚠️ Mint step not found in bridge result steps');
+            }
+          }
+
+          // If mint step had an error, throw it
+          if (mintStepError) {
+            const destChainName = destinationChain?.name || (destinationChainId === ARC_CHAIN_ID ? 'Arc Testnet' : destinationChainId === SEPOLIA_CHAIN_ID ? 'Sepolia' : 'destination chain');
+            throw new Error(`Mint transaction failed: ${mintStepError}. Please ensure you are on the destination chain (${destChainName}) and try again.`);
+          }
         }
         
         // Try to extract directly from result object
@@ -430,7 +595,7 @@ export function useBridge() {
 
       console.log('Final extracted transaction hashes:', { sourceTxHash, receiveTxHash });
       
-      // Validate transaction hashes
+      // Validate transaction hashes - especially the mint/receive hash
       if (sourceTxHash && typeof sourceTxHash === 'string' && sourceTxHash.startsWith('0x') && sourceTxHash.length === 66) {
         console.log('Valid source transaction hash:', sourceTxHash);
       } else {
@@ -439,9 +604,13 @@ export function useBridge() {
       }
       
       if (receiveTxHash && typeof receiveTxHash === 'string' && receiveTxHash.startsWith('0x') && receiveTxHash.length === 66) {
-        console.log('Valid destination transaction hash:', receiveTxHash);
+        console.log('✅ Valid destination (mint) transaction hash:', receiveTxHash);
       } else {
-        console.warn('Invalid or missing destination transaction hash:', receiveTxHash);
+        console.warn('⚠️ Invalid or missing destination (mint) transaction hash:', receiveTxHash);
+        // If we don't have a receiveTxHash but the bridge completed, this might indicate a problem
+        if (!mintStepCompleted) {
+          throw new Error('Mint transaction hash not found. The bridge may have completed on the source chain but the mint on the destination chain may have failed. Please check your wallet on the destination chain.');
+        }
         receiveTxHash = undefined;
       }
 
@@ -477,6 +646,12 @@ export function useBridge() {
       console.log('📋 Bridge error details:', errorDetails);
       
       let errorMessage = err.message || 'Bridge transaction failed';
+      
+      // Check if error is specifically about mint step
+      if (errorMessage.toLowerCase().includes('mint')) {
+        const destChainName = destinationChain?.name || (destinationChainId === ARC_CHAIN_ID ? 'Arc Testnet' : destinationChainId === SEPOLIA_CHAIN_ID ? 'Sepolia' : 'destination chain');
+        errorMessage = `Mint transaction failed on destination chain: ${errorMessage}. Please ensure you approve the network switch to ${destChainName} when prompted in your wallet.`;
+      }
       
       // Handle user rejection/cancellation FIRST - check multiple patterns
       // Also check nested error objects (some SDKs wrap errors)
@@ -564,13 +739,25 @@ export function useBridge() {
         errorMessage = 'Insufficient funds: Not enough balance to complete the bridge.';
       }
       
-      // Handle network errors (only if not user rejection)
-      if (!isUserRejection && (err.code === 'NETWORK_ERROR' || (err.message && (err.message.includes('network') || err.message.includes('timeout'))))) {
+      // Handle timeout errors FIRST (before network switch errors) - check for timeout specifically
+      const isTimeoutError = errorMsg.includes('timeout') || 
+                            errorMsg.includes('timed out') ||
+                            errorMsg.includes('stuck') ||
+                            (err.message && err.message.includes('timeout'));
+      
+      if (!isUserRejection && isTimeoutError) {
+        const destChainName = destinationChain?.name || (destinationChainId === ARC_CHAIN_ID ? 'Arc Testnet' : destinationChainId === SEPOLIA_CHAIN_ID ? 'Sepolia' : 'destination chain');
+        errorMessage = `Bridge transaction timeout: The mint step on ${destChainName} may be stuck. This usually happens when the wallet doesn't prompt for the network switch. Please:\n\n1. Check your wallet for any pending transaction approvals\n2. Manually switch to ${destChainName} in your wallet\n3. Check if there are pending transactions on ${destChainName}\n4. Try the bridge again after switching networks manually`;
+        console.log('⏱️ Detected timeout error - mint step likely stuck due to missing wallet prompt');
+      }
+      
+      // Handle network errors (only if not user rejection and not timeout)
+      if (!isUserRejection && !isTimeoutError && (err.code === 'NETWORK_ERROR' || (err.message && err.message.includes('network')))) {
         errorMessage = 'Network error: Unable to connect to blockchain. Please check your connection.';
       }
       
-      // Handle network switch errors (only if not user rejection)
-      if (!isUserRejection && err.message && (err.message.includes('network') || err.message.includes('chain'))) {
+      // Handle network switch errors (only if not user rejection and not timeout)
+      if (!isUserRejection && !isTimeoutError && err.message && (err.message.includes('network') || err.message.includes('chain'))) {
         errorMessage = 'Network switch failed. Please manually switch to the correct network in your wallet.';
       }
       

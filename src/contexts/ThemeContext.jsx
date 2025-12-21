@@ -12,39 +12,57 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  // Initialize theme with system preference detection
-  const [darkMode, setDarkMode] = useState(() => {
-    // Check localStorage first (user preference)
-    const saved = localStorage.getItem('darkMode');
-    if (saved !== null) {
-      return JSON.parse(saved);
-    }
+  // Helper function to apply theme immediately (synchronously)
+  const applyThemeImmediately = (isDark) => {
+    const theme = isDark ? darkTheme : lightTheme;
     
-    // Fall back to system preference if no saved preference
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    
-    // Default to light mode
-    return false;
-  });
-
-  // Apply theme changes
-  useEffect(() => {
-    const theme = darkMode ? darkTheme : lightTheme;
-    
-    // Apply CSS variables
+    // Apply CSS variables immediately
     applyThemeVariables(theme);
     
-    // Apply Tailwind dark class
-    if (darkMode) {
+    // Apply Tailwind dark class immediately
+    if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
     
     // Save preference
-    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+    localStorage.setItem('darkMode', JSON.stringify(isDark));
+  };
+
+  // Initialize theme with system preference detection
+  const [darkMode, setDarkMode] = useState(() => {
+    // Check localStorage first (user preference)
+    const saved = localStorage.getItem('darkMode');
+    if (saved !== null) {
+      const isDark = JSON.parse(saved);
+      // Apply immediately on initialization for mobile
+      if (typeof document !== 'undefined') {
+        applyThemeImmediately(isDark);
+      }
+      return isDark;
+    }
+    
+    // Fall back to system preference if no saved preference
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      // Apply immediately on initialization for mobile
+      if (typeof document !== 'undefined') {
+        applyThemeImmediately(isDark);
+      }
+      return isDark;
+    }
+    
+    // Default to light mode
+    if (typeof document !== 'undefined') {
+      applyThemeImmediately(false);
+    }
+    return false;
+  });
+
+  // Apply theme changes on mount and when darkMode changes (fallback for initial load)
+  useEffect(() => {
+    applyThemeImmediately(darkMode);
   }, [darkMode]);
 
   // Listen for system preference changes (only if user hasn't set a preference)
@@ -74,10 +92,17 @@ export const ThemeProvider = ({ children }) => {
   }, []);
 
   const toggleDarkMode = () => {
-    setDarkMode((prev) => !prev);
+    setDarkMode((prev) => {
+      const newValue = !prev;
+      // Apply changes synchronously for instant theme switch
+      applyThemeImmediately(newValue);
+      return newValue;
+    });
   };
 
   const setTheme = (isDark) => {
+    // Apply changes synchronously for instant theme switch
+    applyThemeImmediately(isDark);
     setDarkMode(isDark);
   };
 

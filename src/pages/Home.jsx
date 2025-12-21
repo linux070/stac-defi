@@ -127,7 +127,7 @@ const Home = ({ setActiveTab }) => {
       icon: Users,
       lucideIcon: Users,
       color: 'from-orange-500 to-orange-600',
-      description: t('Unique wallet addresses in 24h')
+      description: t('Total unique wallet addresses')
     },
     {
       id: 'volume',

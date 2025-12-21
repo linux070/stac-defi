@@ -88,6 +88,23 @@ export const executeSwap = async (
     }
 
     // Execute swap
+    // Estimate gas limit for better transaction reliability
+    let gasLimit = 500000n;
+    try {
+      gasLimit = await routerContract.swapExactTokensForTokens.estimateGas(
+        amountIn,
+        amountOutMin,
+        path,
+        recipient,
+        deadline,
+        { from: await signer.getAddress() }
+      );
+      // Add 20% buffer to estimated gas
+      gasLimit = (gasLimit * 120n) / 100n;
+    } catch (gasError) {
+      console.warn('Could not estimate gas, using default:', gasError);
+    }
+
     const tx = await routerContract
       .connect(signer)
       .swapExactTokensForTokens(
@@ -97,7 +114,7 @@ export const executeSwap = async (
         recipient,
         deadline,
         {
-          gasLimit: 500000n, // Adjust based on path length (v6 uses bigint)
+          gasLimit: gasLimit,
         }
       );
 
@@ -140,7 +157,9 @@ export const checkApproval = async (tokenContract, owner, spender, amount) => {
  */
 export const approveToken = async (tokenContract, spender, amount, signer) => {
   try {
-    const tx = await tokenContract.connect(signer).approve(spender, amount);
+    // Use MaxUint256 for infinite approval to avoid multiple approvals
+    const maxAmount = ethers.MaxUint256;
+    const tx = await tokenContract.connect(signer).approve(spender, maxAmount);
     return tx;
   } catch (error) {
     console.error('Error approving token:', error);
@@ -155,7 +174,15 @@ export const approveToken = async (tokenContract, spender, amount, signer) => {
  * @returns {bigint} Formatted amount
  */
 export const formatTokenAmount = (amount, decimals) => {
-  return ethers.parseUnits(amount, decimals);
+  if (!amount || isNaN(parseFloat(amount))) {
+    return 0n;
+  }
+  try {
+    return ethers.parseUnits(amount, decimals);
+  } catch (error) {
+    console.error('Error formatting token amount:', error);
+    return 0n;
+  }
 };
 
 /**
@@ -165,7 +192,15 @@ export const formatTokenAmount = (amount, decimals) => {
  * @returns {string} Human-readable amount
  */
 export const parseTokenAmount = (amount, decimals) => {
-  return ethers.formatUnits(amount, decimals);
+  if (!amount) {
+    return '0.00';
+  }
+  try {
+    return ethers.formatUnits(amount, decimals);
+  } catch (error) {
+    console.error('Error parsing token amount:', error);
+    return '0.00';
+  }
 };
 
 /**

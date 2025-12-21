@@ -21,6 +21,7 @@ import {
   getDeadline,
   calculateMinReceived,
   createSwapPath,
+  checkPoolLiquidity,
 } from '../utils/swapContract';
 import useTokenBalance from '../hooks/useTokenBalance';
 import useMultiChainBalances from '../hooks/useMultiChainBalances';
@@ -48,11 +49,31 @@ const Swap = () => {
   const [slippageWarning, setSlippageWarning] = useState('');
   const [toast, setToast] = useState({ visible: false, type: 'info', message: '' });
   const [quoteLoading, setQuoteLoading] = useState(false);
+  const [liquidityWarning, setLiquidityWarning] = useState('');
   
   // Helper function to get token address for current chain
   const getTokenAddress = (tokenSymbol) => {
     if (!chainId || !TOKENS[tokenSymbol]) return null;
     const token = TOKENS[tokenSymbol];
+    
+    // Handle special cases for different network structures
+    if (tokenSymbol === 'USDC') {
+      if (chainId === NETWORKS.ARC_TESTNET.chainId) {
+        return TOKENS.ARC_TESTNET?.USDC?.address || null;
+      } else if (chainId === NETWORKS.ETHEREUM_SEPOLIA.chainId) {
+        return TOKENS.ETHEREUM_SEPOLIA?.USDC?.address || null;
+      }
+    }
+    
+    if (tokenSymbol === 'EURC') {
+      if (token.address && typeof token.address === 'object') {
+        const addr = token.address[chainId] || null;
+        // Return null for placeholder addresses ('0x' or '0x0...')
+        return (addr && addr !== '0x' && addr !== '0x0000000000000000000000000000000000000000') ? addr : null;
+      }
+    }
+    
+    // Fallback for other tokens
     if (token.address && typeof token.address === 'object') {
       const addr = token.address[chainId] || null;
       // Return null for placeholder addresses ('0x' or '0x0...')
@@ -315,6 +336,46 @@ const Swap = () => {
     }
   }, [fromAmount, fromToken, toToken, slippage, fromBalance, isConnected, chainId]);
   
+  // Check liquidity when tokens or amount changes
+  useEffect(() => {
+    setLiquidityWarning('');
+    
+    if (fromAmount && parseFloat(fromAmount) > 0 && isConnected && chainId && window.ethereum) {
+      const contractAddresses = getContractAddresses(chainId);
+      const routerAddress = contractAddresses?.router;
+      const fromTokenAddr = getTokenAddress(fromToken);
+      const toTokenAddr = getTokenAddress(toToken);
+      
+      if (routerAddress && fromTokenAddr && toTokenAddr) {
+        const checkLiquidity = async () => {
+          try {
+            const { provider } = await getEthersProvider();
+            const routerContract = getSwapRouterContract(routerAddress, provider);
+            const liquidityCheck = await checkPoolLiquidity(routerContract, fromTokenAddr, toTokenAddr);
+            
+            if (!liquidityCheck.hasLiquidity) {
+              const fromDecimals = getTokenDecimals(fromToken);
+              const toDecimals = getTokenDecimals(toToken);
+              const reserveInFormatted = parseTokenAmount(liquidityCheck.reserveIn, fromDecimals);
+              const reserveOutFormatted = parseTokenAmount(liquidityCheck.reserveOut, toDecimals);
+              
+              setLiquidityWarning(
+                `⚠️ Insufficient liquidity in ${fromToken}/${toToken} pool. ` +
+                `Current reserves: ${fromToken}: ${reserveInFormatted}, ${toToken}: ${reserveOutFormatted}. ` +
+                `The pool needs liquidity before swaps can be executed.`
+              );
+            }
+          } catch (error) {
+            // Silently fail - we'll show error on swap attempt
+            console.warn('Could not check liquidity:', error);
+          }
+        };
+        
+        checkLiquidity();
+      }
+    }
+  }, [fromAmount, fromToken, toToken, isConnected, chainId]);
+  
   // Helper function to fetch quote from contract
   const fetchContractQuote = async (amount, fromTokenSymbol, toTokenSymbol, routerAddress, fromTokenAddr, toTokenAddr) => {
     try {
@@ -450,9 +511,32 @@ const Swap = () => {
       const slippageBps = slippage * 100; // Convert percentage to basis points
       const minAmountOut = formatTokenAmount(swapQuote?.minReceived || calculateMinReceived(toAmount, slippageBps), toDecimals);
       
+      // Validate amounts before proceeding
+      if (amountIn <= 0n) {
+        throw new Error('Invalid input amount');
+      }
+      
+      if (minAmountOut <= 0n) {
+        throw new Error('Invalid minimum output amount');
+      }
+      
       // Create swap path
       const path = createSwapPath(fromTokenAddr, toTokenAddr);
       const deadline = getDeadline();
+      
+      // Check liquidity before attempting swap
+      const liquidityCheck = await checkPoolLiquidity(routerContract, fromTokenAddr, toTokenAddr);
+      if (!liquidityCheck.hasLiquidity) {
+        const reserveInFormatted = parseTokenAmount(liquidityCheck.reserveIn, fromDecimals);
+        const reserveOutFormatted = parseTokenAmount(liquidityCheck.reserveOut, toDecimals);
+        throw new Error(
+          `Insufficient liquidity in ${fromToken}/${toToken} pool.\n\n` +
+          `Current reserves:\n` +
+          `${fromToken}: ${reserveInFormatted}\n` +
+          `${toToken}: ${reserveOutFormatted}\n\n` +
+          `Please add liquidity to the pool first, or try a different token pair.`
+        );
+      }
       
       // Check if approval is needed - use actual amount for better wallet display
       const needsApproval = await checkApproval(tokenContract, address, routerAddress, amountIn);
@@ -535,7 +619,28 @@ const Swap = () => {
       console.error('Swap error:', err);
       let errorMessage = 'Swap failed. Please try again.';
       
-      if (err.message) {
+      // Extract more specific error information
+      const errorStr = err.message || err.reason || err.data?.message || '';
+      const errorStrLower = errorStr.toLowerCase();
+      
+      if (errorStrLower.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds for gas fees. Please add more ETH to your wallet.';
+      } else if (errorStrLower.includes('insufficient liquidity') || errorStrLower.includes('insufficientliquidity')) {
+        errorMessage = `❌ Insufficient Liquidity Error\n\n` +
+          `The ${fromToken}/${toToken} liquidity pool doesn't have enough liquidity to complete this swap.\n\n` +
+          `🔧 Solutions:\n` +
+          `1. Wait for liquidity providers to add funds to the pool\n` +
+          `2. Try swapping a smaller amount\n` +
+          `3. Try a different token pair that has liquidity\n` +
+          `4. If you're a liquidity provider, add liquidity to the pool first\n\n` +
+          `Note: The Liquidity page is currently under development. For now, liquidity must be added directly through the smart contracts.`;
+      } else if (errorStrLower.includes('insufficient_output_amount') || errorStrLower.includes('insufficientoutputamount')) {
+        errorMessage = 'Slippage too high. Please increase slippage tolerance and try again.';
+      } else if (errorStrLower.includes('expired')) {
+        errorMessage = 'Transaction expired. Please try again.';
+      } else if (errorStrLower.includes('transfer_from_failed') || errorStrLower.includes('transferfromfailed')) {
+        errorMessage = 'Token transfer failed. Check your token allowance and balance.';
+      } else if (err.message) {
         errorMessage = err.message;
       } else if (err.reason) {
         errorMessage = err.reason;
@@ -982,6 +1087,24 @@ const Swap = () => {
           >
             <AlertTriangle size={16} className="swap-validation-error-icon" />
             <p className="swap-validation-error-text">{validationError}</p>
+          </motion.div>
+        )}
+
+        {/* Liquidity Warning */}
+        {liquidityWarning && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
+          >
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={18} className="text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200 whitespace-pre-line">
+                  {liquidityWarning}
+                </p>
+              </div>
+            </div>
           </motion.div>
         )}
 

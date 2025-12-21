@@ -220,32 +220,35 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       <WalletModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
       
       {/* Footer */}
-      <footer className="mt-auto py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-black relative z-10">
+      <footer className="mt-auto border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-black relative z-10 md:py-4 py-6 pb-20 md:pb-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Flex container that stacks on mobile and aligns horizontally on desktop */}
           <div className="flex flex-col md:flex-row items-center justify-between min-h-[60px] gap-4 md:gap-0">
             {/* Left Section - Language Selector */}
-            <div className="flex-shrink-0 md:mr-4">
+            <div className="flex-shrink-0 md:mr-4 w-full md:w-auto flex justify-center md:justify-start">
               <LanguageSelector placement="footer" />
             </div>
             
             {/* Center Section - Copyright and Attribution */}
-            <div className="text-center">
-              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
-                © {new Date().getFullYear()} Stac. All rights reserved. · 
-                Built by : <a 
-                  href="https://x.com/linux_mode" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors font-medium"
-                >
-                  Linux🏅🃏
-                </a>
+            <div className="text-center w-full md:w-auto">
+              <p className="text-sm md:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                <span className="block md:inline">© {new Date().getFullYear()} Stac. All rights reserved.</span>
+                <span className="hidden md:inline"> · </span>
+                <span className="block md:inline mt-1 md:mt-0">
+                  Built by : <a 
+                    href="https://x.com/linux_mode" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-semibold no-underline cursor-pointer"
+                  >
+                    Linux🏅🃏
+                  </a>
+                </span>
               </p>
             </div>
             
             {/* Right Section - Empty spacer on desktop to maintain balance */}
-            <div className="flex-shrink-0 md:w-auto">
+            <div className="flex-shrink-0 md:w-auto hidden md:block">
               {/* This empty div balances the left element on desktop */}
             </div>
           </div>

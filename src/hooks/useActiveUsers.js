@@ -3,7 +3,7 @@ import { getItem, setItem, getItemSync } from '../utils/indexedDB';
 
 // Cache key for IndexedDB
 const CACHE_KEY = 'dapp_active_users';
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour (update hourly for 24h window)
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour (update hourly)
 const TRANSACTIONS_KEY = 'myTransactions';
 
 // Calculate percentage change
@@ -13,26 +13,21 @@ const calculatePercentageChange = (current, previous) => {
   return parseFloat(change.toFixed(1));
 };
 
-// Get unique active users from last 24 hours
+// Get unique active users (all time total)
 const getActiveUsers = async () => {
   try {
     const transactions = await getItem(TRANSACTIONS_KEY);
     if (!transactions || !Array.isArray(transactions)) return 0;
     
-    const now = Date.now();
-    const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
-    
-    // Filter for successful transactions in last 24 hours
-    const recentTransactions = transactions.filter(tx => 
+    // Filter for successful transactions (all time, not just 24h)
+    const successfulTransactions = transactions.filter(tx => 
       tx.status === 'success' &&
-      tx.timestamp &&
-      tx.timestamp >= twentyFourHoursAgo &&
       tx.address // Must have an address
     );
     
     // Extract unique wallet addresses (case-insensitive)
     const uniqueAddresses = new Set();
-    recentTransactions.forEach(tx => {
+    successfulTransactions.forEach(tx => {
       if (tx.address) {
         uniqueAddresses.add(tx.address.toLowerCase());
       }
@@ -45,7 +40,7 @@ const getActiveUsers = async () => {
   }
 };
 
-// Lightweight hook to track active users (unique wallet addresses in 24h)
+// Lightweight hook to track active users (total unique wallet addresses)
 export function useActiveUsers() {
   const [activeUsers, setActiveUsers] = useState(null);
   const [change, setChange] = useState(null);
@@ -95,7 +90,7 @@ export function useActiveUsers() {
             if (doubleCheckCount > 0) {
               finalCount = doubleCheckCount;
             } else {
-              // Transactions exist but none in 24h window - use cached value for persistence
+              // Transactions exist but none are successful - use cached value for persistence
               finalCount = previousCount;
             }
           } else {
@@ -183,7 +178,7 @@ export function useActiveUsers() {
       }, 200);
     });
 
-    // Update every hour (since we're tracking 24h window)
+    // Update every hour
     intervalRef.current = setInterval(() => {
       updateActiveUsers();
     }, CACHE_DURATION);
