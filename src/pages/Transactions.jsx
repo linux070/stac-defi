@@ -245,6 +245,45 @@ const Transactions = () => {
     return amountStr;
   };
 
+  // Helper to get from amount for swap transactions
+  const getSwapFromAmount = (tx) => {
+    if (tx.type !== 'Swap') return '';
+    if (!tx.from) return '';
+    
+    const fromStr = String(tx.from).trim();
+    const numberMatch = fromStr.match(/^([\d.]+)/);
+    return numberMatch ? numberMatch[1] : '';
+  };
+
+  // Helper to get to amount for swap transactions
+  const getSwapToAmount = (tx) => {
+    if (tx.type !== 'Swap') return '';
+    
+    // First try to extract from tx.to
+    if (tx.to) {
+      const toStr = String(tx.to).trim();
+      const numberMatch = toStr.match(/^([\d.]+)/);
+      if (numberMatch && numberMatch[1]) {
+        return numberMatch[1];
+      }
+    }
+    
+    // If tx.amount contains arrow format, extract the second number
+    if (tx.amount && String(tx.amount).includes('→')) {
+      const amountStr = String(tx.amount).trim();
+      const parts = amountStr.split('→');
+      if (parts.length > 1) {
+        const secondPart = parts[1].trim();
+        const numberMatch = secondPart.match(/^([\d.]+)/);
+        if (numberMatch && numberMatch[1]) {
+          return numberMatch[1];
+        }
+      }
+    }
+    
+    return '';
+  };
+
   return (
     <div className="max-w-6xl mx-auto w-full px-4 sm:px-4 md:px-0">
       {/* Header */}
@@ -379,69 +418,149 @@ const Transactions = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="card p-4 space-y-3.5 touch-manipulation"
+              className={`card p-4 space-y-3.5 touch-manipulation ${
+                tx.type === 'Swap'
+                  ? 'border border-blue-100/80 dark:border-blue-900/40 bg-gradient-to-b from-white to-blue-50/40 dark:from-gray-900 dark:to-blue-950/15'
+                  : ''
+              }`}
             >
               {/* Header Row - Type, Status, and Time */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  {tx.type === 'Swap' ? (
-                    <div className="flex flex-col gap-1">
+              {tx.type === 'Swap' ? (
+                <div className="flex flex-col gap-2">
+                  {/* Top row: Swap title and Time */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col gap-1.5">
                       <span className="text-sm font-semibold text-slate-900 dark:text-white">{tx.type}</span>
                       {getNetworkName(tx.chainId) && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 w-fit">
                           {getNetworkName(tx.chainId)}
                         </span>
                       )}
                     </div>
-                  ) : tx.type === 'Bridge' ? (
-                    <span className="text-sm font-semibold text-slate-900 dark:text-white">{tx.type}</span>
-                  ) : (
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getTypeColor(tx.type)}`}>
-                      {getTypeIcon(tx.type)}
-                      {tx.type}
-                    </span>
-                  )}
-                  {tx.status === 'success' ? (
-                    <span className="inline-flex items-center px-2.5 py-1" style={{ 
-                      backgroundColor: '#E0F2F1', 
-                      border: '1px solid #80CBC4',
-                      borderRadius: '8px'
-                    }}>
-                      <span className="flex items-center justify-center w-4 h-4 rounded-full mr-1.5 flex-shrink-0" style={{ 
-                        backgroundColor: '#00897B'
+                    <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">{timeAgo(tx.timestamp)}</span>
+                  </div>
+                  {/* Centered Success button */}
+                  <div className="flex justify-center">
+                    {tx.status === 'success' ? (
+                      <span className="inline-flex items-center px-2.5 py-1" style={{ 
+                        backgroundColor: '#E0F2F1', 
+                        border: '1px solid #80CBC4',
+                        borderRadius: '8px'
                       }}>
-                        <i className="fa fa-check-circle text-white" style={{ fontSize: '10px', lineHeight: '1' }}></i>
+                        <span className="flex items-center justify-center w-4 h-4 rounded-full mr-1.5 flex-shrink-0" style={{ 
+                          backgroundColor: '#00897B'
+                        }}>
+                          <i className="fa fa-check-circle text-white" style={{ fontSize: '10px', lineHeight: '1' }}></i>
+                        </span>
+                        <span className="text-xs font-semibold" style={{ color: '#00695C' }}>Success</span>
                       </span>
-                      <span className="text-xs font-semibold" style={{ color: '#00695C' }}>Success</span>
-                    </span>
-                  ) : (
-                    <div className="flex items-center space-x-1">
-                      {getStatusIcon(tx.status)}
-                      <span className="capitalize text-xs font-medium">{tx.status}</span>
+                    ) : (
+                      <div className="flex items-center space-x-1">
+                        {getStatusIcon(tx.status)}
+                        <span className="capitalize text-xs font-medium">{tx.status}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {tx.type === 'Bridge' ? (
+                      <span className="text-sm font-semibold text-slate-900 dark:text-white">{tx.type}</span>
+                    ) : (
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getTypeColor(tx.type)}`}>
+                        {getTypeIcon(tx.type)}
+                        {tx.type}
+                      </span>
+                    )}
+                    {tx.status === 'success' ? (
+                      <span className="inline-flex items-center px-2.5 py-1" style={{ 
+                        backgroundColor: '#E0F2F1', 
+                        border: '1px solid #80CBC4',
+                        borderRadius: '8px'
+                      }}>
+                        <span className="flex items-center justify-center w-4 h-4 rounded-full mr-1.5 flex-shrink-0" style={{ 
+                          backgroundColor: '#00897B'
+                        }}>
+                          <i className="fa fa-check-circle text-white" style={{ fontSize: '10px', lineHeight: '1' }}></i>
+                        </span>
+                        <span className="text-xs font-semibold" style={{ color: '#00695C' }}>Success</span>
+                      </span>
+                    ) : (
+                      <div className="flex items-center space-x-1">
+                        {getStatusIcon(tx.status)}
+                        <span className="capitalize text-xs font-medium">{tx.status}</span>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">{timeAgo(tx.timestamp)}</span>
+                </div>
+              )}
+
+              {tx.type === 'Swap' ? (
+                <>
+                  {/* Swap Summary - Mobile optimized */}
+                  <div className="rounded-xl border border-blue-100/70 dark:border-blue-900/40 bg-white/70 dark:bg-gray-900/40 p-3">
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">You pay</div>
+                        <div className="flex items-baseline gap-1.5 min-w-0">
+                          {(getSwapFromAmount(tx) || getSwapAmount(tx)) && (
+                            <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
+                              {getSwapFromAmount(tx) || getSwapAmount(tx)}
+                            </span>
+                          )}
+                          <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                            {getSwapFromToken(tx)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="h-9 w-9 rounded-full bg-blue-50 dark:bg-blue-900/25 flex items-center justify-center border border-blue-100 dark:border-blue-900/40">
+                          <ArrowLeftRight size={16} className="text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="mt-1 text-[10px] font-medium text-blue-600/80 dark:text-blue-400/80">Swap</div>
+                      </div>
+
+                      <div className="min-w-0 text-right">
+                        <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">You receive</div>
+                        <div className="flex items-baseline justify-end gap-1.5 min-w-0">
+                          {getSwapToAmount(tx) && (
+                            <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
+                              {getSwapToAmount(tx)}
+                            </span>
+                          )}
+                          <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                            {getSwapToToken(tx)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">{timeAgo(tx.timestamp)}</span>
-              </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* From/To Row - Improved spacing and layout */}
+                  <div className="flex items-center gap-3 py-1.5">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">From</div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{getSwapFromToken(tx)}</div>
+                    </div>
+                    <ArrowLeftRight size={18} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                    <div className="flex-1 min-w-0 text-right">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">To</div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{getSwapToToken(tx)}</div>
+                    </div>
+                  </div>
 
-              {/* From/To Row - Improved spacing and layout */}
-              <div className="flex items-center gap-3 py-1.5">
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">From</div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{getSwapFromToken(tx)}</div>
-                </div>
-                <ArrowLeftRight size={18} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                <div className="flex-1 min-w-0 text-right">
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">To</div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{getSwapToToken(tx)}</div>
-                </div>
-              </div>
-
-              {/* Amount - Better visual hierarchy */}
-              <div className="flex items-center justify-between py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 -mx-1">
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Amount</span>
-                <span className="text-base font-bold text-slate-900 dark:text-white">{getSwapAmount(tx)}</span>
-              </div>
+                  {/* Amount - Better visual hierarchy */}
+                  <div className="flex items-center justify-between py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 -mx-1">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Amount</span>
+                    <span className="text-base font-bold text-slate-900 dark:text-white">{getSwapAmount(tx)}</span>
+                  </div>
+                </>
+              )}
 
               {/* Transaction Hash - Improved layout */}
               <div className="pt-2.5 border-t border-gray-200 dark:border-gray-700">
