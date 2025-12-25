@@ -39,60 +39,153 @@ const Transactions = () => {
   const [myTransactions, setMyTransactions] = useState([]);
   const [loadingLocalTransactions, setLoadingLocalTransactions] = useState(true);
 
-  // Load transactions from IndexedDB on mount
+  // Load transactions from IndexedDB on mount and when wallet address changes
   useEffect(() => {
     const loadTransactions = async () => {
       try {
         const saved = await getItem('myTransactions');
+        console.log('📦 Loading transactions from IndexedDB:', {
+          totalInStorage: saved?.length || 0,
+          walletAddress,
+          walletAddressLower: walletAddress?.toLowerCase()
+        });
+        
         if (saved && Array.isArray(saved)) {
-          setMyTransactions(saved);
+          // Filter transactions by current wallet address
+          if (walletAddress) {
+            const walletAddressLower = walletAddress.toLowerCase();
+            
+            // Debug: Log sample transactions to see their structure
+            if (saved.length > 0) {
+              console.log('📋 Sample transaction from storage:', {
+                firstTx: saved[0],
+                hasAddress: !!saved[0]?.address,
+                txAddress: saved[0]?.address,
+                walletAddress: walletAddressLower
+              });
+            }
+            
+            const filtered = saved.filter(tx => {
+              // Only include transactions that have an address field matching current wallet
+              if (tx.address) {
+                const matches = tx.address.toLowerCase() === walletAddressLower;
+                if (matches) {
+                  console.log('✅ Transaction matches wallet:', tx.hash, tx.type);
+                }
+                return matches;
+              }
+              // Exclude transactions without address field (old transactions)
+              // They can't be attributed to a specific wallet
+              console.log('⚠️ Transaction without address field, excluding:', tx.hash);
+              return false;
+            });
+            
+            console.log('🔍 Filtered transactions:', {
+              total: saved.length,
+              filtered: filtered.length,
+              walletAddress: walletAddressLower
+            });
+            
+            setMyTransactions(filtered);
+          } else {
+            // If no wallet connected, show empty
+            console.log('⚠️ No wallet connected, showing empty transactions');
+            setMyTransactions([]);
+          }
+        } else {
+          console.log('📭 No transactions found in storage');
+          setMyTransactions([]);
         }
       } catch (err) {
         console.error('Error loading transactions from IndexedDB:', err);
+        setMyTransactions([]);
       } finally {
         setLoadingLocalTransactions(false);
       }
     };
     loadTransactions();
-  }, []);
+  }, [walletAddress]); // Reload when wallet address changes
 
   // Merge blockchain transactions with IndexedDB transactions
+  // Filter by current wallet address
   const mergedTransactions = useMemo(() => {
-    const blockchainSet = new Set(blockchainTransactions.map(tx => tx.hash));
-    const localOnly = myTransactions.filter(tx => !blockchainSet.has(tx.hash));
-    return [...blockchainTransactions, ...localOnly].sort((a, b) => {
+    if (!walletAddress) {
+      return [];
+    }
+    
+    const walletAddressLower = walletAddress.toLowerCase();
+    
+    // Filter blockchain transactions by wallet address
+    const filteredBlockchain = blockchainTransactions.filter(tx => {
+      // Check if transaction is from/to the current wallet
+      if (tx.from && tx.from.toLowerCase() === walletAddressLower) return true;
+      if (tx.to && tx.to.toLowerCase() === walletAddressLower) return true;
+      // If transaction has address field, use that
+      if (tx.address && tx.address.toLowerCase() === walletAddressLower) return true;
+      return false;
+    });
+    
+    // Filter local transactions by wallet address (already filtered in useEffect, but double-check)
+    const filteredLocal = myTransactions.filter(tx => {
+      if (tx.address) {
+        return tx.address.toLowerCase() === walletAddressLower;
+      }
+      // Exclude transactions without address field
+      return false;
+    });
+    
+    const blockchainSet = new Set(filteredBlockchain.map(tx => tx.hash));
+    const localOnly = filteredLocal.filter(tx => !blockchainSet.has(tx.hash));
+    
+    const merged = [...filteredBlockchain, ...localOnly].sort((a, b) => {
       const timeA = a.timestamp || 0;
       const timeB = b.timestamp || 0;
       return timeB - timeA;
     });
-  }, [blockchainTransactions, myTransactions]);
+    
+    console.log('🔄 Merged transactions:', {
+      blockchain: filteredBlockchain.length,
+      local: filteredLocal.length,
+      localOnly: localOnly.length,
+      total: merged.length,
+      walletAddress: walletAddressLower
+    });
+    
+    return merged;
+  }, [blockchainTransactions, myTransactions, walletAddress]);
 
-  // Persist transactions to IndexedDB (web3-native persistence)
-  useEffect(() => {
-    if (!loadingLocalTransactions) {
-      // Always save, even if empty array (to ensure IndexedDB is initialized)
-      setItem('myTransactions', myTransactions).then(() => {
-        console.log(`Saved ${myTransactions.length} transactions to IndexedDB`);
-      }).catch(err => {
-        console.error('Error saving transactions to IndexedDB:', err);
-        // Fallback to localStorage
-        try {
-          localStorage.setItem('myTransactions', JSON.stringify(myTransactions));
-        } catch (localErr) {
-          console.error('Error saving to localStorage fallback:', localErr);
-        }
-      });
-    }
-  }, [myTransactions, loadingLocalTransactions]);
+  // Note: We don't save filtered transactions back to IndexedDB
+  // The original transactions with all wallet addresses are kept in storage
+  // We only filter when displaying. This preserves data for all wallets.
   
   // Listen for new transactions from other pages (Bridge, Swap, etc.)
   useEffect(() => {
     const handleTransactionSaved = async () => {
       // Reload transactions when a new one is saved
+      // Filter by current wallet address
+      console.log('🔄 Transaction saved event received, reloading...');
       try {
         const saved = await getItem('myTransactions');
         if (saved && Array.isArray(saved)) {
-          setMyTransactions(saved);
+          if (walletAddress) {
+            const walletAddressLower = walletAddress.toLowerCase();
+            const filtered = saved.filter(tx => {
+              // Only include transactions with matching address
+              if (tx.address) {
+                return tx.address.toLowerCase() === walletAddressLower;
+              }
+              // Exclude transactions without address field
+              return false;
+            });
+            console.log('🔄 Reloaded transactions after save:', {
+              total: saved.length,
+              filtered: filtered.length,
+              walletAddress: walletAddressLower
+            });
+            setMyTransactions(filtered);
+          } else {
+            setMyTransactions([]);
+          }
         }
       } catch (err) {
         console.error('Error reloading transactions:', err);
@@ -108,7 +201,7 @@ const Transactions = () => {
       window.removeEventListener('swapTransactionSaved', handleTransactionSaved);
       window.removeEventListener('lpTransactionSaved', handleTransactionSaved);
     };
-  }, []);
+  }, [walletAddress]); // Include walletAddress in dependencies
 
   const handleCopyHash = async (hash) => {
     const success = await copyToClipboard(hash);
@@ -309,7 +402,7 @@ const Transactions = () => {
             <tbody>
               {mergedTransactions.map((tx, index) => (
                 <motion.tr
-                  key={tx.id}
+                  key={tx.id || tx.hash || `tx-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -414,7 +507,7 @@ const Transactions = () => {
         {mergedTransactions.length > 0 ? (
           mergedTransactions.map((tx, index) => (
             <motion.div
-              key={tx.id}
+              key={tx.id || tx.hash || `tx-${index}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
@@ -463,16 +556,23 @@ const Transactions = () => {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {tx.type === 'Bridge' ? (
-                      <span className="text-sm font-semibold text-slate-900 dark:text-white">{tx.type}</span>
-                    ) : (
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getTypeColor(tx.type)}`}>
-                        {getTypeIcon(tx.type)}
-                        {tx.type}
-                      </span>
-                    )}
+                <div className="flex flex-col gap-2">
+                  {/* Top row: Bridge title and Time */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col gap-1.5">
+                      {tx.type === 'Bridge' ? (
+                        <span className="text-sm font-semibold text-slate-900 dark:text-white">{tx.type}</span>
+                      ) : (
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getTypeColor(tx.type)}`}>
+                          {getTypeIcon(tx.type)}
+                          {tx.type}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">{timeAgo(tx.timestamp)}</span>
+                  </div>
+                  {/* Centered Success button */}
+                  <div className="flex justify-center">
                     {tx.status === 'success' ? (
                       <span className="inline-flex items-center px-2.5 py-1" style={{ 
                         backgroundColor: '#E0F2F1', 
@@ -493,7 +593,6 @@ const Transactions = () => {
                       </div>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">{timeAgo(tx.timestamp)}</span>
                 </div>
               )}
 
@@ -516,11 +615,8 @@ const Transactions = () => {
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="h-9 w-9 rounded-full bg-blue-50 dark:bg-blue-900/25 flex items-center justify-center border border-blue-100 dark:border-blue-900/40">
-                          <ArrowLeftRight size={16} className="text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div className="mt-1 text-[10px] font-medium text-blue-600/80 dark:text-blue-400/80">Swap</div>
+                      <div className="flex items-center justify-center">
+                        <ArrowLeftRight size={18} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
                       </div>
 
                       <div className="min-w-0 text-right">
