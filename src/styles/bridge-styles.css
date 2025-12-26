@@ -513,8 +513,58 @@ html.dark,
   }
 }
 
+/* Add Arc Testnet Button - Top Right */
+.add-arc-button {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  padding: 8px 14px;
+  font-size: 11px;
+  color: var(--bridge-text-primary);
+  border: 1px solid var(--bridge-border-medium);
+  border-radius: 8px;
+  background: var(--bridge-surface-card);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.add-arc-button:hover {
+  background: var(--bridge-surface-hover);
+  border-color: var(--bridge-border-focus);
+  transform: scale(1.02);
+}
+
+.add-arc-button:active {
+  transform: scale(0.98);
+}
+
+/* Desktop: Align button with container top padding */
+@media (min-width: 768px) {
+  .add-arc-button {
+    top: 32px;
+  }
+}
+
+/* Powered By Badge - Bottom Position */
+.powered-by-badge-bottom {
+  margin-top: 16px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--bridge-text-secondary);
+  text-align: center;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
 /* Responsive Design - Mobile First  */
 @media (max-width: 640px) {
+
   /* Override parent wrapper constraints on mobile - target the div wrapping bridge-container */
   div.max-w-lg.mx-auto {
     max-width: 100% !important;
@@ -524,11 +574,12 @@ html.dark,
     padding-right: 0 !important;
     width: 100% !important;
   }
-  
+
   /* Ensure parent wrapper doesn't add padding on mobile */
   .bridge-container {
     padding: 16px;
-    padding-bottom: 50px; /* Add extra bottom padding for badge */
+    padding-bottom: 50px;
+    /* Add extra bottom padding for badge */
     border-radius: 16px;
     margin: 16px auto !important;
     max-width: calc(100% - 32px) !important;
@@ -538,7 +589,7 @@ html.dark,
     border-right: 1px solid var(--bridge-border-light);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   }
-  
+
   /* Settings and badge positioning */
   .settings-button {
     top: 16px;
@@ -549,7 +600,7 @@ html.dark,
     min-height: 36px;
     z-index: 10;
   }
-  
+
   /* Powered by badge - move to bottom on mobile to avoid collision */
   .powered-by-badge {
     position: absolute !important;
@@ -564,11 +615,34 @@ html.dark,
     text-overflow: ellipsis;
     z-index: 5;
   }
-  
+
   .powered-by-badge span {
     display: inline-block;
   }
-  
+
+  /* Add Arc Testnet button - mobile positioning */
+  .add-arc-button {
+    top: 16px !important;
+    right: 16px !important;
+    padding: 6px 10px;
+    font-size: 10px;
+    gap: 4px;
+    z-index: 10;
+    white-space: nowrap;
+  }
+
+  .add-arc-button svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Powered by badge bottom - mobile spacing */
+  .powered-by-badge-bottom {
+    margin-top: 12px;
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+
   /* Header adjustments - no collision with badge on mobile */
   .bridge-header {
     font-size: 20px;
@@ -581,27 +655,27 @@ html.dark,
     box-sizing: border-box;
     margin-top: 0;
   }
-  
+
   /* Network selector - full width cards */
   .network-selector {
     flex-direction: column;
     gap: 12px;
     margin-bottom: 24px;
   }
-  
+
   .network-card {
     width: 100%;
     padding: 16px;
     border-radius: 12px;
     min-height: 64px;
   }
-  
+
   .network-icon {
     width: 32px;
     height: 32px;
     flex-shrink: 0;
   }
-  
+
   .network-name {
     font-size: 14px;
     font-weight: 600;
@@ -609,7 +683,7 @@ html.dark,
     overflow-wrap: break-word;
     line-height: 1.3;
   }
-  
+
   .network-chain {
     font-size: 11px;
     word-wrap: break-word;
@@ -617,7 +691,7 @@ html.dark,
     line-height: 1.3;
     margin-top: 2px;
   }
-  
+
   /* Arrow divider button - centered and larger */
   .arrow-divider-button {
     transform: rotate(90deg);
@@ -630,73 +704,74 @@ html.dark,
     min-height: 44px;
     border-radius: 12px;
   }
-  
+
   .arrow-divider-button svg {
     transform: rotate(90deg);
     width: 20px;
     height: 20px;
   }
-  
+
   /* Input groups - full width, better spacing */
   .input-group {
     padding: 16px;
     margin-bottom: 16px;
     border-radius: 12px;
   }
-  
+
   .input-header {
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 12px;
   }
-  
+
   .input-label {
     font-size: 13px;
     font-weight: 500;
     opacity: 0.9;
   }
-  
+
   .balance-text {
     font-size: 12px;
     white-space: nowrap;
   }
-  
+
   .balance-text span {
     font-weight: 600;
   }
-  
+
   /* Input row - better mobile layout */
   .input-row {
     flex-wrap: nowrap;
     gap: 12px;
     align-items: center;
   }
-  
+
   .amount-input {
     font-size: 28px;
     font-weight: 600;
     min-width: 0;
     flex: 1 1 auto;
-    width: 0; /* Force flex to work properly */
+    width: 0;
+    /* Force flex to work properly */
   }
-  
+
   .token-selector {
     flex-shrink: 0;
     padding: 10px 14px;
     min-width: 80px;
     border-radius: 10px;
   }
-  
+
   .token-icon {
     width: 24px;
     height: 24px;
   }
-  
+
   .token-symbol {
     font-size: 14px;
     font-weight: 600;
   }
-  
+
   /* Max button */
   .max-button {
     padding: 8px 16px;
@@ -705,28 +780,28 @@ html.dark,
     min-height: 36px;
     border-radius: 8px;
   }
-  
+
   /* Info grid - single column */
   .info-grid {
     grid-template-columns: 1fr;
     gap: 12px;
     margin-bottom: 20px;
   }
-  
+
   .info-card {
     padding: 14px;
     border-radius: 12px;
   }
-  
+
   .info-card-label {
     font-size: 11px;
     margin-bottom: 8px;
   }
-  
+
   .info-card-value {
     font-size: 16px;
   }
-  
+
   /* Alert box - better mobile spacing */
   .alert-box {
     padding: 14px 16px;
@@ -734,21 +809,21 @@ html.dark,
     margin-bottom: 20px;
     border-radius: 12px;
   }
-  
+
   .alert-icon {
     width: 18px;
     height: 18px;
     flex-shrink: 0;
     margin-top: 2px;
   }
-  
+
   .alert-text {
     font-size: 13px;
     line-height: 1.5;
     word-wrap: break-word;
     overflow-wrap: break-word;
   }
-  
+
   /* Bridge button - full width, larger touch target */
   .bridge-button {
     padding: 16px;
@@ -758,7 +833,7 @@ html.dark,
     border-radius: 12px;
     width: 100%;
   }
-  
+
   /* Section label */
   .section-label {
     font-size: 12px;
@@ -770,14 +845,15 @@ html.dark,
 @media (max-width: 375px) {
   .bridge-container {
     padding: 12px;
-    padding-bottom: 45px; /* Add extra bottom padding for badge */
+    padding-bottom: 45px;
+    /* Add extra bottom padding for badge */
   }
-  
+
   .bridge-header {
     font-size: 18px;
     padding-right: 0;
   }
-  
+
   .powered-by-badge {
     bottom: 12px !important;
     right: 12px !important;
@@ -786,26 +862,45 @@ html.dark,
     padding: 5px 8px;
     max-width: calc(100% - 24px);
   }
-  
+
   .settings-button {
     top: 12px;
     right: 12px;
     width: 32px;
     height: 32px;
   }
-  
+
+  .add-arc-button {
+    top: 12px !important;
+    right: 12px !important;
+    padding: 5px 8px;
+    font-size: 9px;
+    gap: 3px;
+  }
+
+  .add-arc-button svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .powered-by-badge-bottom {
+    margin-top: 10px;
+    padding: 5px 8px;
+    font-size: 9px;
+  }
+
   .network-card {
     padding: 14px;
   }
-  
+
   .input-group {
     padding: 14px;
   }
-  
+
   .amount-input {
     font-size: 24px;
   }
-  
+
   .bridge-button {
     padding: 14px;
     font-size: 15px;
@@ -904,7 +999,7 @@ html.dark,
   margin-bottom: 24px;
 }
 
-.bridging-modal-network-container > div {
+.bridging-modal-network-container>div {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -1217,7 +1312,7 @@ html:not(.dark) .bridging-modal-error-icon,
     align-items: center;
     padding-top: 16px;
   }
-  
+
   .bridging-modal-container {
     max-width: calc(100% - 32px);
     width: calc(100% - 32px);
@@ -1231,12 +1326,12 @@ html:not(.dark) .bridging-modal-error-icon,
     display: flex;
     flex-direction: column;
   }
-  
+
   .bridging-modal-header {
     padding: 16px;
     flex-shrink: 0;
   }
-  
+
   .bridging-modal-close-button {
     top: 12px;
     right: 12px;
@@ -1245,50 +1340,50 @@ html:not(.dark) .bridging-modal-error-icon,
     min-width: 32px;
     min-height: 32px;
   }
-  
+
   .bridging-modal-close-button svg {
     width: 18px;
     height: 18px;
   }
-  
+
   .bridging-modal-title {
     font-size: 16px;
     font-weight: 600;
     line-height: 1.2;
     padding: 0 40px;
   }
-  
+
   .bridging-modal-loader-container {
     width: 48px;
     height: 48px;
     margin-bottom: 10px;
   }
-  
+
   .bridging-modal-loader-container svg {
     width: 24px;
     height: 24px;
   }
-  
+
   .bridging-modal-loader-container .w-8 {
     width: 24px;
     height: 24px;
   }
-  
+
   .bridging-modal-content {
     padding: 16px;
   }
-  
+
   .bridging-modal-network-container {
     padding: 16px;
     margin-bottom: 16px;
   }
-  
-  .bridging-modal-network-container > div {
+
+  .bridging-modal-network-container>div {
     gap: 8px;
     flex-direction: row !important;
     flex-wrap: nowrap;
   }
-  
+
   .bridging-modal-network-card {
     padding: 10px;
     min-width: 70px;
@@ -1296,117 +1391,117 @@ html:not(.dark) .bridging-modal-error-icon,
     max-width: calc(50% - 6px);
     width: auto;
   }
-  
+
   .bridging-modal-network-icon {
     width: 28px;
     height: 28px;
     margin-bottom: 4px;
   }
-  
+
   .bridging-modal-network-name {
     font-size: 9px;
     word-wrap: break-word;
     overflow-wrap: break-word;
     line-height: 1.2;
   }
-  
+
   .bridging-modal-arrow {
     width: 14px;
     height: 14px;
     flex-shrink: 0;
   }
-  
+
   .bridging-modal-bridge-text {
     font-size: 12px;
     margin-bottom: 16px;
     padding: 0 4px;
   }
-  
+
   .bridging-modal-progress-card {
     padding: 14px;
     margin-bottom: 16px;
   }
-  
+
   .bridging-modal-progress-header {
     margin-bottom: 10px;
   }
-  
+
   .bridging-modal-progress-label {
     font-size: 11px;
   }
-  
+
   .bridging-modal-progress-time {
     font-size: 13px;
   }
-  
+
   .bridging-modal-progress-bar-container {
     height: 6px;
     margin-bottom: 6px;
   }
-  
+
   .bridging-modal-progress-estimate {
     font-size: 10px;
   }
-  
+
   .bridging-modal-notice {
     padding: 12px;
     gap: 10px;
   }
-  
+
   .bridging-modal-notice-icon {
     width: 18px;
     height: 18px;
     flex-shrink: 0;
   }
-  
+
   .bridging-modal-notice-title {
     font-size: 12px;
     margin-bottom: 4px;
   }
-  
+
   .bridging-modal-notice-text {
     font-size: 11px;
     line-height: 1.4;
   }
-  
+
   .bridging-modal-success-message {
     font-size: 13px;
     margin-bottom: 16px;
     padding: 0 4px;
   }
-  
+
   .bridging-modal-success-card {
     padding: 16px;
   }
-  
+
   .bridging-modal-success-label {
     font-size: 10px;
     margin-bottom: 6px;
   }
-  
+
   .bridging-modal-success-time {
     font-size: 24px;
   }
-  
+
   /* Keep network cards side-by-side on mobile (Relay.link style) - override any column layout */
-  .bridging-modal-network-container > div {
+  .bridging-modal-network-container>div {
     flex-direction: row !important;
     width: 100%;
     justify-content: space-between;
   }
-  
+
   .bridging-modal-network-card {
     flex: 1;
     max-width: calc(50% - 6px);
     width: auto;
   }
-  
+
   .bridging-modal-arrow {
     transform: none !important;
     margin: 0;
     flex-shrink: 0;
   }
-  
+
   /* Ensure text doesn't overflow */
   .bridging-modal-bridge-text,
   .bridging-modal-success-message {
@@ -1420,110 +1515,110 @@ html:not(.dark) .bridging-modal-error-icon,
   .bridging-modal-backdrop {
     padding: 12px;
   }
-  
+
   .bridging-modal-container {
     max-width: calc(100% - 24px);
     width: calc(100% - 24px);
     max-height: calc(100vh - 24px);
     border-radius: 16px;
   }
-  
+
   .bridging-modal-header {
     padding: 14px;
   }
-  
+
   .bridging-modal-title {
     font-size: 15px;
   }
-  
+
   .bridging-modal-loader-container {
     width: 44px;
     height: 44px;
   }
-  
+
   .bridging-modal-content {
     padding: 12px;
   }
-  
+
   .bridging-modal-network-container {
     padding: 12px;
   }
-  
-  .bridging-modal-network-container > div {
+
+  .bridging-modal-network-container>div {
     gap: 6px;
   }
-  
+
   .bridging-modal-network-card {
     padding: 8px;
     min-width: 60px;
     flex: 1;
     max-width: calc(50% - 5px);
   }
-  
+
   .bridging-modal-network-icon {
     width: 24px;
     height: 24px;
   }
-  
+
   .bridging-modal-network-name {
     font-size: 8px;
   }
-  
+
   .bridging-modal-arrow {
     width: 12px;
     height: 12px;
   }
-  
+
   .bridging-modal-progress-card {
     padding: 12px;
   }
-  
+
   .bridging-modal-notice {
     padding: 10px;
     gap: 8px;
   }
-  
+
   .bridging-modal-notice-icon {
     width: 16px;
     height: 16px;
   }
-  
+
   .bridging-modal-success-time {
     font-size: 22px;
   }
-  
+
   .bridging-modal-title {
     font-size: 14px;
     padding: 0 36px;
   }
-  
+
   .bridging-modal-error-card {
     padding: 12px;
     gap: 10px;
     margin-bottom: 16px;
   }
-  
+
   .bridging-modal-error-icon {
     width: 18px;
     height: 18px;
   }
-  
+
   .bridging-modal-error-title {
     font-size: 12px;
     margin-bottom: 4px;
   }
-  
+
   .bridging-modal-error-text {
     font-size: 11px;
     line-height: 1.4;
   }
-  
+
   .bridging-modal-buttons-container {
     flex-direction: row;
     gap: 8px;
     margin-top: 4px;
   }
-  
+
   .bridging-modal-retry-button,
   .bridging-modal-close-button-secondary {
     padding: 12px 14px;
@@ -1531,3 +1626,153 @@ html:not(.dark) .bridging-modal-error-icon,
     min-height: 44px;
   }
 }
+/* Network Success Toast Notification */
+.network-success-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  max-width: 540px;
+  width: calc(100% - 48px);
+}
+
+.network-success-content {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 8px 32px rgba(5, 150, 105, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.network-success-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.network-success-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.network-success-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.network-success-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.network-success-close:active {
+  transform: scale(0.95);
+}
+
+.network-success-message {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  line-height: 1.5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 400;
+}
+
+/* Mobile responsive styles for success toast */
+@media (max-width: 640px) {
+  .network-success-toast {
+    top: 12px;
+    width: calc(100% - 24px);
+    max-width: 100%;
+  }
+  
+  .network-success-content {
+    padding: 12px 14px;
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(5, 150, 105, 0.4);
+  }
+  
+  .network-success-header {
+    margin-bottom: 4px;
+  }
+  
+  .network-success-title {
+    font-size: 14px;
+    font-weight: 700;
+  }
+  
+  .network-success-message {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  
+  .network-success-close {
+    padding: 6px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+  
+  .network-success-close svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 375px) {
+  .network-success-toast {
+    top: 10px;
+    width: calc(100% - 20px);
+  }
+  
+  .network-success-content {
+    padding: 10px 12px;
+    border-radius: 8px;
+  }
+  
+  .network-success-header {
+    margin-bottom: 3px;
+  }
+  
+  .network-success-title {
+    font-size: 13px;
+    font-weight: 700;
+  }
+  
+  .network-success-message {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  
+  .network-success-close {
+    padding: 5px;
+    min-width: 26px;
+    min-height: 26px;
+  }
+  
+  .network-success-close svg {
+    width: 13px;
+    height: 13px;
+  }
+}
+
+/* Tablet landscape optimization */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .network-success-toast {
+    max-width: 480px;
+  }
+}
+

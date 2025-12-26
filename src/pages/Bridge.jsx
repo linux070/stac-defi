@@ -27,10 +27,11 @@ const Bridge = () => {
   const [bridgeError, setBridgeError] = useState({ title: 'Error Details', message: '' });
   const [bridgeButtonText, setBridgeButtonText] = useState('Bridge');
   const [stopTimer, setStopTimer] = useState(false);
-  
+  const [showNetworkSuccess, setShowNetworkSuccess] = useState(false);
+
   // Initialize the useBridge hook
   const { bridge, state, reset, fetchTokenBalance, tokenBalance, isLoadingBalance, balanceError, clearBalance } = useBridge();
-  
+
   // Ref for timeout ID
   const timeoutIdRef = useRef(null);
   // Ref for balance interval to ensure proper cleanup
@@ -40,7 +41,7 @@ const Bridge = () => {
   // Refs to store the initial chains when bridge starts - these remain fixed throughout the transaction
   const initialFromChainRef = useRef(null);
   const initialToChainRef = useRef(null);
-  
+
   // Real-time token balance for USDC - now using bridge kit
   // const { balance, loading, refetch, error } = useTokenBalance
   const formatWholeAmount = (value) => {
@@ -59,7 +60,7 @@ const Bridge = () => {
   // Refs for trigger buttons
   const fromChainTriggerRef = useRef(null);
   const toChainTriggerRef = useRef(null);
-  
+
   // Effect to handle body overflow when modals are open
   useEffect(() => {
     const isModalOpen = showChainSelector || showBridgingModal || showBridgeFailedModal;
@@ -70,7 +71,7 @@ const Bridge = () => {
       // Restore normal scrolling when modal is closed
       document.body.style.overflow = 'visible';
     }
-    
+
     // Cleanup function to restore overflow when component unmounts
     return () => {
       document.body.style.overflow = 'visible';
@@ -96,13 +97,13 @@ const Bridge = () => {
       if (showBridgingModal || bridgeLoading || state.step === 'approving') {
         // Stop the timer
         setStopTimer(true);
-        
+
         // Clear timeout if exists
         if (timeoutIdRef.current) {
           clearTimeout(timeoutIdRef.current);
           timeoutIdRef.current = null;
         }
-        
+
         setShowBridgingModal(false);
         setBridgeError({
           title: 'Transaction Rejected',
@@ -121,13 +122,13 @@ const Bridge = () => {
         if (showBridgingModal || state.step === 'approving' || bridgeLoading) {
           // Stop the timer
           setStopTimer(true);
-          
+
           // Clear timeout if exists
           if (timeoutIdRef.current) {
             clearTimeout(timeoutIdRef.current);
             timeoutIdRef.current = null;
           }
-          
+
           setShowBridgingModal(false);
           setBridgeError({
             title: 'Error Details',
@@ -145,13 +146,13 @@ const Bridge = () => {
       if (showBridgingModal || state.step === 'approving' || bridgeLoading) {
         // Stop the timer
         setStopTimer(true);
-        
+
         // Clear timeout if exists
         if (timeoutIdRef.current) {
           clearTimeout(timeoutIdRef.current);
           timeoutIdRef.current = null;
         }
-        
+
         setShowBridgingModal(false);
         setBridgeError({
           title: 'Error Details',
@@ -167,7 +168,7 @@ const Bridge = () => {
     // Listen for wallet rejection events
     window.ethereum.on('accountsChanged', handleAccountsChanged);
     window.ethereum.on('disconnect', handleDisconnect);
-    
+
     // Listen for message events that might indicate rejection
     const handleMessage = (event) => {
       if (event.data && typeof event.data === 'object') {
@@ -178,7 +179,7 @@ const Bridge = () => {
         }
       }
     };
-    
+
     window.addEventListener('message', handleMessage);
 
     return () => {
@@ -205,7 +206,7 @@ const Bridge = () => {
       // Wallet connected/reconnected - refresh balance immediately
       const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
       fetchTokenBalance('USDC', chainIdDecimal);
-      
+
       // Set up periodic balance refresh to keep it updated (every 4 seconds)
       balanceIntervalRef.current = setInterval(() => {
         try {
@@ -222,7 +223,7 @@ const Bridge = () => {
           // Prevent crashes by catching any errors
         }
       }, 4000); // Refresh every 4 seconds (within 3-5 second range)
-      
+
       return () => {
         if (balanceIntervalRef.current) {
           clearInterval(balanceIntervalRef.current);
@@ -239,13 +240,13 @@ const Bridge = () => {
   // The wallet may switch chains for approvals, but UI should remain stable showing the original selection
   useEffect(() => {
     if (!chainId) return;
-    
+
     // Skip UI chain updates during bridge transactions or after bridge has been initiated
     // Check if bridge is in progress (loading, approving, switching-network, or any active state)
-    const isBridgeInProgress = bridgeLoading || 
-                               state.isLoading || 
-                               (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
-    
+    const isBridgeInProgress = bridgeLoading ||
+      state.isLoading ||
+      (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
+
     // If bridge was initiated, keep chains fixed (even after completion)
     // This ensures the UI always shows the original source->destination selection
     if (isBridgeInProgress || bridgeInitiatedRef.current) {
@@ -261,13 +262,13 @@ const Bridge = () => {
       }
       return; // Exit early - don't update UI chains
     }
-    
+
     try {
       // Convert chainId to decimal if it's a hex string
       const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
       const arcChainId = parseInt(NETWORKS.ARC_TESTNET.chainId, 16);
       const sepoliaChainId = parseInt(NETWORKS.ETHEREUM_SEPOLIA.chainId, 16);
-      
+
       if (chainIdDecimal === arcChainId) {
         // If wallet is on Arc Testnet, set it as the 'from' chain
         setFromChain(prevFromChain => {
@@ -299,11 +300,11 @@ const Bridge = () => {
           return prevToChain;
         });
       }
-      
+
       // Fetch balance when chain changes
       if (isConnected) {
         fetchTokenBalance('USDC', chainIdDecimal);
-        
+
         // Note: Balance refresh is already handled by the wallet connection useEffect above
         // No need to create another interval here to avoid duplicates
       }
@@ -317,10 +318,10 @@ const Bridge = () => {
     try {
       const saved = await getItem('myTransactions');
       const existing = saved && Array.isArray(saved) ? saved : [];
-      
+
       // Check if transaction already exists
       const exists = existing.some(tx => tx.hash === txHash);
-      
+
       if (!exists && txHash) {
         const bridgeTx = {
           id: txHash || `bridge-${Date.now()}`,
@@ -334,7 +335,7 @@ const Bridge = () => {
           chainId: getChainIdByName(fromChain),
           address: address?.toLowerCase(),
         };
-        
+
         existing.unshift(bridgeTx);
         // Keep only last 100 transactions
         const trimmed = existing.slice(0, 100);
@@ -352,22 +353,22 @@ const Bridge = () => {
     if (state.step === 'success' && state.sourceTxHash) {
       // Save successful bridge transaction
       saveBridgeTransaction(state.sourceTxHash || state.receiveTxHash, 'success');
-      
+
       // Refresh balance immediately, then again after delay to ensure blockchain has updated
       if (chainId && isConnected) {
         const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
         fetchTokenBalance('USDC', chainIdDecimal);
-        
+
         // Also refresh after a delay to catch blockchain updates
         const timer1 = setTimeout(() => {
           fetchTokenBalance('USDC', chainIdDecimal);
         }, 3000);
-        
+
         // One more refresh after longer delay
         const timer2 = setTimeout(() => {
           fetchTokenBalance('USDC', chainIdDecimal);
         }, 8000);
-        
+
         return () => {
           clearTimeout(timer1);
           clearTimeout(timer2);
@@ -375,14 +376,14 @@ const Bridge = () => {
       }
     }
   }, [state.step, state.sourceTxHash, state.receiveTxHash, chainId, fetchTokenBalance, isConnected, fromChain, toChain, amount, address]);
-  
+
   // Effect to refresh balance after bridge error/cancellation
   useEffect(() => {
     if (state.step === 'error' && isConnected && chainId) {
       // Refresh balance immediately after error/cancellation to ensure it's up to date
       const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
       fetchTokenBalance('USDC', chainIdDecimal);
-      
+
       // Also refresh after a short delay to ensure we get the latest balance
       const timer = setTimeout(() => {
         fetchTokenBalance('USDC', chainIdDecimal);
@@ -414,23 +415,67 @@ const Bridge = () => {
     }
   };
 
+  // Arc Testnet Network Configuration Constants
+  const ARC_TESTNET_CONFIG = {
+    chainId: '0x4cef52', // Hex for 5042002
+    chainName: 'Arc Testnet',
+    rpcUrls: ['https://rpc.testnet.arc.network'],
+    nativeCurrency: {
+      name: 'USDC',
+      symbol: 'USDC',
+      decimals: 18
+    },
+    blockExplorerUrls: ['https://testnet.arcscan.app']
+  };
+
+  // Function to add Arc Testnet to wallet
+  const addArcNetwork = async () => {
+    if (!window || !window.ethereum) {
+      console.error('MetaMask or compatible wallet not detected');
+      return;
+    }
+
+    try {
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [ARC_TESTNET_CONFIG]
+      });
+      console.log('Arc Testnet added successfully');
+
+      // Show success notification
+      setShowNetworkSuccess(true);
+
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        setShowNetworkSuccess(false);
+      }, 3000);
+    } catch (error) {
+      // Handle user rejection (error code 4001)
+      if (error.code === 4001) {
+        console.log('User rejected the request to add Arc Testnet');
+      } else {
+        console.error('Error adding Arc Testnet:', error);
+      }
+    }
+  };
+
   // Handle network changes with auto-switch
   const handleNetworkChange = async (newChain) => {
     // Prevent chain switching during bridge transactions
-    const isBridgeInProgress = bridgeLoading || 
-                               state.isLoading || 
-                               (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
-    
+    const isBridgeInProgress = bridgeLoading ||
+      state.isLoading ||
+      (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
+
     if (isBridgeInProgress) {
       return; // Don't allow chain switching during bridge
     }
-    
+
     // Reset bridge initiated flag and initial chains when user manually changes chains
     // This allows chain syncing to resume
     bridgeInitiatedRef.current = false;
     initialFromChainRef.current = null;
     initialToChainRef.current = null;
-    
+
     if (!isConnected) {
       // If not connected, just update the local state
       setFromChain(newChain);
@@ -440,20 +485,20 @@ const Bridge = () => {
     try {
       // Get the chain ID for the new chain
       const chainId = getChainIdByName(newChain);
-      
+
       if (chainId) {
         // Trigger wallet network switch
         await switchChain({ chainId });
-        
+
         // Update local state (will be confirmed by the useEffect above)
         setFromChain(newChain);
-        
+
         // Fetch balance for the new chain
         fetchTokenBalance('USDC', chainId);
       }
     } catch (error) {
       console.error('Failed to switch network:', error);
-      
+
       // Handle the case where the chain needs to be added to the wallet (Error 4902)
       if ((error?.code === 4902 || error?.message?.includes('wallet_addEthereumChain')) && window && window.ethereum) {
         try {
@@ -469,7 +514,7 @@ const Bridge = () => {
                 blockExplorerUrls: NETWORKS.ARC_TESTNET.blockExplorerUrls,
               }],
             });
-                        
+
             // After adding, try to switch again
             const chainId = getChainIdByName(newChain);
             if (chainId) {
@@ -489,7 +534,7 @@ const Bridge = () => {
                 blockExplorerUrls: NETWORKS.ETHEREUM_SEPOLIA.blockExplorerUrls,
               }],
             });
-                        
+
             // After adding, try to switch again
             const chainId = getChainIdByName(newChain);
             if (chainId) {
@@ -502,27 +547,27 @@ const Bridge = () => {
           console.error('Failed to add network:', addError);
         }
       }
-      
+
       // Even if switching fails, update the local state for UI consistency
       setFromChain(newChain);
     }
   };  // New function to handle 'To' network changes with auto-switch
   const handleToNetworkChange = async (newChain) => {
     // Prevent chain switching during bridge transactions
-    const isBridgeInProgress = bridgeLoading || 
-                               state.isLoading || 
-                               (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
-    
+    const isBridgeInProgress = bridgeLoading ||
+      state.isLoading ||
+      (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
+
     if (isBridgeInProgress) {
       return; // Don't allow chain switching during bridge
     }
-    
+
     // Reset bridge initiated flag and initial chains when user manually changes chains
     // This allows chain syncing to resume
     bridgeInitiatedRef.current = false;
     initialFromChainRef.current = null;
     initialToChainRef.current = null;
-    
+
     if (!isConnected) {
       // If not connected, just update the local state
       setToChain(newChain);
@@ -532,19 +577,19 @@ const Bridge = () => {
     try {
       // Get the chain ID for the new chain
       const chainId = getChainIdByName(newChain);
-      
+
       if (chainId) {
         // Trigger wallet network switch
         await switchChain({ chainId });
-        
+
         // Update local state (will be confirmed by the useEffect above)
         setToChain(newChain);
-        
+
         // Note: We don't fetch balance here since the 'from' chain determines the balance display
       }
     } catch (error) {
       console.error('Failed to switch network:', error);
-      
+
       // Handle the case where the chain needs to be added to the wallet (Error 4902)
       if ((error?.code === 4902 || error?.message?.includes('wallet_addEthereumChain')) && window && window.ethereum) {
         try {
@@ -560,7 +605,7 @@ const Bridge = () => {
                 blockExplorerUrls: NETWORKS.ARC_TESTNET.blockExplorerUrls,
               }],
             });
-                        
+
             // After adding, try to switch again
             const chainId = getChainIdByName(newChain);
             if (chainId) {
@@ -579,7 +624,7 @@ const Bridge = () => {
                 blockExplorerUrls: NETWORKS.ETHEREUM_SEPOLIA.blockExplorerUrls,
               }],
             });
-                        
+
             // After adding, try to switch again
             const chainId = getChainIdByName(newChain);
             if (chainId) {
@@ -591,12 +636,12 @@ const Bridge = () => {
           console.error('Failed to add network:', addError);
         }
       }
-      
+
       // Even if switching fails, update the local state for UI consistency
       setToChain(newChain);
     }
-  };  
-  
+  };
+
   const handleBridge = async () => {
     // Validation checks
     if (!isConnected) {
@@ -607,7 +652,7 @@ const Bridge = () => {
       setShowBridgeFailedModal(true);
       return;
     }
-    
+
     const amountFloat = parseFloat(amount);
     if (!amount || isNaN(amountFloat) || amountFloat <= 0) {
       setBridgeError({
@@ -617,7 +662,7 @@ const Bridge = () => {
       setShowBridgeFailedModal(true);
       return;
     }
-    
+
     // Minimum amount check - below 1 USDC shows Bridge Failed
     if (amountFloat < 1) {
       setBridgeError({
@@ -627,7 +672,7 @@ const Bridge = () => {
       setShowBridgeFailedModal(true);
       return;
     }
-    
+
     // Check if amount exceeds balance - show Bridge Failed with insufficient balance error
     if (amountFloat > parseFloat(tokenBalance || '0')) {
       setBridgeError({
@@ -637,29 +682,29 @@ const Bridge = () => {
       setShowBridgeFailedModal(true);
       return;
     }
-    
+
     // Prevent transaction if Bridge Failed is displayed
     if (bridgeButtonText === 'Bridge Failed') {
       return;
     }
-    
+
     // Reset timer stop flag
     setStopTimer(false);
-    
+
     // Store the initial chains when bridge starts - these will remain fixed throughout
     // This ensures UI always shows the original source->destination, even when wallet switches
     initialFromChainRef.current = fromChain;
     initialToChainRef.current = toChain;
-    
+
     // Mark bridge as initiated - this will keep chains fixed during and after bridge
     bridgeInitiatedRef.current = true;
-    
+
     // Show bridging modal
     setBridgeStartTime(Date.now());
     setShowBridgingModal(true);
     setBridgeLoading(true);
     setBridgeButtonText('Bridging...');
-    
+
     // Set up timeout detection
     const BRIDGE_TIMEOUT = 120000; // 2 minutes
     timeoutIdRef.current = setTimeout(() => {
@@ -676,7 +721,7 @@ const Bridge = () => {
         reset();
       }
     }, BRIDGE_TIMEOUT);
-    
+
     try {
       // Determine direction based on fromChain and toChain
       let direction;
@@ -687,15 +732,15 @@ const Bridge = () => {
       } else {
         throw new Error('Invalid source chain configuration');
       }
-      
+
       const result = await bridge('USDC', amount, direction);
-      
+
       // Clear timeout since transaction completed
       if (timeoutIdRef.current) {
         clearTimeout(timeoutIdRef.current);
         timeoutIdRef.current = null;
       }
-      
+
       // Handle the result
       if (result.step === 'success') {
         // Keep button as "Bridge" - success is shown in the modal
@@ -704,7 +749,7 @@ const Bridge = () => {
       } else if (result.step === 'error') {
         // Stop the timer
         setStopTimer(true);
-        
+
         // Try to extract transaction hash from error result
         let failedTxHash = null;
         if (result.sourceTxHash) {
@@ -716,16 +761,16 @@ const Bridge = () => {
         } else if (result.hash) {
           failedTxHash = result.hash;
         }
-        
+
         // Save failed transaction if we have a hash
         if (failedTxHash) {
           saveBridgeTransaction(failedTxHash, 'failed');
         }
-        
+
         // Handle error result directly - show Bridge Failed modal immediately
         setShowBridgingModal(false);
         setBridgeLoading(false);
-        
+
         // Set the error and show the failed modal immediately
         setBridgeError({
           title: 'Error Details',
@@ -733,7 +778,7 @@ const Bridge = () => {
         });
         setShowBridgeFailedModal(true);
         setBridgeButtonText('Bridge Failed');
-        
+
         // Also reset the bridge state
         reset();
         return; // Exit early, don't throw
@@ -746,7 +791,7 @@ const Bridge = () => {
         name: error.name,
         stack: error.stack
       });
-      
+
       // Try to extract transaction hash from error for failed transactions
       let failedTxHash = null;
       if (state.sourceTxHash) {
@@ -762,28 +807,28 @@ const Bridge = () => {
       } else if (error.transactionHash) {
         failedTxHash = error.transactionHash;
       }
-      
+
       // Save failed transaction if we have a hash
       if (failedTxHash) {
         saveBridgeTransaction(failedTxHash, 'failed');
       }
-      
+
       // Stop the timer
       setStopTimer(true);
-      
+
       // Clear timeout since we're handling the error
       if (timeoutIdRef.current) {
         clearTimeout(timeoutIdRef.current);
         timeoutIdRef.current = null;
       }
-      
+
       // Close the in-progress modal before showing the failure modal
       setShowBridgingModal(false);
-      
+
       // Detect user cancellation/rejection from wallet
       // Check for various rejection patterns from different wallets/SDKs
-      const isUserRejection = 
-        error.code === 4001 || 
+      const isUserRejection =
+        error.code === 4001 ||
         error.code === 'ACTION_REJECTED' ||
         (error.message && (
           error.message.toLowerCase().includes('user rejected') ||
@@ -795,7 +840,7 @@ const Bridge = () => {
           error.message.toLowerCase().includes('user refused') ||
           error.message.toLowerCase().includes('user declined')
         ));
-      
+
       if (isUserRejection) {
         setBridgeError({
           title: 'Error Details',
@@ -841,12 +886,12 @@ const Bridge = () => {
           message: error.message || 'An unexpected error occurred during the bridge transaction.'
         });
       }
-      
+
       // ALWAYS show the failed modal for any error in catch block
       // Set button to Bridge Failed state
       setBridgeButtonText('Bridge Failed');
       setShowBridgeFailedModal(true);
-      
+
       // Log that we're showing the modal
       console.log('Showing Bridge Failed modal - Error caught:', error.message || error);
     } finally {
@@ -860,13 +905,13 @@ const Bridge = () => {
     if (state.step !== 'success' && bridgeLoading) {
       // Stop the timer
       setStopTimer(true);
-      
+
       // Clear timeout if exists
       if (timeoutIdRef.current) {
         clearTimeout(timeoutIdRef.current);
         timeoutIdRef.current = null;
       }
-      
+
       setShowBridgingModal(false);
       setBridgeError({
         title: 'Error Details',
@@ -882,7 +927,7 @@ const Bridge = () => {
       initialToChainRef.current = null;
       return;
     }
-    
+
     // Transaction completed successfully, just close
     // Note: bridgeInitiatedRef remains true to keep chains fixed after completion
     setShowBridgingModal(false);
@@ -905,20 +950,20 @@ const Bridge = () => {
   useEffect(() => {
     if (state.step === 'error' && state.error) {
       console.log('useEffect detected state.step === error, showing Bridge Failed modal:', state.error);
-      
+
       // Save failed transaction if we have a transaction hash
       if (state.sourceTxHash || state.receiveTxHash) {
         saveBridgeTransaction(state.sourceTxHash || state.receiveTxHash, 'failed');
       }
-      
+
       // Close the in-progress modal first
       setShowBridgingModal(false);
-      
+
       // Check if this is a wallet rejection (the error message will contain our formatted message)
       const isWalletRejection = state.error.toLowerCase().includes('transaction rejected') ||
-                                state.error.toLowerCase().includes('user denied') ||
-                                state.error.toLowerCase().includes('user rejected');
-      
+        state.error.toLowerCase().includes('user denied') ||
+        state.error.toLowerCase().includes('user rejected');
+
       setBridgeError({
         title: 'Error Details',
         message: state.error
@@ -926,7 +971,7 @@ const Bridge = () => {
       setShowBridgeFailedModal(true);
       setBridgeButtonText('Bridge'); // Reset to default
       setBridgeLoading(false);
-      
+
       console.log('Bridge Failed modal should now be visible');
     }
   }, [state]);
@@ -934,7 +979,7 @@ const Bridge = () => {
 
   const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude, triggerRef }) => {
     const selectorRef = useRef(null);
-    
+
     // Handle ESC key press to close modal
     useEffect(() => {
       const handleEsc = (event) => {
@@ -942,15 +987,15 @@ const Bridge = () => {
           onClose();
         }
       };
-      
+
       if (isOpen) {
         document.addEventListener('keydown', handleEsc);
       }
-      
+
       return () => {
         document.removeEventListener('keydown', handleEsc);
       };
-    }, [isOpen, onClose]);    
+    }, [isOpen, onClose]);
     if (!isOpen) return null;
 
     const chainList = ['Arc Testnet', 'Sepolia'];
@@ -958,11 +1003,11 @@ const Bridge = () => {
     return (
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
+          <motion.div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ 
+            style={{
               background: 'rgba(0, 0, 0, 0.8)',
-              backdropFilter: 'blur(8px)' 
+              backdropFilter: 'blur(8px)'
             }}
             onClick={onClose}
           >
@@ -972,9 +1017,9 @@ const Bridge = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="relative p-6 w-full max-w-md flex flex-col max-h-[80vh] overflow-hidden"
-              style={{ 
-                background: 'var(--bridge-bg-secondary)', 
-                border: '1px solid var(--bridge-border-light)', 
+              style={{
+                background: 'var(--bridge-bg-secondary)',
+                border: '1px solid var(--bridge-border-light)',
                 borderRadius: '16px',
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
               }}
@@ -982,7 +1027,7 @@ const Bridge = () => {
             >
               <div className="flex justify-between items-center mb-4 flex-shrink-0">
                 <h3 className="bridge-header" style={{ marginBottom: 0, fontSize: '18px' }}>{t('Select Network')}</h3>
-                <button 
+                <button
                   onClick={onClose}
                   className="settings-button"
                   style={{ position: 'static', width: '32px', height: '32px' }}
@@ -990,7 +1035,7 @@ const Bridge = () => {
                   <X size={20} />
                 </button>
               </div>
-              
+
               <div className="flex-1 overflow-y-auto -mx-6 px-6">
                 {/* Chain List */}
                 <div className="space-y-2">
@@ -1024,15 +1069,15 @@ const Bridge = () => {
                       <div className="flex items-center space-x-3">
                         <div className="network-icon">
                           {chain.includes('Arc') ? (
-                            <img 
-                              src="/icons/Arc.png" 
-                              alt="Arc Testnet" 
+                            <img
+                              src="/icons/Arc.png"
+                              alt="Arc Testnet"
                               className="w-8 h-8 rounded-full object-contain"
                             />
                           ) : chain.includes('Sepolia') ? (
-                            <img 
-                              src="/icons/eth.png" 
-                              alt="Sepolia" 
+                            <img
+                              src="/icons/eth.png"
+                              alt="Sepolia"
                               className="w-8 h-8 rounded-full object-contain"
                             />
                           ) : null}
@@ -1043,8 +1088,8 @@ const Bridge = () => {
                         </div>
                       </div>
                       {chain === exclude && (
-                        <div className="px-3 py-1 text-xs rounded" style={{ 
-                          background: 'var(--bridge-surface-card)', 
+                        <div className="px-3 py-1 text-xs rounded" style={{
+                          background: 'var(--bridge-surface-card)',
                           color: 'var(--bridge-text-secondary)',
                           fontSize: '11px'
                         }}>
@@ -1055,7 +1100,7 @@ const Bridge = () => {
                   ))}
                 </div>
               </div>
-              
+
               {/* Info Box */}
               <div className="alert-box mt-4 flex-shrink-0">
                 <Info className="alert-icon" size={16} />
@@ -1079,10 +1124,15 @@ const Bridge = () => {
         animate={{ opacity: 1, y: 0 }}
         className="bridge-container"
       >
-        {/* Powered by Circle CCTP Badge - Top Right */}
-        <div className="powered-by-badge">
-          <span>Powered by Circle CCTP</span>
-        </div>
+        {/* Add Arc Testnet Button - Top Right */}
+        <button
+          onClick={addArcNetwork}
+          className="add-arc-button"
+          aria-label="Add Arc Testnet to Wallet"
+        >
+          <Wallet size={14} />
+          <span>Add Arc Testnet</span>
+        </button>
 
         {/* Header */}
         <h2 className="bridge-header">Bridge Assets</h2>
@@ -1106,17 +1156,17 @@ const Bridge = () => {
               {(() => {
                 const displayFromChain = bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain;
                 return displayFromChain.includes('Arc') ? (
-                <img 
-                  src="/icons/Arc.png" 
-                  alt="Arc Testnet" 
-                  className="w-8 h-8 rounded-full object-contain"
-                />
+                  <img
+                    src="/icons/Arc.png"
+                    alt="Arc Testnet"
+                    className="w-8 h-8 rounded-full object-contain"
+                  />
                 ) : displayFromChain.includes('Sepolia') ? (
-                <img 
-                  src="/icons/eth.png" 
-                  alt="Sepolia" 
-                  className="w-8 h-8 rounded-full object-contain"
-                />
+                  <img
+                    src="/icons/eth.png"
+                    alt="Sepolia"
+                    className="w-8 h-8 rounded-full object-contain"
+                  />
                 ) : null;
               })()}
             </div>
@@ -1127,34 +1177,34 @@ const Bridge = () => {
               <p className="network-chain">Source Network</p>
             </div>
           </div>
-          
+
           {/* Switch Button */}
           <button
             onClick={() => {
               // Prevent chain switching during bridge transactions
-              const isBridgeInProgress = bridgeLoading || 
-                                       state.isLoading || 
-                                       (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
-              
+              const isBridgeInProgress = bridgeLoading ||
+                state.isLoading ||
+                (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
+
               if (isBridgeInProgress) {
                 return; // Don't allow chain switching during bridge
               }
-              
+
               try {
                 // Store current values temporarily
                 const tempFromChain = fromChain;
                 const tempToChain = toChain;
-                
+
                 // Reset bridge initiated flag and initial chains when user manually switches chains
                 // This allows chain syncing to resume
                 bridgeInitiatedRef.current = false;
                 initialFromChainRef.current = null;
                 initialToChainRef.current = null;
-                
+
                 // Swap the chains in UI first
                 setFromChain(tempToChain);
                 setToChain(tempFromChain);
-                
+
                 // Also swap in wallet if connected
                 if (isConnected) {
                   // Get the chain ID for the new 'from' chain (which was previously the 'to' chain)
@@ -1168,7 +1218,7 @@ const Bridge = () => {
                     console.warn('Could not get chain ID for:', tempToChain);
                   }
                 }
-                
+
                 // Refresh balance for the new 'from' chain
                 if (isConnected) {
                   const newFromChainId = getChainIdByName(tempToChain);
@@ -1194,17 +1244,17 @@ const Bridge = () => {
               {(() => {
                 const displayToChain = bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain;
                 return displayToChain.includes('Arc') ? (
-                <img 
-                  src="/icons/Arc.png" 
-                  alt="Arc Testnet" 
-                  className="w-8 h-8 rounded-full object-contain"
-                />
+                  <img
+                    src="/icons/Arc.png"
+                    alt="Arc Testnet"
+                    className="w-8 h-8 rounded-full object-contain"
+                  />
                 ) : displayToChain.includes('Sepolia') ? (
-                <img 
-                  src="/icons/eth.png" 
-                  alt="Sepolia" 
-                  className="w-8 h-8 rounded-full object-contain"
-                />
+                  <img
+                    src="/icons/eth.png"
+                    alt="Sepolia"
+                    className="w-8 h-8 rounded-full object-contain"
+                  />
                 ) : null;
               })()}
             </div>
@@ -1248,9 +1298,9 @@ const Bridge = () => {
             {/* Token Pill - Static, no dropdown */}
             <div className="token-selector">
               <div className="token-icon">
-                <img 
-                  src="/icons/usdc.png" 
-                  alt="USDC" 
+                <img
+                  src="/icons/usdc.png"
+                  alt="USDC"
                   className="w-6 h-6 rounded-full object-contain"
                 />
               </div>
@@ -1303,8 +1353,13 @@ const Bridge = () => {
             <span>{bridgeButtonText}</span>
           )}
         </button>
+
+        {/* Powered by Circle CCTP Badge - Below Bridge Button */}
+        <div className="powered-by-badge-bottom">
+          <span>Powered by Circle CCTP</span>
+        </div>
       </motion.div>
-      
+
       {/* Chain Selectors */}
       <ChainSelector
         isOpen={showChainSelector === 'from'}
@@ -1322,10 +1377,10 @@ const Bridge = () => {
         exclude={fromChain}
         triggerRef={showChainSelector === 'to' ? toChainTriggerRef : fromChainTriggerRef}
       />
-      
+
       {/* Bridging Modal */}
       {/* Use initial chains if bridge was initiated, otherwise use current chains */}
-      <BridgingModal 
+      <BridgingModal
         isOpen={showBridgingModal}
         onClose={closeBridgingModal}
         fromChain={bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain}
@@ -1334,7 +1389,7 @@ const Bridge = () => {
         state={state}
         stopTimer={stopTimer}
       />
-      
+
       {/* Bridge Failed Modal */}
       <BridgeFailedModal
         isOpen={showBridgeFailedModal}
@@ -1344,6 +1399,34 @@ const Bridge = () => {
         errorTitle={bridgeError.title}
         errorMessage={bridgeError.message}
       />
+
+      {/* Network Added Success Notification */}
+      <AnimatePresence>
+        {showNetworkSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="network-success-toast"
+          >
+            <div className="network-success-content">
+              <div className="network-success-header">
+                <span className="network-success-title">Success</span>
+                <button
+                  onClick={() => setShowNetworkSuccess(false)}
+                  className="network-success-close"
+                  aria-label="Close notification"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <p className="network-success-message">
+                Successfully added network to your wallet
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
