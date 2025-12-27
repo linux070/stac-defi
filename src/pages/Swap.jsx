@@ -50,40 +50,89 @@ const Swap = () => {
   const [toast, setToast] = useState({ visible: false, type: 'info', message: '' });
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [liquidityWarning, setLiquidityWarning] = useState('');
-  
+
+  // Helper function to normalize chain ID for comparison
+  const normalizeChainId = (chainId) => {
+    if (!chainId) return null;
+
+    // If it's a number, convert to lowercase hex string
+    if (typeof chainId === 'number') {
+      return '0x' + chainId.toString(16).toLowerCase();
+    }
+
+    // If it's already a string, ensure it's lowercase
+    if (typeof chainId === 'string') {
+      // If it's a decimal string, convert to number first
+      if (!chainId.startsWith('0x')) {
+        const num = parseInt(chainId, 10);
+        if (!isNaN(num)) {
+          return '0x' + num.toString(16).toLowerCase();
+        }
+      }
+      // If it's a hex string, just lowercase it
+      return chainId.toLowerCase();
+    }
+
+    return null;
+  };
+
   // Helper function to get token address for current chain
   const getTokenAddress = (tokenSymbol) => {
-    if (!chainId || !TOKENS[tokenSymbol]) return null;
+    if (!chainId || !tokenSymbol) return null;
+
+    // Normalize the current chain ID for comparison
+    const normalizedChainId = normalizeChainId(chainId);
+    const normalizedArcChainId = normalizeChainId(NETWORKS.ARC_TESTNET.chainId);
+    const normalizedSepoliaChainId = normalizeChainId(NETWORKS.ETHEREUM_SEPOLIA.chainId);
+
+    // Strategy 1: Try structured format first (TOKENS.ARC_TESTNET.USDC)
+    if (normalizedChainId === normalizedArcChainId) {
+      const arcToken = TOKENS.ARC_TESTNET?.[tokenSymbol];
+      if (arcToken?.address) {
+        const addr = arcToken.address;
+        if (addr && addr !== '0x' && addr !== '0x0000000000000000000000000000000000000000') {
+          return addr;
+        }
+      }
+    } else if (normalizedChainId === normalizedSepoliaChainId) {
+      const sepoliaToken = TOKENS.ETHEREUM_SEPOLIA?.[tokenSymbol];
+      if (sepoliaToken?.address) {
+        const addr = sepoliaToken.address;
+        if (addr && addr !== '0x' && addr !== '0x0000000000000000000000000000000000000000') {
+          return addr;
+        }
+      }
+    }
+
+    // Strategy 2: Try generic format (TOKENS.USDC.address[chainId])
     const token = TOKENS[tokenSymbol];
-    
-    // Handle special cases for different network structures
-    if (tokenSymbol === 'USDC') {
-      if (chainId === NETWORKS.ARC_TESTNET.chainId) {
-        return TOKENS.ARC_TESTNET?.USDC?.address || null;
-      } else if (chainId === NETWORKS.ETHEREUM_SEPOLIA.chainId) {
-        return TOKENS.ETHEREUM_SEPOLIA?.USDC?.address || null;
-      }
-    }
-    
-    if (tokenSymbol === 'EURC') {
-      if (token.address && typeof token.address === 'object') {
-        const addr = token.address[chainId] || null;
-        // Return null for placeholder addresses ('0x' or '0x0...')
-        return (addr && addr !== '0x' && addr !== '0x0000000000000000000000000000000000000000') ? addr : null;
-      }
-    }
-    
-    // Fallback for other tokens
+    if (!token) return null;
+
+    // If token has an address object (multi-chain format)
     if (token.address && typeof token.address === 'object') {
-      const addr = token.address[chainId] || null;
-      // Return null for placeholder addresses ('0x' or '0x0...')
-      return (addr && addr !== '0x' && addr !== '0x0000000000000000000000000000000000000000') ? addr : null;
+      // Try to find address using normalized chain ID
+      for (const [key, value] of Object.entries(token.address)) {
+        const normalizedKey = normalizeChainId(key);
+        if (normalizedKey === normalizedChainId) {
+          if (value && value !== '0x' && value !== '0x0000000000000000000000000000000000000000') {
+            return value;
+          }
+        }
+      }
+      return null;
     }
-    const addr = token.address || null;
-    // Return null for placeholder addresses
-    return (addr && addr !== '0x' && addr !== '0x0000000000000000000000000000000000000000') ? addr : null;
+
+    // Strategy 3: Direct address (single-chain token)
+    if (token.address && typeof token.address === 'string') {
+      const addr = token.address;
+      if (addr && addr !== '0x' && addr !== '0x0000000000000000000000000000000000000000') {
+        return addr;
+      }
+    }
+
+    return null;
   };
-  
+
   // Helper function to get token decimals
   const getTokenDecimals = (tokenSymbol) => {
     if (!TOKENS[tokenSymbol]) return 18;
@@ -93,10 +142,10 @@ const Swap = () => {
   // Refs for trigger buttons
   const fromTokenTriggerRef = useRef(null);
   const toTokenTriggerRef = useRef(null);
-  
+
   // Multi-chain balances for USDC (fetches both chains simultaneously)
   const { balances: multiChainBalances } = useMultiChainBalances(address, isConnected);
-  
+
   // Effect to handle body overflow when modals are open
   useEffect(() => {
     const isModalOpen = showFromSelector || showToSelector;
@@ -107,7 +156,7 @@ const Swap = () => {
       // Restore normal scrolling when modal is closed
       document.body.style.overflow = 'visible';
     }
-    
+
     // Cleanup function to restore overflow when component unmounts
     return () => {
       document.body.style.overflow = 'visible';
@@ -118,32 +167,26 @@ const Swap = () => {
   // For USDC and EURC, use multi-chain balances; for other tokens, use regular balance hook
   const { balance: fromBalanceRegular, loading: fromLoadingRegular, refetch: refetchFrom } = useTokenBalance((fromToken === 'USDC' || fromToken === 'EURC') ? null : fromToken);
   const { balance: toBalanceRegular, loading: toLoadingRegular, refetch: refetchTo } = useTokenBalance((toToken === 'USDC' || toToken === 'EURC') ? null : toToken);
-  
+
   // Get balance based on token type and current chain
   const getFromBalance = () => {
     if (fromToken === 'USDC' || fromToken === 'EURC') {
       // Use current chain's balance from multi-chain hook
       const chainIdNum = chainId ? parseInt(chainId, 16) : null;
       const tokenKey = fromToken.toLowerCase(); // 'usdc' or 'eurc'
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Swap.jsx:97',message:'getFromBalance for USDC/EURC',data:{fromToken,chainId,chainIdNum,tokenKey,multiChainBalances:multiChainBalances?{arcTestnet:multiChainBalances.arcTestnet?.[tokenKey],sepolia:multiChainBalances.sepolia?.[tokenKey]}:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-      
+
+
+
       if (chainIdNum === 5042002) { // Arc Testnet
         const balance = multiChainBalances?.arcTestnet?.[tokenKey] || '0.00';
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Swap.jsx:104',message:'getFromBalance Arc Testnet result',data:{fromToken,balance},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
+
         return {
           balance,
           loading: multiChainBalances?.arcTestnet?.loading || false,
         };
       } else if (chainIdNum === 11155111) { // Sepolia
         const balance = multiChainBalances?.sepolia?.[tokenKey] || '0.00';
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Swap.jsx:111',message:'getFromBalance Sepolia result',data:{fromToken,balance},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
+
         return {
           balance,
           loading: multiChainBalances?.sepolia?.loading || false,
@@ -156,13 +199,13 @@ const Swap = () => {
       loading: fromLoadingRegular || false,
     };
   };
-  
+
   const getToBalance = () => {
     if (toToken === 'USDC' || toToken === 'EURC') {
       // Use current chain's balance from multi-chain hook
       const chainIdNum = chainId ? parseInt(chainId, 16) : null;
       const tokenKey = toToken.toLowerCase(); // 'usdc' or 'eurc'
-      
+
       if (chainIdNum === 5042002) { // Arc Testnet
         return {
           balance: multiChainBalances?.arcTestnet?.[tokenKey] || '0.00',
@@ -181,7 +224,7 @@ const Swap = () => {
       loading: toLoadingRegular || false,
     };
   };
-  
+
   const fromBalanceData = getFromBalance();
   const toBalanceData = getToBalance();
   const fromBalance = fromBalanceData.balance;
@@ -194,10 +237,10 @@ const Swap = () => {
       const allTokens = Object.values(TOKENS);
       const filtered = getFilteredTokens(allTokens, chainId);
       // Filter out any invalid tokens that don't have a symbol
-      return Array.isArray(filtered) ? filtered.filter(token => 
-        token && 
-        typeof token === 'object' && 
-        token.symbol && 
+      return Array.isArray(filtered) ? filtered.filter(token =>
+        token &&
+        typeof token === 'object' &&
+        token.symbol &&
         typeof token.symbol === 'string' &&
         token.symbol.length > 0
       ) : [];
@@ -213,13 +256,13 @@ const Swap = () => {
       '0xCF4B1', // ARC Testnet
       '0xaa36a7' // Sepolia
     ];
-    
+
     if (networksExcludingETH.includes(chainId)) {
       // Reset fromToken if it's ETH
       if (fromToken === 'ETH') {
         setFromToken('USDC');
       }
-      
+
       // Reset toToken if it's ETH
       if (toToken === 'ETH') {
         setToToken('USDC');
@@ -241,23 +284,21 @@ const Swap = () => {
   useEffect(() => {
     setValidationError('');
     setQuoteLoading(false);
-    
+
     if (fromAmount && parseFloat(fromAmount) > 0) {
       try {
         // Validate amount
         validateAmount(fromAmount, fromBalance);
-        
+
         // Try to fetch real quote from contract if connected and on supported network
         if (isConnected && chainId && window.ethereum) {
           const contractAddresses = getContractAddresses(chainId);
           const routerAddress = contractAddresses?.router;
           const fromTokenAddr = getTokenAddress(fromToken);
           const toTokenAddr = getTokenAddress(toToken);
-          
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Swap.jsx:213',message:'Quote fetch check',data:{isConnected,chainId,hasEthereum:!!window.ethereum,contractAddresses,routerAddress,fromToken,fromTokenAddr,toToken,toTokenAddr,allAddressesPresent:!!(routerAddress&&fromTokenAddr&&toTokenAddr)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B,C,D,E'})}).catch(()=>{});
-          // #endregion
-          
+
+
+
           // Only fetch from contract if we have all required addresses
           if (routerAddress && fromTokenAddr && toTokenAddr) {
             setQuoteLoading(true);
@@ -270,9 +311,6 @@ const Swap = () => {
                 }
               })
               .catch(err => {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Swap.jsx:230',message:'Quote fetch failed',data:{error:err.message,stack:err.stack,fromToken,toToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-                // #endregion
                 console.warn('Failed to fetch contract quote, using fallback:', err);
                 // Fallback to mock quote
                 const fallbackQuote = calculateSwapQuote(fromToken, toToken, fromAmount, slippage);
@@ -335,30 +373,30 @@ const Swap = () => {
       setQuoteLoading(false);
     }
   }, [fromAmount, fromToken, toToken, slippage, fromBalance, isConnected, chainId]);
-  
+
   // Check liquidity when tokens or amount changes
   useEffect(() => {
     setLiquidityWarning('');
-    
+
     if (fromAmount && parseFloat(fromAmount) > 0 && isConnected && chainId && window.ethereum) {
       const contractAddresses = getContractAddresses(chainId);
       const routerAddress = contractAddresses?.router;
       const fromTokenAddr = getTokenAddress(fromToken);
       const toTokenAddr = getTokenAddress(toToken);
-      
+
       if (routerAddress && fromTokenAddr && toTokenAddr) {
         const checkLiquidity = async () => {
           try {
             const { provider } = await getEthersProvider();
             const routerContract = getSwapRouterContract(routerAddress, provider);
             const liquidityCheck = await checkPoolLiquidity(routerContract, fromTokenAddr, toTokenAddr);
-            
+
             if (!liquidityCheck.hasLiquidity) {
               const fromDecimals = getTokenDecimals(fromToken);
               const toDecimals = getTokenDecimals(toToken);
               const reserveInFormatted = parseTokenAmount(liquidityCheck.reserveIn, fromDecimals);
               const reserveOutFormatted = parseTokenAmount(liquidityCheck.reserveOut, toDecimals);
-              
+
               setLiquidityWarning(
                 `⚠️ Insufficient liquidity in ${fromToken}/${toToken} pool. ` +
                 `Current reserves: ${fromToken}: ${reserveInFormatted}, ${toToken}: ${reserveOutFormatted}. ` +
@@ -370,12 +408,12 @@ const Swap = () => {
             console.warn('Could not check liquidity:', error);
           }
         };
-        
+
         checkLiquidity();
       }
     }
   }, [fromAmount, fromToken, toToken, isConnected, chainId]);
-  
+
   // Helper function to fetch quote from contract
   const fetchContractQuote = async (amount, fromTokenSymbol, toTokenSymbol, routerAddress, fromTokenAddr, toTokenAddr) => {
     try {
@@ -383,24 +421,24 @@ const Swap = () => {
       const routerContract = getSwapRouterContract(routerAddress, provider);
       const fromDecimals = getTokenDecimals(fromTokenSymbol);
       const toDecimals = getTokenDecimals(toTokenSymbol);
-      
+
       // Format input amount
       const amountIn = formatTokenAmount(amount, fromDecimals);
-      
+
       // Create swap path
       const path = createSwapPath(fromTokenAddr, toTokenAddr);
-      
+
       // Get quote from contract
       const amounts = await getSwapQuote(routerContract, amountIn, path);
-      
+
       // Parse output amount
       const amountOut = amounts[amounts.length - 1]; // Last element is the output
       const expectedOutput = parseTokenAmount(amountOut, toDecimals);
-      
+
       // Calculate min received with slippage
       const slippageBps = slippage * 100; // Convert percentage to basis points
       const minReceived = calculateMinReceived(expectedOutput, slippageBps);
-      
+
       // Calculate network fee estimate (gas fee in USDC equivalent)
       // Rough estimate: ~150k gas * gas price
       const estimatedGas = 150000n;
@@ -408,7 +446,7 @@ const Swap = () => {
       const gasCost = estimatedGas * (feeData.gasPrice || 0n);
       // Convert to USDC (assuming 1 ETH = 2000 USDC for estimation, adjust as needed)
       const networkFeeEstimate = Number(gasCost) / 1e18 * 2000; // Rough USDC estimate
-      
+
       return {
         expectedOutput,
         minReceived,
@@ -430,11 +468,11 @@ const Swap = () => {
         switchButton.classList.remove('rotate-180');
       }, 300);
     }
-    
+
     // Swap tokens
     setFromToken(toToken);
     setToToken(fromToken);
-    
+
     // Preserve amounts if possible
     setFromAmount(toAmount);
     setToAmount(fromAmount);
@@ -446,7 +484,7 @@ const Swap = () => {
       setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
       return;
     }
-    
+
     // For all tokens (including ETH when available), use full balance
     setFromAmount(fromBalance);
   };
@@ -496,34 +534,34 @@ const Swap = () => {
     }
 
     setSwapLoading(true);
-    
+
     try {
       // Get provider and signer
       const { provider, signer } = await getEthersProvider();
       const routerContract = getSwapRouterContract(routerAddress, provider);
       const tokenContract = getERC20Contract(fromTokenAddr, provider);
-      
+
       const fromDecimals = getTokenDecimals(fromToken);
       const toDecimals = getTokenDecimals(toToken);
-      
+
       // Format amounts
       const amountIn = formatTokenAmount(fromAmount, fromDecimals);
       const slippageBps = slippage * 100; // Convert percentage to basis points
       const minAmountOut = formatTokenAmount(swapQuote?.minReceived || calculateMinReceived(toAmount, slippageBps), toDecimals);
-      
+
       // Validate amounts before proceeding
       if (amountIn <= 0n) {
         throw new Error('Invalid input amount');
       }
-      
+
       if (minAmountOut <= 0n) {
         throw new Error('Invalid minimum output amount');
       }
-      
+
       // Create swap path
       const path = createSwapPath(fromTokenAddr, toTokenAddr);
       const deadline = getDeadline();
-      
+
       // Check liquidity before attempting swap
       const liquidityCheck = await checkPoolLiquidity(routerContract, fromTokenAddr, toTokenAddr);
       if (!liquidityCheck.hasLiquidity) {
@@ -537,18 +575,18 @@ const Swap = () => {
           `Please add liquidity to the pool first, or try a different token pair.`
         );
       }
-      
+
       // Check if approval is needed - use actual amount for better wallet display
       const needsApproval = await checkApproval(tokenContract, address, routerAddress, amountIn);
-      
+
       if (needsApproval) {
         // Request approval with actual amount (wallet will show the real amount)
         const approveTx = await approveToken(tokenContract, routerAddress, amountIn, signer);
-        
+
         // Wait for approval transaction (wallet shows progress)
         await approveTx.wait();
       }
-      
+
       // Execute swap (wallet will show the transaction)
       const swapTx = await executeSwap(
         routerContract,
@@ -559,23 +597,23 @@ const Swap = () => {
         deadline,
         signer
       );
-      
+
       // Wait for transaction confirmation (wallet shows progress)
       const receipt = await swapTx.wait();
-      
+
       // Save swap transaction to IndexedDB (success case)
       const saveSwapTransaction = async (txHash, txStatus = 'success', receiptData = null) => {
         try {
           const saved = await getItem('myTransactions');
           const existing = saved && Array.isArray(saved) ? saved : [];
-          
+
           // Check if transaction already exists
           const exists = existing.some(tx => tx.hash === txHash);
-          
+
           if (!exists && txHash) {
             // Get network name from chainId
             const chainIdNum = chainId ? parseInt(chainId, 16) : null;
-            
+
             const swapTxData = {
               id: txHash,
               type: 'Swap',
@@ -588,7 +626,7 @@ const Swap = () => {
               chainId: chainIdNum || chainId,
               address: address?.toLowerCase(),
             };
-            
+
             existing.unshift(swapTxData);
             // Keep only last 100 transactions
             const trimmed = existing.slice(0, 100);
@@ -600,29 +638,29 @@ const Swap = () => {
           console.error('Error saving swap transaction:', err);
         }
       };
-      
+
       // Save successful transaction
       const txHash = receipt.hash || swapTx.hash;
       const txStatus = receipt.status === 1 ? 'success' : receipt.status === 0 ? 'failed' : 'pending';
       await saveSwapTransaction(txHash, txStatus, receipt);
-      
+
       // Reset form after successful swap
       setFromAmount('');
       setToAmount('');
       setSwapQuote(null);
       setShowSwapDetails(false);
-      
+
       // Refresh balances
       refetchFrom();
       refetchTo();
     } catch (err) {
       console.error('Swap error:', err);
       let errorMessage = 'Swap failed. Please try again.';
-      
+
       // Extract more specific error information
       const errorStr = err.message || err.reason || err.data?.message || '';
       const errorStrLower = errorStr.toLowerCase();
-      
+
       if (errorStrLower.includes('insufficient funds')) {
         errorMessage = 'Insufficient funds for gas fees. Please add more ETH to your wallet.';
       } else if (errorStrLower.includes('insufficient liquidity') || errorStrLower.includes('insufficientliquidity')) {
@@ -647,7 +685,7 @@ const Swap = () => {
       } else if (err.data?.message) {
         errorMessage = err.data.message;
       }
-      
+
       // Try to extract transaction hash from error for failed transactions
       // Check if swapTx was created before the error (transaction was submitted)
       let failedTxHash = null;
@@ -662,21 +700,21 @@ const Swap = () => {
       } else if (err.transactionHash) {
         failedTxHash = err.transactionHash;
       }
-      
+
       // Save failed transaction if we have a hash
       if (failedTxHash) {
         const saveSwapTransaction = async (txHash, txStatus = 'failed') => {
           try {
             const saved = await getItem('myTransactions');
             const existing = saved && Array.isArray(saved) ? saved : [];
-            
+
             // Check if transaction already exists
             const exists = existing.some(tx => tx.hash === txHash);
-            
+
             if (!exists && txHash) {
               // Get network name from chainId
               const chainIdNum = chainId ? parseInt(chainId, 16) : null;
-              
+
               const swapTxData = {
                 id: txHash,
                 type: 'Swap',
@@ -689,7 +727,7 @@ const Swap = () => {
                 chainId: chainIdNum || chainId,
                 address: address?.toLowerCase(),
               };
-              
+
               existing.unshift(swapTxData);
               // Keep only last 100 transactions
               const trimmed = existing.slice(0, 100);
@@ -701,10 +739,10 @@ const Swap = () => {
             console.error('Error saving failed swap transaction:', saveErr);
           }
         };
-        
+
         await saveSwapTransaction(failedTxHash, 'failed');
       }
-      
+
       // Handle user rejection - only show error if not user cancellation
       if (!errorMessage.includes('user rejected') && !errorMessage.includes('User denied') && !errorMessage.includes('User rejected')) {
         setToast({ visible: true, type: 'error', message: errorMessage });
@@ -717,14 +755,14 @@ const Swap = () => {
 
   const SlippageTolerance = () => {
     const [isCustomFocused, setIsCustomFocused] = useState(false);
-    
+
     // Determine the text color based on slippage value for validation feedback
     const getSlippageTextColor = () => {
       if (slippage > 5) return 'danger';
       if (slippage > 1) return 'warning';
       return '';
     };
-    
+
     return (
       <div className="swap-slippage-container">
         <label className="swap-slippage-label">{t('Slippage')}</label>
@@ -775,34 +813,34 @@ const Swap = () => {
   const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, triggerRef, fromToken, toToken, fromBalance, toBalance }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const selectorRef = useRef(null);
-    
+
     // Filter tokens based on search query
     const filteredTokens = useMemo(() => {
       if (!searchQuery) return tokenList;
-      
+
       const query = searchQuery.toLowerCase();
-      return tokenList.filter(token => 
-        token && 
-        token.symbol && 
+      return tokenList.filter(token =>
+        token &&
+        token.symbol &&
         typeof token.symbol === 'string' &&
-        (token.symbol.toLowerCase().includes(query) || 
-        (token.name && typeof token.name === 'string' && token.name.toLowerCase().includes(query)) ||
-        (token.address && typeof token.address === 'string' && token.address.toLowerCase().includes(query)) ||
-        (token.address && typeof token.address === 'object' && 
-          Object.values(token.address).some(addr => typeof addr === 'string' && addr.toLowerCase().includes(query))))
+        (token.symbol.toLowerCase().includes(query) ||
+          (token.name && typeof token.name === 'string' && token.name.toLowerCase().includes(query)) ||
+          (token.address && typeof token.address === 'string' && token.address.toLowerCase().includes(query)) ||
+          (token.address && typeof token.address === 'object' &&
+            Object.values(token.address).some(addr => typeof addr === 'string' && addr.toLowerCase().includes(query))))
       );
     }, [searchQuery, tokenList]);
-    
+
     // Popular tokens for quick selection.
     const popularTokens = useMemo(() => {
-      return tokenList.filter(token => 
-        token && 
-        token.symbol && 
+      return tokenList.filter(token =>
+        token &&
+        token.symbol &&
         typeof token.symbol === 'string' &&
         ['USDC', 'EURC'].includes(token.symbol)
       );
     }, [tokenList]);
-    
+
     // Handle ESC key press to close modal
     useEffect(() => {
       const handleEsc = (event) => {
@@ -810,11 +848,11 @@ const Swap = () => {
           onClose();
         }
       };
-      
+
       if (isOpen) {
         document.addEventListener('keydown', handleEsc);
       }
-      
+
       return () => {
         document.removeEventListener('keydown', handleEsc);
       };
@@ -823,34 +861,34 @@ const Swap = () => {
     return (
       <AnimatePresence mode="wait">
         {isOpen && (
-        <motion.div 
-          key="token-selector-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 swap-token-selector-modal-backdrop"
-          onClick={onClose}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
           <motion.div
-            ref={selectorRef}
-            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            className="swap-token-selector-modal"
-            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+            key="token-selector-modal"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 swap-token-selector-modal-backdrop"
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
           >
+            <motion.div
+              ref={selectorRef}
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+              className="swap-token-selector-modal"
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+            >
               <div className="swap-token-selector-header">
                 <h3 className="swap-token-selector-title">{t('Select Token')}</h3>
-                <button 
+                <button
                   onClick={onClose}
                   className="swap-token-selector-close-button"
                 >
                   <X size={18} />
                 </button>
               </div>
-              
+
               {/* Search Bar */}
               <div className="swap-token-selector-search">
                 <input
@@ -861,7 +899,7 @@ const Swap = () => {
                   className="swap-token-selector-search-input"
                 />
               </div>
-              
+
               {/* Popular Tokens */}
               <div className="swap-token-selector-popular-section">
                 <h4 className="swap-token-selector-popular-label">{t('Your Tokens')}</h4>
@@ -871,10 +909,10 @@ const Swap = () => {
                     if (!token || !token.symbol || typeof token.symbol !== 'string') {
                       return null;
                     }
-                    
+
                     const isExcluded = token.symbol === exclude;
                     const isSelected = token.symbol === selectedToken;
-                    
+
                     return (
                       <button
                         key={`popular-${token.symbol}`}
@@ -888,15 +926,15 @@ const Swap = () => {
                         className={`swap-token-selector-popular-button ${isSelected ? 'active' : ''} ${isExcluded ? 'disabled' : ''}`}
                       >
                         {token.symbol === 'USDC' ? (
-                          <img 
-                            src="/icons/usdc.png" 
-                            alt={token.symbol} 
+                          <img
+                            src="/icons/usdc.png"
+                            alt={token.symbol}
                             className="swap-token-selector-popular-icon"
                           />
                         ) : token.symbol === 'EURC' ? (
-                          <img 
-                            src="/icons/eurc.png" 
-                            alt={token.symbol} 
+                          <img
+                            src="/icons/eurc.png"
+                            alt={token.symbol}
                             className="swap-token-selector-popular-icon"
                           />
                         ) : (
@@ -912,7 +950,7 @@ const Swap = () => {
                   })}
                 </div>
               </div>
-              
+
               {/* Token List */}
               <div className="swap-token-selector-list">
                 {filteredTokens.map((token) => {
@@ -920,7 +958,7 @@ const Swap = () => {
                   if (!token || !token.symbol || typeof token.symbol !== 'string') {
                     return null;
                   }
-                  
+
                   return (
                     <button
                       key={token.symbol}
@@ -935,13 +973,13 @@ const Swap = () => {
                       <div className="swap-token-selector-list-item-content">
                         <div className="swap-token-selector-list-icon">
                           {token.symbol === 'USDC' ? (
-                            <img 
-                              src="/icons/usdc.png" 
+                            <img
+                              src="/icons/usdc.png"
                               alt={token.symbol}
                             />
                           ) : token.symbol === 'EURC' ? (
-                            <img 
-                              src="/icons/eurc.png" 
+                            <img
+                              src="/icons/eurc.png"
                               alt={token.symbol}
                             />
                           ) : (
@@ -967,7 +1005,7 @@ const Swap = () => {
                     </button>
                   );
                 })}
-                
+
                 {filteredTokens.length === 0 && searchQuery && (
                   <div className="swap-token-selector-empty">
                     <p>{t('noTokensFound')}</p>
@@ -980,7 +1018,7 @@ const Swap = () => {
       </AnimatePresence>
     );
   };
-  
+
   return (
     <div className="max-w-lg mx-auto w-full">
       <motion.div
@@ -995,12 +1033,13 @@ const Swap = () => {
             <p className="swap-header-subtitle">{t('swap.tradeTokensTitle')}</p>
           </div>
           <div className="swap-header-actions">
-            <a 
-              href="https://faucet.circle.com/" 
-              target="_blank" 
+            <a
+              href="https://faucet.circle.com/"
+              target="_blank"
               rel="noopener noreferrer"
-              className="swap-faucet-button"
+              className="swap-faucet-button-compact"
             >
+
               <span>Faucet</span>
             </a>
             <button
@@ -1042,7 +1081,7 @@ const Swap = () => {
                 className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
                 onClick={() => setShowSettings(false)}
               />
-              
+
               {/* Bottom Sheet - Mobile Only */}
               <motion.div
                 initial={{ y: '100%' }}
@@ -1056,7 +1095,7 @@ const Swap = () => {
                 <div className="flex justify-center pt-3 pb-2">
                   <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full" />
                 </div>
-                
+
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 sm:px-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Settings</h3>
@@ -1067,7 +1106,7 @@ const Swap = () => {
                     <X size={20} className="text-gray-500 dark:text-gray-400" />
                   </button>
                 </div>
-                
+
                 {/* Content */}
                 <div className="p-4 sm:p-6 space-y-6 max-h-[70vh] overflow-y-auto">
                   {/* Slippage Tolerance */}
@@ -1140,15 +1179,15 @@ const Swap = () => {
             >
               <div className="swap-token-icon">
                 {fromToken === 'USDC' ? (
-                  <img 
-                    src="/icons/usdc.png" 
-                    alt={fromToken} 
+                  <img
+                    src="/icons/usdc.png"
+                    alt={fromToken}
                     className="w-6 h-6 rounded-full object-contain"
                   />
                 ) : fromToken === 'EURC' ? (
-                  <img 
-                    src="/icons/eurc.png" 
-                    alt={fromToken} 
+                  <img
+                    src="/icons/eurc.png"
+                    alt={fromToken}
                     className="w-6 h-6 rounded-full object-contain"
                   />
                 ) : (
@@ -1215,15 +1254,15 @@ const Swap = () => {
             >
               <div className="swap-token-icon">
                 {toToken === 'USDC' ? (
-                  <img 
-                    src="/icons/usdc.png" 
-                    alt={toToken} 
+                  <img
+                    src="/icons/usdc.png"
+                    alt={toToken}
                     className="w-6 h-6 rounded-full object-contain"
                   />
                 ) : toToken === 'EURC' ? (
-                  <img 
-                    src="/icons/eurc.png" 
-                    alt={toToken} 
+                  <img
+                    src="/icons/eurc.png"
+                    alt={toToken}
                     className="w-6 h-6 rounded-full object-contain"
                   />
                 ) : (

@@ -1,45 +1,51 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Stac - Home of Defi on Arc </title>
-    <meta name="description" content="AI-powered DeFi platform on Arc Network featuring swap, bridge, and liquidity pool provisioning" />
-    <!-- Apply theme immediately before React loads to prevent flash on mobile -->
-    <script>
-      (function() {
-        try {
-          const saved = localStorage.getItem('darkMode');
-          const isDark = saved !== null 
-            ? JSON.parse(saved) 
-            : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          
-          if (isDark) {
-            document.documentElement.classList.add('dark');
-            document.documentElement.style.backgroundColor = '#020617';
-            document.body.style.backgroundColor = '#020617';
-            document.body.style.color = '#f9fafb';
-          } else {
-            document.documentElement.classList.remove('dark');
-            document.documentElement.style.backgroundColor = '#ffffff';
-            document.body.style.backgroundColor = '#ffffff';
-            document.body.style.color = '#111827';
-          }
-        } catch (e) {
-          // Fallback to light mode if error
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" , user-scalable=yes />
+  <title>Stac - Home of Defi on Arc </title>
+  <meta name="description"
+    content="AI-powered DeFi platform on Arc Network featuring swap, bridge, and liquidity pool provisioning" />
+  <!-- Apply theme immediately before React loads to prevent flash on mobile -->
+  <script>
+    (function () {
+      try {
+        const saved = localStorage.getItem('darkMode');
+        const isDark = saved !== null
+          ? JSON.parse(saved)
+          : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#020617';
+          document.body.style.backgroundColor = '#020617';
+          document.body.style.color = '#f9fafb';
+        } else {
           document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#ffffff';
+          document.body.style.backgroundColor = '#ffffff';
+          document.body.style.color = '#111827';
         }
-      })();
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link href="/src/index.css" rel="stylesheet">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+      } catch (e) {
+        // Fallback to light mode if error
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="/src/index.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

@@ -558,10 +558,9 @@ html.dark,
   color: var(--bridge-text-secondary);
   text-align: center;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  opacity: 0.7;
-  font-weight: 500;
+  opacity: 0.9;
+  font-weight: 700;
 }
-
 /* Responsive Design - Mobile First  */
 @media (max-width: 640px) {
 
@@ -1776,3 +1775,49 @@ html:not(.dark) .bridging-modal-error-icon,
   }
 }
 
+
+/* Compact Faucet Button for Swap Page */
+.swap-faucet-button-compact {
+  padding: 8px 14px;
+  font-size: 11px;
+  color: var(--bridge-text-primary);
+  border: 1px solid var(--bridge-border-medium);
+  border-radius: 8px;
+  background: var(--bridge-surface-card);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.swap-faucet-button-compact:hover {
+  background: var(--bridge-surface-hover);
+  border-color: var(--bridge-border-focus);
+  transform: scale(1.02);
+}
+
+.swap-faucet-button-compact:active {
+  transform: scale(0.98);
+}
+
+/* Mobile responsive styles for compact faucet button */
+@media (max-width: 640px) {
+  .swap-faucet-button-compact {
+    padding: 6px 10px;
+    font-size: 10px;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 375px) {
+  .swap-faucet-button-compact {
+    padding: 5px 8px;
+    font-size: 9px;
+    gap: 3px;
+  }
+}
