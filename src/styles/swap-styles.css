@@ -42,7 +42,7 @@ html.dark,
 
 /* Main Swap Container */
 .swap-container {
-  max-width: 480px;
+  max-width: 540px;
   margin: 0 auto;
   background: var(--swap-bg-secondary);
   border: 1px solid var(--swap-border-light);
@@ -53,10 +53,17 @@ html.dark,
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Desktop: Increase height with more vertical padding */
+/* Tablet: Moderate padding increase */
+@media (min-width: 640px) {
+  .swap-container {
+    padding: 28px;
+  }
+}
+
+/* Desktop: Increase padding for more breathing room */
 @media (min-width: 768px) {
   .swap-container {
-    padding: 32px 24px;
+    padding: 36px;
   }
 }
 
@@ -66,6 +73,13 @@ html.dark,
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
+}
+
+/* Desktop: More header spacing */
+@media (min-width: 768px) {
+  .swap-header {
+    margin-bottom: 28px;
+  }
 }
 
 .swap-header-title {
@@ -139,7 +153,7 @@ html.dark,
   background: var(--swap-surface-card);
   border: 1px solid var(--swap-border-light);
   border-radius: 12px;
-  padding: 16px;
+  padding: 18px;
   margin-bottom: 16px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -149,11 +163,25 @@ html.dark,
   background: rgba(255, 255, 255, 0.04);
 }
 
+/* Desktop: More padding for input groups */
+@media (min-width: 768px) {
+  .swap-input-group {
+    padding: 22px;
+  }
+}
+
 .swap-input-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+}
+
+/* Desktop: More spacing in input header */
+@media (min-width: 768px) {
+  .swap-input-header {
+    margin-bottom: 16px;
+  }
 }
 
 .swap-input-label {
@@ -169,6 +197,13 @@ html.dark,
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Desktop: Slightly larger balance text */
+@media (min-width: 768px) {
+  .swap-balance-text {
+    font-size: 13px;
+  }
+}
+
 .swap-balance-text span {
   color: var(--swap-text-primary);
   font-weight: 600;
@@ -178,6 +213,13 @@ html.dark,
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* Desktop: More gap in input row */
+@media (min-width: 768px) {
+  .swap-input-row {
+    gap: 18px;
+  }
 }
 
 .swap-amount-input {
@@ -239,6 +281,15 @@ html.dark,
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 100px;
   flex-shrink: 0;
+}
+
+/* Desktop: Larger token selector */
+@media (min-width: 768px) {
+  .swap-token-selector {
+    padding: 10px 16px;
+    min-width: 115px;
+    gap: 10px;
+  }
 }
 
 .swap-token-selector:hover {
@@ -422,6 +473,14 @@ html.dark,
   gap: 8px;
 }
 
+/* Desktop: Larger button padding */
+@media (min-width: 768px) {
+  .swap-button {
+    padding: 16px;
+    font-size: 15px;
+  }
+}
+
 .swap-button:hover:not(:disabled) {
   transform: scale(1.02);
   filter: brightness(1.1);
@@ -545,7 +604,9 @@ html.dark,
 }
 
 @keyframes swap-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .swap-loading-text {
@@ -734,73 +795,88 @@ html.dark .swap-slippage-container,
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Tablet Responsive - Ensure container doesn't get too wide on smaller tablets */
+@media (min-width: 640px) and (max-width: 900px) {
+  .swap-container {
+    max-width: 510px;
+  }
+}
+
+/* Small Tablet - Further constraint for very small tablets */
+@media (min-width: 640px) and (max-width: 768px) {
+  .swap-container {
+    max-width: 490px;
+    padding: 26px;
+  }
+}
+
 /* Mobile Responsive */
 @media (max-width: 640px) {
   .swap-container {
     padding: 16px;
     border-radius: 12px;
   }
-  
+
   .swap-settings-button {
     width: 28px;
     height: 28px;
   }
-  
+
   .swap-header-actions {
     gap: 8px;
   }
-  
+
   .swap-slippage-container {
     padding: 12px;
     border-radius: 10px;
   }
-  
+
   .swap-slippage-label {
     margin-bottom: 12px;
     font-size: 12px;
   }
-  
+
   .swap-slippage-buttons {
     gap: 6px;
   }
-  
+
   .swap-slippage-button {
     padding: 8px;
     font-size: 12px;
   }
-  
+
   .swap-amount-input {
     font-size: 20px;
   }
-  
+
   .swap-info-grid {
     grid-template-columns: 1fr;
     gap: 8px;
   }
-  
+
   .swap-token-selector {
     min-width: 90px;
     padding: 6px 10px;
   }
-  
+
   .swap-token-icon {
     width: 20px;
     height: 20px;
   }
-  
+
   .swap-token-symbol {
     font-size: 12px;
   }
-  
+
   .swap-direction-button {
     width: 36px;
     height: 36px;
   }
-  
+
   .swap-direction-container {
     margin: 16px 0;
   }
-  
+
   .swap-button {
     padding: 16px;
     font-size: 16px;
@@ -812,15 +888,15 @@ html.dark .swap-slippage-container,
   .swap-container {
     padding: 12px;
   }
-  
+
   .swap-input-group {
     padding: 12px;
   }
-  
+
   .swap-amount-input {
     font-size: 18px;
   }
-  
+
   .swap-button {
     padding: 14px;
     font-size: 14px;
@@ -1110,45 +1186,45 @@ html.dark .swap-slippage-container,
     border-radius: 16px 16px 0 0;
     margin-top: auto;
   }
-  
+
   .swap-token-selector-header {
     padding: 16px;
   }
-  
+
   .swap-token-selector-title {
     font-size: 16px;
   }
-  
+
   .swap-token-selector-close-button {
     width: 28px;
     height: 28px;
   }
-  
+
   .swap-token-selector-search {
     padding: 0 16px 12px;
   }
-  
+
   .swap-token-selector-popular-section {
     padding: 0 16px 12px;
   }
-  
+
   .swap-token-selector-list {
     padding: 0 16px 16px;
   }
-  
+
   .swap-token-selector-list-item {
     padding: 12px;
   }
-  
+
   .swap-token-selector-list-icon {
     width: 36px;
     height: 36px;
   }
-  
+
   .swap-token-selector-list-symbol {
     font-size: 13px;
   }
-  
+
   .swap-token-selector-list-name {
     font-size: 11px;
   }

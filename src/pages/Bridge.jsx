@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
 import { useSwitchChain } from 'wagmi';
-import { ArrowLeftRight, Loader, AlertCircle, Info, Wallet, X, Settings } from 'lucide-react';
+import { ArrowLeftRight, Loader, AlertCircle, Info, Wallet, X, Settings, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
 import { sanitizeInput } from '../utils/blockchain';
@@ -268,6 +269,7 @@ const Bridge = () => {
       const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
       const arcChainId = parseInt(NETWORKS.ARC_TESTNET.chainId, 16);
       const sepoliaChainId = parseInt(NETWORKS.ETHEREUM_SEPOLIA.chainId, 16);
+      const baseSepoliaChainId = parseInt(NETWORKS.BASE_SEPOLIA.chainId, 16);
 
       if (chainIdDecimal === arcChainId) {
         // If wallet is on Arc Testnet, set it as the 'from' chain
@@ -296,6 +298,21 @@ const Bridge = () => {
         setToChain(prevToChain => {
           if (prevToChain === 'Sepolia') {
             return 'Arc Testnet';
+          }
+          return prevToChain;
+        });
+      } else if (chainIdDecimal === baseSepoliaChainId) {
+        // If wallet is on Base Sepolia, set it as the 'from' chain
+        setFromChain(prevFromChain => {
+          if (prevFromChain !== 'Base Sepolia') {
+            return 'Base Sepolia';
+          }
+          return prevFromChain;
+        });
+        // Ensure 'to' chain is different (only if currently the same)
+        setToChain(prevToChain => {
+          if (prevToChain === 'Base Sepolia') {
+            return 'Sepolia';
           }
           return prevToChain;
         });
@@ -410,6 +427,8 @@ const Bridge = () => {
       case 'Ethereum Sepolia':
       case 'Sepolia Testnet (ETH)':
         return parseInt(NETWORKS.ETHEREUM_SEPOLIA.chainId, 16);
+      case 'Base Sepolia':
+        return parseInt(NETWORKS.BASE_SEPOLIA.chainId, 16);
       default:
         return null;
     }
@@ -542,6 +561,26 @@ const Bridge = () => {
               setFromChain(newChain);
               fetchTokenBalance('USDC', chainId);
             }
+          } else if (newChain === 'Base Sepolia') {
+            // For Base Sepolia, add it to the wallet
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: NETWORKS.BASE_SEPOLIA.chainId,
+                chainName: NETWORKS.BASE_SEPOLIA.chainName,
+                nativeCurrency: NETWORKS.BASE_SEPOLIA.nativeCurrency,
+                rpcUrls: NETWORKS.BASE_SEPOLIA.rpcUrls,
+                blockExplorerUrls: NETWORKS.BASE_SEPOLIA.blockExplorerUrls,
+              }],
+            });
+
+            // After adding, try to switch again
+            const chainId = getChainIdByName(newChain);
+            if (chainId) {
+              await switchChain({ chainId });
+              setFromChain(newChain);
+              fetchTokenBalance('USDC', chainId);
+            }
           }
         } catch (addError) {
           console.error('Failed to add network:', addError);
@@ -552,7 +591,7 @@ const Bridge = () => {
       setFromChain(newChain);
     }
   };  // New function to handle 'To' network changes with auto-switch
-  const handleToNetworkChange = async (newChain) => {
+  const handleToNetworkChange = (newChain) => {
     // Prevent chain switching during bridge transactions
     const isBridgeInProgress = bridgeLoading ||
       state.isLoading ||
@@ -568,78 +607,9 @@ const Bridge = () => {
     initialFromChainRef.current = null;
     initialToChainRef.current = null;
 
-    if (!isConnected) {
-      // If not connected, just update the local state
-      setToChain(newChain);
-      return;
-    }
-
-    try {
-      // Get the chain ID for the new chain
-      const chainId = getChainIdByName(newChain);
-
-      if (chainId) {
-        // Trigger wallet network switch
-        await switchChain({ chainId });
-
-        // Update local state (will be confirmed by the useEffect above)
-        setToChain(newChain);
-
-        // Note: We don't fetch balance here since the 'from' chain determines the balance display
-      }
-    } catch (error) {
-      console.error('Failed to switch network:', error);
-
-      // Handle the case where the chain needs to be added to the wallet (Error 4902)
-      if ((error?.code === 4902 || error?.message?.includes('wallet_addEthereumChain')) && window && window.ethereum) {
-        try {
-          // Add Arc Testnet to the wallet
-          if (newChain === 'Arc Testnet') {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: NETWORKS.ARC_TESTNET.chainId,
-                chainName: NETWORKS.ARC_TESTNET.chainName,
-                nativeCurrency: NETWORKS.ARC_TESTNET.nativeCurrency,
-                rpcUrls: NETWORKS.ARC_TESTNET.rpcUrls,
-                blockExplorerUrls: NETWORKS.ARC_TESTNET.blockExplorerUrls,
-              }],
-            });
-
-            // After adding, try to switch again
-            const chainId = getChainIdByName(newChain);
-            if (chainId) {
-              await switchChain({ chainId });
-              setToChain(newChain);
-            }
-          } else if (newChain === 'Sepolia' || newChain === 'Sepolia Testnet' || newChain === 'Ethereum Sepolia' || newChain === 'Sepolia Testnet (ETH)') {
-            // For Sepolia, just try to add it
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: NETWORKS.ETHEREUM_SEPOLIA.chainId,
-                chainName: NETWORKS.ETHEREUM_SEPOLIA.chainName,
-                nativeCurrency: NETWORKS.ETHEREUM_SEPOLIA.nativeCurrency,
-                rpcUrls: NETWORKS.ETHEREUM_SEPOLIA.rpcUrls,
-                blockExplorerUrls: NETWORKS.ETHEREUM_SEPOLIA.blockExplorerUrls,
-              }],
-            });
-
-            // After adding, try to switch again
-            const chainId = getChainIdByName(newChain);
-            if (chainId) {
-              await switchChain({ chainId });
-              setToChain(newChain);
-            }
-          }
-        } catch (addError) {
-          console.error('Failed to add network:', addError);
-        }
-      }
-
-      // Even if switching fails, update the local state for UI consistency
-      setToChain(newChain);
-    }
+    // Just update the local state for destination chain
+    // We do NOT switch the wallet network for the destination chain
+    setToChain(newChain);
   };
 
   const handleBridge = async () => {
@@ -726,9 +696,29 @@ const Bridge = () => {
       // Determine direction based on fromChain and toChain
       let direction;
       if (fromChain === 'Sepolia' || fromChain === 'Sepolia Testnet' || fromChain === 'Ethereum Sepolia' || fromChain === 'Sepolia Testnet (ETH)') {
-        direction = 'sepolia-to-arc';
+        if (toChain === 'Arc Testnet') {
+          direction = 'sepolia-to-arc';
+        } else if (toChain === 'Base Sepolia') {
+          direction = 'sepolia-to-base';
+        } else {
+          throw new Error('Invalid destination chain configuration');
+        }
       } else if (fromChain === 'Arc Testnet') {
-        direction = 'arc-to-sepolia';
+        if (toChain === 'Sepolia' || toChain === 'Sepolia Testnet' || toChain === 'Ethereum Sepolia' || toChain === 'Sepolia Testnet (ETH)') {
+          direction = 'arc-to-sepolia';
+        } else if (toChain === 'Base Sepolia') {
+          direction = 'arc-to-base';
+        } else {
+          throw new Error('Invalid destination chain configuration');
+        }
+      } else if (fromChain === 'Base Sepolia') {
+        if (toChain === 'Sepolia' || toChain === 'Sepolia Testnet' || toChain === 'Ethereum Sepolia' || toChain === 'Sepolia Testnet (ETH)') {
+          direction = 'base-to-sepolia';
+        } else if (toChain === 'Arc Testnet') {
+          direction = 'base-to-arc';
+        } else {
+          throw new Error('Invalid destination chain configuration');
+        }
       } else {
         throw new Error('Invalid source chain configuration');
       }
@@ -996,32 +986,28 @@ const Bridge = () => {
         document.removeEventListener('keydown', handleEsc);
       };
     }, [isOpen, onClose]);
-    if (!isOpen) return null;
 
-    const chainList = ['Arc Testnet', 'Sepolia'];
+    const chainList = ['Arc Testnet', 'Sepolia', 'Base Sepolia'];
 
     return (
-      <AnimatePresence>
+      <>
         {isOpen && (
-          <motion.div
+          <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{
               background: 'rgba(0, 0, 0, 0.8)',
-              backdropFilter: 'blur(8px)'
+              backdropFilter: 'blur(8px)',
             }}
             onClick={onClose}
           >
-            <motion.div
+            <div
               ref={selectorRef}
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
               className="relative p-6 w-full max-w-md flex flex-col max-h-[80vh] overflow-hidden"
               style={{
                 background: 'var(--bridge-bg-secondary)',
                 border: '1px solid var(--bridge-border-light)',
                 borderRadius: '16px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
               }}
               onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
             >
@@ -1039,65 +1025,78 @@ const Bridge = () => {
               <div className="flex-1 overflow-y-auto -mx-6 px-6">
                 {/* Chain List */}
                 <div className="space-y-2">
-                  {chainList.map((chain) => (
-                    <button
-                      key={chain}
-                      onClick={() => {
-                        onSelect(chain);
-                        onClose();
-                      }}
-                      className={`w-full p-4 rounded-lg flex items-center justify-between transition-all duration-200
-                        ${chain === selectedChain ? 'border-2' : 'border-2 border-transparent'}`}
-                      style={chain === selectedChain ? {
-                        background: 'var(--bridge-alert-bg)',
-                        borderColor: 'var(--bridge-accent-primary)'
-                      } : {
-                        background: 'transparent',
-                        borderColor: 'transparent'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (chain !== selectedChain) {
-                          e.currentTarget.style.background = 'var(--bridge-surface-hover)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (chain !== selectedChain) {
-                          e.currentTarget.style.background = 'transparent';
-                        }
-                      }}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="network-icon">
-                          {chain.includes('Arc') ? (
-                            <img
-                              src="/icons/Arc.png"
-                              alt="Arc Testnet"
-                              className="w-8 h-8 rounded-full object-contain"
-                            />
-                          ) : chain.includes('Sepolia') ? (
-                            <img
-                              src="/icons/eth.png"
-                              alt="Sepolia"
-                              className="w-8 h-8 rounded-full object-contain"
-                            />
-                          ) : null}
+                  {chainList.map((chain) => {
+                    const isExcluded = chain === exclude;
+                    const isSelected = chain === selectedChain;
+
+                    return (
+                      <button
+                        key={chain}
+                        disabled={isExcluded}
+                        onClick={() => {
+                          if (!isExcluded) {
+                            onSelect(chain);
+                            onClose();
+                          }
+                        }}
+                        className={`w-full p-4 rounded-lg flex items-center justify-between transition-all duration-200
+                          ${isSelected ? 'border-2' : 'border-2 border-transparent'}`}
+                        style={{
+                          background: isSelected ? 'var(--bridge-alert-bg)' : 'transparent',
+                          borderColor: isSelected ? 'var(--bridge-accent-primary)' : 'transparent',
+                          opacity: isExcluded ? 0.5 : 1,
+                          cursor: isExcluded ? 'not-allowed' : 'pointer'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected && !isExcluded) {
+                            e.currentTarget.style.background = 'var(--bridge-surface-hover)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected && !isExcluded) {
+                            e.currentTarget.style.background = 'transparent';
+                          }
+                        }}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="network-icon">
+                            {chain.includes('Arc') ? (
+                              <img
+                                src="/icons/Arc.png"
+                                alt="Arc Testnet"
+                                className="w-8 h-8 rounded-full object-contain"
+                              />
+                            ) : chain.includes('Base') ? (
+                              <img
+                                src="/icons/base.png"
+                                alt="Base Sepolia"
+                                className="w-8 h-8 rounded-lg object-cover"
+                              />
+                            ) : chain.includes('Sepolia') ? (
+                              <img
+                                src="/icons/eth.png"
+                                alt="Sepolia"
+                                className="w-8 h-8 rounded-full object-contain"
+                              />
+                            ) : null}
+                          </div>
+                          <div className="text-left">
+                            <p className="network-name">{chain}</p>
+                            <p className="network-chain">{t('Testnet')}</p>
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <p className="network-name">{chain}</p>
-                          <p className="network-chain">{t('Testnet')}</p>
-                        </div>
-                      </div>
-                      {chain === exclude && (
-                        <div className="px-3 py-1 text-xs rounded" style={{
-                          background: 'var(--bridge-surface-card)',
-                          color: 'var(--bridge-text-secondary)',
-                          fontSize: '11px'
-                        }}>
-                          {t('Selected')}
-                        </div>
-                      )}
-                    </button>
-                  ))}
+                        {isExcluded && (
+                          <div className="px-3 py-1 text-xs rounded" style={{
+                            background: 'var(--bridge-surface-card)',
+                            color: 'var(--bridge-text-secondary)',
+                            fontSize: '11px'
+                          }}>
+                            {t('Selected')}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1110,15 +1109,16 @@ const Bridge = () => {
                   </p>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     );
+
   };
 
   return (
-    <div className="max-w-lg mx-auto w-full px-0 sm:px-0">
+    <div className="max-w-2xl mx-auto w-full px-0 sm:px-0">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1142,7 +1142,7 @@ const Bridge = () => {
           <Info className="alert-icon" size={16} />
           <div className="alert-content">
             <p className="alert-text">
-              {t("Cross-Chain Bridging: Transfer assets securely between Sepolia and Arc Testnet.")}
+              {t("Cross-Chain Bridging: Transfer assets securely between Sepolia, Base Sepolia, and Arc Testnet.")}
             </p>
           </div>
         </div>
@@ -1151,7 +1151,25 @@ const Bridge = () => {
         <div className="network-selector">
           {/* From Network */}
           {/* Use initial chains if bridge was initiated, otherwise use current chains */}
-          <div className="network-card">
+          <button
+            ref={fromChainTriggerRef}
+            onClick={() => {
+              // Prevent chain switching during bridge transactions
+              const isBridgeInProgress = bridgeLoading ||
+                state.isLoading ||
+                (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
+
+              if (!isBridgeInProgress) {
+                setShowChainSelector('from');
+              }
+            }}
+            disabled={bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')}
+            className="network-card"
+            style={{
+              cursor: (bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')) ? 'not-allowed' : 'pointer',
+              opacity: (bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')) ? 0.6 : 1,
+            }}
+          >
             <div className="network-icon">
               {(() => {
                 const displayFromChain = bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain;
@@ -1160,6 +1178,12 @@ const Bridge = () => {
                     src="/icons/Arc.png"
                     alt="Arc Testnet"
                     className="w-8 h-8 rounded-full object-contain"
+                  />
+                ) : displayFromChain.includes('Base') ? (
+                  <img
+                    src="/icons/base.png"
+                    alt="Base Sepolia"
+                    className="w-8 h-8 rounded-lg object-cover"
                   />
                 ) : displayFromChain.includes('Sepolia') ? (
                   <img
@@ -1174,9 +1198,10 @@ const Bridge = () => {
               <p className="network-name">
                 {bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain}
               </p>
-              <p className="network-chain">Source Network</p>
+              <p className="network-chain">Source</p>
             </div>
-          </div>
+            <ChevronDown size={20} style={{ marginLeft: 'auto', opacity: 0.6 }} />
+          </button>
 
           {/* Switch Button */}
           <button
@@ -1239,7 +1264,25 @@ const Bridge = () => {
 
           {/* To Network */}
           {/* Use initial chains if bridge was initiated, otherwise use current chains */}
-          <div className="network-card">
+          <button
+            ref={toChainTriggerRef}
+            onClick={() => {
+              // Prevent chain switching during bridge transactions
+              const isBridgeInProgress = bridgeLoading ||
+                state.isLoading ||
+                (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
+
+              if (!isBridgeInProgress) {
+                setShowChainSelector('to');
+              }
+            }}
+            disabled={bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')}
+            className="network-card"
+            style={{
+              cursor: (bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')) ? 'not-allowed' : 'pointer',
+              opacity: (bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')) ? 0.6 : 1,
+            }}
+          >
             <div className="network-icon">
               {(() => {
                 const displayToChain = bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain;
@@ -1248,6 +1291,12 @@ const Bridge = () => {
                     src="/icons/Arc.png"
                     alt="Arc Testnet"
                     className="w-8 h-8 rounded-full object-contain"
+                  />
+                ) : displayToChain.includes('Base') ? (
+                  <img
+                    src="/icons/base.png"
+                    alt="Base Sepolia"
+                    className="w-8 h-8 rounded-lg object-cover"
                   />
                 ) : displayToChain.includes('Sepolia') ? (
                   <img
@@ -1262,9 +1311,10 @@ const Bridge = () => {
               <p className="network-name">
                 {bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain}
               </p>
-              <p className="network-chain">Destination Network</p>
+              <p className="network-chain">Destination</p>
             </div>
-          </div>
+            <ChevronDown size={20} style={{ marginLeft: 'auto', opacity: 0.6 }} />
+          </button>
         </div>
 
         {/* Asset Input Section */}
@@ -1401,32 +1451,35 @@ const Bridge = () => {
       />
 
       {/* Network Added Success Notification */}
-      <AnimatePresence>
-        {showNetworkSuccess && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="network-success-toast"
-          >
-            <div className="network-success-content">
-              <div className="network-success-header">
-                <span className="network-success-title">Success</span>
-                <button
-                  onClick={() => setShowNetworkSuccess(false)}
-                  className="network-success-close"
-                  aria-label="Close notification"
-                >
-                  <X size={16} />
-                </button>
+      {createPortal(
+        <AnimatePresence>
+          {showNetworkSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="network-success-toast"
+            >
+              <div className="network-success-content">
+                <div className="network-success-header">
+                  <span className="network-success-title">Success</span>
+                  <button
+                    onClick={() => setShowNetworkSuccess(false)}
+                    className="network-success-close"
+                    aria-label="Close notification"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                <p className="network-success-message">
+                  Successfully added network to your wallet
+                </p>
               </div>
-              <p className="network-success-message">
-                Successfully added network to your wallet
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

@@ -29,6 +29,10 @@ import Toast from '../components/Toast';
 import { getItem, setItem } from '../utils/indexedDB';
 import '../styles/swap-styles.css';
 
+const FACTORY_ADDRESS = "0x34A0b64a88BBd4Bf6Acba8a0Ff8F27c8aDD67E9C";
+const ROUTER_ADDRESS = "0x284C5Afc100ad14a458255075324fA0A9dfd66b1";
+const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
+
 const Swap = () => {
   const { t } = useTranslation();
   const { isConnected, balance, chainId } = useWallet();
@@ -78,6 +82,7 @@ const Swap = () => {
 
   // Helper function to get token address for current chain
   const getTokenAddress = (tokenSymbol) => {
+    if (tokenSymbol === 'USDC') return USDC_ADDRESS;
     if (!chainId || !tokenSymbol) return null;
 
     // Normalize the current chain ID for comparison
@@ -293,7 +298,7 @@ const Swap = () => {
         // Try to fetch real quote from contract if connected and on supported network
         if (isConnected && chainId && window.ethereum) {
           const contractAddresses = getContractAddresses(chainId);
-          const routerAddress = contractAddresses?.router;
+          const routerAddress = ROUTER_ADDRESS;
           const fromTokenAddr = getTokenAddress(fromToken);
           const toTokenAddr = getTokenAddress(toToken);
 
@@ -380,7 +385,7 @@ const Swap = () => {
 
     if (fromAmount && parseFloat(fromAmount) > 0 && isConnected && chainId && window.ethereum) {
       const contractAddresses = getContractAddresses(chainId);
-      const routerAddress = contractAddresses?.router;
+      const routerAddress = ROUTER_ADDRESS;
       const fromTokenAddr = getTokenAddress(fromToken);
       const toTokenAddr = getTokenAddress(toToken);
 
@@ -388,8 +393,9 @@ const Swap = () => {
         const checkLiquidity = async () => {
           try {
             const { provider } = await getEthersProvider();
-            const routerContract = getSwapRouterContract(routerAddress, provider);
-            const liquidityCheck = await checkPoolLiquidity(routerContract, fromTokenAddr, toTokenAddr);
+
+            // Use Factory/Pair approach for liquidity check (standard V2)
+            const liquidityCheck = await checkPoolLiquidity(FACTORY_ADDRESS, provider, fromTokenAddr, toTokenAddr);
 
             if (!liquidityCheck.hasLiquidity) {
               const fromDecimals = getTokenDecimals(fromToken);
@@ -510,7 +516,7 @@ const Swap = () => {
 
     // Get contract addresses for current network
     const contractAddresses = getContractAddresses(chainId);
-    const routerAddress = contractAddresses?.router;
+    const routerAddress = ROUTER_ADDRESS;
     const fromTokenAddr = getTokenAddress(fromToken);
     const toTokenAddr = getTokenAddress(toToken);
 
@@ -563,7 +569,7 @@ const Swap = () => {
       const deadline = getDeadline();
 
       // Check liquidity before attempting swap
-      const liquidityCheck = await checkPoolLiquidity(routerContract, fromTokenAddr, toTokenAddr);
+      const liquidityCheck = await checkPoolLiquidity(FACTORY_ADDRESS, provider, fromTokenAddr, toTokenAddr);
       if (!liquidityCheck.hasLiquidity) {
         const reserveInFormatted = parseTokenAmount(liquidityCheck.reserveIn, fromDecimals);
         const reserveOutFormatted = parseTokenAmount(liquidityCheck.reserveOut, toDecimals);
@@ -1020,7 +1026,7 @@ const Swap = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto w-full">
+    <div className="max-w-2xl mx-auto w-full">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

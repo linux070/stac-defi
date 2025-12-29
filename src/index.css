@@ -5,40 +5,41 @@
 @tailwind utilities;
 
 @layer base {
+
   /* CSS Variables for theme tokens  */
   :root {
     /* Font */
     --theme-font: Inter, system-ui, sans-serif;
-    
+
     /* Colors - Light mode defaults */
     --theme-primary: #3b82f6;
     --theme-focus: #2563eb;
-    
+
     /* Text colors */
     --theme-text-default: #111827;
     --theme-text-subtle: #6b7280;
     --theme-text-muted: #9ca3af;
-    
+
     /* Background colors */
     --theme-bg-default: #ffffff;
     --theme-bg-secondary: #f9fafb;
     --theme-bg-tertiary: #f3f4f6;
-    
+
     /* Border colors */
     --theme-border-default: #e5e7eb;
     --theme-border-subtle: #f3f4f6;
-    
+
     /* Button colors */
     --theme-btn-primary-color: #ffffff;
     --theme-btn-primary-bg: #3b82f6;
     --theme-btn-primary-hover-color: #ffffff;
     --theme-btn-primary-hover-bg: #2563eb;
-    
+
     --theme-btn-secondary-color: #3b82f6;
     --theme-btn-secondary-bg: #ffffff;
     --theme-btn-secondary-hover-color: #2563eb;
     --theme-btn-secondary-hover-bg: #f9fafb;
-    
+
     /* Card colors */
     --theme-card-bg: #ffffff;
     --theme-card-border: #e5e7eb;
@@ -46,10 +47,11 @@
   }
 
   /* Instant theme changes for html and body - no transition delay */
-  html, body {
+  html,
+  body {
     transition: none !important;
   }
-  
+
   body {
     @apply bg-white dark:bg-black text-gray-900 dark:text-white;
     font-family: var(--theme-font);
@@ -58,31 +60,31 @@
     /* Disable transitions for theme-related properties */
     transition: none !important;
   }
-  
+
   /* Custom dark mode background color defined in tailwind.config.js */
   html.dark {
     @apply bg-black;
   }
-  
+
   html {
     @apply bg-white dark:bg-black;
     /* Disable transitions for theme changes */
     transition: none !important;
   }
-  
+
   /* Instant theme property changes - no transitions for colors, smooth for other properties */
   *,
   *::before,
   *::after {
     /* Theme properties: instant (0s) - critical for mobile */
     transition: background-color 0s, border-color 0s, color 0s, fill 0s, stroke 0s,
-                /* Other properties: smooth (200ms) */
-                opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
-                transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
-                filter 200ms cubic-bezier(0.4, 0, 0.2, 1);
+      /* Other properties: smooth (200ms) */
+      opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
+      transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
+      filter 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
 }
 
 @layer components {
@@ -92,7 +94,7 @@
     transition: opacity 0.2s ease, transform 0.2s ease;
     transition-property: opacity, transform;
   }
-  
+
   /* Custom colors defined in tailwind.config.js */
   .btn-secondary {
     @apply bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border-2 border-primary-500 font-semibold py-2 px-6 rounded-lg hover:bg-primary-50 dark:hover:bg-gray-700;
@@ -100,7 +102,7 @@
     transition: opacity 0.2s ease, transform 0.2s ease;
     transition-property: opacity, transform;
   }
-  
+
   /* Card styles with light/dark mode support */
   .card {
     /* Base styles */
@@ -109,58 +111,58 @@
     /* Instant theme changes, smooth transitions for other properties */
     transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     transition-property: opacity, transform, box-shadow;
-    
+
     /* Light mode styles (Crisp Paper) */
     background-color: #fff;
     border: 1px solid #e2e8f0;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-    
+
     /* Dark mode styles */
     @apply dark:bg-black dark:border-gray-800;
   }
-  
+
   /* Hover effect for cards */
   .card:hover {
     @apply shadow-md dark:shadow-lg;
   }
-  
+
   .input-field {
     @apply w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 dark:text-white;
     /* Instant theme changes, smooth transitions for focus states */
     transition: box-shadow 0.2s ease, outline 0.2s ease;
     transition-property: box-shadow, outline;
   }
-  
+
   /* Custom gradient defined in tailwind.config.js */
   .gradient-text {
     @apply bg-gradient-arc bg-clip-text text-transparent;
   }
-  
+
   /* Responsive token selector container */
   .token-selector-container {
     @apply flex items-center justify-between gap-2;
   }
-  
+
   /* Responsive token selector button */
   .token-selector-button {
     @apply flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[120px] w-auto flex-shrink-0;
   }
-  
+
   /* Responsive token selector text */
   .token-selector-text {
     @apply text-left min-w-0;
   }
-  
+
   /* Responsive token selector name */
   .token-selector-name {
     @apply font-bold text-base truncate;
   }
-  
+
   /* Responsive token selector description */
   .token-selector-description {
     @apply text-xs text-gray-500 dark:text-gray-400 truncate;
   }
-  
+
   /* Switch button for bridge/swap */
   .switch-button {
     @apply p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110;
@@ -169,9 +171,18 @@
 
 @layer utilities {
   .text-shadow {
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
-  
+
+  /* Animation delay utilities for blob animations */
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+
   /* Custom glass effect with dark mode support defined in tailwind.config.js */
   .glass-effect {
     @apply bg-white/10 dark:bg-dark-900/30 backdrop-blur-lg border border-white/20 dark:border-dark-700/50;
@@ -179,19 +190,19 @@
     transition: opacity 0.2s ease, transform 0.2s ease;
     transition-property: opacity, transform;
   }
-  
+
   /* Neon glow effects for dark mode */
   .neon-icon-container {
     box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
-  
+
   /* Enhanced dark mode utility classes */
   /* Instant theme changes - no transitions for theme properties */
   .dark\:bg-dark-900 {
     transition: none !important;
   }
-  
+
   /* Utility for better mobile touch targets */
   .touch-target {
     min-height: 44px;
@@ -201,71 +212,72 @@
 
 /* Media queries for responsive design */
 @media (max-width: 768px) {
+
   /* Ensure instant theme changes on mobile - no transitions for theme properties */
   html,
   body,
   * {
-    transition: background-color 0s !important, 
-                border-color 0s !important, 
-                color 0s !important,
-                opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
-                transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0s,
+      border-color 0s,
+      color 0s,
+      opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
+      transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
-  
+
   /* Mobile-specific: prevent backdrop-blur from causing theme switch delays */
   [class*="backdrop-blur"],
   [class*="bg-white/80"],
   [class*="dark:bg-\[#131720\]/80"],
   header,
   nav {
-    transition: background-color 0s !important, 
-                border-color 0s !important,
-                color 0s !important,
-                opacity 200ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: background-color 0s,
+      border-color 0s,
+      color 0s,
+      opacity 200ms cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
-  
+
   /* Footer improvements for mobile visibility */
   footer {
     border-top-width: 2px !important;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
   }
-  
+
   html.dark footer {
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
   }
-  
+
   footer p {
     font-size: 0.875rem !important;
     line-height: 1.6 !important;
   }
-  
+
   footer a {
     font-weight: 600 !important;
     text-decoration: none !important;
     cursor: pointer !important;
   }
-  
+
   .token-selector-button {
     @apply min-w-[100px] px-2 py-1;
   }
-  
+
   .token-selector-name {
     @apply text-sm;
   }
-  
+
   .token-selector-description {
     @apply text-xs;
   }
-  
+
   .token-icon {
     @apply w-8 h-8;
   }
-  
+
   .card {
     padding: 1rem;
   }
-  
+
   .switch-button {
     @apply p-3;
   }
@@ -275,36 +287,36 @@
   .token-selector-button {
     @apply min-w-[80px] px-1 py-1;
   }
-  
+
   .token-selector-name {
     @apply text-xs;
   }
-  
+
   .token-selector-description {
     @apply hidden;
   }
-  
+
   .token-icon {
     @apply w-6 h-6 text-sm;
   }
-  
+
   .card {
     padding: 0.75rem;
   }
-  
+
   .switch-button {
     @apply p-2;
   }
-  
+
   /* Reduce padding on mobile for better fit */
   .p-4 {
     padding: 1rem;
   }
-  
+
   .p-6 {
     padding: 1.25rem;
   }
-  
+
   .p-8 {
     padding: 1.5rem;
   }
@@ -328,6 +340,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -338,6 +351,7 @@
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -363,8 +377,4 @@
 }
 
 /* Ensure proper viewport settings for mobile */
-@viewport {
-  width: device-width;
-  initial-scale: 1;
-  user-zoom: fixed;
-}
+/* @viewport rule removed */

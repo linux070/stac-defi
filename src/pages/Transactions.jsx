@@ -11,19 +11,33 @@ import { NETWORKS } from '../config/networks';
 // Helper function to get network name from chainId
 const getNetworkName = (chainId) => {
   if (!chainId) return null;
-  
+
   // Handle both hex and decimal chainId
-  const chainIdNum = typeof chainId === 'string' && chainId.startsWith('0x') 
-    ? parseInt(chainId, 16) 
+  const chainIdNum = typeof chainId === 'string' && chainId.startsWith('0x')
+    ? parseInt(chainId, 16)
     : parseInt(chainId);
-  
+
   // Match chainId to network
   if (chainIdNum === 5042002 || chainId === '0x4cef52' || chainId === '5042002') {
     return NETWORKS.ARC_TESTNET.chainName; // "Arc Testnet"
   } else if (chainIdNum === 11155111 || chainId === '0xaa36a7' || chainId === '11155111') {
     return NETWORKS.ETHEREUM_SEPOLIA.chainName; // "Sepolia Testnet"
+  } else if (chainIdNum === 84532 || chainId === '0x14a34' || chainId === '84532') {
+    return NETWORKS.BASE_SEPOLIA.chainName; // "Base Sepolia"
   }
-  
+
+  return null;
+};
+
+// Helper to get chain icon
+const getChainIcon = (chainName) => {
+  if (!chainName) return null;
+  const name = chainName.toLowerCase();
+
+  if (name.includes('arc')) return '/icons/Arc.png';
+  if (name.includes('base')) return '/icons/base.png';
+  if (name.includes('sepolia') || name.includes('eth')) return '/icons/eth.png';
+
   return null;
 };
 
@@ -49,12 +63,12 @@ const Transactions = () => {
           walletAddress,
           walletAddressLower: walletAddress?.toLowerCase()
         });
-        
+
         if (saved && Array.isArray(saved)) {
           // Filter transactions by current wallet address
           if (walletAddress) {
             const walletAddressLower = walletAddress.toLowerCase();
-            
+
             // Debug: Log sample transactions to see their structure
             if (saved.length > 0) {
               console.log('📋 Sample transaction from storage:', {
@@ -64,7 +78,7 @@ const Transactions = () => {
                 walletAddress: walletAddressLower
               });
             }
-            
+
             const filtered = saved.filter(tx => {
               // Only include transactions that have an address field matching current wallet
               if (tx.address) {
@@ -79,13 +93,13 @@ const Transactions = () => {
               console.log('⚠️ Transaction without address field, excluding:', tx.hash);
               return false;
             });
-            
+
             console.log('🔍 Filtered transactions:', {
               total: saved.length,
               filtered: filtered.length,
               walletAddress: walletAddressLower
             });
-            
+
             setMyTransactions(filtered);
           } else {
             // If no wallet connected, show empty
@@ -112,9 +126,9 @@ const Transactions = () => {
     if (!walletAddress) {
       return [];
     }
-    
+
     const walletAddressLower = walletAddress.toLowerCase();
-    
+
     // Filter blockchain transactions by wallet address
     const filteredBlockchain = blockchainTransactions.filter(tx => {
       // Check if transaction is from/to the current wallet
@@ -124,7 +138,7 @@ const Transactions = () => {
       if (tx.address && tx.address.toLowerCase() === walletAddressLower) return true;
       return false;
     });
-    
+
     // Filter local transactions by wallet address (already filtered in useEffect, but double-check)
     const filteredLocal = myTransactions.filter(tx => {
       if (tx.address) {
@@ -133,16 +147,16 @@ const Transactions = () => {
       // Exclude transactions without address field
       return false;
     });
-    
+
     const blockchainSet = new Set(filteredBlockchain.map(tx => tx.hash));
     const localOnly = filteredLocal.filter(tx => !blockchainSet.has(tx.hash));
-    
+
     const merged = [...filteredBlockchain, ...localOnly].sort((a, b) => {
       const timeA = a.timestamp || 0;
       const timeB = b.timestamp || 0;
       return timeB - timeA;
     });
-    
+
     console.log('🔄 Merged transactions:', {
       blockchain: filteredBlockchain.length,
       local: filteredLocal.length,
@@ -150,14 +164,14 @@ const Transactions = () => {
       total: merged.length,
       walletAddress: walletAddressLower
     });
-    
+
     return merged;
   }, [blockchainTransactions, myTransactions, walletAddress]);
 
   // Note: We don't save filtered transactions back to IndexedDB
   // The original transactions with all wallet addresses are kept in storage
   // We only filter when displaying. This preserves data for all wallets.
-  
+
   // Listen for new transactions from other pages (Bridge, Swap, etc.)
   useEffect(() => {
     const handleTransactionSaved = async () => {
@@ -191,11 +205,11 @@ const Transactions = () => {
         console.error('Error reloading transactions:', err);
       }
     };
-    
+
     window.addEventListener('bridgeTransactionSaved', handleTransactionSaved);
     window.addEventListener('swapTransactionSaved', handleTransactionSaved);
     window.addEventListener('lpTransactionSaved', handleTransactionSaved);
-    
+
     return () => {
       window.removeEventListener('bridgeTransactionSaved', handleTransactionSaved);
       window.removeEventListener('swapTransactionSaved', handleTransactionSaved);
@@ -257,12 +271,12 @@ const Transactions = () => {
   const getSwapFromToken = (tx) => {
     if (tx.type !== 'Swap') return tx.from || '';
     if (!tx.from) return '';
-    
+
     const fromStr = String(tx.from).trim();
-    
+
     // If it's already just a token symbol (no spaces, no numbers), return it
     if (!fromStr.includes(' ') && !/^\d/.test(fromStr)) return fromStr;
-    
+
     // Extract token symbol from formats like "1.0 USDC", "1 EURC", etc.
     // Split by space and get the last part (token symbol)
     const parts = fromStr.split(/\s+/).filter(p => p.length > 0);
@@ -270,24 +284,24 @@ const Transactions = () => {
       // Return the last part which should be the token symbol
       return parts[parts.length - 1];
     }
-    
+
     // If only one part, check if it's a token (contains letters) or a number
     if (/[A-Za-z]/.test(parts[0])) {
       return parts[0];
     }
-    
+
     return fromStr;
   };
 
   const getSwapToToken = (tx) => {
     if (tx.type !== 'Swap') return tx.to || '';
     if (!tx.to) return '';
-    
+
     const toStr = String(tx.to).trim();
-    
+
     // If it's already just a token symbol (no spaces, no numbers at start), return it
     if (!toStr.includes(' ') && !/^\d/.test(toStr)) return toStr;
-    
+
     // Extract token symbol from formats like "1.096700 USDC", "1.1 EURC", etc.
     // Split by space and get the last part (token symbol)
     const parts = toStr.split(/\s+/).filter(p => p && p.length > 0);
@@ -296,27 +310,27 @@ const Transactions = () => {
       const token = parts[parts.length - 1];
       return token || toStr;
     }
-    
+
     // If only one part, check if it's a token (contains letters) or a number
     if (parts.length > 0 && /[A-Za-z]/.test(parts[0])) {
       return parts[0];
     }
-    
+
     return toStr;
   };
 
   const getSwapAmount = (tx) => {
     if (tx.type !== 'Swap') return tx.amount || '';
     if (!tx.amount) return '';
-    
+
     const amountStr = String(tx.amount).trim();
-    
+
     // If it's already just a number (no arrow, no letters), return it
     const cleanNumber = parseFloat(amountStr);
     if (!isNaN(cleanNumber) && !amountStr.includes('→') && !/[a-zA-Z]/.test(amountStr)) {
       return String(cleanNumber);
     }
-    
+
     // If it contains an arrow, extract the first number before the arrow
     if (amountStr.includes('→')) {
       // Format: "1 EURC → 1.096700 USDC" - extract first number
@@ -327,14 +341,14 @@ const Transactions = () => {
         return numberMatch[1];
       }
     }
-    
+
     // Otherwise, extract the first number from the string
     // Format: "1 EURC" or "1.096700 USDC" - extract number
     const numberMatch = amountStr.match(/^([\d.]+)/);
     if (numberMatch && numberMatch[1]) {
       return numberMatch[1];
     }
-    
+
     return amountStr;
   };
 
@@ -342,7 +356,7 @@ const Transactions = () => {
   const getSwapFromAmount = (tx) => {
     if (tx.type !== 'Swap') return '';
     if (!tx.from) return '';
-    
+
     const fromStr = String(tx.from).trim();
     const numberMatch = fromStr.match(/^([\d.]+)/);
     return numberMatch ? numberMatch[1] : '';
@@ -351,7 +365,7 @@ const Transactions = () => {
   // Helper to get to amount for swap transactions
   const getSwapToAmount = (tx) => {
     if (tx.type !== 'Swap') return '';
-    
+
     // First try to extract from tx.to
     if (tx.to) {
       const toStr = String(tx.to).trim();
@@ -360,7 +374,7 @@ const Transactions = () => {
         return numberMatch[1];
       }
     }
-    
+
     // If tx.amount contains arrow format, extract the second number
     if (tx.amount && String(tx.amount).includes('→')) {
       const amountStr = String(tx.amount).trim();
@@ -373,7 +387,7 @@ const Transactions = () => {
         }
       }
     }
-    
+
     return '';
   };
 
@@ -381,7 +395,7 @@ const Transactions = () => {
     <div className="max-w-6xl mx-auto w-full px-4 sm:px-4 md:px-0">
       {/* Header */}
       <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('Transactions')}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('Transactions')}</h1>
       </div>
 
       {/* Activity Table - Desktop */}
@@ -423,22 +437,40 @@ const Transactions = () => {
                     ) : (
                       <span className={`inline-flex items-center px-2 py-1 md:px-3 md:py-1 rounded-full text-xs font-semibold ${getTypeColor(tx.type)}`}>
                         {getTypeIcon(tx.type)}
-                      {tx.type}
-                    </span>
+                        {tx.type}
+                      </span>
                     )}
                   </td>
-                  <td className="py-3 md:py-4 text-xs md:text-sm font-medium">{getSwapFromToken(tx)}</td>
-                  <td className="py-3 md:py-4 text-xs md:text-sm font-medium">{getSwapToToken(tx)}</td>
+                  <td className="py-3 md:py-4 text-xs md:text-sm font-medium">
+                    {tx.type === 'Bridge' && getChainIcon(getSwapFromToken(tx)) ? (
+                      <div className="flex items-center gap-2">
+                        <img src={getChainIcon(getSwapFromToken(tx))} alt={getSwapFromToken(tx)} className="w-5 h-5 rounded-full object-contain" />
+                        <span>{getSwapFromToken(tx)}</span>
+                      </div>
+                    ) : (
+                      getSwapFromToken(tx)
+                    )}
+                  </td>
+                  <td className="py-3 md:py-4 text-xs md:text-sm font-medium">
+                    {tx.type === 'Bridge' && getChainIcon(getSwapToToken(tx)) ? (
+                      <div className="flex items-center gap-2">
+                        <img src={getChainIcon(getSwapToToken(tx))} alt={getSwapToToken(tx)} className="w-5 h-5 rounded-full object-contain" />
+                        <span>{getSwapToToken(tx)}</span>
+                      </div>
+                    ) : (
+                      getSwapToToken(tx)
+                    )}
+                  </td>
                   <td className="py-3 md:py-4 text-xs md:text-sm font-semibold">{getSwapAmount(tx)}</td>
                   <td className="py-3 md:py-4 text-xs md:text-sm text-gray-500">{timeAgo(tx.timestamp)}</td>
                   <td className="py-3 md:py-4">
                     {tx.status === 'success' ? (
-                      <span className="inline-flex items-center px-3 py-1.5" style={{ 
-                        backgroundColor: '#E0F2F1', 
+                      <span className="inline-flex items-center px-3 py-1.5" style={{
+                        backgroundColor: '#E0F2F1',
                         border: '1px solid #80CBC4',
                         borderRadius: '8px'
                       }}>
-                        <span className="flex items-center justify-center w-5 h-5 rounded-full mr-2 flex-shrink-0" style={{ 
+                        <span className="flex items-center justify-center w-5 h-5 rounded-full mr-2 flex-shrink-0" style={{
                           backgroundColor: '#00897B'
                         }}>
                           <i className="fa fa-check-circle text-white" style={{ fontSize: '12px', lineHeight: '1' }}></i>
@@ -446,10 +478,10 @@ const Transactions = () => {
                         <span className="text-xs font-semibold" style={{ color: '#00695C' }}>Success</span>
                       </span>
                     ) : (
-                    <div className="flex items-center space-x-1 md:space-x-2">
-                      {getStatusIcon(tx.status)}
-                      <span className="capitalize text-xs md:text-sm">{tx.status}</span>
-                    </div>
+                      <div className="flex items-center space-x-1 md:space-x-2">
+                        {getStatusIcon(tx.status)}
+                        <span className="capitalize text-xs md:text-sm">{tx.status}</span>
+                      </div>
                     )}
                   </td>
                   <td className="py-3 md:py-4">
@@ -491,11 +523,11 @@ const Transactions = () => {
             ) : (
               <>
                 <p className="text-gray-500 dark:text-gray-400 mb-2">{t('activity.noActivityFound')}</p>
-            <p className="text-sm text-gray-400">
+                <p className="text-sm text-gray-400">
                   {!isConnected
-                ? t('Please connect your wallet first')
-                : t('Transactions will appear here')}
-            </p>
+                    ? t('Please connect your wallet first')
+                    : t('Transactions will appear here')}
+                </p>
               </>
             )}
           </div>
@@ -511,11 +543,10 @@ const Transactions = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className={`card p-4 space-y-3.5 touch-manipulation ${
-                tx.type === 'Swap'
-                  ? 'border border-blue-100/80 dark:border-blue-900/40 bg-gradient-to-b from-white to-blue-50/40 dark:from-gray-900 dark:to-blue-950/15'
-                  : ''
-              }`}
+              className={`card p-4 space-y-3.5 touch-manipulation ${tx.type === 'Swap'
+                ? 'border border-blue-100/80 dark:border-blue-900/40 bg-gradient-to-b from-white to-blue-50/40 dark:from-gray-900 dark:to-blue-950/15'
+                : ''
+                }`}
             >
               {/* Header Row - Type, Status, and Time */}
               {tx.type === 'Swap' ? (
@@ -535,12 +566,12 @@ const Transactions = () => {
                   {/* Centered Success button */}
                   <div className="flex justify-center">
                     {tx.status === 'success' ? (
-                      <span className="inline-flex items-center px-2.5 py-1" style={{ 
-                        backgroundColor: '#E0F2F1', 
+                      <span className="inline-flex items-center px-2.5 py-1" style={{
+                        backgroundColor: '#E0F2F1',
                         border: '1px solid #80CBC4',
                         borderRadius: '8px'
                       }}>
-                        <span className="flex items-center justify-center w-4 h-4 rounded-full mr-1.5 flex-shrink-0" style={{ 
+                        <span className="flex items-center justify-center w-4 h-4 rounded-full mr-1.5 flex-shrink-0" style={{
                           backgroundColor: '#00897B'
                         }}>
                           <i className="fa fa-check-circle text-white" style={{ fontSize: '10px', lineHeight: '1' }}></i>
@@ -574,12 +605,12 @@ const Transactions = () => {
                   {/* Centered Success button */}
                   <div className="flex justify-center">
                     {tx.status === 'success' ? (
-                      <span className="inline-flex items-center px-2.5 py-1" style={{ 
-                        backgroundColor: '#E0F2F1', 
+                      <span className="inline-flex items-center px-2.5 py-1" style={{
+                        backgroundColor: '#E0F2F1',
                         border: '1px solid #80CBC4',
                         borderRadius: '8px'
                       }}>
-                        <span className="flex items-center justify-center w-4 h-4 rounded-full mr-1.5 flex-shrink-0" style={{ 
+                        <span className="flex items-center justify-center w-4 h-4 rounded-full mr-1.5 flex-shrink-0" style={{
                           backgroundColor: '#00897B'
                         }}>
                           <i className="fa fa-check-circle text-white" style={{ fontSize: '10px', lineHeight: '1' }}></i>
@@ -638,15 +669,34 @@ const Transactions = () => {
               ) : (
                 <>
                   {/* From/To Row - Improved spacing and layout */}
+                  {/* From/To Row - Improved spacing and layout */}
                   <div className="flex items-center gap-3 py-1.5">
                     <div className="flex-1 min-w-0">
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">From</div>
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{getSwapFromToken(tx)}</div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                        {tx.type === 'Bridge' && getChainIcon(getSwapFromToken(tx)) ? (
+                          <div className="flex items-center gap-1.5">
+                            <img src={getChainIcon(getSwapFromToken(tx))} alt={getSwapFromToken(tx)} className="w-4 h-4 rounded-full object-contain" />
+                            <span>{getSwapFromToken(tx)}</span>
+                          </div>
+                        ) : (
+                          getSwapFromToken(tx)
+                        )}
+                      </div>
                     </div>
                     <ArrowLeftRight size={18} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0 text-right">
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">To</div>
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{getSwapToToken(tx)}</div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white truncate flex justify-end">
+                        {tx.type === 'Bridge' && getChainIcon(getSwapToToken(tx)) ? (
+                          <div className="flex items-center gap-1.5">
+                            <img src={getChainIcon(getSwapToToken(tx))} alt={getSwapToToken(tx)} className="w-4 h-4 rounded-full object-contain" />
+                            <span>{getSwapToToken(tx)}</span>
+                          </div>
+                        ) : (
+                          getSwapToToken(tx)
+                        )}
+                      </div>
                     </div>
                   </div>
 

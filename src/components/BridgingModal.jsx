@@ -86,7 +86,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
   };
 
   const modalState = getModalState();
-  
+
   // Don't render if there's an error - BridgeFailedModal will handle it
   if (state?.step === 'error') {
     return null;
@@ -120,7 +120,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
               </button>
 
               <div className="flex flex-col items-center text-white">
-                <motion.div 
+                <motion.div
                   className="relative mb-3"
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -135,14 +135,14 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                       <CheckCircle size={24} className="text-white" strokeWidth={2.5} />
                     </div>
                   )}
-                  <motion.div 
+                  <motion.div
                     className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-lg"
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.3, type: 'spring' }}
                   >
                     {modalState === 'inProgress' ? (
-                      <motion.div 
+                      <motion.div
                         className="w-2 h-2 rounded-full"
                         style={{ background: 'var(--bridge-accent-primary)' }}
                         animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
@@ -153,7 +153,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                     )}
                   </motion.div>
                 </motion.div>
-                <motion.h3 
+                <motion.h3
                   className="bridging-modal-title"
                   initial={{ y: -10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -166,7 +166,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
 
             <div className="bridging-modal-content">
               {/* Network Visualization Card */}
-              <motion.div 
+              <motion.div
                 className="bridging-modal-network-container"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -176,38 +176,50 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                   {/* Source Chain Card */}
                   <div className="bridging-modal-network-card">
                     {fromChain.includes('Arc') ? (
-                      <img 
-                        src="/icons/Arc.png" 
-                        alt="Arc Testnet" 
+                      <img
+                        src="/icons/Arc.png"
+                        alt="Arc Testnet"
+                        className="bridging-modal-network-icon object-contain"
+                      />
+                    ) : fromChain.includes('Base') ? (
+                      <img
+                        src="/icons/base.png"
+                        alt="Base Sepolia"
                         className="bridging-modal-network-icon object-contain"
                       />
                     ) : (
-                      <img 
-                        src="/icons/eth.png" 
-                        alt="Sepolia" 
+                      <img
+                        src="/icons/eth.png"
+                        alt="Sepolia"
                         className="bridging-modal-network-icon object-contain"
                       />
                     )}
                     <p className="bridging-modal-network-name">{fromChain}</p>
                   </div>
-                  
+
                   {/* Arrow Connector */}
                   <div className="flex items-center justify-center flex-shrink-0">
                     <ArrowRight className="bridging-modal-arrow w-4 h-4" strokeWidth={2} />
                   </div>
-                  
+
                   {/* Destination Chain Card */}
                   <div className="bridging-modal-network-card">
                     {toChain.includes('Arc') ? (
-                      <img 
-                        src="/icons/Arc.png" 
-                        alt="Arc Testnet" 
+                      <img
+                        src="/icons/Arc.png"
+                        alt="Arc Testnet"
+                        className="bridging-modal-network-icon object-contain"
+                      />
+                    ) : toChain.includes('Base') ? (
+                      <img
+                        src="/icons/base.png"
+                        alt="Base Sepolia"
                         className="bridging-modal-network-icon object-contain"
                       />
                     ) : (
-                      <img 
-                        src="/icons/eth.png" 
-                        alt="Sepolia" 
+                      <img
+                        src="/icons/eth.png"
+                        alt="Sepolia"
                         className="bridging-modal-network-icon object-contain"
                       />
                     )}
@@ -228,7 +240,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                       <span className="bridging-modal-progress-time">{formatTime(displayTime)}</span>
                     </div>
                     <div className="bridging-modal-progress-bar-container">
-                      <div 
+                      <div
                         className="bridging-modal-progress-bar"
                         style={{ width: `${Math.min(100, (displayTime / 120) * 100)}%` }}
                       ></div>
@@ -239,7 +251,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                   </div>
 
                   {/* Important Notice */}
-                  <motion.div 
+                  <motion.div
                     className="bridging-modal-notice"
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
@@ -261,14 +273,14 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
               )}
 
               {modalState === 'completed' && (
-                <motion.div 
+                <motion.div
                   className="space-y-4"
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.3 }}
                 >
                   {/* Success Message */}
-                  <motion.p 
+                  <motion.p
                     className="bridging-modal-success-message"
                     initial={{ y: 10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}

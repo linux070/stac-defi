@@ -6,10 +6,10 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
   // Format error message with number highlighting
   const formatErrorMessage = (message) => {
     if (!message) return 'An unknown error occurred during the bridge transaction.';
-    
+
     const numberRegex = /(\d+\.?\d*)/g;
     const parts = message.split(numberRegex);
-    
+
     return parts.map((part, index) => {
       if (/^\d+\.?\d*$/.test(part)) {
         return (
@@ -50,7 +50,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
               </button>
 
               <div className="flex flex-col items-center text-white">
-                <motion.div 
+                <motion.div
                   className="mb-3"
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -60,7 +60,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                     <AlertCircle size={24} className="text-white" strokeWidth={2.5} />
                   </div>
                 </motion.div>
-                <motion.h3 
+                <motion.h3
                   className="bridging-modal-title"
                   initial={{ y: -10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -73,7 +73,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
 
             <div className="bridging-modal-content">
               {/* Network Visualization Card */}
-              <motion.div 
+              <motion.div
                 className="bridging-modal-network-container"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -83,38 +83,50 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                   {/* Source Chain Card */}
                   <div className="bridging-modal-network-card">
                     {fromChain?.includes('Arc') ? (
-                      <img 
-                        src="/icons/Arc.png" 
-                        alt="Arc Testnet" 
+                      <img
+                        src="/icons/Arc.png"
+                        alt="Arc Testnet"
+                        className="bridging-modal-network-icon object-contain"
+                      />
+                    ) : fromChain?.includes('Base') ? (
+                      <img
+                        src="/icons/base.png"
+                        alt="Base Sepolia"
                         className="bridging-modal-network-icon object-contain"
                       />
                     ) : (
-                      <img 
-                        src="/icons/eth.png" 
-                        alt="Sepolia" 
+                      <img
+                        src="/icons/eth.png"
+                        alt="Sepolia"
                         className="bridging-modal-network-icon object-contain"
                       />
                     )}
                     <p className="bridging-modal-network-name">{fromChain}</p>
                   </div>
-                  
+
                   {/* Arrow Connector */}
                   <div className="flex items-center justify-center flex-shrink-0">
                     <ArrowRight className="bridging-modal-arrow w-4 h-4" strokeWidth={2} />
                   </div>
-                  
+
                   {/* Destination Chain Card */}
                   <div className="bridging-modal-network-card">
                     {toChain?.includes('Arc') ? (
-                      <img 
-                        src="/icons/Arc.png" 
-                        alt="Arc Testnet" 
+                      <img
+                        src="/icons/Arc.png"
+                        alt="Arc Testnet"
+                        className="bridging-modal-network-icon object-contain"
+                      />
+                    ) : toChain?.includes('Base') ? (
+                      <img
+                        src="/icons/base.png"
+                        alt="Base Sepolia"
                         className="bridging-modal-network-icon object-contain"
                       />
                     ) : (
-                      <img 
-                        src="/icons/eth.png" 
-                        alt="Sepolia" 
+                      <img
+                        src="/icons/eth.png"
+                        alt="Sepolia"
                         className="bridging-modal-network-icon object-contain"
                       />
                     )}
@@ -124,7 +136,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
               </motion.div>
 
               {/* Enhanced Error Message Card */}
-              <motion.div 
+              <motion.div
                 className="bridging-modal-error-card"
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
