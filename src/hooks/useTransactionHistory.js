@@ -2,31 +2,33 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { createPublicClient, http, formatUnits } from 'viem';
 import { sepolia } from 'viem/chains';
-import { SEPOLIA_CHAIN_ID, ARC_CHAIN_ID } from './useBridge';
+import { SEPOLIA_CHAIN_ID, ARC_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID } from './useBridge';
 import { getItem, setItem } from '../utils/indexedDB';
 
 // Chain configurations
 const ARC_RPC_URLS = [
-  'https://rpc.testnet.arc.network/',
-  'https://rpc.testnet.arc.network',
 ];
 
 const SEPOLIA_RPC_URLS = [
-  'https://ethereum-sepolia-rpc.publicnode.com',
   'https://rpc.sepolia.org',
-  'https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
 ];
 
-// USDC contract addresses for both chains
+const BASE_SEPOLIA_RPC_URLS = [
+  'https://sepolia.base.org',
+  'https://base-sepolia.blockpi.network/v1/rpc/public',
+];
+
+// USDC contract addresses for all chains
 const USDC_CONTRACTS = {
   [SEPOLIA_CHAIN_ID]: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
   [ARC_CHAIN_ID]: '0x3600000000000000000000000000000000000000',
+  [BASE_SEPOLIA_CHAIN_ID]: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
 };
 
 // ERC20 Transfer event signature
 const TRANSFER_EVENT_SIGNATURE = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
-// Create public clients for both chains
+// Create public clients for all chains
 const createArcClient = () => {
   for (const rpcUrl of ARC_RPC_URLS) {
     try {
@@ -37,8 +39,8 @@ const createArcClient = () => {
           network: 'arc-testnet',
           nativeCurrency: {
             decimals: 18,
-            name: 'ETH',
-            symbol: 'ETH',
+            name: 'USDC',
+            symbol: 'USDC',
           },
           rpcUrls: {
             default: { http: [rpcUrl] },
@@ -78,6 +80,40 @@ const createSepoliaClient = () => {
   return null;
 };
 
+const createBaseSepoliaClient = () => {
+  for (const rpcUrl of BASE_SEPOLIA_RPC_URLS) {
+    try {
+      return createPublicClient({
+        chain: {
+          id: BASE_SEPOLIA_CHAIN_ID,
+          name: 'Base Sepolia',
+          network: 'base-sepolia',
+          nativeCurrency: {
+            decimals: 18,
+            name: 'ETH',
+            symbol: 'ETH',
+          },
+          rpcUrls: {
+            default: { http: [rpcUrl] },
+            public: { http: [rpcUrl] },
+          },
+          blockExplorers: {
+            default: { name: 'BaseScan', url: 'https://sepolia.basescan.org' },
+          },
+          testnet: true,
+        },
+        transport: http(rpcUrl, {
+          retryCount: 2,
+          timeout: 8000,
+        }),
+      });
+    } catch (err) {
+      continue;
+    }
+  }
+  return null;
+};
+
 // Determine transaction type based on contract addresses and logs
 const determineTransactionType = (tx, logs, chainId) => {
   // Check if it's a bridge transaction by looking for USDC transfers
@@ -90,10 +126,7 @@ const determineTransactionType = (tx, logs, chainId) => {
   );
 
   // For now, we'll identify bridge transactions
-  // In the future, we can add swap and LP detection
   if (hasUSDCTransfer) {
-    // Check if this looks like a bridge (interaction with bridge contracts)
-    // Bridge transactions typically involve transfers to/from bridge contracts
     return 'Bridge';
   }
 
@@ -111,8 +144,10 @@ const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
   // Get transaction type
   const type = determineTransactionType(tx, receipt?.logs, chainId);
 
-  // Extract amount from logs if available
+  // Extract amount and direction from logs
   let amount = '0.00';
+  let isOutgoing = true; // Default to outgoing (Source)
+
   const usdcAddress = USDC_CONTRACTS[chainId];
   if (receipt?.logs && usdcAddress) {
     const transferLogs = receipt.logs.filter(log =>
@@ -121,10 +156,23 @@ const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
     );
 
     if (transferLogs.length > 0) {
+      const log = transferLogs[0];
+
+      // Check direction: From User = Outgoing, To User = Incoming
+      // topic[1] is 'from', topic[2] is 'to'
+      // addresses in topics are padded to 32 bytes (64 chars), check includes
+      const userLower = address.toLowerCase().replace('0x', '');
+      const fromTopic = log.topics?.[1]?.toLowerCase() || '';
+      const toTopic = log.topics?.[2]?.toLowerCase() || '';
+
+      if (toTopic.includes(userLower)) {
+        isOutgoing = false; // Incoming (Destination/Mint)
+      } else {
+        isOutgoing = true; // Outgoing (Source/Burn)
+      }
+
       // Decode the amount from the log data
-      // The amount is stored in log.data as a hex string
       try {
-        const log = transferLogs[0];
         if (log.data && log.data !== '0x') {
           // Remove '0x' prefix and convert hex to decimal
           const hexAmount = log.data.startsWith('0x') ? log.data.slice(2) : log.data;
@@ -141,17 +189,27 @@ const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
   }
 
   // Determine from/to chains for bridge transactions
+  // This is a best-guess for blockchain transactions if not provided by local store
   let fromChain = chainName;
   let toChain = chainName;
 
   if (type === 'Bridge') {
-    // For bridge transactions, we need to determine the other chain
-    if (chainId === SEPOLIA_CHAIN_ID) {
-      fromChain = 'Sepolia';
-      toChain = 'Arc Testnet';
-    } else if (chainId === ARC_CHAIN_ID) {
-      fromChain = 'Arc Testnet';
-      toChain = 'Sepolia';
+    if (isOutgoing) {
+      // Outgoing: From this chain -> To destination (default to Arc/Sepolia pair, but allow Base)
+      fromChain = chainName;
+
+      // Heuristic destination guessing
+      if (chainId === SEPOLIA_CHAIN_ID) toChain = 'Arc Testnet'; // Could be Base, but defaulting for now
+      else if (chainId === ARC_CHAIN_ID) toChain = 'Sepolia';
+      else if (chainId === BASE_SEPOLIA_CHAIN_ID) toChain = 'Sepolia';
+    } else {
+      // Incoming: From source -> To this chain
+      toChain = chainName;
+
+      // Heuristic source guessing
+      if (chainId === SEPOLIA_CHAIN_ID) fromChain = 'Arc Testnet';
+      else if (chainId === ARC_CHAIN_ID) fromChain = 'Sepolia';
+      else if (chainId === BASE_SEPOLIA_CHAIN_ID) fromChain = 'Sepolia';
     }
   }
 
@@ -166,11 +224,13 @@ const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
     hash: tx.hash,
     chainId,
     address: address?.toLowerCase(),
+    isOutgoing, // Internal flag for deduplication
   };
 };
 
 // Deduplicate bridge transactions
-// Bridge transactions appear on both chains, so we need to identify and remove duplicates
+// Bridge transactions appear on both chains (Source/Burn and Dest/Mint)
+// We prefer the Outgoing (Source) transaction as it typically initiates the action
 const deduplicateBridgeTransactions = (transactions) => {
   const bridgeTxs = transactions.filter(tx => tx.type === 'Bridge');
   const otherTxs = transactions.filter(tx => tx.type !== 'Bridge');
@@ -181,7 +241,7 @@ const deduplicateBridgeTransactions = (transactions) => {
   const bridgeGroups = new Map();
 
   bridgeTxs.forEach(tx => {
-    // Create a key based on amount and rounded timestamp (10 min window for better matching)
+    // Create a key based on amount and rounded timestamp
     const timeWindow = Math.floor(tx.timestamp / (10 * 60 * 1000)); // 10 minute windows
     const key = `${tx.amount}_${timeWindow}`;
 
@@ -191,37 +251,19 @@ const deduplicateBridgeTransactions = (transactions) => {
     bridgeGroups.get(key).push(tx);
   });
 
-  console.log(`📊 Found ${bridgeGroups.size} bridge transaction groups`);
-
-  // For each group, keep only the source transaction (from Sepolia to Arc)
+  // For each group, prefer the Outgoing transaction (Source)
   const uniqueBridgeTxs = [];
   bridgeGroups.forEach((group, key) => {
-    console.log(`Group ${key}: ${group.length} transactions`, group.map(tx => ({
-      hash: tx.hash.slice(0, 10),
-      chainId: tx.chainId,
-      from: tx.from,
-      to: tx.to
-    })));
-
     if (group.length === 1) {
-      // Only one transaction in this group, keep it
       uniqueBridgeTxs.push(group[0]);
     } else {
-      // Multiple transactions - keep the one from Sepolia (source chain)
-      // Handle both hex and decimal chainId formats
-      const sepoliaTx = group.find(tx => {
-        const chainId = typeof tx.chainId === 'string' && tx.chainId.startsWith('0x')
-          ? parseInt(tx.chainId, 16)
-          : parseInt(tx.chainId);
-        return chainId === SEPOLIA_CHAIN_ID;
-      });
+      // Multiple transactions - try to find the Outgoing one
+      const outgoingTx = group.find(tx => tx.isOutgoing !== false); // Default to true if undefined
 
-      if (sepoliaTx) {
-        console.log(`✅ Keeping Sepolia tx: ${sepoliaTx.hash.slice(0, 10)}, removing ${group.length - 1} duplicates`);
-        uniqueBridgeTxs.push(sepoliaTx);
+      if (outgoingTx) {
+        uniqueBridgeTxs.push(outgoingTx);
       } else {
-        // If no Sepolia tx, keep the first one
-        console.log(`⚠️ No Sepolia tx found, keeping first: ${group[0].hash.slice(0, 10)}`);
+        // Fallback: keep the first one
         uniqueBridgeTxs.push(group[0]);
       }
     }
@@ -301,7 +343,7 @@ export function useTransactionHistory() {
       // Fetch transaction details for each hash
       const txPromises = txHashes
         .filter(hash => !fetchedHashesRef.current.has(hash))
-        .slice(0, 20) // Limit to 20 most recent to keep it lightweight
+        .slice(0, 20) // Limit to 20 most recent
         .map(async (hash) => {
           try {
             const [tx, receipt] = await Promise.all([
@@ -309,22 +351,16 @@ export function useTransactionHistory() {
               client.getTransactionReceipt({ hash }),
             ]);
 
-            // Debug: Log receipt status
-            console.log(`Transaction ${hash} receipt status:`, receipt?.status);
-
-            // Fetch block data to get the actual timestamp
+            // Fetch block data
             let block = null;
             if (receipt?.blockNumber) {
               try {
-                // Add a timeout to prevent hanging on slow/broken RPC responses
                 const blockPromise = client.getBlock({ blockNumber: receipt.blockNumber });
                 const timeoutPromise = new Promise((_, reject) =>
                   setTimeout(() => reject(new Error('Block fetch timeout')), 5000)
                 );
                 block = await Promise.race([blockPromise, timeoutPromise]);
               } catch (err) {
-                console.warn(`⚠️ Could not fetch block ${receipt.blockNumber}, using current time. Error:`, err.message);
-                // Fallback: use current time if block fetch fails
                 block = null;
               }
             }
@@ -373,14 +409,16 @@ export function useTransactionHistory() {
     try {
       const arcClient = createArcClient();
       const sepoliaClient = createSepoliaClient();
+      const baseSepoliaClient = createBaseSepoliaClient();
 
-      const [arcTxs, sepoliaTxs] = await Promise.all([
+      const [arcTxs, sepoliaTxs, baseSepoliaTxs] = await Promise.all([
         arcClient ? fetchChainTransactions(ARC_CHAIN_ID, 'Arc Testnet', arcClient) : [],
         sepoliaClient ? fetchChainTransactions(SEPOLIA_CHAIN_ID, 'Sepolia', sepoliaClient) : [],
+        baseSepoliaClient ? fetchChainTransactions(BASE_SEPOLIA_CHAIN_ID, 'Base Sepolia', baseSepoliaClient) : [],
       ]);
 
       // Combine, deduplicate, and sort by timestamp (newest first)
-      const combinedTxs = [...arcTxs, ...sepoliaTxs];
+      const combinedTxs = [...arcTxs, ...sepoliaTxs, ...baseSepoliaTxs];
       const deduplicatedTxs = deduplicateBridgeTransactions(combinedTxs);
       const allTxs = deduplicatedTxs.sort((a, b) => b.timestamp - a.timestamp);
 
@@ -400,7 +438,7 @@ export function useTransactionHistory() {
             const deduplicatedMerged = deduplicateBridgeTransactions(mergedTxs);
 
             await setItem('myTransactions', deduplicatedMerged);
-            console.log(`💾 Saved ${newTxsToSave.length} new transactions to IndexedDB (total: ${deduplicatedMerged.length} after deduplication)`);
+            console.log(`💾 Saved ${newTxsToSave.length} new transactions to IndexedDB`);
           }
         } catch (err) {
           console.error('Error saving transactions to IndexedDB:', err);

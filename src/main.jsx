@@ -11,10 +11,10 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { defineChain } from 'viem';
 
 // Import wallets
-import { 
-  metaMaskWallet, 
-  walletConnectWallet, 
-  coinbaseWallet, 
+import {
+  metaMaskWallet,
+  walletConnectWallet,
+  coinbaseWallet,
   rabbyWallet,
   safeWallet,
   rainbowWallet,
@@ -39,7 +39,7 @@ const sepolia = defineChain({
   name: 'Sepolia',
   nativeCurrency: { name: 'SepoliaETH', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161'] },
+    default: { http: ['https://eth-sepolia.g.alchemy.com/v2/w5SlKrdofEKjcKadoa6KQ'] },
   },
   blockExplorers: {
     default: { name: 'Sepolia Explorer', url: 'https://sepolia.etherscan.io/' },
@@ -47,10 +47,24 @@ const sepolia = defineChain({
   testnet: true,
 });
 
+// Define Base Sepolia chain
+const baseSepolia = defineChain({
+  id: 84532,
+  name: 'Base Sepolia',
+  nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://sepolia.base.org'] },
+  },
+  blockExplorers: {
+    default: { name: 'BaseScan', url: 'https://sepolia.basescan.org/' },
+  },
+  testnet: true,
+});
+
 const config = getDefaultConfig({
   appName: 'Stac',
   projectId: '7d4d84f37143c02aea3560eedfebb918',
-  chains: [arcTestnet, sepolia],
+  chains: [arcTestnet, sepolia, baseSepolia],
   ssr: true,
   wallets: [
     {

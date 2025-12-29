@@ -21,12 +21,24 @@ export const NETWORKS = {
       symbol: 'ETH',
       decimals: 18,
     },
-    rpcUrls: ['https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161'],
+    rpcUrls: ['https://eth-sepolia.g.alchemy.com/v2/w5SlKrdofEKjcKadoa6KQ'],
     blockExplorerUrls: ['https://sepolia.etherscan.io/'],
   },
-};export const SUPPORTED_CHAINS = [
+  BASE_SEPOLIA: {
+    chainId: '0x14a34', // 84532 in decimal - Base Sepolia
+    chainName: 'Base Sepolia',
+    nativeCurrency: {
+      name: 'ETH',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    rpcUrls: ['https://sepolia.base.org'],
+    blockExplorerUrls: ['https://sepolia.basescan.org/'],
+  },
+}; export const SUPPORTED_CHAINS = [
   NETWORKS.ARC_TESTNET.chainId,
   NETWORKS.ETHEREUM_SEPOLIA.chainId,
+  NETWORKS.BASE_SEPOLIA.chainId,
 ];
 
 export const DEFAULT_CHAIN = NETWORKS.ARC_TESTNET;
@@ -40,6 +52,7 @@ export const TOKENS = {
     address: {
       [NETWORKS.ARC_TESTNET.chainId]: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d', // Official Circle USDC on Arc Testnet
       [NETWORKS.ETHEREUM_SEPOLIA.chainId]: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Official Circle USDC on Sepolia
+      [NETWORKS.BASE_SEPOLIA.chainId]: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // Official Circle USDC on Base Sepolia
     },
     logo: 'usd-circle', // FAIcon name (Circle USDC)
   },
@@ -58,13 +71,20 @@ export const TOKENS = {
       symbol: 'USDC',
     },
   },
+  BASE_SEPOLIA: {
+    USDC: {
+      address: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // Official Circle USDC on Base Sepolia
+      decimals: 6,
+      symbol: 'USDC',
+    },
+  },
   EURC: {
     symbol: 'EURC',
     name: 'Euro Coin',
     decimals: 6,
     address: {
-      [NETWORKS.ARC_TESTNET.chainId]: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a', 
-      [NETWORKS.ETHEREUM_SEPOLIA.chainId]: '0x08210F9170F89Ab7658F0B5E3fF39b0E03C594D4', 
+      [NETWORKS.ARC_TESTNET.chainId]: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a',
+      [NETWORKS.ETHEREUM_SEPOLIA.chainId]: '0x08210F9170F89Ab7658F0B5E3fF39b0E03C594D4',
     },
     logo: 'euro-sign', // FAIcon name
   },
@@ -89,6 +109,7 @@ export const CONTRACTS = {
     SWAP_ROUTER: '0x94d3398e7Eba1B4486B6e80138E820abFcF3Fef8', // Deployed SwapRouter
     SWAP_FACTORY: '0x2ab5A54A25AD34Aaefb8038A1832fAd639d911A5', // Deployed SwapFactory
     BRIDGE: '0x', // Bridge contract (not deployed yet)
+    LP_MANAGER: '0x', // LP Manager (not deployed yet)
   },
 };
 

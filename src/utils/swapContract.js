@@ -324,10 +324,10 @@ export const getEthersProvider = async () => {
   if (!window.ethereum) {
     throw new Error('No ethereum provider found. Please install MetaMask or another Web3 wallet.');
   }
-  
+
   const provider = new ethers.BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();
-  
+
   return { provider, signer };
 };
 

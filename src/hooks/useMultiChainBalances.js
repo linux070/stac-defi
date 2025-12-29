@@ -69,7 +69,7 @@ const fetchChainBalance = async (chainId, address, rpcUrls, tokenSymbol = 'USDC'
               timeout: 5000, // Shorter timeout for lightweight fetching
             }),
           });
-          
+
           await publicClient.getBlockNumber();
           break;
         } catch (err) {
@@ -105,7 +105,7 @@ const fetchChainBalance = async (chainId, address, rpcUrls, tokenSymbol = 'USDC'
               timeout: 5000,
             }),
           });
-          
+
           await publicClient.getBlockNumber();
           break;
         } catch (err) {
@@ -135,7 +135,7 @@ const fetchChainBalance = async (chainId, address, rpcUrls, tokenSymbol = 'USDC'
     const decimals = TOKEN_DECIMALS[tokenSymbol] || 6;
     const formattedBalance = formatUnits(balance, decimals);
     const roundedBalance = parseFloat(formattedBalance).toFixed(2);
-    
+
     return { balance: roundedBalance, error: null };
   } catch (err) {
     console.error(`Error fetching ${tokenSymbol} balance for chain ${chainId}:`, err);
