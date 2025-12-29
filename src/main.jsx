@@ -25,7 +25,7 @@ import {
 const arcTestnet = defineChain({
   id: 5042002, // 0x4cef52
   name: 'Arc Testnet',
-  nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+  nativeCurrency: { name: 'ETH', symbol: 'USDC', decimals: 18 },
   rpcUrls: {
     default: { http: ['https://rpc-testnet.arc.network'] },
   },
