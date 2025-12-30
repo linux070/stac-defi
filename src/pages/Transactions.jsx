@@ -45,6 +45,7 @@ const Transactions = () => {
   const { t } = useTranslation();
   const { isConnected, walletAddress, chainId } = useWallet();
   const [copiedHash, setCopiedHash] = useState('');
+  const [previousWallet, setPreviousWallet] = useState(null);
 
   // Fetch real-time transactions from blockchain (auto-updates every 30 seconds)
   const { transactions: blockchainTransactions, loading: transactionsLoading } = useTransactionHistory();
@@ -53,76 +54,118 @@ const Transactions = () => {
   const [myTransactions, setMyTransactions] = useState([]);
   const [loadingLocalTransactions, setLoadingLocalTransactions] = useState(true);
 
+  // Helper: Backup transactions to sessionStorage for recovery
+  const backupToSessionStorage = (address, transactions) => {
+    try {
+      if (address && transactions && transactions.length > 0) {
+        const key = `stac_tx_backup_${address.toLowerCase()}`;
+        sessionStorage.setItem(key, JSON.stringify(transactions));
+      }
+    } catch (err) {
+      // Silently fail
+    }
+  };
+
+  // Helper: Recover transactions from sessionStorage
+  const recoverFromSessionStorage = (address) => {
+    try {
+      if (address) {
+        const key = `stac_tx_backup_${address.toLowerCase()}`;
+        const data = sessionStorage.getItem(key);
+        return data ? JSON.parse(data) : null;
+      }
+    } catch (err) {
+      return null;
+    }
+    return null;
+  };
+
   // Load transactions from IndexedDB on mount and when wallet address changes
   useEffect(() => {
     const loadTransactions = async () => {
+      setLoadingLocalTransactions(true);
+
       try {
+        // Detect wallet change and clear previous data
+        if (previousWallet && previousWallet !== walletAddress) {
+          console.log(`👛 Wallet switched: ${previousWallet.slice(0, 6)} → ${walletAddress?.slice(0, 6) || 'none'}`);
+          setMyTransactions([]); // Clear immediately on wallet change
+        }
+
+        if (!walletAddress) {
+          console.log('⚠️ No wallet connected, showing empty transactions');
+          setMyTransactions([]);
+          setLoadingLocalTransactions(false);
+          return;
+        }
+
+        setPreviousWallet(walletAddress);
+        const walletAddressLower = walletAddress.toLowerCase();
+
+        // Try to load from IndexedDB first
         const saved = await getItem('myTransactions');
         console.log('📦 Loading transactions from IndexedDB:', {
           totalInStorage: saved?.length || 0,
-          walletAddress,
-          walletAddressLower: walletAddress?.toLowerCase()
+          walletAddress: walletAddressLower
         });
 
         if (saved && Array.isArray(saved)) {
           // Filter transactions by current wallet address
-          if (walletAddress) {
-            const walletAddressLower = walletAddress.toLowerCase();
-
-            // Debug: Log sample transactions to see their structure
-            if (saved.length > 0) {
-              console.log('📋 Sample transaction from storage:', {
-                firstTx: saved[0],
-                hasAddress: !!saved[0]?.address,
-                txAddress: saved[0]?.address,
-                walletAddress: walletAddressLower
-              });
+          const filtered = saved.filter(tx => {
+            if (tx.address) {
+              return tx.address.toLowerCase() === walletAddressLower;
             }
+            return false;
+          });
 
-            const filtered = saved.filter(tx => {
-              // Only include transactions that have an address field matching current wallet
-              if (tx.address) {
-                const matches = tx.address.toLowerCase() === walletAddressLower;
-                if (matches) {
-                  console.log('✅ Transaction matches wallet:', tx.hash, tx.type);
-                }
-                return matches;
-              }
-              // Exclude transactions without address field (old transactions)
-              // They can't be attributed to a specific wallet
-              console.log('⚠️ Transaction without address field, excluding:', tx.hash);
-              return false;
-            });
-
-            console.log('🔍 Filtered transactions:', {
-              total: saved.length,
-              filtered: filtered.length,
-              walletAddress: walletAddressLower
-            });
-
+          if (filtered.length > 0) {
+            console.log(`✅ Loaded ${filtered.length} transactions for ${walletAddress.slice(0, 6)}...`);
             setMyTransactions(filtered);
+            // Backup to sessionStorage
+            backupToSessionStorage(walletAddress, filtered);
           } else {
-            // If no wallet connected, show empty
-            console.log('⚠️ No wallet connected, showing empty transactions');
-            setMyTransactions([]);
+            // No transactions in IndexedDB, try sessionStorage recovery
+            const recovered = recoverFromSessionStorage(walletAddress);
+            if (recovered && recovered.length > 0) {
+              console.log(`🔄 Recovered ${recovered.length} transactions from sessionStorage`);
+              setMyTransactions(recovered);
+              // Save recovered transactions back to IndexedDB
+              const allSaved = saved || [];
+              const merged = [...recovered, ...allSaved.filter(tx =>
+                tx.address?.toLowerCase() !== walletAddressLower
+              )];
+              await setItem('myTransactions', merged);
+            } else {
+              console.log(`📭 No transactions found for ${walletAddress.slice(0, 6)}...`);
+              setMyTransactions([]);
+            }
           }
         } else {
-          console.log('📭 No transactions found in storage');
-          setMyTransactions([]);
+          // No data in IndexedDB, try sessionStorage
+          const recovered = recoverFromSessionStorage(walletAddress);
+          if (recovered && recovered.length > 0) {
+            console.log(`🔄 Recovered ${recovered.length} transactions from sessionStorage (no IndexedDB data)`);
+            setMyTransactions(recovered);
+            await setItem('myTransactions', recovered);
+          } else {
+            console.log('📭 No transactions found in any storage');
+            setMyTransactions([]);
+          }
         }
       } catch (err) {
-        console.error('Error loading transactions from IndexedDB:', err);
+        console.error('Error loading transactions:', err);
         setMyTransactions([]);
       } finally {
         setLoadingLocalTransactions(false);
       }
     };
+
     loadTransactions();
   }, [walletAddress]); // Reload when wallet address changes
 
   // Merge blockchain transactions with IndexedDB transactions
   // PRIORITY: IndexedDB transactions have accurate from/to chains (user-selected)
-  // Blockchain transactions use heuristics which may be wrong for Bridge type
+  // Blockchain transactions are fallback when no user-saved data exists
   const mergedTransactions = useMemo(() => {
     if (!walletAddress) {
       return [];
@@ -141,13 +184,14 @@ const Transactions = () => {
     });
 
     // Filter local transactions by wallet address
-    // Also cleanup: remove blockchain-fetched Bridge transactions (have isOutgoing flag)
+    // Cleanup: remove blockchain-fetched Bridge transactions (have isOutgoing flag)
+    // Keep only user-saved Bridge transactions (no isOutgoing flag)
     const filteredLocal = myTransactions.filter(tx => {
       if (!tx.address) return false;
       if (tx.address.toLowerCase() !== walletAddressLower) return false;
 
-      // Cleanup: Remove blockchain-fetched Bridge transactions from IndexedDB data
-      // These have incorrect heuristic chains - only user-saved Bridge txs are accurate
+      // Remove blockchain-fetched Bridge transactions that were accidentally saved
+      // They have incorrect heuristic chains - only user-saved Bridge txs are accurate
       if (tx.type === 'Bridge' && tx.isOutgoing !== undefined) {
         return false; // Skip blockchain-fetched Bridge transactions
       }
@@ -155,18 +199,14 @@ const Transactions = () => {
       return true;
     });
 
-    // CRITICAL: Use IndexedDB transactions for Bridge type ONLY
-    // Blockchain-fetched Bridge transactions have incorrect from/to chains
+    // Build set of local transaction hashes for deduplication
     const localSet = new Set(filteredLocal.map(tx => tx.hash));
 
-    // Only add blockchain transactions that:
-    // 1. Don't exist in local IndexedDB
-    // 2. Are NOT Bridge type (Swap/LP blockchain data is accurate)
-    const blockchainOnly = filteredBlockchain.filter(tx =>
-      !localSet.has(tx.hash) && tx.type !== 'Bridge'
-    );
+    // Add blockchain transactions that don't exist in local storage
+    // For Bridge transactions: only add if no local version exists (user-saved has priority)
+    const blockchainOnly = filteredBlockchain.filter(tx => !localSet.has(tx.hash));
 
-    // Local first (accurate), then blockchain-only for non-Bridge types
+    // Combine: local first (accurate user data), then blockchain-only
     const merged = [...filteredLocal, ...blockchainOnly].sort((a, b) => {
       const timeA = a.timestamp || 0;
       const timeB = b.timestamp || 0;

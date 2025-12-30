@@ -15,8 +15,8 @@ import '../styles/bridge-styles.css';
 
 const Bridge = () => {
   const { t } = useTranslation();
-  const { isConnected, address, chainId } = useWallet();
-  const { switchChain } = useSwitchChain();
+  const { isConnected, walletAddress, chainId } = useWallet();
+  const { switchChain, switchChainAsync } = useSwitchChain();
   const [fromChain, setFromChain] = useState('Sepolia');
   const [toChain, setToChain] = useState('Arc Testnet');
   const [amount, setAmount] = useState('');
@@ -350,15 +350,39 @@ const Bridge = () => {
           status: txStatus,
           hash: txHash,
           chainId: getChainIdByName(fromChain),
-          address: address?.toLowerCase(),
+          address: walletAddress?.toLowerCase(),
         };
+
+        console.log('💾 Saving bridge transaction:', {
+          hash: txHash.slice(0, 10) + '...',
+          from: fromChain,
+          to: toChain,
+          amount,
+          status: txStatus,
+          address: walletAddress?.slice(0, 8) + '...'
+        });
 
         existing.unshift(bridgeTx);
         // Keep only last 100 transactions
         const trimmed = existing.slice(0, 100);
         await setItem('myTransactions', trimmed);
-        // Dispatch custom event to notify bridge count hook
+
+        // Also backup to sessionStorage for recovery after site clear
+        try {
+          if (walletAddress) {
+            const key = `stac_tx_backup_${walletAddress.toLowerCase()}`;
+            const walletTxs = trimmed.filter(tx =>
+              tx.address?.toLowerCase() === walletAddress.toLowerCase()
+            );
+            sessionStorage.setItem(key, JSON.stringify(walletTxs));
+          }
+        } catch (backupErr) {
+          // Silently fail sessionStorage backup
+        }
+
+        // Dispatch custom event to notify Transactions page
         window.dispatchEvent(new CustomEvent('bridgeTransactionSaved'));
+        console.log('✅ Bridge transaction saved successfully');
       }
     } catch (err) {
       console.error('Error saving bridge transaction:', err);
@@ -392,7 +416,7 @@ const Bridge = () => {
         };
       }
     }
-  }, [state.step, state.sourceTxHash, state.receiveTxHash, chainId, fetchTokenBalance, isConnected, fromChain, toChain, amount, address]);
+  }, [state.step, state.sourceTxHash, state.receiveTxHash, chainId, fetchTokenBalance, isConnected, fromChain, toChain, amount, walletAddress]);
 
   // Effect to refresh balance after bridge error/cancellation
   useEffect(() => {
@@ -507,7 +531,7 @@ const Bridge = () => {
 
       if (chainId) {
         // Trigger wallet network switch
-        await switchChain({ chainId });
+        await switchChainAsync({ chainId });
 
         // Update local state (will be confirmed by the useEffect above)
         setFromChain(newChain);
@@ -537,7 +561,7 @@ const Bridge = () => {
             // After adding, try to switch again
             const chainId = getChainIdByName(newChain);
             if (chainId) {
-              await switchChain({ chainId });
+              await switchChainAsync({ chainId });
               setFromChain(newChain);
               fetchTokenBalance('USDC', chainId);
             }
@@ -557,7 +581,7 @@ const Bridge = () => {
             // After adding, try to switch again
             const chainId = getChainIdByName(newChain);
             if (chainId) {
-              await switchChain({ chainId });
+              await switchChainAsync({ chainId });
               setFromChain(newChain);
               fetchTokenBalance('USDC', chainId);
             }
@@ -577,7 +601,7 @@ const Bridge = () => {
             // After adding, try to switch again
             const chainId = getChainIdByName(newChain);
             if (chainId) {
-              await switchChain({ chainId });
+              await switchChainAsync({ chainId });
               setFromChain(newChain);
               fetchTokenBalance('USDC', chainId);
             }
@@ -1220,8 +1244,6 @@ const Bridge = () => {
                 const tempFromChain = fromChain;
                 const tempToChain = toChain;
 
-                // Reset bridge initiated flag and initial chains when user manually switches chains
-                // This allows chain syncing to resume
                 bridgeInitiatedRef.current = false;
                 initialFromChainRef.current = null;
                 initialToChainRef.current = null;
@@ -1235,7 +1257,7 @@ const Bridge = () => {
                   // Get the chain ID for the new 'from' chain (which was previously the 'to' chain)
                   const newFromChainId = getChainIdByName(tempToChain);
                   if (newFromChainId) {
-                    switchChain({ chainId: newFromChainId }).catch(err => {
+                    switchChainAsync({ chainId: newFromChainId }).catch(err => {
                       console.warn('Failed to switch network in wallet:', err);
                       // Even if wallet switch fails, UI has already been updated
                     });
