@@ -48,8 +48,6 @@ export const BASE_SEPOLIA_CHAIN_ID = 84532;
 // RPC URLs for balance fetching
 const ARC_RPC_URLS = [
   'https://rpc.testnet.arc.network',
-  'https://rpc.quicknode.testnet.arc.network',
-  'https://rpc.blockdaemon.testnet.arc.network',
 ];
 
 const BASE_SEPOLIA_RPC_URLS = [
@@ -479,99 +477,78 @@ export function useBridge() {
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
 
-      // Ensure destination chain is added to wallet BEFORE starting bridge
-      // This is critical for the mint transaction - Bridge Kit needs the chain to be available
+      // Ensure destination chain is added to wallet (but don't switch to it)
+      // Bridge Kit will handle all chain switching automatically
       try {
-        if (window.ethereum) {
-          // Check if we're already on the destination chain
-          const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
-          const currentChainIdDecimal = parseInt(currentChainId, 16);
-
-          // Only add/switch if not already on destination chain
-          if (currentChainIdDecimal !== destinationChainId) {
-            try {
-              // First try to switch to destination chain
-              await window.ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: `0x${destinationChainId.toString(16)}` }],
-              });
-              console.log(`✅ Switched to destination chain ${destinationChainId}`);
-            } catch (switchError) {
-              // If switch fails (chain not added), add it
-              if (switchError.code === 4902) {
-                if (destinationChainId === ARC_CHAIN_ID) {
-                  await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [{
-                      chainId: `0x${ARC_CHAIN_ID.toString(16)}`,
-                      chainName: 'Arc Testnet',
-                      nativeCurrency: {
-                        name: 'USDC',
-                        symbol: 'USDC',
-                        decimals: 6,
-                      },
-                      rpcUrls: ['https://rpc.testnet.arc.network', 'https://rpc.quicknode.testnet.arc.network', 'https://rpc.blockdaemon.testnet.arc.network'],
-                      blockExplorerUrls: ['https://testnet.arcscan.app'],
-                    }],
-                  });
-                  console.log('✅ Added Arc Testnet to wallet');
-                } else if (destinationChainId === SEPOLIA_CHAIN_ID) {
-                  await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [{
-                      chainId: `0x${SEPOLIA_CHAIN_ID.toString(16)}`,
-                      chainName: 'Sepolia',
-                      nativeCurrency: {
-                        name: 'ETH',
-                        symbol: 'ETH',
-                        decimals: 18,
-                      },
-                      rpcUrls: ['https://ethereum-sepolia-rpc.publicnode.com', 'https://rpc.sepolia.org'],
-                      blockExplorerUrls: ['https://sepolia.etherscan.io'],
-                    }],
-                  });
-                  console.log('✅ Added Sepolia to wallet');
-                } else if (destinationChainId === BASE_SEPOLIA_CHAIN_ID) {
-                  await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [{
-                      chainId: `0x${BASE_SEPOLIA_CHAIN_ID.toString(16)}`,
-                      chainName: 'Base Sepolia',
-                      nativeCurrency: {
-                        name: 'ETH',
-                        symbol: 'ETH',
-                        decimals: 18,
-                      },
-                      rpcUrls: ['https://sepolia.base.org', 'https://base-sepolia.blockpi.network/v1/rpc/public'],
-                      blockExplorerUrls: ['https://sepolia.basescan.org'],
-                    }],
-                  });
-                  console.log('✅ Added Base Sepolia to wallet');
-                }
-              } else {
-                console.warn('Could not switch to destination chain:', switchError.message);
-              }
-            }
-          }
-
-          // Now switch back to source chain for the bridge to start
-          // Get fresh chain ID after any switching (the previous value may be stale)
-          const freshChainId = await window.ethereum.request({ method: 'eth_chainId' });
-          const freshChainIdDecimal = parseInt(freshChainId, 16);
-
-          if (freshChainIdDecimal !== sourceChainId) {
+        if (window.ethereum && destinationChainId) {
+          // Try to add the destination chain to wallet (if not already added)
+          // This ensures Bridge Kit can switch to it when needed for the mint transaction
+          try {
+            // Try to switch to check if chain exists (will fail with 4902 if not added)
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: `0x${destinationChainId.toString(16)}` }],
+            });
+            // If successful, switch back to source chain
             await window.ethereum.request({
               method: 'wallet_switchEthereumChain',
               params: [{ chainId: `0x${sourceChainId.toString(16)}` }],
             });
-            console.log(`✅ Switched back to source chain ${sourceChainId} for bridge start`);
-            // Wait for chain switch to complete
-            await new Promise(resolve => setTimeout(resolve, 2000));
+          } catch (switchError) {
+            // If switch fails (chain not added), add it
+            if (switchError.code === 4902) {
+              if (destinationChainId === ARC_CHAIN_ID) {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [{
+                    chainId: `0x${ARC_CHAIN_ID.toString(16)}`,
+                    chainName: 'Arc Testnet',
+                    nativeCurrency: {
+                      name: 'USDC',
+                      symbol: 'USDC',
+                      decimals: 6,
+                    },
+                    rpcUrls: ['https://rpc.testnet.arc.network'],
+                    blockExplorerUrls: ['https://testnet.arcscan.app'],
+                  }],
+                });
+              } else if (destinationChainId === SEPOLIA_CHAIN_ID) {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [{
+                    chainId: `0x${SEPOLIA_CHAIN_ID.toString(16)}`,
+                    chainName: 'Sepolia',
+                    nativeCurrency: {
+                      name: 'ETH',
+                      symbol: 'ETH',
+                      decimals: 18,
+                    },
+                    rpcUrls: ['https://ethereum-sepolia-rpc.publicnode.com', 'https://rpc.sepolia.org'],
+                    blockExplorerUrls: ['https://sepolia.etherscan.io'],
+                  }],
+                });
+              } else if (destinationChainId === BASE_SEPOLIA_CHAIN_ID) {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [{
+                    chainId: `0x${BASE_SEPOLIA_CHAIN_ID.toString(16)}`,
+                    chainName: 'Base Sepolia',
+                    nativeCurrency: {
+                      name: 'ETH',
+                      symbol: 'ETH',
+                      decimals: 18,
+                    },
+                    rpcUrls: ['https://sepolia.base.org', 'https://base-sepolia.blockpi.network/v1/rpc/public'],
+                    blockExplorerUrls: ['https://sepolia.basescan.org'],
+                  }],
+                });
+              }
+            }
           }
         }
       } catch (chainSetupError) {
-        console.warn('Error setting up chains, but continuing with bridge:', chainSetupError);
-        // Don't throw - Bridge Kit should handle chain switching, but this helps ensure chains are available
+        // Silently continue - Bridge Kit will handle chain switching
+        console.debug('Chain setup skipped:', chainSetupError.message);
       }
 
       // Set up step tracking

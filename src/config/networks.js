@@ -9,7 +9,7 @@ export const NETWORKS = {
       symbol: 'ETH',
       decimals: 18,
     },
-    rpcUrls: ['https://rpc-testnet.arc.network'],
+    rpcUrls: ['https://rpc.testnet.arc.network'],
     blockExplorerUrls: ['https://testnet.arcscan.app/'],
     gasToken: 'USDC', // Arc uses USDC for gas
   },
@@ -63,6 +63,11 @@ export const TOKENS = {
       decimals: 6,
       symbol: 'USDC',
     },
+    EURC: {
+      address: '0x08210F9170F89Ab7658F0B5E3fF39b0E03C594D4', // Official Circle EURC on Sepolia
+      decimals: 6,
+      symbol: 'EURC',
+    },
   },
   ARC_TESTNET: {
     USDC: {
@@ -70,12 +75,22 @@ export const TOKENS = {
       decimals: 6,
       symbol: 'USDC',
     },
+    EURC: {
+      address: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a', // Official Circle EURC on Arc Testnet
+      decimals: 6,
+      symbol: 'EURC',
+    },
   },
   BASE_SEPOLIA: {
     USDC: {
       address: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // Official Circle USDC on Base Sepolia
       decimals: 6,
       symbol: 'USDC',
+    },
+    EURC: {
+      address: '0x808456652fdb597867f38412077A9182bf77359F', // Official Circle EURC on Base Sepolia
+      decimals: 6,
+      symbol: 'EURC',
     },
   },
   EURC: {
@@ -85,6 +100,7 @@ export const TOKENS = {
     address: {
       [NETWORKS.ARC_TESTNET.chainId]: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a',
       [NETWORKS.ETHEREUM_SEPOLIA.chainId]: '0x08210F9170F89Ab7658F0B5E3fF39b0E03C594D4',
+      [NETWORKS.BASE_SEPOLIA.chainId]: '0x808456652fdb597867f38412077A9182bf77359F', // Official Circle EURC on Base Sepolia
     },
     logo: 'euro-sign', // FAIcon name
   },

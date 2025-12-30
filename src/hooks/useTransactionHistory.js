@@ -7,9 +7,11 @@ import { getItem, setItem } from '../utils/indexedDB';
 
 // Chain configurations
 const ARC_RPC_URLS = [
+  'https://rpc.testnet.arc.network',
 ];
 
 const SEPOLIA_RPC_URLS = [
+  'https://ethereum-sepolia-rpc.publicnode.com',
   'https://rpc.sepolia.org',
 ];
 
@@ -189,27 +191,37 @@ const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
   }
 
   // Determine from/to chains for bridge transactions
-  // This is a best-guess for blockchain transactions if not provided by local store
+  // Use smart heuristics for blockchain-fetched transactions
   let fromChain = chainName;
   let toChain = chainName;
 
   if (type === 'Bridge') {
     if (isOutgoing) {
-      // Outgoing: From this chain -> To destination (default to Arc/Sepolia pair, but allow Base)
+      // Outgoing: From this chain -> To destination
       fromChain = chainName;
 
-      // Heuristic destination guessing
-      if (chainId === SEPOLIA_CHAIN_ID) toChain = 'Arc Testnet'; // Could be Base, but defaulting for now
-      else if (chainId === ARC_CHAIN_ID) toChain = 'Sepolia';
-      else if (chainId === BASE_SEPOLIA_CHAIN_ID) toChain = 'Sepolia';
+      // Smart destination guessing based on common patterns
+      if (chainId === SEPOLIA_CHAIN_ID) {
+        // Sepolia usually bridges to Arc, but could be Base
+        toChain = 'Arc Testnet'; // Most common
+      } else if (chainId === ARC_CHAIN_ID) {
+        // Arc usually bridges to Sepolia, but could be Base
+        toChain = 'Sepolia'; // Most common
+      } else if (chainId === BASE_SEPOLIA_CHAIN_ID) {
+        toChain = 'Sepolia'; // Base usually to Sepolia
+      }
     } else {
       // Incoming: From source -> To this chain
       toChain = chainName;
 
-      // Heuristic source guessing
-      if (chainId === SEPOLIA_CHAIN_ID) fromChain = 'Arc Testnet';
-      else if (chainId === ARC_CHAIN_ID) fromChain = 'Sepolia';
-      else if (chainId === BASE_SEPOLIA_CHAIN_ID) fromChain = 'Sepolia';
+      // Smart source guessing
+      if (chainId === SEPOLIA_CHAIN_ID) {
+        fromChain = 'Arc Testnet'; // Most common
+      } else if (chainId === ARC_CHAIN_ID) {
+        fromChain = 'Sepolia'; // Most common
+      } else if (chainId === BASE_SEPOLIA_CHAIN_ID) {
+        fromChain = 'Sepolia'; // Most common
+      }
     }
   }
 
@@ -229,20 +241,23 @@ const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
 };
 
 // Deduplicate bridge transactions
-// Bridge transactions appear on both chains (Source/Burn and Dest/Mint)
-// We prefer the Outgoing (Source) transaction as it typically initiates the action
+// Bridge transactions appear on BOTH chains with DIFFERENT hashes:
+// - Burn transaction on source chain (hash1)
+// - Mint transaction on destination chain (hash2)
+// We need to group them by amount + timestamp to show only ONE transaction
+// PRIORITY: IndexedDB transactions (user-initiated) have ACCURATE from/to chains
 const deduplicateBridgeTransactions = (transactions) => {
+  console.log(`🔍 Deduplicating ${transactions.length} transactions...`);
+
   const bridgeTxs = transactions.filter(tx => tx.type === 'Bridge');
   const otherTxs = transactions.filter(tx => tx.type !== 'Bridge');
 
-  console.log(`🔍 Deduplicating ${bridgeTxs.length} bridge transactions...`);
-
-  // Group bridge transactions by amount and approximate timestamp (within 10 minutes)
+  // Group bridge transactions by amount and timestamp (within 5 minute window)
   const bridgeGroups = new Map();
 
   bridgeTxs.forEach(tx => {
-    // Create a key based on amount and rounded timestamp
-    const timeWindow = Math.floor(tx.timestamp / (10 * 60 * 1000)); // 10 minute windows
+    // Create a key based on amount and 5-minute time window
+    const timeWindow = Math.floor(tx.timestamp / (5 * 60 * 1000)); // 5 minute windows
     const key = `${tx.amount}_${timeWindow}`;
 
     if (!bridgeGroups.has(key)) {
@@ -251,25 +266,29 @@ const deduplicateBridgeTransactions = (transactions) => {
     bridgeGroups.get(key).push(tx);
   });
 
-  // For each group, prefer the Outgoing transaction (Source)
+  // For each group, prefer the IndexedDB transaction (has accurate from/to from user selection)
+  // IndexedDB transactions DON'T have isOutgoing flag, blockchain-fetched ones DO
   const uniqueBridgeTxs = [];
-  bridgeGroups.forEach((group, key) => {
+  bridgeGroups.forEach((group) => {
     if (group.length === 1) {
       uniqueBridgeTxs.push(group[0]);
     } else {
-      // Multiple transactions - try to find the Outgoing one
-      const outgoingTx = group.find(tx => tx.isOutgoing !== false); // Default to true if undefined
+      // Multiple transactions - PREFER IndexedDB transactions (no isOutgoing flag)
+      // These have the accurate from/to chains from user's actual selection
+      const indexedDBTx = group.find(tx => tx.isOutgoing === undefined);
 
-      if (outgoingTx) {
-        uniqueBridgeTxs.push(outgoingTx);
+      if (indexedDBTx) {
+        uniqueBridgeTxs.push(indexedDBTx);
       } else {
-        // Fallback: keep the first one
-        uniqueBridgeTxs.push(group[0]);
+        // All blockchain-fetched, prefer outgoing transaction (has accurate 'from')
+        const outgoingTx = group.find(tx => tx.isOutgoing === true);
+        uniqueBridgeTxs.push(outgoingTx || group[0]);
       }
     }
   });
 
-  console.log(`✨ Deduplicated to ${uniqueBridgeTxs.length} unique bridge transactions`);
+  console.log(`✨ Deduplicated ${bridgeTxs.length} bridge txs to ${uniqueBridgeTxs.length} unique`);
+
 
   return [...uniqueBridgeTxs, ...otherTxs];
 };
@@ -422,28 +441,10 @@ export function useTransactionHistory() {
       const deduplicatedTxs = deduplicateBridgeTransactions(combinedTxs);
       const allTxs = deduplicatedTxs.sort((a, b) => b.timestamp - a.timestamp);
 
-      // Save to IndexedDB for persistence
-      if (allTxs.length > 0) {
-        try {
-          // Load existing transactions from IndexedDB
-          const existingTxs = await getItem('myTransactions') || [];
-
-          // Merge new transactions with existing ones (avoid duplicates by hash)
-          const existingHashes = new Set(existingTxs.map(tx => tx.hash));
-          const newTxsToSave = allTxs.filter(tx => !existingHashes.has(tx.hash));
-
-          if (newTxsToSave.length > 0 || existingTxs.length > 0) {
-            // Merge and deduplicate the entire dataset to clean up old duplicates
-            const mergedTxs = [...newTxsToSave, ...existingTxs];
-            const deduplicatedMerged = deduplicateBridgeTransactions(mergedTxs);
-
-            await setItem('myTransactions', deduplicatedMerged);
-            console.log(`💾 Saved ${newTxsToSave.length} new transactions to IndexedDB`);
-          }
-        } catch (err) {
-          console.error('Error saving transactions to IndexedDB:', err);
-        }
-      }
+      // NOTE: We do NOT save blockchain-fetched transactions to IndexedDB
+      // Only user-initiated saves (Bridge.jsx, Swap.jsx) should persist
+      // Blockchain transactions have heuristic from/to chains which may be wrong
+      // IndexedDB preserves the accurate user-selected chains
 
       // Update state, merging with existing transactions
       setTransactions(prev => {

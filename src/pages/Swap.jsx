@@ -180,8 +180,6 @@ const Swap = () => {
       const chainIdNum = chainId ? parseInt(chainId, 16) : null;
       const tokenKey = fromToken.toLowerCase(); // 'usdc' or 'eurc'
 
-
-
       if (chainIdNum === 5042002) { // Arc Testnet
         const balance = multiChainBalances?.arcTestnet?.[tokenKey] || '0.00';
 
@@ -195,6 +193,13 @@ const Swap = () => {
         return {
           balance,
           loading: multiChainBalances?.sepolia?.loading || false,
+        };
+      } else if (chainIdNum === 84532) { // Base Sepolia
+        const balance = multiChainBalances?.baseSepolia?.[tokenKey] || '0.00';
+
+        return {
+          balance,
+          loading: multiChainBalances?.baseSepolia?.loading || false,
         };
       }
       return { balance: '0.00', loading: false };
@@ -220,6 +225,11 @@ const Swap = () => {
         return {
           balance: multiChainBalances?.sepolia?.[tokenKey] || '0.00',
           loading: multiChainBalances?.sepolia?.loading || false,
+        };
+      } else if (chainIdNum === 84532) { // Base Sepolia
+        return {
+          balance: multiChainBalances?.baseSepolia?.[tokenKey] || '0.00',
+          loading: multiChainBalances?.baseSepolia?.loading || false,
         };
       }
       return { balance: '0.00', loading: false };

@@ -121,7 +121,8 @@ const Transactions = () => {
   }, [walletAddress]); // Reload when wallet address changes
 
   // Merge blockchain transactions with IndexedDB transactions
-  // Filter by current wallet address
+  // PRIORITY: IndexedDB transactions have accurate from/to chains (user-selected)
+  // Blockchain transactions use heuristics which may be wrong for Bridge type
   const mergedTransactions = useMemo(() => {
     if (!walletAddress) {
       return [];
@@ -139,19 +140,34 @@ const Transactions = () => {
       return false;
     });
 
-    // Filter local transactions by wallet address (already filtered in useEffect, but double-check)
+    // Filter local transactions by wallet address
+    // Also cleanup: remove blockchain-fetched Bridge transactions (have isOutgoing flag)
     const filteredLocal = myTransactions.filter(tx => {
-      if (tx.address) {
-        return tx.address.toLowerCase() === walletAddressLower;
+      if (!tx.address) return false;
+      if (tx.address.toLowerCase() !== walletAddressLower) return false;
+
+      // Cleanup: Remove blockchain-fetched Bridge transactions from IndexedDB data
+      // These have incorrect heuristic chains - only user-saved Bridge txs are accurate
+      if (tx.type === 'Bridge' && tx.isOutgoing !== undefined) {
+        return false; // Skip blockchain-fetched Bridge transactions
       }
-      // Exclude transactions without address field
-      return false;
+
+      return true;
     });
 
-    const blockchainSet = new Set(filteredBlockchain.map(tx => tx.hash));
-    const localOnly = filteredLocal.filter(tx => !blockchainSet.has(tx.hash));
+    // CRITICAL: Use IndexedDB transactions for Bridge type ONLY
+    // Blockchain-fetched Bridge transactions have incorrect from/to chains
+    const localSet = new Set(filteredLocal.map(tx => tx.hash));
 
-    const merged = [...filteredBlockchain, ...localOnly].sort((a, b) => {
+    // Only add blockchain transactions that:
+    // 1. Don't exist in local IndexedDB
+    // 2. Are NOT Bridge type (Swap/LP blockchain data is accurate)
+    const blockchainOnly = filteredBlockchain.filter(tx =>
+      !localSet.has(tx.hash) && tx.type !== 'Bridge'
+    );
+
+    // Local first (accurate), then blockchain-only for non-Bridge types
+    const merged = [...filteredLocal, ...blockchainOnly].sort((a, b) => {
       const timeA = a.timestamp || 0;
       const timeB = b.timestamp || 0;
       return timeB - timeA;
@@ -160,7 +176,7 @@ const Transactions = () => {
     console.log('🔄 Merged transactions:', {
       blockchain: filteredBlockchain.length,
       local: filteredLocal.length,
-      localOnly: localOnly.length,
+      blockchainOnly: blockchainOnly.length,
       total: merged.length,
       walletAddress: walletAddressLower
     });
@@ -442,21 +458,29 @@ const Transactions = () => {
                     )}
                   </td>
                   <td className="py-3 md:py-4 text-xs md:text-sm font-medium">
-                    {tx.type === 'Bridge' && getChainIcon(getSwapFromToken(tx)) ? (
-                      <div className="flex items-center gap-2">
-                        <img src={getChainIcon(getSwapFromToken(tx))} alt={getSwapFromToken(tx)} className="w-5 h-5 rounded-full object-contain" />
-                        <span>{getSwapFromToken(tx)}</span>
-                      </div>
+                    {tx.type === 'Bridge' ? (
+                      getChainIcon(tx.from) ? (
+                        <div className="flex items-center gap-2">
+                          <img src={getChainIcon(tx.from)} alt={tx.from} className="w-5 h-5 rounded-full object-contain" />
+                          <span>{tx.from}</span>
+                        </div>
+                      ) : (
+                        tx.from
+                      )
                     ) : (
                       getSwapFromToken(tx)
                     )}
                   </td>
                   <td className="py-3 md:py-4 text-xs md:text-sm font-medium">
-                    {tx.type === 'Bridge' && getChainIcon(getSwapToToken(tx)) ? (
-                      <div className="flex items-center gap-2">
-                        <img src={getChainIcon(getSwapToToken(tx))} alt={getSwapToToken(tx)} className="w-5 h-5 rounded-full object-contain" />
-                        <span>{getSwapToToken(tx)}</span>
-                      </div>
+                    {tx.type === 'Bridge' ? (
+                      getChainIcon(tx.to) ? (
+                        <div className="flex items-center gap-2">
+                          <img src={getChainIcon(tx.to)} alt={tx.to} className="w-5 h-5 rounded-full object-contain" />
+                          <span>{tx.to}</span>
+                        </div>
+                      ) : (
+                        tx.to
+                      )
                     ) : (
                       getSwapToToken(tx)
                     )}
@@ -669,16 +693,19 @@ const Transactions = () => {
               ) : (
                 <>
                   {/* From/To Row - Improved spacing and layout */}
-                  {/* From/To Row - Improved spacing and layout */}
                   <div className="flex items-center gap-3 py-1.5">
                     <div className="flex-1 min-w-0">
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">From</div>
                       <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                        {tx.type === 'Bridge' && getChainIcon(getSwapFromToken(tx)) ? (
-                          <div className="flex items-center gap-1.5">
-                            <img src={getChainIcon(getSwapFromToken(tx))} alt={getSwapFromToken(tx)} className="w-4 h-4 rounded-full object-contain" />
-                            <span>{getSwapFromToken(tx)}</span>
-                          </div>
+                        {tx.type === 'Bridge' ? (
+                          getChainIcon(tx.from) ? (
+                            <div className="flex items-center gap-1.5">
+                              <img src={getChainIcon(tx.from)} alt={tx.from} className="w-4 h-4 rounded-full object-contain" />
+                              <span>{tx.from}</span>
+                            </div>
+                          ) : (
+                            tx.from
+                          )
                         ) : (
                           getSwapFromToken(tx)
                         )}
@@ -688,11 +715,15 @@ const Transactions = () => {
                     <div className="flex-1 min-w-0 text-right">
                       <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">To</div>
                       <div className="text-sm font-semibold text-slate-900 dark:text-white truncate flex justify-end">
-                        {tx.type === 'Bridge' && getChainIcon(getSwapToToken(tx)) ? (
-                          <div className="flex items-center gap-1.5">
-                            <img src={getChainIcon(getSwapToToken(tx))} alt={getSwapToToken(tx)} className="w-4 h-4 rounded-full object-contain" />
-                            <span>{getSwapToToken(tx)}</span>
-                          </div>
+                        {tx.type === 'Bridge' ? (
+                          getChainIcon(tx.to) ? (
+                            <div className="flex items-center gap-1.5">
+                              <img src={getChainIcon(tx.to)} alt={tx.to} className="w-4 h-4 rounded-full object-contain" />
+                              <span>{tx.to}</span>
+                            </div>
+                          ) : (
+                            tx.to
+                          )
                         ) : (
                           getSwapToToken(tx)
                         )}
