@@ -935,12 +935,9 @@ const Swap = () => {
                       <button
                         key={`popular-${token.symbol}`}
                         onClick={() => {
-                          if (!isExcluded) {
-                            onSelect(token.symbol);
-                            onClose();
-                          }
+                          onSelect(token.symbol);
+                          onClose();
                         }}
-                        disabled={isExcluded}
                         className={`swap-token-selector-popular-button ${isSelected ? 'active' : ''} ${isExcluded ? 'disabled' : ''}`}
                       >
                         {token.symbol === 'USDC' ? (
@@ -981,12 +978,10 @@ const Swap = () => {
                     <button
                       key={token.symbol}
                       onClick={() => {
-                        if (token.symbol !== exclude) {
-                          onSelect(token.symbol);
-                          onClose();
-                        }
+                        onSelect(token.symbol);
+                        onClose();
                       }}
-                      className={`swap-token-selector-list-item ${token.symbol === selectedToken ? 'selected' : ''}`}
+                      className={`swap-token-selector-list-item ${token.symbol === selectedToken ? 'selected' : ''} ${token.symbol === exclude ? 'disabled' : ''}`}
                     >
                       <div className="swap-token-selector-list-item-content">
                         <div className="swap-token-selector-list-icon">
@@ -1091,12 +1086,12 @@ const Swap = () => {
         <AnimatePresence>
           {showSettings && (
             <>
-              {/* Backdrop */}
+              {/* Backdrop - High-fidelity blur */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
+                className="fixed inset-0 z-[1000000] bg-black/40 backdrop-blur-sm md:hidden"
                 onClick={() => setShowSettings(false)}
               />
 
@@ -1106,27 +1101,27 @@ const Swap = () => {
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl md:hidden"
+                className="fixed bottom-0 left-0 right-0 z-[1000001] bg-white dark:bg-gray-800 rounded-t-[32px] shadow-[0_-8px_32px_rgba(0,0,0,0.15)] md:hidden border-t border-gray-100 dark:border-gray-700/50"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Drag Handle for Mobile */}
-                <div className="flex justify-center pt-3 pb-2">
-                  <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full" />
+                <div className="flex justify-center pt-3 pb-1">
+                  <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full" />
                 </div>
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 sm:px-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Settings</h3>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700/50">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Settings</h3>
                   <button
                     onClick={() => setShowSettings(false)}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
+                    className="w-10 h-10 flex items-center justify-center bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all active:scale-90"
                   >
                     <X size={20} className="text-gray-500 dark:text-gray-400" />
                   </button>
                 </div>
 
                 {/* Content */}
-                <div className="p-4 sm:p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto pb-10">
                   {/* Slippage Tolerance */}
                   <SlippageTolerance />
                 </div>
@@ -1392,7 +1387,13 @@ const Swap = () => {
         isOpen={showFromSelector}
         onClose={() => setShowFromSelector(false)}
         selectedToken={fromToken}
-        onSelect={setFromToken}
+        onSelect={(token) => {
+          if (token === toToken) {
+            handleSwitch();
+          } else {
+            setFromToken(token);
+          }
+        }}
         exclude={toToken}
         triggerRef={fromTokenTriggerRef}
         fromToken={fromToken}
@@ -1404,7 +1405,13 @@ const Swap = () => {
         isOpen={showToSelector}
         onClose={() => setShowToSelector(false)}
         selectedToken={toToken}
-        onSelect={setToToken}
+        onSelect={(token) => {
+          if (token === fromToken) {
+            handleSwitch();
+          } else {
+            setToToken(token);
+          }
+        }}
         exclude={fromToken}
         triggerRef={toTokenTriggerRef}
         fromToken={fromToken}

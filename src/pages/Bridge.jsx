@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
 import { useSwitchChain, useChains } from 'wagmi';
-import { ArrowLeftRight, Loader, AlertCircle, Info, Wallet, X, Settings, ChevronDown, Check, CheckCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeftRight, Loader, AlertCircle, Info, Wallet, X, Settings, ChevronDown, CheckCircle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
 import { sanitizeInput } from '../utils/blockchain';
@@ -1113,11 +1113,6 @@ const Bridge = () => {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          {isSelected && (
-                            <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center">
-                              <Check size={14} className="text-blue-500" />
-                            </div>
-                          )}
                           {isExcluded && (
                             <div className="px-1.5 py-0.5 text-xs rounded-md" style={{
                               background: 'var(--bridge-surface-card)',
