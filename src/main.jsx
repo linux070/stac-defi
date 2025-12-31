@@ -9,6 +9,7 @@ import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { defineChain } from 'viem';
+import { sepolia as sepoliaChain } from 'viem/chains';
 
 // Import wallets
 import {
@@ -21,45 +22,62 @@ import {
   baseAccount,
 } from '@rainbow-me/rainbowkit/wallets';
 
-// Define Arc Testnet chain - Fixed to match config/networks.js
-const arcTestnet = defineChain({
-  id: 5042002, // 0x4cef52
+// Define Arc Testnet chain
+const arcTestnet = {
+  id: 5042002,
   name: 'Arc Testnet',
-  nativeCurrency: { name: 'ETH', symbol: 'USDC', decimals: 18 },
+  nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.testnet.arc.network'] },
+    default: {
+      http: ['https://rpc.testnet.arc.network'],
+      iconUrls: ['https://stac-defi.vercel.app/icons/Arc.png'] // Absolute URL preferred for wallets
+    },
+    public: {
+      http: ['https://rpc.testnet.arc.network'],
+      iconUrls: ['https://stac-defi.vercel.app/icons/Arc.png']
+    },
   },
   blockExplorers: {
     default: { name: 'ArcScan', url: 'https://testnet.arcscan.app/' },
   },
   testnet: true,
-});// Define Sepolia Testnet chain
-const sepolia = defineChain({
-  id: 11155111,
-  name: 'Sepolia',
-  nativeCurrency: { name: 'SepoliaETH', symbol: 'ETH', decimals: 18 },
+  iconUrl: '/icons/Arc.png',
+  iconBackground: '#fff',
+};
+
+// Define Sepolia Testnet chain
+const sepolia = {
+  ...sepoliaChain,
   rpcUrls: {
+    ...sepoliaChain.rpcUrls,
     default: { http: ['https://eth-sepolia.g.alchemy.com/v2/w5SlKrdofEKjcKadoa6KQ'] },
   },
-  blockExplorers: {
-    default: { name: 'Sepolia Explorer', url: 'https://sepolia.etherscan.io/' },
-  },
-  testnet: true,
-});
+  iconUrl: '/icons/eth.png',
+  iconBackground: '#484c50',
+};
 
 // Define Base Sepolia chain
-const baseSepolia = defineChain({
+const baseSepolia = {
   id: 84532,
   name: 'Base Sepolia',
   nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://sepolia.base.org'] },
+    default: {
+      http: ['https://sepolia.base.org'],
+      iconUrls: ['/icons/base.png']
+    },
+    public: {
+      http: ['https://sepolia.base.org'],
+      iconUrls: ['/icons/base.png']
+    },
   },
   blockExplorers: {
     default: { name: 'BaseScan', url: 'https://sepolia.basescan.org/' },
   },
   testnet: true,
-});
+  iconUrl: '/icons/base.png',
+  iconBackground: '#0052ff',
+};
 
 const config = getDefaultConfig({
   appName: 'Stac',

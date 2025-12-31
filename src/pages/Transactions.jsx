@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
-import { Copy, ExternalLink, CheckCircle, Clock, XCircle, ArrowLeftRight, RefreshCw, Layers } from 'lucide-react';
+import { Copy, ExternalLink, CheckCircle, Clock, XCircle, ArrowLeftRight, RefreshCw, Layers, History } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { timeAgo, formatAddress, copyToClipboard, getExplorerUrl } from '../utils/blockchain';
 import { useTransactionHistory } from '../hooks/useTransactionHistory';
@@ -40,6 +40,26 @@ const getChainIcon = (chainName) => {
 
   return null;
 };
+
+const EmptyActivityState = () => (
+  <div className="flex flex-col items-center justify-center py-16 md:py-24 px-6 overflow-hidden text-center">
+    <div className="relative mb-14 md:mb-16 flex items-center justify-center scale-90 md:scale-100">
+      {/* Refined concentric rings */}
+      <div className="absolute w-44 h-44 rounded-full border border-slate-200/60 dark:border-slate-700/40 animate-pulse" />
+      <div className="absolute w-32 h-32 rounded-full border border-slate-300/40 dark:border-slate-600/25" />
+
+      {/* Central icon container */}
+      <div className="relative z-10 w-20 h-20 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-200/80 dark:border-slate-700/50 shadow-lg transition-all duration-300">
+        <History size={36} className="text-slate-500 dark:text-slate-400" strokeWidth={1.5} />
+      </div>
+    </div>
+    <div className="max-w-[280px] md:max-w-md mx-auto">
+      <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base font-semibold tracking-tight leading-relaxed transition-colors duration-300">
+        This account has no recent activity...
+      </p>
+    </div>
+  </div>
+);
 
 const Transactions = () => {
   const { t } = useTranslation();
@@ -198,15 +218,26 @@ const Transactions = () => {
 
       return true;
     });
-
     // Build set of local transaction hashes for deduplication
     const localSet = new Set(filteredLocal.map(tx => tx.hash));
 
     // Add blockchain transactions that don't exist in local storage
-    // For Bridge transactions: only add if no local version exists (user-saved has priority)
-    const blockchainOnly = filteredBlockchain.filter(tx => !localSet.has(tx.hash));
+    // CRITICAL: We only show Bridge/Swap activity carried out on THIS dApp
+    // This is ensured by only showing Bridge transactions that have a matching record in local storage
+    const blockchainOnly = filteredBlockchain.filter(tx => {
+      // If we already have it locally, don't add it again (deduplication)
+      if (localSet.has(tx.hash)) return false;
 
-    // Combine: local first (accurate user data), then blockchain-only
+      // EXCLUDE: Bridge and Transfer types from blockchain sources directly
+      // These are often "noise" from external dApps or standard transfers
+      // We only show Bridge transactions if they were explicitly saved by our dApp
+      if (tx.type === 'Bridge' || tx.type === 'Transfer') return false;
+
+      // ALLOW: Swaps (often useful catch-all for dApp swaps if local save failed)
+      return true;
+    });
+
+    // Combine: local first (accurate user data), then blockchain-only (other types like Swaps)
     const merged = [...filteredLocal, ...blockchainOnly].sort((a, b) => {
       const timeA = a.timestamp || 0;
       const timeB = b.timestamp || 0;
@@ -585,14 +616,7 @@ const Transactions = () => {
                 <p className="text-gray-500 dark:text-gray-400">Loading transactions...</p>
               </div>
             ) : (
-              <>
-                <p className="text-gray-500 dark:text-gray-400 mb-2">{t('activity.noActivityFound')}</p>
-                <p className="text-sm text-gray-400">
-                  {!isConnected
-                    ? t('Please connect your wallet first')
-                    : t('Transactions will appear here')}
-                </p>
-              </>
+              <EmptyActivityState />
             )}
           </div>
         )}
@@ -818,14 +842,7 @@ const Transactions = () => {
                 <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Loading transactions...</p>
               </div>
             ) : (
-              <>
-                <p className="text-gray-500 dark:text-gray-400 mb-1.5 text-sm font-medium">{t('activity.noActivityFound')}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                  {!isConnected
-                    ? t('Please connect your wallet first')
-                    : t('Transactions will appear here')}
-                </p>
-              </>
+              <EmptyActivityState />
             )}
           </div>
         )}

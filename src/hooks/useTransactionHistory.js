@@ -66,6 +66,23 @@ const recoverFromSessionStorage = (walletAddress) => {
   return null;
 };
 
+// Custom fetch handler to intercept malformed/truncated JSON responses
+const safeRpcFetch = async (url, options) => {
+  const response = await fetch(url, options);
+  const clone = response.clone();
+  try {
+    const text = await clone.text();
+    JSON.parse(text);
+    return response;
+  } catch (err) {
+    if (err instanceof SyntaxError) {
+      console.warn(`[SuperBridge] Truncated JSON detected from ${url}. Switching providers...`);
+      throw new Error(`Malformed JSON response from RPC: ${err.message}`);
+    }
+    return response;
+  }
+};
+
 // Create public clients for all chains
 const createArcClient = () => {
   for (const rpcUrl of ARC_RPC_URLS) {
@@ -90,9 +107,11 @@ const createArcClient = () => {
           testnet: true,
         },
         transport: http(rpcUrl, {
-          retryCount: 2,
-          timeout: 8000,
+          retryCount: 5,
+          timeout: 30000,
+          fetch: safeRpcFetch,
         }),
+        batch: { multicall: true },
       });
     } catch (err) {
       continue;
@@ -107,9 +126,11 @@ const createSepoliaClient = () => {
       return createPublicClient({
         chain: sepolia,
         transport: http(rpcUrl, {
-          retryCount: 2,
-          timeout: 8000,
+          retryCount: 5,
+          timeout: 30000,
+          fetch: safeRpcFetch,
         }),
+        batch: { multicall: true },
       });
     } catch (err) {
       continue;
@@ -141,9 +162,11 @@ const createBaseSepoliaClient = () => {
           testnet: true,
         },
         transport: http(rpcUrl, {
-          retryCount: 2,
-          timeout: 8000,
+          retryCount: 5,
+          timeout: 30000,
+          fetch: safeRpcFetch,
         }),
+        batch: { multicall: true },
       });
     } catch (err) {
       continue;
@@ -163,13 +186,15 @@ const determineTransactionType = (tx, logs, chainId) => {
     log.address?.toLowerCase() === usdcAddress.toLowerCase()
   );
 
-  // For now, we'll identify bridge transactions
+  // For USDC transfers that aren't explicitly identified as swaps or other types,
+  // we'll label them as 'Transfer' instead of 'Bridge'.
+  // Our dApp's bridge transactions are explicitly saved as 'Bridge' in IndexedDB.
   if (hasUSDCTransfer) {
-    return 'Bridge';
+    return 'Transfer';
   }
 
-  // Default to Bridge for now (can be enhanced later)
-  return 'Bridge';
+  // Default type
+  return 'Transaction';
 };
 
 // Format transaction data

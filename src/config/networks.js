@@ -5,13 +5,15 @@ export const NETWORKS = {
     chainId: '0x4cef52', // 5042002 in decimal - Arc Testnet
     chainName: 'Arc Testnet',
     nativeCurrency: {
-      name: 'ETH',
-      symbol: 'ETH',
+      name: 'USDC',
+      symbol: 'USDC',
       decimals: 18,
     },
     rpcUrls: ['https://rpc.testnet.arc.network'],
     blockExplorerUrls: ['https://testnet.arcscan.app/'],
     gasToken: 'USDC', // Arc uses USDC for gas
+    iconUrl: '/icons/Arc.png',
+    iconBackground: '#131720',
   },
   ETHEREUM_SEPOLIA: {
     chainId: '0xaa36a7', // 11155111 in hex

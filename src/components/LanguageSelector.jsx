@@ -9,13 +9,13 @@ const LanguageSelector = ({ placement = 'header' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectorRef = useRef(null);
 
-  // Language options with flags
+  // Language options with high-quality SVG flags from flagcdn
   const languages = [
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'es', name: 'Español', flag: '🇪🇸' },
-    { code: 'fr', name: 'Français', flag: '🇫🇷' },
-    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-    { code: 'zh', name: '中文', flag: '🇨🇳' }
+    { code: 'en', name: 'English', flag: 'https://flagcdn.com/w40/us.png' },
+    { code: 'es', name: 'Español', flag: 'https://flagcdn.com/w40/es.png' },
+    { code: 'fr', name: 'Français', flag: 'https://flagcdn.com/w40/fr.png' },
+    { code: 'de', name: 'Deutsch', flag: 'https://flagcdn.com/w40/de.png' },
+    { code: 'zh', name: '中文', flag: 'https://flagcdn.com/w40/cn.png' }
   ];
 
   // Close dropdown when clicking outside
@@ -80,7 +80,11 @@ const LanguageSelector = ({ placement = 'header' }) => {
         aria-expanded={isOpen}
         title={t('changeLanguage')}
       >
-        <span>{currentLanguage.flag}</span>
+        <img
+          src={currentLanguage.flag}
+          alt={currentLanguage.name}
+          className="w-4 h-3 object-cover rounded-sm shadow-sm"
+        />
         <span className="uppercase">{currentLanguage.code}</span>
         <ChevronDown size={16} />
       </button>
@@ -98,14 +102,17 @@ const LanguageSelector = ({ placement = 'header' }) => {
               <button
                 key={lang.code}
                 onClick={() => changeLanguage(lang.code)}
-                className={`w-full px-4 py-2 text-left text-sm flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  i18n.language === lang.code 
-                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
-                    : 'text-gray-700 dark:text-gray-300'
-                }`}
+                className={`w-full px-4 py-2 text-left text-sm flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${i18n.language === lang.code
+                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                  : 'text-gray-700 dark:text-gray-300'
+                  }`}
               >
                 <div className="flex items-center space-x-2">
-                  <span>{lang.flag}</span>
+                  <img
+                    src={lang.flag}
+                    alt={lang.name}
+                    className="w-4 h-3 object-cover rounded-sm shadow-sm"
+                  />
                   <span>{lang.name}</span>
                 </div>
                 {i18n.language === lang.code && <Check size={16} />}

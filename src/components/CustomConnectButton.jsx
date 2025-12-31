@@ -12,15 +12,15 @@ const CustomConnectButton = () => {
   const { balance: usdcBalance, loading: usdcLoading } = useTokenBalance('USDC');
   const { chains, switchChain } = useSwitchChain();
   const { disconnect } = useDisconnect();
-  
+
   // Use the new multi-chain balance hook
   const { balances } = useMultiChainBalances(address, isConnected);
-  
+
   const [showBalance, setShowBalance] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [copied, setCopied] = useState(false);
-  
+
   // Show balance after a short delay to allow for initial load
   useEffect(() => {
     if (isConnected) {
@@ -164,70 +164,90 @@ const CustomConnectButton = () => {
                       {showDropdown && (
                         <div className="wallet-dropdown-menu absolute top-full right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
                           {/* Arc Testnet Option */}
-                          <div 
-                            className="chain-option flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                            onClick={() => {
-                              const arcChain = chains.find(c => c.name.includes('Arc'));
-                              if (arcChain) handleSwitchChain(arcChain.id);
-                            }}
-                          >
-                            <div className="w-6 h-6 rounded-full flex items-center justify-center">
-                              <img 
-                                src="/icons/Arc.png" 
-                                alt="Arc Testnet" 
-                                className="w-6 h-6 rounded-full object-contain"
-                              />
-                            </div>
-                            <div className="flex-1 text-left">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">Arc Testnet</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {balances.arcTestnet.loading ? (
-                                  <span className="flex items-center">
-                                    <Loader className="animate-spin mr-1" size={10} />
-                                    Loading...
-                                  </span>
-                                ) : (
-                                  `${balances.arcTestnet.usdc || '0.00'} USDC`
+                          {(() => {
+                            const arcChain = chains.find(c => c.name.includes('Arc'));
+                            if (!arcChain) return null;
+                            return (
+                              <div
+                                className="chain-option flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                                onClick={() => handleSwitchChain(arcChain.id)}
+                              >
+                                <div
+                                  className="w-6 h-6 rounded-full flex items-center justify-center overflow-hidden"
+                                  style={{ background: arcChain.name.includes('Arc') ? '#131720' : (arcChain.iconBackground || '#000') }}
+                                >
+                                  {arcChain.iconUrl ? (
+                                    <img
+                                      src={arcChain.iconUrl}
+                                      alt="Arc Testnet"
+                                      className="w-full h-full object-contain"
+                                    />
+                                  ) : (
+                                    <span className="text-[10px] font-bold">A</span>
+                                  )}
+                                </div>
+                                <div className="flex-1 text-left">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">Arc Testnet</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    {balances.arcTestnet.loading ? (
+                                      <span className="flex items-center">
+                                        <Loader className="animate-spin mr-1" size={10} />
+                                        Loading...
+                                      </span>
+                                    ) : (
+                                      `${balances.arcTestnet.usdc || '0.00'} USDC`
+                                    )}
+                                  </div>
+                                </div>
+                                {chain.name.includes('Arc') && (
+                                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
                                 )}
                               </div>
-                            </div>
-                            {chain.name.includes('Arc') && (
-                              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                            )}
-                          </div>
+                            );
+                          })()}
 
                           {/* Sepolia Option */}
-                          <div 
-                            className="chain-option flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                            onClick={() => {
-                              const sepoliaChain = chains.find(c => c.name.includes('Sepolia'));
-                              if (sepoliaChain) handleSwitchChain(sepoliaChain.id);
-                            }}
-                          >
-                            <div className="w-6 h-6 rounded-full flex items-center justify-center">
-                              <img 
-                                src="/icons/eth.png" 
-                                alt="Sepolia" 
-                                className="w-6 h-6 rounded-full object-contain"
-                              />
-                            </div>
-                            <div className="flex-1 text-left">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">Sepolia</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {balances.sepolia.loading ? (
-                                  <span className="flex items-center">
-                                    <Loader className="animate-spin mr-1" size={10} />
-                                    Loading...
-                                  </span>
-                                ) : (
-                                  `${balances.sepolia.usdc || '0.00'} USDC`
+                          {(() => {
+                            const sepoliaChain = chains.find(c => c.name.includes('Sepolia') && !c.name.includes('Base'));
+                            if (!sepoliaChain) return null;
+                            return (
+                              <div
+                                className="chain-option flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                                onClick={() => handleSwitchChain(sepoliaChain.id)}
+                              >
+                                <div
+                                  className="w-6 h-6 rounded-full flex items-center justify-center overflow-hidden"
+                                  style={{ background: sepoliaChain.iconBackground || '#484c50' }}
+                                >
+                                  {sepoliaChain.iconUrl ? (
+                                    <img
+                                      src={sepoliaChain.iconUrl}
+                                      alt="Sepolia"
+                                      className="w-full h-full object-contain"
+                                    />
+                                  ) : (
+                                    <span className="text-[10px] font-bold">S</span>
+                                  )}
+                                </div>
+                                <div className="flex-1 text-left">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">Sepolia</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    {balances.sepolia.loading ? (
+                                      <span className="flex items-center">
+                                        <Loader className="animate-spin mr-1" size={10} />
+                                        Loading...
+                                      </span>
+                                    ) : (
+                                      `${balances.sepolia.usdc || '0.00'} USDC`
+                                    )}
+                                  </div>
+                                </div>
+                                {chain.name.includes('Sepolia') && (
+                                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
                                 )}
                               </div>
-                            </div>
-                            {chain.name.includes('Sepolia') && (
-                              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                            )}
-                          </div>
+                            );
+                          })()}
 
                           <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
 
@@ -310,12 +330,12 @@ const CustomConnectButton = () => {
                               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-2xl font-bold mb-3">
                                 {account.displayName?.charAt(0) || 'W'}
                               </div>
-                              
+
                               {/* Wallet Address */}
                               <div className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                                 {shortenAddress(account.address)}
                               </div>
-                              
+
                               {/* USDC Balance */}
                               <div className="text-sm text-gray-600 dark:text-gray-400">
                                 {currentBalance.loading ? (

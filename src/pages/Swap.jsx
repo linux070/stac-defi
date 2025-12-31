@@ -641,6 +641,7 @@ const Swap = () => {
               hash: txHash,
               chainId: chainIdNum || chainId,
               address: address?.toLowerCase(),
+              initiatedBy: 'StacDApp', // Mark as dApp-initiated
             };
 
             existing.unshift(swapTxData);
@@ -1410,6 +1411,18 @@ const Swap = () => {
         fromBalance={fromBalance}
         toBalance={toBalance}
       />
+
+      {/* Feedback Button */}
+      <div className="feedback-widget">
+        <a
+          href="https://forms.gle/your-form-id"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="feedback-button"
+        >
+          Feedback
+        </a>
+      </div>
 
       {/* Toast Notifications */}
       <Toast

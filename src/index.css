@@ -208,6 +208,42 @@
     min-height: 44px;
     min-width: 44px;
   }
+
+  /* Vertical Feedback Button */
+  .feedback-widget {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+  }
+
+  .feedback-button {
+    display: block;
+    background: #131720;
+    color: #94a3b8;
+    padding: 16px 8px;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    border-radius: 8px 0 0 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    transform: translateX(4px);
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
+    backdrop-blur: md;
+  }
+
+  .feedback-button:hover {
+    transform: translateX(0);
+    background: #1e293b;
+    color: #ffffff;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+  }
 }
 
 /* Media queries for responsive design */

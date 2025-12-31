@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
-import { useSwitchChain } from 'wagmi';
+import { useSwitchChain, useChains } from 'wagmi';
 import { ArrowLeftRight, Loader, AlertCircle, Info, Wallet, X, Settings, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
@@ -351,6 +351,7 @@ const Bridge = () => {
           hash: txHash,
           chainId: getChainIdByName(fromChain),
           address: walletAddress?.toLowerCase(),
+          initiatedBy: 'StacDApp', // Mark as dApp-initiated for filtering
         };
 
         console.log('💾 Saving bridge transaction:', {
@@ -993,6 +994,7 @@ const Bridge = () => {
 
   const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude, triggerRef }) => {
     const selectorRef = useRef(null);
+    const chains = useChains();
 
     // Handle ESC key press to close modal
     useEffect(() => {
@@ -1049,17 +1051,21 @@ const Bridge = () => {
               <div className="flex-1 overflow-y-auto -mx-6 px-6">
                 {/* Chain List */}
                 <div className="space-y-2">
-                  {chainList.map((chain) => {
-                    const isExcluded = chain === exclude;
-                    const isSelected = chain === selectedChain;
+                  {chainList.map((chainName) => {
+                    const isExcluded = chainName === exclude;
+                    const isSelected = chainName === selectedChain;
+
+                    // Find chain object to get iconUrl
+                    const chainObj = chains.find(c => c.name === chainName || (chainName === 'Sepolia' && c.name.includes('Sepolia')));
+                    const iconUrl = chainObj?.iconUrl;
 
                     return (
                       <button
-                        key={chain}
+                        key={chainName}
                         disabled={isExcluded}
                         onClick={() => {
                           if (!isExcluded) {
-                            onSelect(chain);
+                            onSelect(chainName);
                             onClose();
                           }
                         }}
@@ -1084,25 +1090,22 @@ const Bridge = () => {
                       >
                         <div className="flex items-center space-x-3">
                           <div className="network-icon">
-                            {chain.includes('Arc') ? (
-                              <img
-                                src="/icons/Arc.png"
-                                alt="Arc Testnet"
-                                className="w-8 h-8 rounded-full object-contain"
-                              />
-                            ) : chain.includes('Base') ? (
-                              <img
-                                src="/icons/base.png"
-                                alt="Base Sepolia"
-                                className="w-8 h-8 rounded-lg object-cover"
-                              />
-                            ) : chain.includes('Sepolia') ? (
-                              <img
-                                src="/icons/eth.png"
-                                alt="Sepolia"
-                                className="w-8 h-8 rounded-full object-contain"
-                              />
-                            ) : null}
+                            {iconUrl ? (
+                              <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
+                                style={{ background: chainName.includes('Arc') ? '#131720' : (chainObj.iconBackground || '#000') }}
+                              >
+                                <img
+                                  src={iconUrl}
+                                  alt={chainName}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+                                <span className="text-xs font-bold">{chainName.substring(0, 1)}</span>
+                              </div>
+                            )}
                           </div>
                           <div className="text-left">
                             <p className="network-name">{chain}</p>
@@ -1502,6 +1505,17 @@ const Bridge = () => {
         </AnimatePresence>,
         document.body
       )}
+      {/* Feedback Button */}
+      <div className="feedback-widget">
+        <a
+          href="https://forms.gle/your-form-id"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="feedback-button"
+        >
+          Feedback
+        </a>
+      </div>
     </div>
   );
 };

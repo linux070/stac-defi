@@ -57,7 +57,26 @@ const ERC20_ABI = [
     type: 'function',
   },
 ];
+// Custom fetch handler to intercept malformed/truncated JSON responses
+const safeRpcFetch = async (url, options) => {
+  const response = await fetch(url, options);
+  const clone = response.clone();
+  try {
+    const text = await clone.text();
+    JSON.parse(text);
+    return response;
+  } catch (err) {
+    if (err instanceof SyntaxError) {
+      console.warn(`[SuperBridge] Truncated JSON detected from ${url}. Switching providers...`);
+      throw new Error(`Malformed JSON response from RPC: ${err.message}`);
+    }
+    return response;
+  }
+};
 
+/**
+ * Hook to fetch balances for multiple tokens across multiple chains
+ */
 // Fetch balance for a specific chain and token
 const fetchChainBalance = async (chainId, address, rpcUrls, tokenSymbol = 'USDC') => {
   if (!address) return { balance: '0.00', error: null };
@@ -73,9 +92,11 @@ const fetchChainBalance = async (chainId, address, rpcUrls, tokenSymbol = 'USDC'
           publicClient = createPublicClient({
             chain: sepolia,
             transport: http(rpcUrl, {
-              retryCount: 1,
-              timeout: 5000, // Shorter timeout for lightweight fetching
+              retryCount: 5,
+              timeout: 30000,
+              fetch: safeRpcFetch,
             }),
+            batch: { multicall: true },
           });
 
           await publicClient.getBlockNumber();
@@ -96,8 +117,8 @@ const fetchChainBalance = async (chainId, address, rpcUrls, tokenSymbol = 'USDC'
               network: 'arc-testnet',
               nativeCurrency: {
                 decimals: 18,
-                name: 'ETH',
-                symbol: 'ETH',
+                name: 'USDC',
+                symbol: 'USDC',
               },
               rpcUrls: {
                 default: { http: [rpcUrl] },
@@ -109,9 +130,11 @@ const fetchChainBalance = async (chainId, address, rpcUrls, tokenSymbol = 'USDC'
               testnet: true,
             },
             transport: http(rpcUrl, {
-              retryCount: 1,
-              timeout: 5000,
+              retryCount: 5,
+              timeout: 30000,
+              fetch: safeRpcFetch,
             }),
+            batch: { multicall: true },
           });
 
           await publicClient.getBlockNumber();
@@ -145,9 +168,11 @@ const fetchChainBalance = async (chainId, address, rpcUrls, tokenSymbol = 'USDC'
               testnet: true,
             },
             transport: http(rpcUrl, {
-              retryCount: 1,
-              timeout: 5000,
+              retryCount: 5,
+              timeout: 30000,
+              fetch: safeRpcFetch,
             }),
+            batch: { multicall: true },
           });
 
           await publicClient.getBlockNumber();

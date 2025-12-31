@@ -2,13 +2,71 @@ import { useState, useCallback } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
 import { BridgeKit } from '@circle-fin/bridge-kit';
-import { createPublicClient, http, formatUnits } from 'viem';
-import { sepolia } from 'viem/chains';
-import { arcTestnet } from 'viem/chains';
+import { createPublicClient, http, fallback, formatUnits, defineChain } from 'viem';
+import { sepolia as sepoliaChain } from 'viem/chains';
 import { NETWORKS, TOKENS } from '../config/networks'; // Import the same config
 
-// --- Configuration & Constants ---
+// Explicitly define ARC Testnet and Sepolia for high reliability
+export const arcTestnet = defineChain({
+  id: 5042002,
+  name: 'Arc Testnet',
+  nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://rpc.testnet.arc.network'] },
+  },
+  blockExplorers: {
+    default: { name: 'ArcScan', url: 'https://testnet.arcscan.app' },
+  },
+});
 
+export const sepolia = defineChain({
+  ...sepoliaChain,
+  rpcUrls: {
+    ...sepoliaChain.rpcUrls,
+    default: { http: ['https://eth-sepolia.g.alchemy.com/v2/w5SlKrdofEKjcKadoa6KQ'] },
+  },
+});
+
+/**
+ * Custom fetch handler to intercept malformed/truncated JSON responses
+ * Forces viem fallback to switch providers when a SyntaxError is detected.
+ */
+const safeRpcFetch = async (url, options) => {
+  const response = await fetch(url, options);
+
+  // Clone the response to read it as text first
+  const clone = response.clone();
+  try {
+    const text = await clone.text();
+    JSON.parse(text); // Validate JSON
+    return response;
+  } catch (err) {
+    if (err instanceof SyntaxError) {
+      console.warn(`[SuperBridge] Truncated JSON detected from ${url}. Switching providers...`);
+      // Throwing here forces viem's fallback transport to try the next URL
+      throw new Error(`Malformed JSON response from RPC: ${err.message}`);
+    }
+    return response;
+  }
+};
+
+// --- Configuration & Constants ---
+export const publicClient = createPublicClient({
+  chain: sepolia,
+  transport: fallback([
+    // Dedicated High-Limit Providers
+    http('https://eth-sepolia.g.alchemy.com/v2/w5SlKrdofEKjcKadoa6KQ', { fetch: safeRpcFetch }),
+    http('https://sepolia.infura.io/v3/w5SlKrdofEKjcKadoa6KQ', { fetch: safeRpcFetch }),
+    http('https://ethereum-sepolia-rpc.publicnode.com', { fetch: safeRpcFetch }),
+    http('https://rpc.sepolia.org', { fetch: safeRpcFetch }),
+  ], {
+    rank: true,
+    retryCount: 5,
+    retryDelay: 500,
+  }),
+  batch: { multicall: true },
+  pollingInterval: 12_000,
+})
 // Token configurations for all supported chains
 export const CHAIN_TOKENS = {
   [11155111]: { // Sepolia
@@ -123,9 +181,11 @@ export function useBridge() {
             publicClient = createPublicClient({
               chain: sepolia,
               transport: http(rpcUrl, {
-                retryCount: 2,
-                timeout: 8000,
+                retryCount: 5,
+                timeout: 30000,
+                fetch: safeRpcFetch
               }),
+              batch: { multicall: true }
             });
 
             await publicClient.getBlockNumber();
@@ -606,6 +666,16 @@ export function useBridge() {
         // Clear step timeouts on error
         clearTimeout(burnStepTimeout);
         clearTimeout(mintStepTimeout);
+
+        // Global try-catch for "mint" step diagnostics
+        if (state.step === 'minting' || err.message?.toLowerCase().includes('mint')) {
+          console.error('CRITICAL: Failure during Bridge Mint step');
+          if (err.message?.includes('Unterminated string') || err.message?.includes('JSON')) {
+            console.error('RPC Error detected (JSON Truncation). Partial data:', err.data || 'unavailable');
+            // Log full error for deeper inspection
+            console.dir(err);
+          }
+        }
         throw err;
       }
 
