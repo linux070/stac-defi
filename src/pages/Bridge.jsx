@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
 import { useSwitchChain, useChains } from 'wagmi';
-import { ArrowLeftRight, Loader, AlertCircle, Info, Wallet, X, Settings, ChevronDown } from 'lucide-react';
+import { ArrowLeftRight, Loader, AlertCircle, Info, Wallet, X, Settings, ChevronDown, Check, CheckCircle, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
 import { sanitizeInput } from '../utils/blockchain';
@@ -1074,7 +1074,7 @@ const Bridge = () => {
                         style={{
                           background: isSelected ? 'var(--bridge-alert-bg)' : 'transparent',
                           borderColor: isSelected ? 'var(--bridge-accent-primary)' : 'transparent',
-                          opacity: isExcluded ? 0.5 : 1,
+                          opacity: 1, // Keep full visibility for all networks
                           cursor: isExcluded ? 'not-allowed' : 'pointer'
                         }}
                         onMouseEnter={(e) => {
@@ -1108,19 +1108,27 @@ const Bridge = () => {
                             )}
                           </div>
                           <div className="text-left">
-                            <p className="network-name">{chain}</p>
+                            <p className="network-name">{chainName}</p>
                             <p className="network-chain">{t('Testnet')}</p>
                           </div>
                         </div>
-                        {isExcluded && (
-                          <div className="px-3 py-1 text-xs rounded" style={{
-                            background: 'var(--bridge-surface-card)',
-                            color: 'var(--bridge-text-secondary)',
-                            fontSize: '11px'
-                          }}>
-                            {t('Selected')}
-                          </div>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          {isSelected && (
+                            <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center">
+                              <Check size={14} className="text-blue-500" />
+                            </div>
+                          )}
+                          {isExcluded && (
+                            <div className="px-1.5 py-0.5 text-xs rounded-md" style={{
+                              background: 'var(--bridge-surface-card)',
+                              color: 'var(--bridge-text-secondary)',
+                              fontSize: '10px',
+                              fontWeight: '600'
+                            }}>
+                              {t('Selected')}
+                            </div>
+                          )}
+                        </div>
                       </button>
                     );
                   })}
@@ -1222,10 +1230,13 @@ const Bridge = () => {
               })()}
             </div>
             <div className="network-info">
+              {/* Mobile Label: Above */}
+              <p className="network-chain mobile-only">{t('From')}</p>
               <p className="network-name">
                 {bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain}
               </p>
-              <p className="network-chain">Source</p>
+              {/* Desktop Label: Below */}
+              <p className="network-chain desktop-only">{t('Source')}</p>
             </div>
             <ChevronDown size={20} style={{ marginLeft: 'auto', opacity: 0.6 }} />
           </button>
@@ -1333,10 +1344,13 @@ const Bridge = () => {
               })()}
             </div>
             <div className="network-info">
+              {/* Mobile Label: Above */}
+              <p className="network-chain mobile-only">{t('To')}</p>
               <p className="network-name">
                 {bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain}
               </p>
-              <p className="network-chain">Destination</p>
+              {/* Desktop Label: Below */}
+              <p className="network-chain desktop-only">{t('Destination')}</p>
             </div>
             <ChevronDown size={20} style={{ marginLeft: 'auto', opacity: 0.6 }} />
           </button>
@@ -1345,21 +1359,10 @@ const Bridge = () => {
         {/* Asset Input Section */}
         <div className="input-group">
           <div className="input-header">
-            <div className="input-label">You send</div>
-            {isConnected && (
-              <div className="balance-text">
-                Balance: <span>
-                  {isLoadingBalance ? (
-                    <Loader className="animate-spin inline" size={11} />
-                  ) : balanceError ? (
-                    <span style={{ color: '#f87171' }}>Error</span>
-                  ) : (
-                    formatBalance(tokenBalance || 0)
-                  )}
-                </span>
-              </div>
-            )}
+            <p className="input-label">{t('You send')}</p>
           </div>
+          {/* Mobile Spacer */}
+          <div className="mobile-only" style={{ height: '8px' }}></div>
           <div className="input-row">
             <input
               type="text"
@@ -1383,7 +1386,18 @@ const Bridge = () => {
             </div>
           </div>
           {isConnected && (
-            <div className="flex items-center justify-end mt-2">
+            <div className="input-footer">
+              <div className="balance-text">
+                {t('Bal')}: <span>
+                  {isLoadingBalance ? (
+                    <Loader className="animate-spin inline" size={11} />
+                  ) : balanceError ? (
+                    <span style={{ color: '#f87171' }}>Error</span>
+                  ) : (
+                    formatBalance(tokenBalance || 0)
+                  )}
+                </span>
+              </div>
               <button
                 onClick={() => {
                   if (tokenBalance && parseFloat(tokenBalance) > 0) {
@@ -1479,43 +1493,46 @@ const Bridge = () => {
       {createPortal(
         <AnimatePresence>
           {showNetworkSuccess && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="network-success-toast"
-            >
-              <div className="network-success-content">
-                <div className="network-success-header">
-                  <span className="network-success-title">Success</span>
-                  <button
-                    onClick={() => setShowNetworkSuccess(false)}
-                    className="network-success-close"
-                    aria-label="Close notification"
-                  >
-                    <X size={16} />
-                  </button>
+            <div className="network-success-portal-container">
+              {/* Backdrop for mobile to make it feel like a modal */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                exit={{ opacity: 0 }}
+                className="network-success-backdrop md:hidden"
+                onClick={() => setShowNetworkSuccess(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                className="network-success-toast"
+              >
+                <div className="network-success-content">
+                  <div className="network-success-header">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle size={18} className="text-white" />
+                      <span className="network-success-title">{t('Success')}</span>
+                    </div>
+                    <button
+                      onClick={() => setShowNetworkSuccess(false)}
+                      className="network-success-close"
+                      aria-label="Close notification"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <p className="network-success-message">
+                    {t('Successfully added network to your wallet')}
+                  </p>
                 </div>
-                <p className="network-success-message">
-                  Successfully added network to your wallet
-                </p>
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
           )}
         </AnimatePresence>,
         document.body
       )}
-      {/* Feedback Button */}
-      <div className="feedback-widget">
-        <a
-          href="https://forms.gle/your-form-id"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="feedback-button"
-        >
-          Feedback
-        </a>
-      </div>
+
     </div>
   );
 };

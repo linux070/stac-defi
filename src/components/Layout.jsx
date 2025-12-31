@@ -12,6 +12,7 @@ import WalletModal from './WalletModal';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import LanguageSelector from './LanguageSelector';
 import BackgroundGradient from './BackgroundGradient';
+import FeedbackButton from './FeedbackButton';
 
 const Layout = ({ children, activeTab, setActiveTab }) => {
   const { t, i18n } = useTranslation();
@@ -77,7 +78,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
         {/* Desktop Header - Floating Island */}
         <div className="hidden md:block md:fixed md:top-4 md:left-0 md:right-0 md:flex md:justify-center">
-          <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-6 py-3 mx-auto w-fit max-w-full md:min-w-[700px] md:max-w-6xl">
+          <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-6 py-2.5 mx-auto w-fit max-w-full md:min-w-[500px] md:max-w-[1200px] flex-nowrap overflow-hidden">
             {/* Logo with text */}
             <a href="/" className="flex items-center gap-2 cursor-pointer flex-shrink-0">
               <img
@@ -85,13 +86,13 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                 alt="Stac Logo"
                 className="w-8 h-8 rounded-lg object-cover dark:invert dark:brightness-110"
               />
-              <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap tracking-tight">
+              <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap tracking-tight select-none">
                 Stac
               </span>
             </a>
 
             {/* Desktop Navigation */}
-            <nav className="flex items-center gap-4 md:gap-6 ml-6">
+            <nav className="flex items-center gap-2 md:gap-4 ml-4">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -99,14 +100,14 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                     key={item.id}
                     data-nav={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`px-3 py-2 rounded-full text-sm font-bold transition-all duration-200 flex items-center nav-link
+                    className={`px-3 py-2 rounded-full text-sm font-bold transition-all duration-200 flex items-center nav-link whitespace-nowrap
                       ${activeTab === item.id
                         ? 'bg-blue-100/50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                         : 'text-gray-700 hover:bg-gray-100/50 dark:text-gray-200 dark:hover:bg-gray-700/50'
                       }`}
                   >
-                    <Icon size={16} className="mr-2" />
-                    <span className="font-bold">{item.label}</span>
+                    <Icon size={16} className="mr-2 flex-shrink-0" />
+                    <span className="font-bold whitespace-nowrap">{item.label}</span>
                   </button>
                 );
               })}
@@ -258,6 +259,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
           </div>
         </div>
       </footer>
+      <FeedbackButton />
     </div>
   );
 };

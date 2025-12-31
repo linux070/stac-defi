@@ -1,8 +1,10 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertCircle, AlertTriangle, ArrowRight } from 'lucide-react';
 
 const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, errorMessage }) => {
+  const { t } = useTranslation();
   // Format error message with number highlighting
   const formatErrorMessage = (message) => {
     if (!message) return 'An unknown error occurred during the bridge transaction.';
@@ -66,7 +68,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
                 >
-                  {errorTitle || 'Transaction Failed'}
+                  {errorTitle || t('Transaction Failed')}
                 </motion.h3>
               </div>
             </div>
@@ -101,7 +103,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                         className="bridging-modal-network-icon object-contain"
                       />
                     )}
-                    <p className="bridging-modal-network-name">{fromChain}</p>
+                    <p className="bridging-modal-network-name whitespace-nowrap">{fromChain}</p>
                   </div>
 
                   {/* Arrow Connector */}
@@ -130,7 +132,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                         className="bridging-modal-network-icon object-contain"
                       />
                     )}
-                    <p className="bridging-modal-network-name">{toChain}</p>
+                    <p className="bridging-modal-network-name whitespace-nowrap">{toChain}</p>
                   </div>
                 </div>
               </motion.div>
@@ -147,7 +149,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                 </div>
                 <div className="flex-1">
                   <p className="bridging-modal-error-title">
-                    Error Details
+                    {t('Error Details')}
                   </p>
                   <p className="bridging-modal-error-text">
                     {formatErrorMessage(errorMessage || 'An unknown error occurred during the bridge transaction.')}
@@ -163,7 +165,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  Retry
+                  {t('Retry')}
                 </motion.button>
                 <motion.button
                   onClick={onClose}
@@ -171,7 +173,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  Close
+                  {t('Close')}
                 </motion.button>
               </div>
             </div>

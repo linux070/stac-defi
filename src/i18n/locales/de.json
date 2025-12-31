@@ -119,5 +119,8 @@
   "features.subSecondFinality": "Subsekundäre Finalität",
   "features.usdcGasFees": "USDC-Gasgebühren",
   "features.bestExecution": "Beste Ausführung",
+  "Successfully added network to your wallet": "Netzwerk erfolgreich zu Ihrer Wallet hinzugefügt",
+  "Success": "Erfolg",
+  "Bal": "Guthaben",
   "connectWallet": "Wallet verbinden"
 }

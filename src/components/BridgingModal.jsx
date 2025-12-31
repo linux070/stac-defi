@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader, CheckCircle, X, AlertCircle, Clock, Info, ArrowRight } from 'lucide-react';
 import '../styles/bridge-styles.css';
@@ -159,7 +160,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
                 >
-                  {modalState === 'inProgress' ? 'Bridging in Progress' : 'Bridge Completed'}
+                  {modalState === 'inProgress' ? t('Bridging in Progress') : t('Bridge Completed')}
                 </motion.h3>
               </div>
             </div>
@@ -194,7 +195,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                         className="bridging-modal-network-icon object-contain"
                       />
                     )}
-                    <p className="bridging-modal-network-name">{fromChain}</p>
+                    <p className="bridging-modal-network-name whitespace-nowrap">{fromChain}</p>
                   </div>
 
                   {/* Arrow Connector */}
@@ -223,16 +224,14 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                         className="bridging-modal-network-icon object-contain"
                       />
                     )}
-                    <p className="bridging-modal-network-name">{toChain}</p>
+                    <p className="bridging-modal-network-name whitespace-nowrap">{toChain}</p>
                   </div>
                 </div>
               </motion.div>
 
               {modalState === 'inProgress' && (
                 <>
-                  <p className="bridging-modal-bridge-text">
-                    Bridging from {fromChain} to {toChain}
-                  </p>
+                  {t('Bridging from')} {fromChain} {t('To')} {toChain}
 
                   <div className="bridging-modal-progress-card">
                     <div className="bridging-modal-progress-header">
@@ -245,9 +244,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                         style={{ width: `${Math.min(100, (displayTime / 120) * 100)}%` }}
                       ></div>
                     </div>
-                    <p className="bridging-modal-progress-estimate">
-                      Estimated completion time : 1-2 minutes.
-                    </p>
+                    {t('Estimated completion time')}: 1-2 {t('minutes')}.
                   </div>
 
                   {/* Important Notice */}
@@ -262,10 +259,10 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                     </div>
                     <div className="flex-1">
                       <p className="bridging-modal-notice-title">
-                        Important Notice
+                        {t('Important Notice')}
                       </p>
                       <p className="bridging-modal-notice-text">
-                        Please keep this window open until the transaction completes. Closing it may interrupt the bridging process.
+                        {t('bridgingWindowNotice')}
                       </p>
                     </div>
                   </motion.div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
 import { useAccount } from 'wagmi';
@@ -1412,18 +1413,6 @@ const Swap = () => {
         toBalance={toBalance}
       />
 
-      {/* Feedback Button */}
-      <div className="feedback-widget">
-        <a
-          href="https://forms.gle/your-form-id"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="feedback-button"
-        >
-          Feedback
-        </a>
-      </div>
-
       {/* Toast Notifications */}
       <Toast
         type={toast.type}
@@ -1431,6 +1420,7 @@ const Swap = () => {
         visible={toast.visible}
         onClose={() => setToast({ ...toast, visible: false })}
       />
+
     </div>
   );
 };
