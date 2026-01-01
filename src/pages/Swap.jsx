@@ -8,43 +8,38 @@ import { ArrowDownUp, Settings, Info, Loader, Wallet, AlertTriangle, X, ChevronD
 import { motion, AnimatePresence } from 'framer-motion';
 import { TOKENS, TOKEN_PRICES, NETWORKS } from '../config/networks';
 import { sanitizeInput, calculateSwapQuote, validateAmount, validateSlippage, getFilteredTokens } from '../utils/blockchain';
-import { getContractAddresses } from '../config/contracts';
-import {
-  getEthersProvider,
-  getSwapRouterContract,
-  getERC20Contract,
-  formatTokenAmount,
-  parseTokenAmount,
-  getSwapQuote,
-  checkApproval,
-  approveToken,
-  executeSwap,
-  getDeadline,
-  calculateMinReceived,
-  createSwapPath,
-  checkPoolLiquidity,
-} from '../utils/swapContract';
 import useTokenBalance from '../hooks/useTokenBalance';
 import useMultiChainBalances from '../hooks/useMultiChainBalances';
 import Toast from '../components/Toast';
-import { getItem, setItem } from '../utils/indexedDB';
+import { DEX_ADDRESS, USDC_ADDRESS as CONSTANT_USDC_ADDRESS } from '../config/constants';
+import { useSwap } from '../hooks/useSwap';
+import SwapModal from '../components/SwapModal';
+import FaucetModal from '../components/FaucetModal';
 import '../styles/swap-styles.css';
 
-const FACTORY_ADDRESS = "0x34A0b64a88BBd4Bf6Acba8a0Ff8F27c8aDD67E9C";
-const ROUTER_ADDRESS = "0x284C5Afc100ad14a458255075324fA0A9dfd66b1";
-const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
+const USDC_ADDRESS = CONSTANT_USDC_ADDRESS;
+
+const getTokenIcon = (symbol) => {
+  const iconMap = {
+    'USDC': '/icons/usdc.png',
+    'STCK': '/icons/stac.png',
+    'BALL': '/icons/ball.jpg',
+    'MTB': '/icons/mtb.png',
+    'ECR': '/icons/ecr.png'
+  };
+  return iconMap[symbol] || null;
+};
 
 const Swap = () => {
   const { t } = useTranslation();
   const { isConnected, balance, chainId } = useWallet();
   const { address } = useAccount();
   const [fromToken, setFromToken] = useState('USDC');
-  const [toToken, setToToken] = useState('EURC');
+  const [toToken, setToToken] = useState('STCK');
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
   const [slippage, setSlippage] = useState(0.5);
   const [customSlippage, setCustomSlippage] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
   const [showFromSelector, setShowFromSelector] = useState(false);
   const [showToSelector, setShowToSelector] = useState(false);
   const [showSwapDetails, setShowSwapDetails] = useState(false);
@@ -55,6 +50,14 @@ const Swap = () => {
   const [toast, setToast] = useState({ visible: false, type: 'info', message: '' });
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [liquidityWarning, setLiquidityWarning] = useState('');
+
+  // Modal states
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
+  const [isFaucetModalOpen, setIsFaucetModalOpen] = useState(false);
+
+
+  // Wagmi-based Swap Hook
+  const swapState = useSwap(fromToken, toToken, fromAmount, slippage);
 
   // Helper function to normalize chain ID for comparison
   const normalizeChainId = (chainId) => {
@@ -169,17 +172,15 @@ const Swap = () => {
     };
   }, [showFromSelector, showToSelector]);
 
-  // Real-time token balances
-  // For USDC and EURC, use multi-chain balances; for other tokens, use regular balance hook
-  const { balance: fromBalanceRegular, loading: fromLoadingRegular, refetch: refetchFrom } = useTokenBalance((fromToken === 'USDC' || fromToken === 'EURC') ? null : fromToken);
-  const { balance: toBalanceRegular, loading: toLoadingRegular, refetch: refetchTo } = useTokenBalance((toToken === 'USDC' || toToken === 'EURC') ? null : toToken);
+  // For USDC, use multi-chain balances; for other tokens, use regular balance hook
+  const { balance: fromBalanceRegular, loading: fromLoadingRegular, refetch: refetchFrom } = useTokenBalance((fromToken === 'USDC') ? null : fromToken);
+  const { balance: toBalanceRegular, loading: toLoadingRegular, refetch: refetchTo } = useTokenBalance((toToken === 'USDC') ? null : toToken);
 
-  // Get balance based on token type and current chain
   const getFromBalance = () => {
-    if (fromToken === 'USDC' || fromToken === 'EURC') {
+    if (fromToken === 'USDC') {
       // Use current chain's balance from multi-chain hook
       const chainIdNum = chainId ? parseInt(chainId, 16) : null;
-      const tokenKey = fromToken.toLowerCase(); // 'usdc' or 'eurc'
+      const tokenKey = fromToken.toLowerCase(); // 'usdc'
 
       if (chainIdNum === 5042002) { // Arc Testnet
         const balance = multiChainBalances?.arcTestnet?.[tokenKey] || '0.00';
@@ -212,10 +213,10 @@ const Swap = () => {
   };
 
   const getToBalance = () => {
-    if (toToken === 'USDC' || toToken === 'EURC') {
+    if (toToken === 'USDC') {
       // Use current chain's balance from multi-chain hook
       const chainIdNum = chainId ? parseInt(chainId, 16) : null;
-      const tokenKey = toToken.toLowerCase(); // 'usdc' or 'eurc'
+      const tokenKey = toToken.toLowerCase(); // 'usdc'
 
       if (chainIdNum === 5042002) { // Arc Testnet
         return {
@@ -296,185 +297,55 @@ const Swap = () => {
     }
   }, [slippage]);
 
-  // Calculate swap quote when amount changes - fetch from contract if connected
+  // Calculate swap quote using the useSwap hook
   useEffect(() => {
-    setValidationError('');
-    setQuoteLoading(false);
-
     if (fromAmount && parseFloat(fromAmount) > 0) {
-      try {
-        // Validate amount
-        validateAmount(fromAmount, fromBalance);
+      if (swapState.expectedOut && swapState.expectedOut !== "0") {
+        setToAmount(swapState.expectedOut);
 
-        // Try to fetch real quote from contract if connected and on supported network
-        if (isConnected && chainId && window.ethereum) {
-          const contractAddresses = getContractAddresses(chainId);
-          const routerAddress = ROUTER_ADDRESS;
-          const fromTokenAddr = getTokenAddress(fromToken);
-          const toTokenAddr = getTokenAddress(toToken);
-
-
-
-          // Only fetch from contract if we have all required addresses
-          if (routerAddress && fromTokenAddr && toTokenAddr) {
-            setQuoteLoading(true);
-            fetchContractQuote(fromAmount, fromToken, toToken, routerAddress, fromTokenAddr, toTokenAddr)
-              .then(quote => {
-                if (quote) {
-                  setSwapQuote(quote);
-                  setToAmount(quote.expectedOutput);
-                  setShowSwapDetails(true);
-                }
-              })
-              .catch(err => {
-                console.warn('Failed to fetch contract quote, using fallback:', err);
-                // Fallback to mock quote
-                const fallbackQuote = calculateSwapQuote(fromToken, toToken, fromAmount, slippage);
-                if (fallbackQuote) {
-                  // Ensure quote has required fields for swap details
-                  const formattedQuote = {
-                    ...fallbackQuote,
-                    priceImpact: fallbackQuote.priceImpact || '0.00',
-                    networkFee: fallbackQuote.gasFee || '0.00',
-                  };
-                  setSwapQuote(formattedQuote);
-                  setToAmount(formattedQuote.expectedOutput);
-                  setShowSwapDetails(true);
-                }
-              })
-              .finally(() => {
-                setQuoteLoading(false);
-              });
-          } else {
-            // Fallback to mock quote if contract not available
-            const quote = calculateSwapQuote(fromToken, toToken, fromAmount, slippage);
-            if (quote) {
-              // Ensure quote has required fields for swap details
-              const formattedQuote = {
-                ...quote,
-                priceImpact: quote.priceImpact || '0.00',
-                networkFee: quote.gasFee || '0.00',
-              };
-              setSwapQuote(formattedQuote);
-              setToAmount(formattedQuote.expectedOutput);
-              setShowSwapDetails(true);
-            }
-          }
-        } else {
-          // Not connected or no provider, use mock quote
-          const quote = calculateSwapQuote(fromToken, toToken, fromAmount, slippage);
-          if (quote) {
-            // Ensure quote has required fields for swap details
-            const formattedQuote = {
-              ...quote,
-              priceImpact: quote.priceImpact || '0.00',
-              networkFee: quote.gasFee || '0.00',
-            };
-            setSwapQuote(formattedQuote);
-            setToAmount(formattedQuote.expectedOutput);
-            setShowSwapDetails(true);
-          }
-        }
-      } catch (err) {
-        setValidationError(err.message);
-        setSwapQuote(null);
-        setToAmount('');
-        setShowSwapDetails(false);
-        setQuoteLoading(false);
+        // Update the swapQuote object for detail display
+        setSwapQuote({
+          expectedOutput: swapState.expectedOut,
+          price: swapState.price,
+          minReceived: (parseFloat(swapState.expectedOut) * 0.995).toFixed(6),
+          priceImpact: '0.00',
+          networkFee: '0.00'
+        });
+        setShowSwapDetails(true);
       }
     } else {
-      setSwapQuote(null);
       setToAmount('');
+      setSwapQuote(null);
       setShowSwapDetails(false);
-      setQuoteLoading(false);
     }
-  }, [fromAmount, fromToken, toToken, slippage, fromBalance, isConnected, chainId]);
+  }, [fromAmount, swapState.expectedOut, swapState.price]);
 
-  // Check liquidity when tokens or amount changes
+  // Handle swap success/error notifications
   useEffect(() => {
-    setLiquidityWarning('');
+    if (swapState.isSuccess) {
+      setToast({ visible: true, type: 'success', message: t('Swap Successful!') });
+      setFromAmount('');
+      refetchFrom();
+      refetchTo();
 
-    if (fromAmount && parseFloat(fromAmount) > 0 && isConnected && chainId && window.ethereum) {
-      const contractAddresses = getContractAddresses(chainId);
-      const routerAddress = ROUTER_ADDRESS;
-      const fromTokenAddr = getTokenAddress(fromToken);
-      const toTokenAddr = getTokenAddress(toToken);
-
-      if (routerAddress && fromTokenAddr && toTokenAddr) {
-        const checkLiquidity = async () => {
-          try {
-            const { provider } = await getEthersProvider();
-
-            // Use Factory/Pair approach for liquidity check (standard V2)
-            const liquidityCheck = await checkPoolLiquidity(FACTORY_ADDRESS, provider, fromTokenAddr, toTokenAddr);
-
-            if (!liquidityCheck.hasLiquidity) {
-              const fromDecimals = getTokenDecimals(fromToken);
-              const toDecimals = getTokenDecimals(toToken);
-              const reserveInFormatted = parseTokenAmount(liquidityCheck.reserveIn, fromDecimals);
-              const reserveOutFormatted = parseTokenAmount(liquidityCheck.reserveOut, toDecimals);
-
-              setLiquidityWarning(
-                `⚠️ Insufficient liquidity in ${fromToken}/${toToken} pool. ` +
-                `Current reserves: ${fromToken}: ${reserveInFormatted}, ${toToken}: ${reserveOutFormatted}. ` +
-                `The pool needs liquidity before swaps can be executed.`
-              );
-            }
-          } catch (error) {
-            // Silently fail - we'll show error on swap attempt
-            console.warn('Could not check liquidity:', error);
-          }
-        };
-
-        checkLiquidity();
-      }
+      const timer = setTimeout(() => {
+        setToast({ visible: false, type: 'info', message: '' });
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-  }, [fromAmount, fromToken, toToken, isConnected, chainId]);
+  }, [swapState.isSuccess, t, refetchFrom, refetchTo]);
 
-  // Helper function to fetch quote from contract
-  const fetchContractQuote = async (amount, fromTokenSymbol, toTokenSymbol, routerAddress, fromTokenAddr, toTokenAddr) => {
-    try {
-      const { provider } = await getEthersProvider();
-      const routerContract = getSwapRouterContract(routerAddress, provider);
-      const fromDecimals = getTokenDecimals(fromTokenSymbol);
-      const toDecimals = getTokenDecimals(toTokenSymbol);
+  useEffect(() => {
+    if (swapState.error) {
+      const errorMessage = swapState.error.shortMessage || swapState.error.message || 'Transaction failed';
+      setToast({ visible: true, type: 'error', message: errorMessage });
 
-      // Format input amount
-      const amountIn = formatTokenAmount(amount, fromDecimals);
-
-      // Create swap path
-      const path = createSwapPath(fromTokenAddr, toTokenAddr);
-
-      // Get quote from contract
-      const amounts = await getSwapQuote(routerContract, amountIn, path);
-
-      // Parse output amount
-      const amountOut = amounts[amounts.length - 1]; // Last element is the output
-      const expectedOutput = parseTokenAmount(amountOut, toDecimals);
-
-      // Calculate min received with slippage
-      const slippageBps = slippage * 100; // Convert percentage to basis points
-      const minReceived = calculateMinReceived(expectedOutput, slippageBps);
-
-      // Calculate network fee estimate (gas fee in USDC equivalent)
-      // Rough estimate: ~150k gas * gas price
-      const estimatedGas = 150000n;
-      const feeData = await provider.getFeeData();
-      const gasCost = estimatedGas * (feeData.gasPrice || 0n);
-      // Convert to USDC (assuming 1 ETH = 2000 USDC for estimation, adjust as needed)
-      const networkFeeEstimate = Number(gasCost) / 1e18 * 2000; // Rough USDC estimate
-
-      return {
-        expectedOutput,
-        minReceived,
-        priceImpact: '0.00', // Could calculate from reserves if needed
-        networkFee: networkFeeEstimate.toFixed(6),
-      };
-    } catch (error) {
-      console.error('Error fetching contract quote:', error);
-      throw error;
+      const timer = setTimeout(() => {
+        setToast({ visible: false, type: 'info', message: '' });
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [swapState.error]);
 
   const handleSwitch = () => {
     // Add animation class for smooth transition
@@ -506,327 +377,26 @@ const Swap = () => {
     setFromAmount(fromBalance);
   };
 
-  const handleSwap = async () => {
+  const handleFaucetClick = (e) => {
+    e.preventDefault();
+    setIsFaucetModalOpen(true);
+  };
+
+  const handleSwapClick = () => {
     if (!isConnected) {
       setToast({ visible: true, type: 'error', message: t('connectWalletFirst') });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
       return;
     }
-
-    if (validationError) {
-      setToast({ visible: true, type: 'error', message: validationError });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
+    if (!fromAmount || parseFloat(fromAmount) <= 0) {
+      setToast({ visible: true, type: 'error', message: t('Please enter a valid amount') });
       return;
     }
-
-    if (!window.ethereum) {
-      setToast({ visible: true, type: 'error', message: 'No Web3 wallet found. Please install MetaMask.' });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
-      return;
-    }
-
-    // Get contract addresses for current network
-    const contractAddresses = getContractAddresses(chainId);
-    const routerAddress = ROUTER_ADDRESS;
-    const fromTokenAddr = getTokenAddress(fromToken);
-    const toTokenAddr = getTokenAddress(toToken);
-
-    // Check for missing addresses and provide specific error messages
-    if (!routerAddress) {
-      setToast({ visible: true, type: 'error', message: 'Swap router not available on this network. Please switch to Arc Testnet.' });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
-      return;
-    }
-
-    if (!fromTokenAddr) {
-      setToast({ visible: true, type: 'error', message: `${fromToken} token address not configured on this network.` });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
-      return;
-    }
-
-    if (!toTokenAddr) {
-      setToast({ visible: true, type: 'error', message: `${toToken} token address not configured on this network.` });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
-      return;
-    }
-
-    setSwapLoading(true);
-
-    try {
-      // Get provider and signer
-      const { provider, signer } = await getEthersProvider();
-      const routerContract = getSwapRouterContract(routerAddress, provider);
-      const tokenContract = getERC20Contract(fromTokenAddr, provider);
-
-      const fromDecimals = getTokenDecimals(fromToken);
-      const toDecimals = getTokenDecimals(toToken);
-
-      // Format amounts
-      const amountIn = formatTokenAmount(fromAmount, fromDecimals);
-      const slippageBps = slippage * 100; // Convert percentage to basis points
-      const minAmountOut = formatTokenAmount(swapQuote?.minReceived || calculateMinReceived(toAmount, slippageBps), toDecimals);
-
-      // Validate amounts before proceeding
-      if (amountIn <= 0n) {
-        throw new Error('Invalid input amount');
-      }
-
-      if (minAmountOut <= 0n) {
-        throw new Error('Invalid minimum output amount');
-      }
-
-      // Create swap path
-      const path = createSwapPath(fromTokenAddr, toTokenAddr);
-      const deadline = getDeadline();
-
-      // Check liquidity before attempting swap
-      const liquidityCheck = await checkPoolLiquidity(FACTORY_ADDRESS, provider, fromTokenAddr, toTokenAddr);
-      if (!liquidityCheck.hasLiquidity) {
-        const reserveInFormatted = parseTokenAmount(liquidityCheck.reserveIn, fromDecimals);
-        const reserveOutFormatted = parseTokenAmount(liquidityCheck.reserveOut, toDecimals);
-        throw new Error(
-          `Insufficient liquidity in ${fromToken}/${toToken} pool.\n\n` +
-          `Current reserves:\n` +
-          `${fromToken}: ${reserveInFormatted}\n` +
-          `${toToken}: ${reserveOutFormatted}\n\n` +
-          `Please add liquidity to the pool first, or try a different token pair.`
-        );
-      }
-
-      // Check if approval is needed - use actual amount for better wallet display
-      const needsApproval = await checkApproval(tokenContract, address, routerAddress, amountIn);
-
-      if (needsApproval) {
-        // Request approval with actual amount (wallet will show the real amount)
-        const approveTx = await approveToken(tokenContract, routerAddress, amountIn, signer);
-
-        // Wait for approval transaction (wallet shows progress)
-        await approveTx.wait();
-      }
-
-      // Execute swap (wallet will show the transaction)
-      const swapTx = await executeSwap(
-        routerContract,
-        amountIn,
-        minAmountOut,
-        path,
-        address,
-        deadline,
-        signer
-      );
-
-      // Wait for transaction confirmation (wallet shows progress)
-      const receipt = await swapTx.wait();
-
-      // Save swap transaction to IndexedDB (success case)
-      const saveSwapTransaction = async (txHash, txStatus = 'success', receiptData = null) => {
-        try {
-          const saved = await getItem('myTransactions');
-          const existing = saved && Array.isArray(saved) ? saved : [];
-
-          // Check if transaction already exists
-          const exists = existing.some(tx => tx.hash === txHash);
-
-          if (!exists && txHash) {
-            // Get network name from chainId
-            const chainIdNum = chainId ? parseInt(chainId, 16) : null;
-
-            const swapTxData = {
-              id: txHash,
-              type: 'Swap',
-              from: fromToken, // Just the token symbol
-              to: toToken, // Just the token symbol
-              amount: fromAmount, // Just the number
-              timestamp: Date.now(),
-              status: txStatus,
-              hash: txHash,
-              chainId: chainIdNum || chainId,
-              address: address?.toLowerCase(),
-              initiatedBy: 'StacDApp', // Mark as dApp-initiated
-            };
-
-            existing.unshift(swapTxData);
-            // Keep only last 100 transactions
-            const trimmed = existing.slice(0, 100);
-            await setItem('myTransactions', trimmed);
-            // Dispatch custom event to notify Transactions page
-            window.dispatchEvent(new CustomEvent('swapTransactionSaved'));
-          }
-        } catch (err) {
-          console.error('Error saving swap transaction:', err);
-        }
-      };
-
-      // Save successful transaction
-      const txHash = receipt.hash || swapTx.hash;
-      const txStatus = receipt.status === 1 ? 'success' : receipt.status === 0 ? 'failed' : 'pending';
-      await saveSwapTransaction(txHash, txStatus, receipt);
-
-      // Reset form after successful swap
-      setFromAmount('');
-      setToAmount('');
-      setSwapQuote(null);
-      setShowSwapDetails(false);
-
-      // Refresh balances
-      refetchFrom();
-      refetchTo();
-    } catch (err) {
-      console.error('Swap error:', err);
-      let errorMessage = 'Swap failed. Please try again.';
-
-      // Extract more specific error information
-      const errorStr = err.message || err.reason || err.data?.message || '';
-      const errorStrLower = errorStr.toLowerCase();
-
-      if (errorStrLower.includes('insufficient funds')) {
-        errorMessage = 'Insufficient funds for gas fees. Please add more ETH to your wallet.';
-      } else if (errorStrLower.includes('insufficient liquidity') || errorStrLower.includes('insufficientliquidity')) {
-        errorMessage = `❌ Insufficient Liquidity Error\n\n` +
-          `The ${fromToken}/${toToken} liquidity pool doesn't have enough liquidity to complete this swap.\n\n` +
-          `🔧 Solutions:\n` +
-          `1. Wait for liquidity providers to add funds to the pool\n` +
-          `2. Try swapping a smaller amount\n` +
-          `3. Try a different token pair that has liquidity\n` +
-          `4. If you're a liquidity provider, add liquidity to the pool first\n\n` +
-          `Note: The Liquidity page is currently under development. For now, liquidity must be added directly through the smart contracts.`;
-      } else if (errorStrLower.includes('insufficient_output_amount') || errorStrLower.includes('insufficientoutputamount')) {
-        errorMessage = 'Slippage too high. Please increase slippage tolerance and try again.';
-      } else if (errorStrLower.includes('expired')) {
-        errorMessage = 'Transaction expired. Please try again.';
-      } else if (errorStrLower.includes('transfer_from_failed') || errorStrLower.includes('transferfromfailed')) {
-        errorMessage = 'Token transfer failed. Check your token allowance and balance.';
-      } else if (err.message) {
-        errorMessage = err.message;
-      } else if (err.reason) {
-        errorMessage = err.reason;
-      } else if (err.data?.message) {
-        errorMessage = err.data.message;
-      }
-
-      // Try to extract transaction hash from error for failed transactions
-      // Check if swapTx was created before the error (transaction was submitted)
-      let failedTxHash = null;
-      if (swapTx?.hash) {
-        failedTxHash = swapTx.hash;
-      } else if (err.transaction?.hash) {
-        failedTxHash = err.transaction.hash;
-      } else if (err.receipt?.hash) {
-        failedTxHash = err.receipt.hash;
-      } else if (err.hash) {
-        failedTxHash = err.hash;
-      } else if (err.transactionHash) {
-        failedTxHash = err.transactionHash;
-      }
-
-      // Save failed transaction if we have a hash
-      if (failedTxHash) {
-        const saveSwapTransaction = async (txHash, txStatus = 'failed') => {
-          try {
-            const saved = await getItem('myTransactions');
-            const existing = saved && Array.isArray(saved) ? saved : [];
-
-            // Check if transaction already exists
-            const exists = existing.some(tx => tx.hash === txHash);
-
-            if (!exists && txHash) {
-              // Get network name from chainId
-              const chainIdNum = chainId ? parseInt(chainId, 16) : null;
-
-              const swapTxData = {
-                id: txHash,
-                type: 'Swap',
-                from: fromToken, // Just the token symbol
-                to: toToken, // Just the token symbol
-                amount: fromAmount, // Just the number
-                timestamp: Date.now(),
-                status: txStatus,
-                hash: txHash,
-                chainId: chainIdNum || chainId,
-                address: address?.toLowerCase(),
-              };
-
-              existing.unshift(swapTxData);
-              // Keep only last 100 transactions
-              const trimmed = existing.slice(0, 100);
-              await setItem('myTransactions', trimmed);
-              // Dispatch custom event to notify Transactions page
-              window.dispatchEvent(new CustomEvent('swapTransactionSaved'));
-            }
-          } catch (saveErr) {
-            console.error('Error saving failed swap transaction:', saveErr);
-          }
-        };
-
-        await saveSwapTransaction(failedTxHash, 'failed');
-      }
-
-      // Handle user rejection - only show error if not user cancellation
-      if (!errorMessage.includes('user rejected') && !errorMessage.includes('User denied') && !errorMessage.includes('User rejected')) {
-        setToast({ visible: true, type: 'error', message: errorMessage });
-        setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 5000);
-      }
-    } finally {
-      setSwapLoading(false);
-    }
+    setIsSwapModalOpen(true);
   };
 
-  const SlippageTolerance = () => {
-    const [isCustomFocused, setIsCustomFocused] = useState(false);
 
-    // Determine the text color based on slippage value for validation feedback
-    const getSlippageTextColor = () => {
-      if (slippage > 5) return 'danger';
-      if (slippage > 1) return 'warning';
-      return '';
-    };
 
-    return (
-      <div className="swap-slippage-container">
-        <label className="swap-slippage-label">{t('Slippage')}</label>
-        <div className="swap-slippage-content">
-          <div className="swap-slippage-buttons">
-            {[0.1, 0.5, 1.0].map((value) => (
-              <button
-                key={value}
-                onClick={() => {
-                  setSlippage(value);
-                  setCustomSlippage('');
-                }}
-                className={`swap-slippage-button ${slippage === value ? 'active' : ''}`}
-              >
-                {value}%
-              </button>
-            ))}
-            <div className="swap-slippage-input-wrapper">
-              <input
-                type="text"
-                placeholder="0.0"
-                value={customSlippage}
-                onChange={(e) => {
-                  const val = sanitizeInput(e.target.value);
-                  setCustomSlippage(val);
-                  if (val && !isNaN(parseFloat(val))) {
-                    setSlippage(parseFloat(val));
-                  }
-                }}
-                onFocus={() => setIsCustomFocused(true)}
-                onBlur={() => setIsCustomFocused(false)}
-                className={`swap-slippage-input ${getSlippageTextColor()}`}
-              />
-              <span className="swap-slippage-percent">%</span>
-            </div>
-          </div>
-          {slippageWarning && (
-            <div className="swap-slippage-warning">
-              <AlertTriangle size={14} className="swap-slippage-warning-icon" />
-              <p className="swap-slippage-warning-text">{slippageWarning}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
+
 
   const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, triggerRef, fromToken, toToken, fromBalance, toBalance }) => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -855,7 +425,7 @@ const Swap = () => {
         token &&
         token.symbol &&
         typeof token.symbol === 'string' &&
-        ['USDC', 'EURC'].includes(token.symbol)
+        ['USDC', 'STCK', 'BALL', 'MTB', 'ECR'].includes(token.symbol)
       );
     }, [tokenList]);
 
@@ -876,159 +446,145 @@ const Swap = () => {
       };
     }, [isOpen, onClose]);
 
+    const TokenRow = ({ token, selectedToken, exclude, onSelect, onClose, t }) => {
+      const { balance: tokenBalance, loading: tokenLoading } = useTokenBalance(token.symbol);
+      const isSelected = token.symbol === selectedToken;
+      const isExcluded = token.symbol === exclude;
+
+      return (
+        <button
+          key={token.symbol}
+          onClick={() => {
+            onSelect(token.symbol);
+            onClose();
+          }}
+          disabled={isExcluded}
+          className={`swap-token-selector-list-item ${isSelected ? 'selected' : ''} ${isExcluded ? 'disabled' : ''}`}
+        >
+          <div className="swap-token-selector-list-item-content">
+            <div className="swap-token-selector-list-icon">
+              {getTokenIcon(token.symbol) ? (
+                <img src={getTokenIcon(token.symbol)} alt={token.symbol} />
+              ) : (
+                <span className="flex items-center justify-center w-full h-full text-lg font-bold">
+                  {token.symbol?.charAt(0)}
+                </span>
+              )}
+            </div>
+            <div className="swap-token-selector-list-info">
+              <p className="swap-token-selector-list-symbol">{token.symbol || 'Unknown'}</p>
+              <p className="swap-token-selector-list-name">{token.name || 'Token'}</p>
+            </div>
+          </div>
+          {isConnected && (
+            <div className="swap-token-selector-list-balance">
+              <p className="swap-token-selector-list-balance-amount">
+                {tokenLoading ? <Loader size={12} className="animate-spin" /> : tokenBalance || '0.00'}
+              </p>
+              <p className="swap-token-selector-list-balance-label">{t('balance')}</p>
+            </div>
+          )}
+        </button>
+      );
+    };
+
+    if (!isOpen) return null;
+
     return (
-      <AnimatePresence mode="wait">
-        {isOpen && (
-          <motion.div
-            key="token-selector-modal"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 swap-token-selector-modal-backdrop"
-            onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <motion.div
-              ref={selectorRef}
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-              className="swap-token-selector-modal"
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+      <div
+        className="fixed inset-0 z-[1000] flex items-start justify-center p-4 pt-24 swap-token-selector-modal-backdrop"
+        onClick={onClose}
+      >
+        <div
+          ref={selectorRef}
+          className="swap-token-selector-modal"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="swap-token-selector-header">
+            <h3 className="swap-token-selector-title">{t('Select Token')}</h3>
+            <button
+              onClick={onClose}
+              className="swap-token-selector-close-button"
             >
-              <div className="swap-token-selector-header">
-                <h3 className="swap-token-selector-title">{t('Select Token')}</h3>
-                <button
-                  onClick={onClose}
-                  className="swap-token-selector-close-button"
-                >
-                  <X size={18} />
-                </button>
-              </div>
+              <X size={18} />
+            </button>
+          </div>
 
-              {/* Search Bar */}
-              <div className="swap-token-selector-search">
-                <input
-                  type="text"
-                  placeholder={t('Search Tokens')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="swap-token-selector-search-input"
-                />
-              </div>
+          {/* Search Bar */}
+          <div className="swap-token-selector-search">
+            <input
+              type="text"
+              placeholder={t('Search Tokens')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="swap-token-selector-search-input"
+            />
+          </div>
 
-              {/* Popular Tokens */}
-              <div className="swap-token-selector-popular-section">
-                <h4 className="swap-token-selector-popular-label">{t('Your Tokens')}</h4>
-                <div className="swap-token-selector-popular-tokens">
-                  {popularTokens.map((token) => {
-                    // Safety check: skip invalid tokens
-                    if (!token || !token.symbol || typeof token.symbol !== 'string') {
-                      return null;
-                    }
+          {/* Popular Tokens */}
+          <div className="swap-token-selector-popular-section">
+            <h4 className="swap-token-selector-popular-label">{t('Your Tokens')}</h4>
+            <div className="swap-token-selector-popular-tokens">
+              {popularTokens.map((token) => {
+                // Safety check: skip invalid tokens
+                if (!token || !token.symbol || typeof token.symbol !== 'string') {
+                  return null;
+                }
 
-                    const isExcluded = token.symbol === exclude;
-                    const isSelected = token.symbol === selectedToken;
+                const isExcluded = token.symbol === exclude;
+                const isSelected = token.symbol === selectedToken;
 
-                    return (
-                      <button
-                        key={`popular-${token.symbol}`}
-                        onClick={() => {
-                          onSelect(token.symbol);
-                          onClose();
-                        }}
-                        className={`swap-token-selector-popular-button ${isSelected ? 'active' : ''} ${isExcluded ? 'disabled' : ''}`}
-                      >
-                        {token.symbol === 'USDC' ? (
-                          <img
-                            src="/icons/usdc.png"
-                            alt={token.symbol}
-                            className="swap-token-selector-popular-icon"
-                          />
-                        ) : token.symbol === 'EURC' ? (
-                          <img
-                            src="/icons/eurc.png"
-                            alt={token.symbol}
-                            className="swap-token-selector-popular-icon"
-                          />
-                        ) : (
-                          <div className="swap-token-selector-popular-icon" style={{ background: 'var(--swap-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '12px', fontWeight: 600 }}>
-                              {token.symbol && token.symbol.length > 0 ? token.symbol.charAt(0) : '?'}
-                            </span>
-                          </div>
-                        )}
-                        <span className="swap-token-selector-popular-symbol">{token.symbol}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Token List */}
-              <div className="swap-token-selector-list">
-                {filteredTokens.map((token) => {
-                  // Safety check: skip invalid tokens
-                  if (!token || !token.symbol || typeof token.symbol !== 'string') {
-                    return null;
-                  }
-
-                  return (
-                    <button
-                      key={token.symbol}
-                      onClick={() => {
-                        onSelect(token.symbol);
-                        onClose();
-                      }}
-                      className={`swap-token-selector-list-item ${token.symbol === selectedToken ? 'selected' : ''} ${token.symbol === exclude ? 'disabled' : ''}`}
-                    >
-                      <div className="swap-token-selector-list-item-content">
-                        <div className="swap-token-selector-list-icon">
-                          {token.symbol === 'USDC' ? (
-                            <img
-                              src="/icons/usdc.png"
-                              alt={token.symbol}
-                            />
-                          ) : token.symbol === 'EURC' ? (
-                            <img
-                              src="/icons/eurc.png"
-                              alt={token.symbol}
-                            />
-                          ) : (
-                            <span style={{ fontSize: '18px', fontWeight: 600, color: 'var(--swap-text-primary)' }}>
-                              {token.symbol && token.symbol.length > 0 ? token.symbol.charAt(0) : '?'}
-                            </span>
-                          )}
-                        </div>
-                        <div className="swap-token-selector-list-info">
-                          <p className="swap-token-selector-list-symbol">{token.symbol || 'Unknown'}</p>
-                          <p className="swap-token-selector-list-name">{token.name || 'Token'}</p>
-                        </div>
+                return (
+                  <button
+                    key={`popular-${token.symbol}`}
+                    onClick={() => {
+                      onSelect(token.symbol);
+                      onClose();
+                    }}
+                    className={`swap-token-selector-popular-button ${isSelected ? 'active' : ''} ${isExcluded ? 'disabled' : ''}`}
+                  >
+                    {getTokenIcon(token.symbol) ? (
+                      <img
+                        src={getTokenIcon(token.symbol)}
+                        alt={token.symbol}
+                        className="swap-token-selector-popular-icon"
+                      />
+                    ) : (
+                      <div className="swap-token-selector-popular-icon" style={{ background: 'var(--swap-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 600 }}>
+                          {token.symbol && token.symbol.length > 0 ? token.symbol.charAt(0) : '?'}
+                        </span>
                       </div>
-                      {/* Token Balance */}
-                      {isConnected && (
-                        <div className="swap-token-selector-list-balance">
-                          <p className="swap-token-selector-list-balance-amount">
-                            {token.symbol === fromToken ? fromBalance : token.symbol === toToken ? toBalance : '0.00'}
-                          </p>
-                          <p className="swap-token-selector-list-balance-label">{t('balance')}</p>
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
+                    )}
+                    <span className="swap-token-selector-popular-symbol">{token.symbol}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-                {filteredTokens.length === 0 && searchQuery && (
-                  <div className="swap-token-selector-empty">
-                    <p>{t('noTokensFound')}</p>
-                  </div>
-                )}
+          {/* Token List */}
+          <div className="swap-token-selector-list">
+            {filteredTokens.map((token) => (
+              <TokenRow
+                key={token.symbol}
+                token={token}
+                selectedToken={selectedToken}
+                exclude={exclude}
+                onSelect={onSelect}
+                onClose={onClose}
+                t={t}
+              />
+            ))}
+
+            {filteredTokens.length === 0 && searchQuery && (
+              <div className="swap-token-selector-empty">
+                <p>{t('noTokensFound')}</p>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            )}
+          </div>
+        </div>
+      </div>
     );
   };
 
@@ -1046,89 +602,19 @@ const Swap = () => {
             <p className="swap-header-subtitle">{t('swap.tradeTokensTitle')}</p>
           </div>
           <div className="swap-header-actions">
-            <a
-              href="https://faucet.circle.com/"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={handleFaucetClick}
               className="swap-faucet-button-compact"
             >
-
               <span>Faucet</span>
-            </a>
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="swap-settings-button"
-              title="Settings"
-            >
-              <Settings size={18} />
             </button>
+
           </div>
         </div>
 
-        {/* Settings Panel - Desktop: Inline Expandable */}
-        <AnimatePresence>
-          {showSettings && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="mb-4 md:mb-6 hidden md:block"
-            >
-              <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-6">
-                {/* Slippage Tolerance */}
-                <SlippageTolerance />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        {/* Settings Bottom Sheet Modal - Mobile Only */}
-        <AnimatePresence>
-          {showSettings && (
-            <>
-              {/* Backdrop - High-fidelity blur */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[1000000] bg-black/40 backdrop-blur-sm md:hidden"
-                onClick={() => setShowSettings(false)}
-              />
 
-              {/* Bottom Sheet - Mobile Only */}
-              <motion.div
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed bottom-0 left-0 right-0 z-[1000001] bg-white dark:bg-gray-800 rounded-t-[32px] shadow-[0_-8px_32px_rgba(0,0,0,0.15)] md:hidden border-t border-gray-100 dark:border-gray-700/50"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Drag Handle for Mobile */}
-                <div className="flex justify-center pt-3 pb-1">
-                  <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full" />
-                </div>
 
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700/50">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Settings</h3>
-                  <button
-                    onClick={() => setShowSettings(false)}
-                    className="w-10 h-10 flex items-center justify-center bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all active:scale-90"
-                  >
-                    <X size={20} className="text-gray-500 dark:text-gray-400" />
-                  </button>
-                </div>
-
-                {/* Content */}
-                <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto pb-10">
-                  {/* Slippage Tolerance */}
-                  <SlippageTolerance />
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
 
         {/* Validation Error */}
         {validationError && (
@@ -1194,12 +680,6 @@ const Swap = () => {
                 {fromToken === 'USDC' ? (
                   <img
                     src="/icons/usdc.png"
-                    alt={fromToken}
-                    className="w-6 h-6 rounded-full object-contain"
-                  />
-                ) : fromToken === 'EURC' ? (
-                  <img
-                    src="/icons/eurc.png"
                     alt={fromToken}
                     className="w-6 h-6 rounded-full object-contain"
                   />
@@ -1272,12 +752,6 @@ const Swap = () => {
                     alt={toToken}
                     className="w-6 h-6 rounded-full object-contain"
                   />
-                ) : toToken === 'EURC' ? (
-                  <img
-                    src="/icons/eurc.png"
-                    alt={toToken}
-                    className="w-6 h-6 rounded-full object-contain"
-                  />
                 ) : (
                   <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                     <span className="text-xs font-bold">{toToken}</span>
@@ -1318,68 +792,101 @@ const Swap = () => {
           )}
         </div>
 
-        {/* Swap Details */}
-        <AnimatePresence>
-          {showSwapDetails && swapQuote && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="mb-4 md:mb-6"
-            >
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-3 text-xs md:text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Expected Output</span>
-                  <span className="font-semibold">{swapQuote.expectedOutput} {toToken}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Min Received</span>
-                  <span className="font-semibold">{swapQuote.minReceived} {toToken}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Price Impact</span>
-                  <span className={`font-semibold ${parseFloat(swapQuote.priceImpact || '0') > 1 ? 'text-red-600' : 'text-green-600'}`}>
-                    {swapQuote.priceImpact || '0.00'}%
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Network Fee</span>
-                  <span className="font-semibold">~{swapQuote.networkFee || swapQuote.gasFee || '0.00'} USDC</span>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
+
+        {/* Direct Slippage Toolbar - One-Tap Control */}
+        <div className="flex items-center justify-between mb-5 px-1">
+          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em]">
+            Slippage
+          </div>
+          <div className="flex items-center gap-1 p-1 bg-blue-50/50 dark:bg-[#131720]/40 border border-blue-100/50 dark:border-white/5 rounded-2xl shadow-sm backdrop-blur-sm">
+            {[0.1, 0.5, 1.0].map((value) => (
+              <button
+                key={value}
+                onClick={() => {
+                  setSlippage(value);
+                  setCustomSlippage('');
+                }}
+                className={`px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all duration-300 active:scale-95 ${slippage === value && !customSlippage
+                  ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-md ring-1 ring-blue-100/50 dark:ring-blue-500/50'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-blue-500'
+                  }`}
+              >
+                {value}%
+              </button>
+            ))}
+            {/* Direct Editable Input */}
+            <div className="relative flex items-center ml-1">
+              <input
+                type="text"
+                placeholder="Custom"
+                value={customSlippage}
+                onChange={(e) => {
+                  const val = sanitizeInput(e.target.value);
+                  setCustomSlippage(val);
+                  if (val && !isNaN(parseFloat(val))) {
+                    setSlippage(parseFloat(val));
+                  }
+                }}
+                className={`w-[94px] pl-2 pr-7 py-1.5 rounded-xl text-[12px] font-bold text-center transition-all duration-300 focus:outline-none ${customSlippage
+                  ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-md ring-1 ring-blue-100 dark:ring-blue-500'
+                  : 'bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500'
+                  }`}
+              />
+              <span className={`absolute right-3 text-[11px] font-bold pointer-events-none ${customSlippage ? 'text-blue-300 dark:text-blue-200' : 'text-gray-400/80'
+                }`}>%</span>
+            </div>
+          </div>
+        </div>
+
+        {slippageWarning && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-2.5 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200/50 dark:border-yellow-700/30 rounded-xl flex items-center gap-2"
+          >
+            <AlertTriangle size={14} className="text-yellow-600 dark:text-yellow-400 shrink-0" />
+            <p className="text-[11px] font-medium text-yellow-800 dark:text-yellow-200 leading-tight">
+              {slippageWarning}
+            </p>
+          </motion.div>
+        )}
 
         {/* Swap Button */}
         <button
-          onClick={handleSwap}
-          disabled={!fromAmount || !toAmount || swapLoading || !isConnected}
-          className="swap-button"
+          onClick={handleSwapClick}
+          className={`swap-button ${(parseFloat(fromAmount) > parseFloat(fromBalance)) ? 'swap-button-failed' : ''}`}
+          disabled={!isConnected || !fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance)}
         >
-          {swapLoading ? (
-            <div className="swap-loading">
-              <div className="swap-spinner"></div>
-              <span className="swap-loading-text">{t('processing')}...</span>
-            </div>
-          ) : !isConnected ? (
+          {!isConnected ? (
             <>
-              <Wallet size={18} />
-              <span>{t('connectWallet')}</span>
+              <Wallet size={18} className="inline mr-2" />
+              <span>{t('Connect Wallet')}</span>
             </>
-          ) : !fromAmount || !toAmount ? (
-            <span>{t('Swap')}</span>
+          ) : parseFloat(fromAmount) > parseFloat(fromBalance) ? (
+            <span>{t('Insufficient Balance')}</span>
           ) : (
-            <span>{t('swap')}</span>
+            <span>{t('Swap')}</span>
           )}
         </button>
 
-        {/* Helper Text */}
-        {isConnected && swapQuote && (
-          <p className="swap-helper-text">
-            {t('bySwappingAgree')}
-          </p>
-        )}
+        {/* Modals */}
+        <SwapModal
+          isOpen={isSwapModalOpen}
+          onClose={() => setIsSwapModalOpen(false)}
+          fromToken={TOKENS[fromToken]}
+          toToken={TOKENS[toToken]}
+          fromAmount={fromAmount}
+          toAmount={toAmount}
+          swapState={swapState}
+        />
+
+        <FaucetModal
+          isOpen={isFaucetModalOpen}
+          onClose={() => setIsFaucetModalOpen(false)}
+        />
+
+
       </motion.div>
 
       {/* Token Selectors */}

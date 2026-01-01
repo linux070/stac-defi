@@ -23,7 +23,7 @@ export const sepolia = defineChain({
   ...sepoliaChain,
   rpcUrls: {
     ...sepoliaChain.rpcUrls,
-    default: { http: ['https://eth-sepolia.g.alchemy.com/v2/w5SlKrdofEKjcKadoa6KQ'] },
+    default: { http: ['https://ethereum-sepolia-rpc.publicnode.com'] },
   },
 });
 
@@ -55,10 +55,9 @@ export const publicClient = createPublicClient({
   chain: sepolia,
   transport: fallback([
     // Dedicated High-Limit Providers
-    http('https://eth-sepolia.g.alchemy.com/v2/w5SlKrdofEKjcKadoa6KQ', { fetch: safeRpcFetch }),
-    http('https://sepolia.infura.io/v3/w5SlKrdofEKjcKadoa6KQ', { fetch: safeRpcFetch }),
     http('https://ethereum-sepolia-rpc.publicnode.com', { fetch: safeRpcFetch }),
     http('https://rpc.sepolia.org', { fetch: safeRpcFetch }),
+    http('https://rpc2.sepolia.org', { fetch: safeRpcFetch }),
   ], {
     rank: true,
     retryCount: 5,

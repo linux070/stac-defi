@@ -1158,91 +1158,136 @@ html.dark .arrow-divider-button {
 
 /* Bridging Modal Styles  */
 .bridging-modal-backdrop {
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .bridging-modal-container {
-  background: var(--bridge-bg-secondary);
-  border: 1px solid var(--bridge-border-light);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  background: var(--bridge-bg-primary);
+  border: 1px solid var(--bridge-border-medium);
+  border-radius: 28px;
+  box-shadow: 0 32px 64px -16px rgba(0, 0, 0, 0.3);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  max-width: 480px;
-  width: 100%;
+  max-width: 500px;
+  width: 92%;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .bridging-modal-header {
-  background: linear-gradient(135deg, var(--bridge-accent-primary), var(--bridge-accent-secondary));
-  padding: 24px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  padding: 40px 24px 32px;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.bridging-modal-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+  animation: rotate-slow 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rotate-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .bridging-modal-header-completed {
-  background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.bridging-modal-header-failed {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
 .bridging-modal-close-button {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  border-radius: 8px;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   color: white;
+  z-index: 10;
+  backdrop-filter: blur(4px);
 }
 
 .bridging-modal-close-button:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
 }
 
 .bridging-modal-loader-container {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 2;
+}
+
+.bridging-modal-status-badge {
+  position: absolute;
+  -bottom: 6px;
+  -right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 3;
 }
 
 .bridging-modal-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   color: white;
   text-align: center;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 2;
 }
 
 .bridging-modal-content {
-  padding: 24px;
-  background: var(--bridge-bg-secondary);
+  padding: 32px 24px;
+  background: var(--bridge-bg-primary);
 }
 
 .bridging-modal-network-container {
-  background: var(--bridge-surface-card);
+  background: var(--bridge-bg-secondary);
   border: 1px solid var(--bridge-border-light);
-  border-radius: 12px;
+  border-radius: 20px;
   padding: 20px;
   margin-bottom: 24px;
 }
@@ -1252,185 +1297,224 @@ html.dark .arrow-divider-button {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  width: 100%;
+  gap: 16px;
 }
 
 .bridging-modal-network-card {
-  background: var(--bridge-bg-secondary);
+  background: var(--bridge-bg-primary);
   border: 1px solid var(--bridge-border-medium);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 100px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  min-width: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .bridging-modal-network-icon {
-  width: 40px;
-  height: 40px;
-  margin-bottom: 8px;
-  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  padding: 2px;
+  background: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
 .bridging-modal-network-name {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--bridge-text-primary);
   text-align: center;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.bridging-modal-arrow {
-  color: var(--bridge-text-tertiary);
+.bridging-modal-arrow-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bridge-bg-secondary);
+  border: 1px solid var(--bridge-border-light);
   flex-shrink: 0;
 }
 
-.bridging-modal-bridge-text {
-  font-size: 13px;
+.bridging-modal-arrow {
   color: var(--bridge-text-secondary);
-  margin-bottom: 20px;
+}
+
+.bridging-modal-bridge-text {
+  font-size: 14px;
+  color: var(--bridge-text-secondary);
+  margin-bottom: 24px;
   text-align: center;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+}
+
+.bridging-modal-bridge-text strong {
+  color: var(--bridge-accent-primary);
+  font-weight: 600;
 }
 
 .bridging-modal-progress-card {
-  background: var(--bridge-surface-card);
+  background: var(--bridge-bg-secondary);
   border: 1px solid var(--bridge-border-light);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 20px;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 24px;
 }
 
 .bridging-modal-progress-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+  align-items: flex-end;
+  margin-bottom: 14px;
 }
 
 .bridging-modal-progress-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--bridge-text-secondary);
-  font-weight: 500;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .bridging-modal-progress-time {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--bridge-text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 .bridging-modal-progress-bar-container {
   width: 100%;
-  background: var(--bridge-border-light);
-  border-radius: 8px;
-  height: 8px;
-  margin-bottom: 8px;
+  background: var(--bridge-bg-tertiary);
+  border-radius: 10px;
+  height: 10px;
+  margin-bottom: 12px;
+  position: relative;
   overflow: hidden;
 }
 
 .bridging-modal-progress-bar {
-  background: linear-gradient(90deg, var(--bridge-accent-primary), var(--bridge-accent-secondary));
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
   height: 100%;
-  border-radius: 8px;
-  transition: width 1s ease-out;
+  border-radius: 10px;
+  transition: width 0.5s cubic-bezier(0.1, 1, 0.4, 1);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+}
+
+.bridging-modal-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: progress-shimmer 2s infinite linear;
+}
+
+@keyframes progress-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
 }
 
 .bridging-modal-progress-estimate {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--bridge-text-tertiary);
   text-align: center;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
 }
 
 .bridging-modal-notice {
-  background: rgba(251, 191, 36, 0.1);
-  border-left: 4px solid #fbbf24;
-  border-radius: 0 12px 12px 0;
+  background: var(--bridge-alert-bg);
+  border: 1px solid var(--bridge-alert-border);
+  border-radius: 16px;
   padding: 16px;
   display: flex;
-  gap: 12px;
+  gap: 14px;
   align-items: flex-start;
 }
 
-/* Light mode notice */
-:root:not(.dark) .bridging-modal-notice,
-html:not(.dark) .bridging-modal-notice,
-.light .bridging-modal-notice {
-  background: rgba(251, 191, 36, 0.15);
-  border-left-color: #f59e0b;
-}
-
-/* Dark mode notice */
-html.dark .bridging-modal-notice,
-.dark .bridging-modal-notice {
-  background: rgba(251, 191, 36, 0.1);
-  border-left-color: #fbbf24;
-}
-
 .bridging-modal-notice-icon {
-  color: #fbbf24;
+  color: var(--bridge-accent-primary);
   flex-shrink: 0;
   margin-top: 2px;
 }
 
-:root:not(.dark) .bridging-modal-notice-icon,
-html:not(.dark) .bridging-modal-notice-icon,
-.light .bridging-modal-notice-icon {
-  color: #f59e0b;
-}
-
 .bridging-modal-notice-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--bridge-text-primary);
-  margin-bottom: 6px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin-bottom: 4px;
 }
 
 .bridging-modal-notice-text {
   font-size: 12px;
   color: var(--bridge-text-secondary);
-  line-height: 1.5;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
 }
 
 .bridging-modal-success-message {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--bridge-text-secondary);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   text-align: center;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
 }
 
 .bridging-modal-success-card {
-  background: var(--bridge-surface-card);
+  background: var(--bridge-bg-secondary);
   border: 1px solid var(--bridge-border-light);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 20px;
+  padding: 24px;
   text-align: center;
 }
 
 .bridging-modal-success-label {
   font-size: 11px;
   color: var(--bridge-text-secondary);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
+.bridging-modal-success-time-container {
+  background: var(--bridge-bg-primary);
+  border: 1px solid var(--bridge-border-medium);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
 .bridging-modal-success-time {
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 36px;
+  font-weight: 800;
   color: var(--bridge-text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.03em;
+  line-height: 1;
 }
 
 /* Bridge Failed Modal Error Card */
@@ -1558,53 +1642,31 @@ html:not(.dark) .bridging-modal-error-icon,
   .bridging-modal-backdrop {
     padding: 16px;
     align-items: center;
-    padding-top: 16px;
   }
 
   .bridging-modal-container {
-    max-width: calc(100% - 32px);
-    width: calc(100% - 32px);
-    margin: 0 auto;
-    border-radius: 16px;
-    max-height: calc(100vh - 32px);
-    overflow-y: auto;
-    position: relative;
-    height: auto;
-    min-height: auto;
-    display: flex;
-    flex-direction: column;
+    max-width: 100%;
+    width: 100%;
+    border-radius: 24px;
+    max-height: 90vh;
   }
 
   .bridging-modal-header {
-    padding: 16px;
-    flex-shrink: 0;
+    padding: 32px 20px 24px;
   }
 
   .bridging-modal-close-button {
-    top: 12px;
-    right: 12px;
+    top: 16px;
+    right: 16px;
     width: 32px;
     height: 32px;
-    min-width: 32px;
-    min-height: 32px;
-  }
-
-  .bridging-modal-close-button svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .bridging-modal-title {
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.2;
-    padding: 0 40px;
   }
 
   .bridging-modal-loader-container {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 10px;
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    margin-bottom: 16px;
   }
 
   .bridging-modal-loader-container svg {
@@ -1612,149 +1674,83 @@ html:not(.dark) .bridging-modal-error-icon,
     height: 24px;
   }
 
-  .bridging-modal-loader-container .w-8 {
-    width: 24px;
-    height: 24px;
+  .bridging-modal-title {
+    font-size: 18px;
   }
 
   .bridging-modal-content {
-    padding: 16px;
+    padding: 24px 20px;
   }
 
   .bridging-modal-network-container {
     padding: 16px;
-    margin-bottom: 16px;
-  }
-
-  .bridging-modal-network-container>div {
-    gap: 8px;
-    flex-direction: row !important;
-    flex-wrap: nowrap;
+    border-radius: 18px;
+    margin-bottom: 20px;
   }
 
   .bridging-modal-network-card {
-    padding: 10px;
-    min-width: 70px;
-    flex: 1;
-    max-width: calc(50% - 6px);
-    width: auto;
+    padding: 12px;
+    border-radius: 14px;
   }
 
   .bridging-modal-network-icon {
-    width: 28px;
-    height: 28px;
-    margin-bottom: 4px;
+    width: 36px;
+    height: 36px;
+    margin-bottom: 8px;
+    border-radius: 10px;
   }
 
   .bridging-modal-network-name {
-    font-size: 9px;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    line-height: 1.2;
-  }
-
-  .bridging-modal-arrow {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-  }
-
-  .bridging-modal-bridge-text {
-    font-size: 12px;
-    margin-bottom: 16px;
-    padding: 0 4px;
-  }
-
-  .bridging-modal-progress-card {
-    padding: 14px;
-    margin-bottom: 16px;
-  }
-
-  .bridging-modal-progress-header {
-    margin-bottom: 10px;
-  }
-
-  .bridging-modal-progress-label {
     font-size: 11px;
   }
 
-  .bridging-modal-progress-time {
+  .bridging-modal-arrow-container {
+    width: 28px;
+    height: 28px;
+  }
+
+  .bridging-modal-bridge-text {
     font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .bridging-modal-progress-card {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .bridging-modal-progress-time {
+    font-size: 14px;
   }
 
   .bridging-modal-progress-bar-container {
-    height: 6px;
-    margin-bottom: 6px;
-  }
-
-  .bridging-modal-progress-estimate {
-    font-size: 10px;
+    height: 8px;
   }
 
   .bridging-modal-notice {
-    padding: 12px;
-    gap: 10px;
+    padding: 14px;
+    border-radius: 14px;
   }
 
   .bridging-modal-notice-icon {
     width: 18px;
     height: 18px;
-    flex-shrink: 0;
   }
 
   .bridging-modal-notice-title {
-    font-size: 12px;
-    margin-bottom: 4px;
+    font-size: 13px;
   }
 
   .bridging-modal-notice-text {
     font-size: 11px;
-    line-height: 1.4;
-  }
-
-  .bridging-modal-success-message {
-    font-size: 13px;
-    margin-bottom: 16px;
-    padding: 0 4px;
   }
 
   .bridging-modal-success-card {
-    padding: 16px;
-  }
-
-  .bridging-modal-success-label {
-    font-size: 10px;
-    margin-bottom: 6px;
+    padding: 20px;
   }
 
   .bridging-modal-success-time {
-    font-size: 24px;
-  }
-
-  /* Keep network cards side-by-side on mobile (Relay.link style) - override any column layout */
-  .bridging-modal-network-container>div {
-    flex-direction: row !important;
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .bridging-modal-network-card {
-    flex: 1;
-    max-width: calc(50% - 6px);
-    width: auto;
-  }
-
-  .bridging-modal-arrow {
-    transform: none !important;
-    margin: 0;
-    flex-shrink: 0;
-  }
-
-  /* Ensure text doesn't overflow */
-  .bridging-modal-bridge-text,
-  .bridging-modal-success-message {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    font-size: 28px;
   }
 }
 
@@ -2080,4 +2076,141 @@ html:not(.dark) .bridging-modal-error-icon,
     font-size: 9px;
     gap: 3px;
   }
+}
+
+/* Bridging Modal Modern Redesign */
+.bridging-modal-heading-container {
+  padding-top: 8px;
+  margin-bottom: 24px;
+}
+
+.bridging-modal-youre-bridging {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--bridge-text-primary);
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.bridging-modal-close-button-alt {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  background: var(--bridge-surface-hover);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--bridge-text-secondary);
+  z-index: 20;
+}
+
+.bridging-modal-close-button-alt:hover {
+  background: var(--bridge-bg-tertiary);
+  color: var(--bridge-text-primary);
+  transform: scale(1.05);
+}
+
+/* Success Card - Bridging Redesign */
+.bridging-modal-status-card-new {
+  background: var(--bridge-surface-card);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 28px;
+  padding: 40px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
+
+.bridging-modal-success-icon-wrapper {
+  margin-bottom: 8px;
+}
+
+.bridging-modal-checkmark-circle {
+  width: 72px;
+  height: 72px;
+  background: rgba(0, 137, 123, 0.08);
+  border: 2px solid #00897B;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00897B;
+  box-shadow: 0 0 20px rgba(0, 137, 123, 0.15);
+}
+
+.bridging-modal-status-title-new {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--bridge-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.bridging-modal-success-summary_text {
+  font-size: 15px;
+  color: var(--bridge-text-secondary);
+  font-weight: 500;
+}
+
+.bridging-modal-success-summary-visual {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 12px 20px;
+  background: var(--bridge-bg-primary);
+  border-radius: 20px;
+  border: 1px solid var(--bridge-border-light);
+}
+
+.bridging-modal-success-chain-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--bridge-text-primary);
+  font-size: 14px;
+}
+
+.bridging-modal-success-chain-img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: white;
+  padding: 1px;
+}
+
+.bridging-modal-success-path-arrow {
+  color: var(--bridge-text-secondary);
+  opacity: 0.5;
+}
+
+.bridging-modal-action-button-secondary-new {
+  width: 100%;
+  background: var(--bridge-bg-primary);
+  color: var(--bridge-text-primary);
+  padding: 18px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 16px;
+  border: 1px solid var(--bridge-border-light);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.bridging-modal-action-button-secondary-new:hover {
+  background: var(--bridge-surface-hover);
+  border-color: var(--bridge-accent-primary);
+  transform: translateY(-1px);
 }

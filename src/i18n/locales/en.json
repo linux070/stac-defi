@@ -122,5 +122,17 @@
   "Successfully added network to your wallet": "Successfully added network to your wallet",
   "Success": "Success",
   "Bal": "Bal",
-  "connectWallet": "Connect Wallet"
+  "connectWallet": "Connect Wallet",
+  "bridgingWindowNotice": "Funds are safe. Even if you close this window or the progress bar slows down, your transaction will complete on-chain once the required confirmations are met. You can track progress in your transaction history.",
+  "bridgeFailedTip": "If your transaction was sent but the UI failed, your funds are safe. You can check your wallet or transaction history for updates.",
+  "bridgeSuccessTip": "Your assets are now available on the destination chain. It might take a few seconds for your wallet balance to refresh.",
+  "faucet.title": "Faucet",
+  "faucet.description": "Claim free test tokens to test the dApp. You can claim once per 24 hours.",
+  "faucet.token": "Token",
+  "faucet.claiming": "Claiming Tokens...",
+  "faucet.claimButton": "Claim Free Tokens",
+  "faucet.successTitle": "Claim Successful!",
+  "faucet.successMessage": "Success! You've received {{symbol}} test tokens. They should appear in your wallet in a few seconds.",
+  "faucet.errorTitle": "Claim Failed",
+  "faucet.errorMessage": "We couldn't process your claim. You might have already reached your daily limit or there's a network issue."
 }

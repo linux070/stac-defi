@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader, CheckCircle, X, AlertCircle, Clock, Info, ArrowRight } from 'lucide-react';
 import '../styles/bridge-styles.css';
 
-const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, stopTimer }) => {
+const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime, state, stopTimer }) => {
+  const { t } = useTranslation();
   const [elapsedTime, setElapsedTime] = useState(0);
   const [finalTime, setFinalTime] = useState(null);
 
@@ -104,202 +105,149 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
           onClick={onClose}
         >
           <motion.div
-            className="relative bridging-modal-container overflow-hidden"
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="relative bridging-modal-container"
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Gradient Header */}
-            <div className={`bridging-modal-header ${modalState === 'completed' ? 'bridging-modal-header-completed' : ''}`}>
-              <button
-                onClick={onClose}
-                className="bridging-modal-close-button"
-              >
-                <X size={20} className="text-white" />
-              </button>
-
-              <div className="flex flex-col items-center text-white">
-                <motion.div
-                  className="relative mb-3"
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.1, type: 'spring' }}
-                >
-                  {modalState === 'inProgress' ? (
-                    <div className="bridging-modal-loader-container">
-                      <Loader className="animate-spin text-white" size={24} strokeWidth={2.5} />
-                    </div>
-                  ) : (
-                    <div className="bridging-modal-loader-container">
-                      <CheckCircle size={24} className="text-white" strokeWidth={2.5} />
-                    </div>
-                  )}
-                  <motion.div
-                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-lg"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.3, type: 'spring' }}
-                  >
-                    {modalState === 'inProgress' ? (
-                      <motion.div
-                        className="w-2 h-2 rounded-full"
-                        style={{ background: 'var(--bridge-accent-primary)' }}
-                        animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                      />
-                    ) : (
-                      <CheckCircle size={16} className="text-green-500" />
-                    )}
-                  </motion.div>
-                </motion.div>
-                <motion.h3
-                  className="bridging-modal-title"
-                  initial={{ y: -10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  {modalState === 'inProgress' ? t('Bridging in Progress') : t('Bridge Completed')}
-                </motion.h3>
-              </div>
-            </div>
+            {/* Close Button (Absolute) - Match SwapModal alt button style */}
+            <button
+              onClick={onClose}
+              className="bridging-modal-close-button-alt"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
 
             <div className="bridging-modal-content">
+              <div className="bridging-modal-heading-container">
+                <h2 className="bridging-modal-youre-bridging">
+                  {modalState === 'inProgress' ? t("You're bridging") : t('Bridge Completed')}
+                </h2>
+              </div>
               {/* Network Visualization Card */}
               <motion.div
                 className="bridging-modal-network-container"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.4 }}
               >
-                <div className="flex flex-row items-center justify-between gap-3">
+                <div>
                   {/* Source Chain Card */}
                   <div className="bridging-modal-network-card">
-                    {fromChain.includes('Arc') ? (
-                      <img
-                        src="/icons/Arc.png"
-                        alt="Arc Testnet"
-                        className="bridging-modal-network-icon object-contain"
-                      />
-                    ) : fromChain.includes('Base') ? (
-                      <img
-                        src="/icons/base.png"
-                        alt="Base Sepolia"
-                        className="bridging-modal-network-icon object-contain"
-                      />
-                    ) : (
-                      <img
-                        src="/icons/eth.png"
-                        alt="Sepolia"
-                        className="bridging-modal-network-icon object-contain"
-                      />
-                    )}
-                    <p className="bridging-modal-network-name whitespace-nowrap">{fromChain}</p>
+                    <img
+                      src={fromChain.includes('Arc') ? "/icons/Arc.png" : fromChain.includes('Base') ? "/icons/base.png" : "/icons/eth.png"}
+                      alt={fromChain}
+                      className="bridging-modal-network-icon"
+                    />
+                    <p className="bridging-modal-network-name">{fromChain}</p>
                   </div>
 
                   {/* Arrow Connector */}
-                  <div className="flex items-center justify-center flex-shrink-0">
-                    <ArrowRight className="bridging-modal-arrow w-4 h-4" strokeWidth={2} />
+                  <div className="bridging-modal-arrow-container">
+                    <ArrowRight className="bridging-modal-arrow" size={16} strokeWidth={3} />
                   </div>
 
                   {/* Destination Chain Card */}
                   <div className="bridging-modal-network-card">
-                    {toChain.includes('Arc') ? (
-                      <img
-                        src="/icons/Arc.png"
-                        alt="Arc Testnet"
-                        className="bridging-modal-network-icon object-contain"
-                      />
-                    ) : toChain.includes('Base') ? (
-                      <img
-                        src="/icons/base.png"
-                        alt="Base Sepolia"
-                        className="bridging-modal-network-icon object-contain"
-                      />
-                    ) : (
-                      <img
-                        src="/icons/eth.png"
-                        alt="Sepolia"
-                        className="bridging-modal-network-icon object-contain"
-                      />
-                    )}
-                    <p className="bridging-modal-network-name whitespace-nowrap">{toChain}</p>
+                    <img
+                      src={toChain.includes('Arc') ? "/icons/Arc.png" : toChain.includes('Base') ? "/icons/base.png" : "/icons/eth.png"}
+                      alt={toChain}
+                      className="bridging-modal-network-icon"
+                    />
+                    <p className="bridging-modal-network-name">{toChain}</p>
                   </div>
                 </div>
               </motion.div>
 
               {modalState === 'inProgress' && (
-                <>
-                  {t('Bridging from')} {fromChain} {t('To')} {toChain}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <p className="bridging-modal-bridge-text">
+                    {t('Bridging from')} <strong>{fromChain}</strong> {t('To')} <strong>{toChain}</strong>
+                  </p>
 
                   <div className="bridging-modal-progress-card">
                     <div className="bridging-modal-progress-header">
-                      <span className="bridging-modal-progress-label">Elapsed Time</span>
+                      <span className="bridging-modal-progress-label">{t('Elapsed Time')}</span>
                       <span className="bridging-modal-progress-time">{formatTime(displayTime)}</span>
                     </div>
                     <div className="bridging-modal-progress-bar-container">
-                      <div
+                      <motion.div
                         className="bridging-modal-progress-bar"
-                        style={{ width: `${Math.min(100, (displayTime / 120) * 100)}%` }}
-                      ></div>
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(100, (displayTime / 120) * 100)}%` }}
+                        transition={{ duration: 0.5 }}
+                      />
                     </div>
-                    {t('Estimated completion time')}: 1-2 {t('minutes')}.
+                    <p className="bridging-modal-progress-estimate">
+                      {t('Estimated completion time')}: 1-2 {t('minutes')}
+                    </p>
                   </div>
 
                   {/* Important Notice */}
                   <motion.div
                     className="bridging-modal-notice"
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.5 }}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.6 }}
                   >
-                    <div className="flex-shrink-0">
-                      <Info size={20} className="bridging-modal-notice-icon" strokeWidth={2.5} />
-                    </div>
+                    <Info size={20} className="bridging-modal-notice-icon" strokeWidth={2.5} />
                     <div className="flex-1">
-                      <p className="bridging-modal-notice-title">
-                        {t('Important Notice')}
-                      </p>
-                      <p className="bridging-modal-notice-text">
-                        {t('bridgingWindowNotice')}
-                      </p>
+                      <p className="bridging-modal-notice-title">{t('Important Notice')}</p>
+                      <p className="bridging-modal-notice-text">{t('bridgingWindowNotice')}</p>
                     </div>
                   </motion.div>
-                </>
+                </motion.div>
               )}
 
               {modalState === 'completed' && (
                 <motion.div
-                  className="space-y-4"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 }}
+                  className="space-y-6 pt-2 pb-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
                 >
-                  {/* Success Message */}
-                  <motion.p
-                    className="bridging-modal-success-message"
-                    initial={{ y: 10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    Your funds have been successfully credited to {toChain}
-                  </motion.p>
-
-                  {/* Success Stats Card */}
-                  <div className="bridging-modal-success-card">
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                      <CheckCircle size={20} className="text-green-500" strokeWidth={2.5} />
-                      <span className="bridging-modal-success-label">Bridge Completed</span>
-                    </div>
-                    <div className="bg-white/80 dark:bg-slate-700/60 rounded-xl p-5 text-center shadow-sm border border-slate-200/50 dark:border-slate-600/40">
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        <Clock size={16} className="text-green-500" />
-                        <span className="bridging-modal-success-label">Completion Time</span>
+                  <div className="bridging-modal-status-card-new">
+                    <div className="bridging-modal-success-icon-wrapper">
+                      <div className="bridging-modal-checkmark-circle">
+                        <Check size={32} strokeWidth={3} />
                       </div>
-                      <p className="bridging-modal-success-time">{formatTime(displayTime)}</p>
+                    </div>
+                    <h4 className="bridging-modal-status-title-new">{t('Bridge Successful!')}</h4>
+                    <div className="bridging-modal-success-summary-text">
+                      {t('You bridged')}
+                    </div>
+                    <div className="bridging-modal-success-summary-visual">
+                      <div className="bridging-modal-success-chain-badge">
+                        <img src={fromChain.includes('Arc') ? "/icons/Arc.png" : fromChain.includes('Base') ? "/icons/base.png" : "/icons/eth.png"} alt="" className="bridging-modal-success-chain-img" />
+                        <span>{amount} USDC</span>
+                      </div>
+                      <div className="bridging-modal-success-path-arrow">
+                        <ArrowRight size={14} />
+                      </div>
+                      <div className="bridging-modal-success-chain-badge">
+                        <img src={toChain.includes('Arc') ? "/icons/Arc.png" : toChain.includes('Base') ? "/icons/base.png" : "/icons/eth.png"} alt="" className="bridging-modal-success-chain-img" />
+                        <span>{amount} USDC</span>
+                      </div>
                     </div>
                   </div>
+
+                  <p className="bridging-modal-success-message">
+                    {t('Your funds have been successfully credited to')} <strong>{toChain}</strong>
+                  </p>
+
+                  <button
+                    onClick={onClose}
+                    className="bridging-modal-action-button-secondary-new"
+                  >
+                    {t('Close')}
+                  </button>
                 </motion.div>
               )}
             </div>

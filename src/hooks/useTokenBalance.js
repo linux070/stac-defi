@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAccount, useBalance, useChainId } from 'wagmi';
 import { NETWORKS, TOKENS } from '../config/networks';
 
@@ -15,39 +15,46 @@ const SEPOLIA_CHAIN_ID = NETWORKS?.ETHEREUM_SEPOLIA ? parseInt(NETWORKS.ETHEREUM
 const BALANCE_FETCH_TIMEOUT = 10000;
 
 const useTokenBalance = (tokenSymbol) => {
-  // IMPORTANT: All hooks must be called unconditionally at the top level
   const { address, isConnected } = useAccount();
-  const chainId = useChainId(); // Returns a number (e.g. 11155111)
-  
-  // State to track timeout
+  const chainId = useChainId();
+
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const timeoutRef = useRef(null);
-  
-  // Convert chainId to number if it's a hex string
+
   const chainIdNumber = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
 
-  // Determine token address based on chain and token symbol
-  let tokenAddress = undefined;
-  let shouldFetch = false;
+  // Resolve token address from config
+  const tokenAddress = useMemo(() => {
+    if (!tokenSymbol || !TOKENS[tokenSymbol]) return undefined;
 
-  if (isConnected && address && tokenSymbol) {
-    // For Arc Testnet, USDC is fetched using ERC-20 contract
-    if (chainIdNumber === ARC_CHAIN_ID && tokenSymbol === 'USDC') {
-      tokenAddress = USDC_ARC_ADDRESS;
-      shouldFetch = true;
-    } 
-    // For Sepolia, USDC is an ERC-20 token
-    else if (chainIdNumber === SEPOLIA_CHAIN_ID && tokenSymbol === 'USDC') {
-      tokenAddress = USDC_SEPOLIA_ADDRESS;
-      shouldFetch = true;
+    const tokenConfig = TOKENS[tokenSymbol];
+    if (tokenConfig.address && typeof tokenConfig.address === 'object') {
+      // Try both hex string (e.g., '0xCF4B1') and decimal number (e.g., 5042002)
+      const chainIdHex = typeof chainId === 'string' ? chainId : '0x' + chainId.toString(16).toLowerCase();
+
+      const addr = tokenConfig.address[chainIdHex] ||
+        tokenConfig.address[chainIdNumber] ||
+        tokenConfig.address[chainId];
+
+      if (addr && addr !== '0x0000000000000000000000000000000000000000') {
+        return addr;
+      }
     }
-  }
 
-  // Build fetch config - useBalance must be called unconditionally
+    // Direct string address (legacy or single-chain)
+    if (typeof tokenConfig.address === 'string' && tokenConfig.address !== '0x0000000000000000000000000000000000000000') {
+      return tokenConfig.address;
+    }
+
+    return undefined;
+  }, [tokenSymbol, chainIdNumber, chainId]);
+
+  const shouldFetch = isConnected && !!address && !!tokenSymbol && !!tokenAddress;
+
   const fetchConfig = {
     address: address || undefined,
     token: tokenAddress,
-    enabled: shouldFetch && !!address,
+    enabled: shouldFetch,
   };
 
   // Wagmi hook - MUST be called unconditionally (no early returns before this)
@@ -87,7 +94,7 @@ const useTokenBalance = (tokenSymbol) => {
       balance: '0.00',
       symbol: tokenSymbol,
       loading: false,
-      refetch: refetch || (() => {}),
+      refetch: refetch || (() => { }),
       error: null
     };
   }
@@ -97,7 +104,7 @@ const useTokenBalance = (tokenSymbol) => {
       balance: '0.00',
       symbol: tokenSymbol,
       loading: false,
-      refetch: refetch || (() => {}),
+      refetch: refetch || (() => { }),
       error: null
     };
   }
@@ -117,7 +124,7 @@ const useTokenBalance = (tokenSymbol) => {
     balance: formatBalance(data?.formatted) || '0.00',
     symbol: data?.symbol || tokenSymbol,
     loading: isActuallyLoading,
-    refetch: refetch || (() => {}),
+    refetch: refetch || (() => { }),
     error: error?.message || (loadingTimeout ? 'Balance fetch timeout' : null)
   };
 };

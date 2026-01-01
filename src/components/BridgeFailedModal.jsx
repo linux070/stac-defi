@@ -7,7 +7,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
   const { t } = useTranslation();
   // Format error message with number highlighting
   const formatErrorMessage = (message) => {
-    if (!message) return 'An unknown error occurred during the bridge transaction.';
+    if (!message) return t('An unknown error occurred during the bridge transaction.');
 
     const numberRegex = /(\d+\.?\d*)/g;
     const parts = message.split(numberRegex);
@@ -15,7 +15,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
     return parts.map((part, index) => {
       if (/^\d+\.?\d*$/.test(part)) {
         return (
-          <span key={index} className="font-mono font-bold text-red-900 dark:text-red-200">
+          <span key={index} className="font-mono font-bold text-red-600 dark:text-red-400">
             {part}
           </span>
         );
@@ -35,104 +35,59 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
           onClick={onClose}
         >
           <motion.div
-            className="relative bridging-modal-container overflow-hidden"
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="relative bridging-modal-container"
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Gradient Header */}
-            <div className="bridging-modal-header bridging-modal-header-failed">
-              <button
-                onClick={onClose}
-                className="bridging-modal-close-button"
-              >
-                <X size={20} className="text-white" />
-              </button>
-
-              <div className="flex flex-col items-center text-white">
-                <motion.div
-                  className="mb-3"
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.1, type: 'spring' }}
-                >
-                  <div className="bridging-modal-loader-container">
-                    <AlertCircle size={24} className="text-white" strokeWidth={2.5} />
-                  </div>
-                </motion.div>
-                <motion.h3
-                  className="bridging-modal-title"
-                  initial={{ y: -10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  {errorTitle || t('Transaction Failed')}
-                </motion.h3>
-              </div>
-            </div>
+            {/* Close Button (Absolute) - Match SwapModal alt button style */}
+            <button
+              onClick={onClose}
+              className="bridging-modal-close-button-alt"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
 
             <div className="bridging-modal-content">
+              <div className="bridging-modal-heading-container">
+                <h2 className="bridging-modal-youre-bridging text-red-500">
+                  {errorTitle || t('Transaction Failed')}
+                </h2>
+              </div>
               {/* Network Visualization Card */}
               <motion.div
                 className="bridging-modal-network-container"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.4 }}
               >
-                <div className="flex flex-row items-center justify-between gap-3">
+                <div className="flex flex-row items-center justify-between gap-4">
                   {/* Source Chain Card */}
                   <div className="bridging-modal-network-card">
-                    {fromChain?.includes('Arc') ? (
-                      <img
-                        src="/icons/Arc.png"
-                        alt="Arc Testnet"
-                        className="bridging-modal-network-icon object-contain"
-                      />
-                    ) : fromChain?.includes('Base') ? (
-                      <img
-                        src="/icons/base.png"
-                        alt="Base Sepolia"
-                        className="bridging-modal-network-icon object-contain"
-                      />
-                    ) : (
-                      <img
-                        src="/icons/eth.png"
-                        alt="Sepolia"
-                        className="bridging-modal-network-icon object-contain"
-                      />
-                    )}
-                    <p className="bridging-modal-network-name whitespace-nowrap">{fromChain}</p>
+                    <img
+                      src={fromChain?.includes('Arc') ? "/icons/Arc.png" : fromChain?.includes('Base') ? "/icons/base.png" : "/icons/eth.png"}
+                      alt={fromChain}
+                      className="bridging-modal-network-icon"
+                    />
+                    <p className="bridging-modal-network-name">{fromChain}</p>
                   </div>
 
                   {/* Arrow Connector */}
-                  <div className="flex items-center justify-center flex-shrink-0">
-                    <ArrowRight className="bridging-modal-arrow w-4 h-4" strokeWidth={2} />
+                  <div className="bridging-modal-arrow-container">
+                    <ArrowRight className="bridging-modal-arrow" size={16} strokeWidth={3} />
                   </div>
 
                   {/* Destination Chain Card */}
                   <div className="bridging-modal-network-card">
-                    {toChain?.includes('Arc') ? (
-                      <img
-                        src="/icons/Arc.png"
-                        alt="Arc Testnet"
-                        className="bridging-modal-network-icon object-contain"
-                      />
-                    ) : toChain?.includes('Base') ? (
-                      <img
-                        src="/icons/base.png"
-                        alt="Base Sepolia"
-                        className="bridging-modal-network-icon object-contain"
-                      />
-                    ) : (
-                      <img
-                        src="/icons/eth.png"
-                        alt="Sepolia"
-                        className="bridging-modal-network-icon object-contain"
-                      />
-                    )}
-                    <p className="bridging-modal-network-name whitespace-nowrap">{toChain}</p>
+                    <img
+                      src={toChain?.includes('Arc') ? "/icons/Arc.png" : toChain?.includes('Base') ? "/icons/base.png" : "/icons/eth.png"}
+                      alt={toChain}
+                      className="bridging-modal-network-icon"
+                    />
+                    <p className="bridging-modal-network-name">{toChain}</p>
                   </div>
                 </div>
               </motion.div>
@@ -140,25 +95,39 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
               {/* Enhanced Error Message Card */}
               <motion.div
                 className="bridging-modal-error-card"
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5 }}
               >
-                <div className="flex-shrink-0">
-                  <AlertTriangle size={20} className="bridging-modal-error-icon" strokeWidth={2.5} />
-                </div>
+                <AlertTriangle size={20} className="bridging-modal-error-icon" strokeWidth={2.5} />
                 <div className="flex-1">
                   <p className="bridging-modal-error-title">
                     {t('Error Details')}
                   </p>
                   <p className="bridging-modal-error-text">
-                    {formatErrorMessage(errorMessage || 'An unknown error occurred during the bridge transaction.')}
+                    {formatErrorMessage(errorMessage || t('An unknown error occurred during the bridge transaction.'))}
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Notice for safety */}
+              <motion.div
+                className="bridging-modal-notice mt-6"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                <AlertCircle size={20} className="bridging-modal-notice-icon" strokeWidth={2.5} />
+                <div className="flex-1">
+                  <p className="bridging-modal-notice-title">{t('Helpful Tip')}</p>
+                  <p className="bridging-modal-notice-text">
+                    {t('bridgeFailedTip')}
                   </p>
                 </div>
               </motion.div>
 
               {/* Action Buttons */}
-              <div className="bridging-modal-buttons-container">
+              <div className="bridging-modal-buttons-container mt-8">
                 <motion.button
                   onClick={onClose}
                   className="bridging-modal-retry-button"

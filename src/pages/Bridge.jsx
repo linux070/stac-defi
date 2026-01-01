@@ -1469,6 +1469,7 @@ const Bridge = () => {
         onClose={closeBridgingModal}
         fromChain={bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain}
         toChain={bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain}
+        amount={amount}
         startTime={bridgeStartTime}
         state={state}
         stopTimer={stopTimer}

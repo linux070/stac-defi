@@ -50,7 +50,7 @@ const sepolia = {
   ...sepoliaChain,
   rpcUrls: {
     ...sepoliaChain.rpcUrls,
-    default: { http: ['https://eth-sepolia.g.alchemy.com/v2/w5SlKrdofEKjcKadoa6KQ'] },
+    default: { http: ['https://ethereum-sepolia-rpc.publicnode.com'] },
   },
   iconUrl: '/icons/eth.png',
   iconBackground: '#484c50',

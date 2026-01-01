@@ -17,17 +17,11 @@ const TOKEN_CONTRACTS = {
     [ARC_CHAIN_ID]: '0x3600000000000000000000000000000000000000', // Bridge Kit USDC on Arc Testnet
     [BASE_SEPOLIA_CHAIN_ID]: TOKENS?.BASE_SEPOLIA?.USDC?.address || '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
   },
-  EURC: {
-    [SEPOLIA_CHAIN_ID]: TOKENS?.EURC?.address?.[NETWORKS.ETHEREUM_SEPOLIA.chainId] || '0x',
-    [ARC_CHAIN_ID]: TOKENS?.EURC?.address?.[NETWORKS.ARC_TESTNET.chainId] || '0x',
-    [BASE_SEPOLIA_CHAIN_ID]: TOKENS?.EURC?.address?.[NETWORKS.BASE_SEPOLIA.chainId] || '0x',
-  },
 };
 
 // Token decimals (both USDC and EURC are 6)
 const TOKEN_DECIMALS = {
   USDC: 6,
-  EURC: 6,
 };
 
 // RPC URLs
@@ -215,9 +209,9 @@ const fetchChainBalance = async (chainId, address, rpcUrls, tokenSymbol = 'USDC'
 // Lightweight hook to fetch USDC and EURC balances for all three chains simultaneously
 const useMultiChainBalances = (address, isConnected) => {
   const [balances, setBalances] = useState({
-    arcTestnet: { usdc: '0.00', eurc: '0.00', loading: false },
-    sepolia: { usdc: '0.00', eurc: '0.00', loading: false },
-    baseSepolia: { usdc: '0.00', eurc: '0.00', loading: false },
+    arcTestnet: { usdc: '0.00', loading: false },
+    sepolia: { usdc: '0.00', loading: false },
+    baseSepolia: { usdc: '0.00', loading: false },
   });
 
   const intervalRef = useRef(null);
@@ -226,9 +220,9 @@ const useMultiChainBalances = (address, isConnected) => {
     const fetchBalances = async () => {
       if (!isConnected || !address) {
         setBalances({
-          arcTestnet: { usdc: '0.00', eurc: '0.00', loading: false },
-          sepolia: { usdc: '0.00', eurc: '0.00', loading: false },
-          baseSepolia: { usdc: '0.00', eurc: '0.00', loading: false },
+          arcTestnet: { usdc: '0.00', loading: false },
+          sepolia: { usdc: '0.00', loading: false },
+          baseSepolia: { usdc: '0.00', loading: false },
         });
         return;
       }
@@ -243,33 +237,27 @@ const useMultiChainBalances = (address, isConnected) => {
       try {
         // Fetch all balances in parallel for better performance
         const [
-          arcUsdcResult, arcEurcResult,
-          sepoliaUsdcResult, sepoliaEurcResult,
-          baseSepoliaUsdcResult, baseSepoliaEurcResult
+          arcUsdcResult,
+          sepoliaUsdcResult,
+          baseSepoliaUsdcResult
         ] = await Promise.allSettled([
           fetchChainBalance(ARC_CHAIN_ID, address, ARC_RPC_URLS, 'USDC'),
-          fetchChainBalance(ARC_CHAIN_ID, address, ARC_RPC_URLS, 'EURC'),
           fetchChainBalance(SEPOLIA_CHAIN_ID, address, SEPOLIA_RPC_URLS, 'USDC'),
-          fetchChainBalance(SEPOLIA_CHAIN_ID, address, SEPOLIA_RPC_URLS, 'EURC'),
           fetchChainBalance(BASE_SEPOLIA_CHAIN_ID, address, BASE_SEPOLIA_RPC_URLS, 'USDC'),
-          fetchChainBalance(BASE_SEPOLIA_CHAIN_ID, address, BASE_SEPOLIA_RPC_URLS, 'EURC'),
         ]);
 
         // Update balances
         setBalances(prev => ({
           arcTestnet: {
             usdc: arcUsdcResult.status === 'fulfilled' ? arcUsdcResult.value.balance : (prev.arcTestnet.usdc || '0.00'),
-            eurc: arcEurcResult.status === 'fulfilled' ? arcEurcResult.value.balance : (prev.arcTestnet.eurc || '0.00'),
             loading: false,
           },
           sepolia: {
             usdc: sepoliaUsdcResult.status === 'fulfilled' ? sepoliaUsdcResult.value.balance : (prev.sepolia.usdc || '0.00'),
-            eurc: sepoliaEurcResult.status === 'fulfilled' ? sepoliaEurcResult.value.balance : (prev.sepolia.eurc || '0.00'),
             loading: false,
           },
           baseSepolia: {
             usdc: baseSepoliaUsdcResult.status === 'fulfilled' ? baseSepoliaUsdcResult.value.balance : (prev.baseSepolia.usdc || '0.00'),
-            eurc: baseSepoliaEurcResult.status === 'fulfilled' ? baseSepoliaEurcResult.value.balance : (prev.baseSepolia.eurc || '0.00'),
             loading: false,
           },
         }));
