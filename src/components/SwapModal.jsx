@@ -28,12 +28,14 @@ const SwapModal = ({
     swapState
 }) => {
     const formatAmount = (val) => {
-        if (!val) return '0.000';
+        if (!val) return '0.00';
         const num = parseFloat(val);
-        if (num === 0) return '0.000';
+        if (num === 0) return '0.00';
+
+        // Round to 2 decimal places (2 significant figures)
         return num.toLocaleString(undefined, {
             minimumFractionDigits: 2,
-            maximumFractionDigits: 3
+            maximumFractionDigits: 2
         });
     };
 
@@ -42,8 +44,8 @@ const SwapModal = ({
             'USDC': '/icons/usdc.png',
             'STCK': '/icons/stac.png',
             'BALL': '/icons/ball.jpg',
-            'MTB': '/icons/mtb.png',
-            'ECR': '/icons/ecr.png'
+            'MTB': '/icons/MTB.png',
+            'ECR': '/icons/ECR.png'
         };
         return iconMap[symbol] || null;
     };
@@ -65,6 +67,33 @@ const SwapModal = ({
     } = swapState;
 
     const [step, setStep] = useState('confirm'); // confirm, processing, success, error
+    const [frozenData, setFrozenData] = useState(null);
+
+    // Reset the wagmi hook state to clear any stale success/tx hashes when modal opens
+    useEffect(() => {
+        if (isOpen && swapState.reset) {
+            swapState.reset();
+        }
+    }, [isOpen]);
+
+    // Freeze data when starting to prevent '0.000' if parent clears state
+    useEffect(() => {
+        if (isOpen && !frozenData && fromAmount && toAmount) {
+            setFrozenData({
+                fromAmount,
+                toAmount,
+                fromToken,
+                toToken
+            });
+        }
+    }, [isOpen, fromAmount, toAmount, fromToken, toToken, frozenData]);
+
+    // Clear frozen data when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setFrozenData(null);
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (isLoading) {
@@ -78,13 +107,15 @@ const SwapModal = ({
                         const history = await getItem('myTransactions') || [];
                         const exists = history.some(tx => tx.hash === txHash);
                         if (!exists) {
+                            // Use frozen data if available, otherwise current props
+                            const dataToLog = frozenData || { fromAmount, toAmount, fromToken, toToken };
                             const newTx = {
                                 id: txHash,
                                 hash: txHash,
                                 type: 'Swap',
-                                from: `${fromAmount} ${fromToken?.symbol}`,
-                                to: `${toAmount} ${toToken?.symbol}`,
-                                amount: `${fromAmount} ${fromToken?.symbol} → ${toAmount} ${toToken?.symbol}`,
+                                from: `${dataToLog.fromAmount} ${dataToLog.fromToken?.symbol}`,
+                                to: `${dataToLog.toAmount} ${dataToLog.toToken?.symbol}`,
+                                amount: `${dataToLog.fromAmount} ${dataToLog.fromToken?.symbol} → ${dataToLog.toAmount} ${dataToLog.toToken?.symbol}`,
                                 timestamp: Date.now(),
                                 status: 'success',
                                 address: address.toLowerCase(),
@@ -102,10 +133,10 @@ const SwapModal = ({
             }
         } else if (error) {
             setStep('error');
-        } else if (!isOpen) {
+        } else if (!isOpen || (!isLoading && !isSuccess)) {
             setStep('confirm');
         }
-    }, [isLoading, isSuccess, error, isOpen, txHash, address, fromToken, toToken, fromAmount, toAmount, chainId]);
+    }, [isLoading, isSuccess, error, isOpen, txHash, address, fromToken, toToken, fromAmount, toAmount, chainId, frozenData]);
 
     if (!isOpen) return null;
 
@@ -175,7 +206,7 @@ const SwapModal = ({
                                             <div className="swap-modal-token-badge">
                                                 <div className="swap-modal-token-icon-small">
                                                     {getTokenIcon(fromToken?.symbol) ? (
-                                                        <img src={getTokenIcon(fromToken?.symbol)} alt="" className="w-full h-full object-contain" />
+                                                        <img src={getTokenIcon(fromToken?.symbol)} alt="" className="w-full h-full object-cover" />
                                                     ) : (
                                                         fromToken?.symbol?.[0] || '?'
                                                     )}
@@ -184,7 +215,7 @@ const SwapModal = ({
                                             <div className="swap-modal-amount-content">
                                                 <div className="swap-modal-amount-label">{t('From')}</div>
                                                 <div className="swap-modal-amount-value">
-                                                    {formatAmount(fromAmount)} {fromToken?.symbol}
+                                                    {formatAmount(frozenData?.fromAmount || fromAmount, frozenData?.fromToken?.symbol || fromToken?.symbol)} {frozenData?.fromToken?.symbol || fromToken?.symbol}
                                                 </div>
                                             </div>
                                         </div>
@@ -199,7 +230,7 @@ const SwapModal = ({
                                             <div className="swap-modal-token-badge">
                                                 <div className="swap-modal-token-icon-small">
                                                     {getTokenIcon(toToken?.symbol) ? (
-                                                        <img src={getTokenIcon(toToken?.symbol)} alt="" className="w-full h-full object-contain" />
+                                                        <img src={getTokenIcon(toToken?.symbol)} alt="" className="w-full h-full object-cover" />
                                                     ) : (
                                                         toToken?.symbol?.[0] || '?'
                                                     )}
@@ -208,7 +239,7 @@ const SwapModal = ({
                                             <div className="swap-modal-amount-content">
                                                 <div className="swap-modal-amount-label">{t('To (Estimated)')}</div>
                                                 <div className="swap-modal-amount-value">
-                                                    {formatAmount(toAmount)} {toToken?.symbol}
+                                                    {formatAmount(frozenData?.toAmount || toAmount, frozenData?.toToken?.symbol || toToken?.symbol)} {frozenData?.toToken?.symbol || toToken?.symbol}
                                                 </div>
                                             </div>
                                         </div>
@@ -249,12 +280,6 @@ const SwapModal = ({
                                         </button>
                                     )}
 
-                                    {step === 'processing' && (
-                                        <div className="swap-modal-processing-info">
-                                            <Loader className="animate-spin mr-2" size={16} />
-                                            <span>{isApproving ? t('Waiting for Approval...') : t('Waiting for Swap...')}</span>
-                                        </div>
-                                    )}
                                 </div>
                             )}
 
@@ -274,15 +299,15 @@ const SwapModal = ({
                                         </div>
                                         <div className="swap-modal-success-summary-visual">
                                             <div className="swap-modal-success-token-badge">
-                                                <img src={getTokenIcon(fromToken?.symbol)} alt="" className="swap-modal-success-token-img" />
-                                                <span>{formatAmount(fromAmount)} {fromToken?.symbol}</span>
+                                                <img src={getTokenIcon(frozenData?.fromToken?.symbol || fromToken?.symbol)} alt="" className="swap-modal-success-token-img" />
+                                                <span>{formatAmount(frozenData?.fromAmount || fromAmount, frozenData?.fromToken?.symbol || fromToken?.symbol)} {frozenData?.fromToken?.symbol || fromToken?.symbol}</span>
                                             </div>
                                             <div className="swap-modal-success-path-arrow">
                                                 <ArrowDown size={14} className="rotate-[-90deg]" />
                                             </div>
                                             <div className="swap-modal-success-token-badge">
-                                                <img src={getTokenIcon(toToken?.symbol)} alt="" className="swap-modal-success-token-img" />
-                                                <span>{formatAmount(toAmount)} {toToken?.symbol}</span>
+                                                <img src={getTokenIcon(frozenData?.toToken?.symbol || toToken?.symbol)} alt="" className="swap-modal-success-token-img" />
+                                                <span>{formatAmount(frozenData?.toAmount || toAmount, frozenData?.toToken?.symbol || toToken?.symbol)} {frozenData?.toToken?.symbol || toToken?.symbol}</span>
                                             </div>
                                         </div>
                                     </div>

@@ -3,10 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Droplets, Loader, CheckCircle, Check, AlertCircle, ExternalLink, Info, Sparkles } from 'lucide-react';
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
-import TokenABI from '../abis/TokenABI.json';
+import BatchFaucetABI from '../abis/BatchFaucetABI.json';
 import { getExplorerUrl } from '../utils/blockchain';
 import { useWallet } from '../contexts/WalletContext';
-import { TOKENS } from '../config/constants';
+import { TOKENS, BATCH_FAUCET_ADDRESS, USDC_ADDRESS, CHAINS } from '../config/constants';
+import { getItem, setItem } from '../utils/indexedDB';
+
+const COOLDOWN_HOURS = 0;
+const COOLDOWN_MS = 0; // Disabled for testing
 
 const getTokenIcon = (symbol) => {
     if (!symbol) return null;
@@ -14,8 +18,8 @@ const getTokenIcon = (symbol) => {
     if (s === 'usdc') return '/icons/usdc.png';
     if (s === 'stck') return '/icons/stac.png';
     if (s === 'ball') return '/icons/ball.jpg';
-    if (s === 'mtb') return '/icons/mtb.png';
-    if (s === 'ecr') return '/icons/ecr.png';
+    if (s === 'mtb') return '/icons/MTB.png';
+    if (s === 'ecr') return '/icons/ECR.png';
     return null;
 };
 
@@ -52,48 +56,98 @@ const TokenStatus = ({ symbol, hash, error, isPending, isWaiting, isSuccess, cha
 
 const FaucetModal = ({ isOpen, onClose }) => {
     const { t } = useTranslation();
-    const { chainId } = useWallet();
+    const { balance: nativeBalance, chainId, switchToNetwork } = useWallet();
     const { address: userAddress } = useAccount();
+    const [cooldownRemaining, setCooldownRemaining] = useState(0);
+    const [networkError, setNetworkError] = useState(false);
 
-    // Hooks for STCK
-    const stckClaim = useWriteContract();
-    const stckWait = useWaitForTransactionReceipt({ hash: stckClaim.data });
+    // Single Hook for Batch Claim
+    const batchClaim = useWriteContract();
+    const batchWait = useWaitForTransactionReceipt({ hash: batchClaim.data });
 
-    // Hooks for BALL
-    const ballClaim = useWriteContract();
-    const ballWait = useWaitForTransactionReceipt({ hash: ballClaim.data });
+    // Check network and cooldown on mount and when modal opens
+    useEffect(() => {
+        const checkNetwork = () => {
+            const arcChainId = '0x' + CHAINS.ARC_TESTNET.toString(16);
+            if (chainId && chainId !== arcChainId) {
+                setNetworkError(true);
+            } else {
+                setNetworkError(false);
+            }
+        };
 
-    // Hooks for MTB
-    const mtbClaim = useWriteContract();
-    const mtbWait = useWaitForTransactionReceipt({ hash: mtbClaim.data });
+        const checkCooldown = async () => {
+            // Disabled for testing
+            setCooldownRemaining(0);
+        };
 
-    // Hooks for ECR
-    const ecrClaim = useWriteContract();
-    const ecrWait = useWaitForTransactionReceipt({ hash: ecrClaim.data });
+        if (isOpen) {
+            checkNetwork();
+            checkCooldown();
+        }
+    }, [isOpen, userAddress, chainId]);
+
+    // Timer for countdown
+    useEffect(() => {
+        let timer;
+        if (cooldownRemaining > 0) {
+            timer = setInterval(() => {
+                setCooldownRemaining(prev => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [cooldownRemaining]);
+
+    // Save claim timestamp on success
+    useEffect(() => {
+        if (batchWait.isSuccess && userAddress) {
+            setItem(`faucet_last_claim_${userAddress}`, Date.now());
+            // Dispatch event to refresh balances globally
+            window.dispatchEvent(new CustomEvent('faucetClaimed'));
+            console.log('[Faucet] Claim successful, dispatched refresh event');
+        }
+    }, [batchWait.isSuccess, userAddress]);
 
     const handleClaimAll = () => {
         if (!userAddress) return;
 
-        const claimToken = (address, claimHook) => {
-            claimHook.writeContract({
-                address: address,
-                abi: TokenABI,
-                functionName: 'claimFaucet',
-            });
-        };
+        // Ensure on correct network
+        const arcChainId = '0x' + CHAINS.ARC_TESTNET.toString(16);
+        if (chainId !== arcChainId) {
+            switchToNetwork({ chainId: '0x' + CHAINS.ARC_TESTNET.toString(16) });
+            return;
+        }
 
-        claimToken(TOKENS.STCK, stckClaim);
-        claimToken(TOKENS.BALL, ballClaim);
-        claimToken(TOKENS.MTB, mtbClaim);
-        claimToken(TOKENS.ECR, ecrClaim);
+        batchClaim.writeContract({
+            address: BATCH_FAUCET_ADDRESS,
+            abi: BatchFaucetABI,
+            functionName: 'claimAll',
+            args: [[USDC_ADDRESS, TOKENS.STCK, TOKENS.BALL, TOKENS.MTB, TOKENS.ECR]],
+        });
     };
 
-    const isAnyPending = stckClaim.isPending || stckWait.isLoading ||
-        ballClaim.isPending || ballWait.isLoading ||
-        mtbClaim.isPending || mtbWait.isLoading ||
-        ecrClaim.isPending || ecrWait.isLoading;
+    // Reset state when modal opens to avoid showing previous success
+    useEffect(() => {
+        if (isOpen && batchClaim.reset) {
+            batchClaim.reset();
+        }
+    }, [isOpen]);
 
-    const allSuccess = stckWait.isSuccess && ballWait.isSuccess && mtbWait.isSuccess && ecrWait.isSuccess;
+    const formatCooldown = (seconds) => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        return `${h}h ${m}m ${s}s`;
+    };
+
+    const isPending = batchClaim.isPending || batchWait.isLoading;
+    const isSuccess = batchWait.isSuccess;
 
     if (!isOpen) return null;
 
@@ -126,67 +180,116 @@ const FaucetModal = ({ isOpen, onClose }) => {
                     <div className="swap-modal-content">
                         <div className="swap-modal-heading-container">
                             <h2 className="swap-modal-youre-swapping">
-                                {allSuccess ? t('Faucet Success') : t('Multi-Token Faucet')}
+                                {isSuccess ? t('Faucet Success') : t('Multi-Token Faucet')}
                             </h2>
                         </div>
 
-                        {!allSuccess ? (
+                        {!isSuccess ? (
                             <div className="pt-2">
-                                <div className="faucet-tokens-grid">
+                                <div className="faucet-notice-card !mb-4">
+                                    <Info size={18} className="faucet-notice-icon" />
+                                    <p className="faucet-notice-text">
+                                        {networkError
+                                            ? t('Please switch to Arc Testnet to claim tokens.')
+                                            : cooldownRemaining > 0
+                                                ? t('Faucet is on cooldown for security. Please wait.')
+                                                : parseFloat(nativeBalance) < 5
+                                                    ? t('You need at least 5 USDC to claim. Try the Circle faucet first.')
+                                                    : t('Claim all tokens in a single transaction.')}
+                                    </p>
+                                </div>
+
+                                {batchClaim.error && (
+                                    <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2">
+                                        <AlertCircle size={16} className="text-red-500 shrink-0" />
+                                        <p className="text-xs text-red-500 font-medium leading-tight">
+                                            {batchClaim.error.message.includes('User rejected')
+                                                ? t('Transaction was rejected.')
+                                                : batchClaim.error.message.slice(0, 80) + '...'}
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div className="faucet-tokens-grid !grid-cols-3">
+                                    <TokenStatus
+                                        symbol="USDC"
+                                        hash={batchClaim.data}
+                                        isPending={false}
+                                        isWaiting={isPending}
+                                        isSuccess={isSuccess}
+                                        error={batchClaim.error}
+                                        chainId={chainId}
+                                    />
                                     <TokenStatus
                                         symbol="STCK"
-                                        hash={stckClaim.data}
-                                        isPending={stckClaim.isPending}
-                                        isWaiting={stckWait.isLoading}
-                                        isSuccess={stckWait.isSuccess}
-                                        error={stckClaim.error}
+                                        hash={batchClaim.data}
+                                        isPending={false}
+                                        isWaiting={isPending}
+                                        isSuccess={isSuccess}
+                                        error={batchClaim.error}
                                         chainId={chainId}
                                     />
                                     <TokenStatus
                                         symbol="BALL"
-                                        hash={ballClaim.data}
-                                        isPending={ballClaim.isPending}
-                                        isWaiting={ballWait.isLoading}
-                                        isSuccess={ballWait.isSuccess}
-                                        error={ballClaim.error}
+                                        hash={batchClaim.data}
+                                        isPending={false}
+                                        isWaiting={isPending}
+                                        isSuccess={isSuccess}
+                                        error={batchClaim.error}
                                         chainId={chainId}
                                     />
                                     <TokenStatus
                                         symbol="MTB"
-                                        hash={mtbClaim.data}
-                                        isPending={mtbClaim.isPending}
-                                        isWaiting={mtbWait.isLoading}
-                                        isSuccess={mtbWait.isSuccess}
-                                        error={mtbClaim.error}
+                                        hash={batchClaim.data}
+                                        isPending={false}
+                                        isWaiting={isPending}
+                                        isSuccess={isSuccess}
+                                        error={batchClaim.error}
                                         chainId={chainId}
                                     />
                                     <TokenStatus
                                         symbol="ECR"
-                                        hash={ecrClaim.data}
-                                        isPending={ecrClaim.isPending}
-                                        isWaiting={ecrWait.isLoading}
-                                        isSuccess={ecrWait.isSuccess}
-                                        error={ecrClaim.error}
+                                        hash={batchClaim.data}
+                                        isPending={false}
+                                        isWaiting={isPending}
+                                        isSuccess={isSuccess}
+                                        error={batchClaim.error}
                                         chainId={chainId}
                                     />
                                 </div>
 
-                                <div className="faucet-notice-card">
-                                    <Info size={18} className="faucet-notice-icon" />
-                                    <p className="faucet-notice-text">
-                                        {t('You will need to confirm 4 separate transactions in your wallet to claim all tokens.')}
-                                    </p>
+
+                                {/* Circle USDC Faucet Link - Rocks in both light & dark mode */}
+                                <div className="faucet-external-card"
+                                    onClick={() => window.open('https://faucet.circle.com/', '_blank')}>
+                                    <div className="faucet-external-info">
+                                        <div className="faucet-external-icon">
+                                            <img src="/icons/usdc.png" alt="USDC" />
+                                        </div>
+                                        <div>
+                                            <h5 className="faucet-external-title">{t('Need Official USDC?')}</h5>
+                                            <p className="faucet-external-subtitle">{t('Claim on Circle Faucet')}</p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <button
                                     onClick={handleClaimAll}
-                                    disabled={isAnyPending || !userAddress}
+                                    disabled={isPending || !userAddress}
                                     className="swap-modal-action-button w-full"
                                 >
-                                    {isAnyPending ? (
+                                    {networkError ? (
+                                        <div className="flex items-center justify-center gap-2">
+                                            <span>{t('Switch to Arc Testnet')}</span>
+                                        </div>
+                                    ) : isPending ? (
                                         <div className="flex items-center justify-center gap-2">
                                             <Loader className="animate-spin" size={18} />
-                                            <span>{t('Claiming...')}</span>
+                                            <span>{t('Processing...')}</span>
+                                        </div>
+                                    ) : cooldownRemaining > 0 ? (
+                                        <div className="flex items-center justify-center gap-2">
+                                            <span>{t('Next claim in')} {formatCooldown(cooldownRemaining)}</span>
                                         </div>
                                     ) : (
                                         <div className="flex items-center justify-center gap-2">
@@ -209,11 +312,11 @@ const FaucetModal = ({ isOpen, onClose }) => {
                                         {t('All test tokens have been sent to your wallet.')}
                                     </div>
 
-                                    <div className="flex flex-wrap justify-center gap-3 mt-4">
-                                        {['STCK', 'BALL', 'MTB', 'ECR'].map(symbol => (
-                                            <div key={symbol} className="swap-modal-success-token-badge border border-white/5 py-2 px-3 bg-white/5 rounded-xl">
-                                                <img src={getTokenIcon(symbol)} alt="" className="swap-modal-success-token-img" />
-                                                <span>{symbol}</span>
+                                    <div className="grid grid-cols-3 gap-3 mt-4">
+                                        {['USDC', 'STCK', 'BALL', 'MTB', 'ECR'].map(symbol => (
+                                            <div key={symbol} className="swap-modal-success-token-badge border border-white/5 py-2 px-3 bg-white/5 rounded-xl flex items-center justify-center gap-2">
+                                                <img src={getTokenIcon(symbol)} alt="" className="w-5 h-5 rounded-full" />
+                                                <span className="font-bold text-sm">{symbol}</span>
                                             </div>
                                         ))}
                                     </div>

@@ -41,6 +41,20 @@ const getChainIcon = (chainName) => {
   return null;
 };
 
+// Helper to get token logo
+const getTokenLogo = (symbol) => {
+  if (!symbol) return null;
+  const s = String(symbol).toLowerCase();
+  if (s.includes('usdc')) return '/icons/usdc.png';
+  if (s.includes('stck') || s.includes('stac')) return '/icons/stac.png';
+  if (s.includes('ball')) return '/icons/ball.jpg';
+  if (s.includes('mtb')) return '/icons/MTB.png';
+  if (s.includes('ecr')) return '/icons/ECR.png';
+  if (s.includes('eth')) return '/icons/eth.png';
+  if (s.includes('eurc')) return '/icons/eurc.png';
+  return null;
+};
+
 const EmptyActivityState = () => (
   <div className="flex flex-col items-center justify-center py-16 md:py-24 px-6 overflow-hidden text-center">
     <div className="relative mb-14 md:mb-16 flex items-center justify-center scale-90 md:scale-100">
@@ -255,6 +269,21 @@ const Transactions = () => {
     return merged;
   }, [blockchainTransactions, myTransactions, walletAddress]);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const transactionsPerPage = 10;
+
+  // Calculate pagination
+  const totalPages = Math.ceil(mergedTransactions.length / transactionsPerPage);
+  const startIndex = (currentPage - 1) * transactionsPerPage;
+  const endIndex = startIndex + transactionsPerPage;
+  const paginatedTransactions = mergedTransactions.slice(startIndex, endIndex);
+
+  // Reset to page 1 when wallet changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [walletAddress]);
+
   // Note: We don't save filtered transactions back to IndexedDB
   // The original transactions with all wallet addresses are kept in storage
   // We only filter when displaying. This preserves data for all wallets.
@@ -446,36 +475,50 @@ const Transactions = () => {
 
     const fromStr = String(tx.from).trim();
     const numberMatch = fromStr.match(/^([\d.]+)/);
-    return numberMatch ? numberMatch[1] : '';
+    if (!numberMatch) return '';
+
+    // Maintain precision for small amounts
+    const num = parseFloat(numberMatch[1]);
+    if (num < 0.001) return num.toFixed(6);
+    if (num < 0.01) return num.toFixed(4);
+    return numberMatch[1];
   };
 
   // Helper to get to amount for swap transactions
   const getSwapToAmount = (tx) => {
     if (tx.type !== 'Swap') return '';
 
+    let rawAmount = '';
+
     // First try to extract from tx.to
     if (tx.to) {
       const toStr = String(tx.to).trim();
       const numberMatch = toStr.match(/^([\d.]+)/);
       if (numberMatch && numberMatch[1]) {
-        return numberMatch[1];
+        rawAmount = numberMatch[1];
       }
     }
 
     // If tx.amount contains arrow format, extract the second number
-    if (tx.amount && String(tx.amount).includes('→')) {
+    if (!rawAmount && tx.amount && String(tx.amount).includes('→')) {
       const amountStr = String(tx.amount).trim();
       const parts = amountStr.split('→');
       if (parts.length > 1) {
         const secondPart = parts[1].trim();
         const numberMatch = secondPart.match(/^([\d.]+)/);
         if (numberMatch && numberMatch[1]) {
-          return numberMatch[1];
+          rawAmount = numberMatch[1];
         }
       }
     }
 
-    return '';
+    if (!rawAmount) return '';
+
+    // Maintain precision for small amounts
+    const num = parseFloat(rawAmount);
+    if (num < 0.001) return num.toFixed(6);
+    if (num < 0.01) return num.toFixed(4);
+    return rawAmount;
   };
 
   return (
@@ -501,7 +544,7 @@ const Transactions = () => {
               </tr>
             </thead>
             <tbody>
-              {mergedTransactions.map((tx, index) => (
+              {paginatedTransactions.map((tx, index) => (
                 <motion.tr
                   key={tx.id || tx.hash || `tx-${index}`}
                   initial={{ opacity: 0, y: 20 }}
@@ -511,16 +554,24 @@ const Transactions = () => {
                 >
                   <td className="py-3 md:py-4">
                     {tx.type === 'Swap' ? (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs md:text-sm font-medium">{tx.type}</span>
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-xs md:text-sm font-bold text-slate-900 dark:text-white">{tx.type}</span>
                         {getNetworkName(tx.chainId) && (
-                          <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
-                            {getNetworkName(tx.chainId)}
-                          </span>
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 w-fit">
+                            <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3 h-3 object-contain" />
+                            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">
+                              {getNetworkName(tx.chainId)}
+                            </span>
+                          </div>
                         )}
                       </div>
                     ) : tx.type === 'Bridge' ? (
-                      <span className="text-xs md:text-sm font-medium">{tx.type}</span>
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-xs md:text-sm font-bold text-slate-900 dark:text-white">{tx.type}</span>
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 w-fit">
+                          <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">Cross-Chain</span>
+                        </div>
+                      </div>
                     ) : (
                       <span className={`inline-flex items-center px-2 py-1 md:px-3 md:py-1 rounded-full text-xs font-semibold ${getTypeColor(tx.type)}`}>
                         {getTypeIcon(tx.type)}
@@ -532,45 +583,57 @@ const Transactions = () => {
                     {tx.type === 'Bridge' ? (
                       getChainIcon(tx.from) ? (
                         <div className="flex items-center gap-2">
-                          <img src={getChainIcon(tx.from)} alt={tx.from} className="w-5 h-5 rounded-full object-contain" />
+                          <img src={getChainIcon(tx.from)} alt={tx.from} className="w-5 h-5 rounded-full object-cover" />
                           <span>{tx.from}</span>
                         </div>
                       ) : (
                         tx.from
                       )
                     ) : (
-                      getSwapFromToken(tx)
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                          {getTokenLogo(getSwapFromToken(tx)) ? (
+                            <img src={getTokenLogo(getSwapFromToken(tx))} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full rounded-full bg-slate-100 dark:bg-slate-700" />
+                          )}
+                        </div>
+                        <span className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">{getSwapFromToken(tx)}</span>
+                      </div>
                     )}
                   </td>
                   <td className="py-3 md:py-4 text-xs md:text-sm font-medium">
                     {tx.type === 'Bridge' ? (
                       getChainIcon(tx.to) ? (
                         <div className="flex items-center gap-2">
-                          <img src={getChainIcon(tx.to)} alt={tx.to} className="w-5 h-5 rounded-full object-contain" />
+                          <img src={getChainIcon(tx.to)} alt={tx.to} className="w-5 h-5 rounded-full object-cover" />
                           <span>{tx.to}</span>
                         </div>
                       ) : (
                         tx.to
                       )
                     ) : (
-                      getSwapToToken(tx)
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                          {getTokenLogo(getSwapToToken(tx)) ? (
+                            <img src={getTokenLogo(getSwapToToken(tx))} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full rounded-full bg-slate-100 dark:bg-slate-700" />
+                          )}
+                        </div>
+                        <span className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">{getSwapToToken(tx)}</span>
+                      </div>
                     )}
                   </td>
                   <td className="py-3 md:py-4 text-xs md:text-sm font-semibold">{getSwapAmount(tx)}</td>
                   <td className="py-3 md:py-4 text-xs md:text-sm text-gray-500">{timeAgo(tx.timestamp)}</td>
                   <td className="py-3 md:py-4">
                     {tx.status === 'success' ? (
-                      <span className="inline-flex items-center px-3 py-1.5" style={{
-                        backgroundColor: '#E0F2F1',
-                        border: '1px solid #80CBC4',
-                        borderRadius: '8px'
-                      }}>
-                        <span className="flex items-center justify-center w-5 h-5 rounded-full mr-2 flex-shrink-0" style={{
-                          backgroundColor: '#00897B'
-                        }}>
-                          <i className="fa fa-check-circle text-white" style={{ fontSize: '12px', lineHeight: '1' }}></i>
-                        </span>
-                        <span className="text-xs font-semibold" style={{ color: '#00695C' }}>Success</span>
+                      <span className="inline-flex items-center px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 rounded-lg">
+                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 mr-2 flex-shrink-0">
+                          <CheckCircle className="text-white" size={14} />
+                        </div>
+                        <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Success</span>
                       </span>
                     ) : (
                       <div className="flex items-center space-x-1 md:space-x-2">
@@ -625,7 +688,7 @@ const Transactions = () => {
       {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
         {mergedTransactions.length > 0 ? (
-          mergedTransactions.map((tx, index) => (
+          paginatedTransactions.map((tx, index) => (
             <motion.div
               key={tx.id || tx.hash || `tx-${index}`}
               initial={{ opacity: 0, y: 20 }}
@@ -644,9 +707,12 @@ const Transactions = () => {
                     <div className="flex flex-col gap-1.5">
                       <span className="text-sm font-semibold text-slate-900 dark:text-white">{tx.type}</span>
                       {getNetworkName(tx.chainId) && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 w-fit">
-                          {getNetworkName(tx.chainId)}
-                        </span>
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 w-fit">
+                          <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3 h-3 object-contain" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">
+                            {getNetworkName(tx.chainId)}
+                          </span>
+                        </div>
                       )}
                     </div>
                     <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">{timeAgo(tx.timestamp)}</span>
@@ -722,33 +788,43 @@ const Transactions = () => {
                     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                       <div className="min-w-0">
                         <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">You pay</div>
-                        <div className="flex items-baseline gap-1.5 min-w-0">
-                          {(getSwapFromAmount(tx) || getSwapAmount(tx)) && (
-                            <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
-                              {getSwapFromAmount(tx) || getSwapAmount(tx)}
-                            </span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          {getTokenLogo(getSwapFromToken(tx)) && (
+                            <img src={getTokenLogo(getSwapFromToken(tx))} alt="" className="w-5 h-5 rounded-full object-cover border border-white/10" />
                           )}
-                          <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                            {getSwapFromToken(tx)}
-                          </span>
+                          <div className="flex items-baseline gap-1.5 min-w-0">
+                            {(getSwapFromAmount(tx) || getSwapAmount(tx)) && (
+                              <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
+                                {getSwapFromAmount(tx) || getSwapAmount(tx)}
+                              </span>
+                            )}
+                            <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                              {getSwapFromToken(tx)}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-center">
-                        <ArrowLeftRight size={18} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                        <ArrowLeftRight size={18} className="text-blue-400 dark:text-blue-500 flex-shrink-0" />
                       </div>
 
-                      <div className="min-w-0 text-right">
-                        <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">You receive</div>
-                        <div className="flex items-baseline justify-end gap-1.5 min-w-0">
-                          {getSwapToAmount(tx) && (
-                            <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
-                              {getSwapToAmount(tx)}
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1 text-right">You receive</div>
+                        <div className="flex items-center justify-end gap-2 min-w-0">
+                          <div className="flex items-baseline justify-end gap-1.5 min-w-0 order-1">
+                            {getSwapToAmount(tx) && (
+                              <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
+                                {getSwapToAmount(tx)}
+                              </span>
+                            )}
+                            <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                              {getSwapToToken(tx)}
                             </span>
+                          </div>
+                          {getTokenLogo(getSwapToToken(tx)) && (
+                            <img src={getTokenLogo(getSwapToToken(tx))} alt="" className="w-5 h-5 rounded-full object-cover border border-white/10 order-2" />
                           )}
-                          <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                            {getSwapToToken(tx)}
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -764,7 +840,7 @@ const Transactions = () => {
                         {tx.type === 'Bridge' ? (
                           getChainIcon(tx.from) ? (
                             <div className="flex items-center gap-1.5">
-                              <img src={getChainIcon(tx.from)} alt={tx.from} className="w-4 h-4 rounded-full object-contain" />
+                              <img src={getChainIcon(tx.from)} alt={tx.from} className="w-4 h-4 rounded-full object-cover" />
                               <span>{tx.from}</span>
                             </div>
                           ) : (
@@ -782,7 +858,7 @@ const Transactions = () => {
                         {tx.type === 'Bridge' ? (
                           getChainIcon(tx.to) ? (
                             <div className="flex items-center gap-1.5">
-                              <img src={getChainIcon(tx.to)} alt={tx.to} className="w-4 h-4 rounded-full object-contain" />
+                              <img src={getChainIcon(tx.to)} alt={tx.to} className="w-4 h-4 rounded-full object-cover" />
                               <span>{tx.to}</span>
                             </div>
                           ) : (
@@ -847,7 +923,34 @@ const Transactions = () => {
           </div>
         )}
       </div>
-    </div>
+
+      {/* Pagination Controls */}
+      {mergedTransactions.length > transactionsPerPage && (
+        <div className="flex items-center justify-center gap-3 mt-8 pb-6">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold text-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-blue-50 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 flex items-center justify-center"
+            aria-label="Previous page"
+          >
+            ‹
+          </button>
+          <div className="px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              Page <span className="text-blue-600 dark:text-blue-400">{currentPage}</span> of {totalPages}
+            </span>
+          </div>
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold text-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-blue-50 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 flex items-center justify-center"
+            aria-label="Next page"
+          >
+            ›
+          </button>
+        </div>
+      )}
+    </div >
   );
 };
 
