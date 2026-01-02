@@ -1,34 +1,50 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, AlertCircle, AlertTriangle, ArrowRight } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 
 const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, errorMessage }) => {
   const { t } = useTranslation();
-  // Format error message with number highlighting
-  const formatErrorMessage = (message) => {
-    if (!message) return t('An unknown error occurred during the bridge transaction.');
 
-    const numberRegex = /(\d+\.?\d*)/g;
-    const parts = message.split(numberRegex);
+  // Safety checks for chain names
+  const safeFromChain = typeof fromChain === 'string' ? fromChain : 'Sepolia';
+  const safeToChain = typeof toChain === 'string' ? toChain : 'Arc Testnet';
 
-    return parts.map((part, index) => {
-      if (/^\d+\.?\d*$/.test(part)) {
-        return (
-          <span key={index} className="font-mono font-bold text-red-600 dark:text-red-400">
-            {part}
-          </span>
-        );
-      }
-      return <span key={index}>{part}</span>;
-    });
+  // Helper to simplify technical RPC/Network errors
+  const getCleanErrorMessage = (msg) => {
+    if (!msg) return t('User rejected the transaction in wallet.');
+
+    // Check for common technical/RPC error patterns
+    const isTechnicalError =
+      msg.toLowerCase().includes('http request failed') ||
+      msg.toLowerCase().includes('unterminated string') ||
+      msg.toLowerCase().includes('json') ||
+      msg.toLowerCase().includes('viem') ||
+      msg.toLowerCase().includes('mint step failed') ||
+      msg.toLowerCase().includes('drpc.org');
+
+    if (isTechnicalError) {
+      return t('Network error on destination chain. Please ensure you are connected to the correct network and try again.');
+    }
+
+    // fallback to original if it's already user-friendly (like rejection)
+    return msg;
   };
 
-  return (
+  const getChainIcon = (name) => {
+    if (!name) return "/icons/eth.png";
+    const n = name.toLowerCase();
+    if (n.includes('arc')) return "/icons/Arc.png";
+    if (n.includes('base')) return "/icons/base.png";
+    return "/icons/eth.png";
+  };
+
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center bridging-modal-backdrop"
+          className="fixed inset-0 z-[1000] bridging-modal-backdrop"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -42,7 +58,6 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button (Absolute) - Match SwapModal alt button style */}
             <button
               onClick={onClose}
               className="bridging-modal-close-button-alt"
@@ -52,105 +67,66 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
             </button>
 
             <div className="bridging-modal-content">
-              <div className="bridging-modal-heading-container">
-                <h2 className="bridging-modal-youre-bridging text-red-500">
-                  {errorTitle || t('Transaction Failed')}
-                </h2>
-              </div>
-              {/* Network Visualization Card */}
               <motion.div
-                className="bridging-modal-network-container"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
+                className="space-y-6"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
               >
-                <div className="flex flex-row items-center justify-between gap-4">
-                  {/* Source Chain Card */}
-                  <div className="bridging-modal-network-card">
-                    <img
-                      src={fromChain?.includes('Arc') ? "/icons/Arc.png" : fromChain?.includes('Base') ? "/icons/base.png" : "/icons/eth.png"}
-                      alt={fromChain}
-                      className="bridging-modal-network-icon"
-                    />
-                    <p className="bridging-modal-network-name">{fromChain}</p>
+                <div className="bridging-modal-status-card-new">
+                  <div className="bridging-modal-success-icon-wrapper">
+                    <motion.div
+                      className="bridging-modal-failed-circle"
+                      initial={{ scale: 0, rotate: -45 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ delay: 0.2, type: 'spring' }}
+                    >
+                      <X size={40} strokeWidth={4} />
+                    </motion.div>
                   </div>
 
-                  {/* Arrow Connector */}
-                  <div className="bridging-modal-arrow-container">
-                    <ArrowRight className="bridging-modal-arrow" size={16} strokeWidth={3} />
+                  <div className="text-center mb-6">
+                    <h4 className="bridging-modal-status-title-new" style={{ color: '#ef4444' }}>
+                      {t('Transaction Failed')}
+                    </h4>
+                    <p className="bridging-modal-success-message">
+                      {getCleanErrorMessage(errorMessage)}
+                    </p>
                   </div>
 
-                  {/* Destination Chain Card */}
-                  <div className="bridging-modal-network-card">
-                    <img
-                      src={toChain?.includes('Arc') ? "/icons/Arc.png" : toChain?.includes('Base') ? "/icons/base.png" : "/icons/eth.png"}
-                      alt={toChain}
-                      className="bridging-modal-network-icon"
-                    />
-                    <p className="bridging-modal-network-name">{toChain}</p>
+                  <div className="bridging-modal-success-details mb-8">
+                    <div className="bridging-modal-success-info-row">
+                      <span>{t('Source')}</span>
+                      <div className="flex items-center gap-2">
+                        <img src={getChainIcon(safeFromChain)} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        <span className="value">{safeFromChain}</span>
+                      </div>
+                    </div>
+                    <div className="bridging-modal-success-info-row">
+                      <span>{t('Destination')}</span>
+                      <div className="flex items-center gap-2">
+                        <img src={getChainIcon(safeToChain)} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        <span className="value">{safeToChain}</span>
+                      </div>
+                    </div>
                   </div>
+
+                  <button
+                    onClick={onClose}
+                    className="bridging-modal-action-button-secondary-new"
+                  >
+                    {t('Retry')}
+                  </button>
                 </div>
               </motion.div>
-
-              {/* Enhanced Error Message Card */}
-              <motion.div
-                className="bridging-modal-error-card"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                <AlertTriangle size={20} className="bridging-modal-error-icon" strokeWidth={2.5} />
-                <div className="flex-1">
-                  <p className="bridging-modal-error-title">
-                    {t('Error Details')}
-                  </p>
-                  <p className="bridging-modal-error-text">
-                    {formatErrorMessage(errorMessage || t('An unknown error occurred during the bridge transaction.'))}
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Notice for safety */}
-              <motion.div
-                className="bridging-modal-notice mt-6"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                <AlertCircle size={20} className="bridging-modal-notice-icon" strokeWidth={2.5} />
-                <div className="flex-1">
-                  <p className="bridging-modal-notice-title">{t('Helpful Tip')}</p>
-                  <p className="bridging-modal-notice-text">
-                    {t('bridgeFailedTip')}
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Action Buttons */}
-              <div className="bridging-modal-buttons-container mt-8">
-                <motion.button
-                  onClick={onClose}
-                  className="bridging-modal-retry-button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {t('Retry')}
-                </motion.button>
-                <motion.button
-                  onClick={onClose}
-                  className="bridging-modal-close-button-secondary"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {t('Close')}
-                </motion.button>
-              </div>
             </div>
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default BridgeFailedModal;

@@ -8,6 +8,8 @@ import { useDappTransactionCount } from '../hooks/useDappTransactionCount';
 import { useDappBridgeCount } from '../hooks/useDappBridgeCount';
 import { useActiveUsers } from '../hooks/useActiveUsers';
 import { useNetworkUptime } from '../hooks/useNetworkUptime';
+import { useTotalVolume } from '../hooks/useTotalVolume';
+import { useTotalValueProcessed } from '../hooks/useTotalValueProcessed';
 
 const Home = ({ setActiveTab }) => {
   const { t } = useTranslation();
@@ -15,10 +17,12 @@ const Home = ({ setActiveTab }) => {
   const { bridgeCount, change: bridgeChange, trend: bridgeTrend } = useDappBridgeCount();
   const { activeUsers, change: usersChange, trend: usersTrend } = useActiveUsers();
   const { uptime, change: uptimeChange, trend: uptimeTrend } = useNetworkUptime();
-  
+  const { totalVolume, loading: volumeLoading } = useTotalVolume();
+  const { totalValue, loading: tvpLoading } = useTotalValueProcessed();
+
   const [stats, setStats] = useState({
-    volume: { value: 847200, change: 15.3, trend: 'up' },
-    tvl: { value: 3200000, change: 8.7, trend: 'up' },
+    volume: { value: totalVolume || 0, change: 0, trend: 'up' },
+    tvl: { value: totalValue || 0, change: 0, trend: 'up' },
     users: { value: activeUsers || 1247, change: usersChange || 12.4, trend: usersTrend || 'up' },
     transactions: { value: transactionCount || 8934, change: change || 5.2, trend: trend || 'up' },
     crossChain: { value: bridgeCount || 342, change: bridgeChange || 22.1, trend: bridgeTrend || 'up' },
@@ -90,21 +94,37 @@ const Home = ({ setActiveTab }) => {
     }
   }, [uptime, uptimeChange, uptimeTrend]);
 
-  // Simulate live data updates (excluding transactions which now use real data)
+  // Update total volume when real data is available
   useEffect(() => {
-    const interval = setInterval(() => {
+    if (totalVolume !== null && !volumeLoading) {
       setStats(prevStats => ({
         ...prevStats,
         volume: {
           ...prevStats.volume,
-          value: prevStats.volume.value + Math.floor(Math.random() * 1000),
-          change: parseFloat((prevStats.volume.change + (Math.random() * 0.5 - 0.25)).toFixed(1))
+          value: totalVolume,
         },
+      }));
+    }
+  }, [totalVolume, volumeLoading]);
+
+  // Update total value processed when real data is available
+  useEffect(() => {
+    if (totalValue !== null && !tvpLoading) {
+      setStats(prevStats => ({
+        ...prevStats,
         tvl: {
           ...prevStats.tvl,
-          value: prevStats.tvl.value + Math.floor(Math.random() * 500),
-          change: parseFloat((prevStats.tvl.change + (Math.random() * 0.2 - 0.1)).toFixed(1))
+          value: totalValue,
         },
+      }));
+    }
+  }, [totalValue, tvpLoading]);
+
+  // Simulate live data updates (excluding transactions, volume, and TVP which now use real data)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStats(prevStats => ({
+        ...prevStats,
         users: {
           ...prevStats.users,
           value: prevStats.users.value + Math.floor(Math.random() * 5),
@@ -131,14 +151,14 @@ const Home = ({ setActiveTab }) => {
     },
     {
       id: 'volume',
-      label: t('24h Volume'),
+      label: t('Swap Volume'),
       value: formatCurrency(stats.volume.value, 0),
       change: stats.volume.change,
       trend: stats.volume.trend,
       icon: DollarSign,
       lucideIcon: DollarSign,
       color: 'from-green-500 to-green-600',
-      description: t('Sum of swap transactions in last 24h')
+      description: t('Total swap volume in USD')
     },
     {
       id: 'Cross-Chain',
@@ -164,14 +184,14 @@ const Home = ({ setActiveTab }) => {
     },
     {
       id: 'tvl',
-      label: t('Total Value Locked'),
+      label: t('Total Value Processed'),
       value: formatCurrency(stats.tvl.value, 0),
       change: stats.tvl.change,
       trend: stats.tvl.trend,
       icon: TrendingUp,
       lucideIcon: TrendingUp,
       color: 'from-blue-500 to-blue-600',
-      description: t('Aggregate from all liquidity pools')
+      description: t('Aggregate of all dApp activities')
     },
     {
       id: 'uptime',
@@ -207,7 +227,7 @@ const Home = ({ setActiveTab }) => {
 
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSg0NSkiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3BhdHRlcm4pIi8+PC9zdmc+')] opacity-20"></div>
         <div className="relative z-10">
-         
+
           <h1 className="text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold mb-3 md:mb-4 leading-tight">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-200 to-white bg-[length:200%_auto] animate-text-shimmer">
               {t('Welcome to Stac')}
@@ -235,13 +255,13 @@ const Home = ({ setActiveTab }) => {
             transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-3 md:gap-4"
           >
-            <button 
+            <button
               onClick={handleGetStarted}
               className="w-full sm:w-auto bg-white text-blue-600 px-6 py-3 md:px-7 md:py-4 rounded-xl font-bold hover:shadow-2xl hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
             >
               <span>{t('Swap Now')}</span>
             </button>
-            <a 
+            <a
               href="https://www.arc.network/"
               target="_blank"
               rel="noopener noreferrer"
@@ -250,7 +270,7 @@ const Home = ({ setActiveTab }) => {
               <span>{t('Learn More')}</span>
             </a>
           </motion.div>
-          
+
           {/* Key Benefits */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -272,14 +292,14 @@ const Home = ({ setActiveTab }) => {
             </div>
           </motion.div>
         </div>
-        
+
         {/* Background decorations */}
         <div className="absolute top-0 right-0 w-48 h-48 md:w-96 md:h-96 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 md:w-96 md:h-96 bg-white/10 rounded-full blur-3xl"></div>
       </motion.div>
 
       {/* Statistics Dashboard */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -302,7 +322,7 @@ const Home = ({ setActiveTab }) => {
               >
                 {/* Subtle gradient overlay on hover */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-                
+
                 <div className="relative z-10">
                   <div className="flex items-start justify-between mb-4">
                     <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} neon-icon-container flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
@@ -317,11 +337,11 @@ const Home = ({ setActiveTab }) => {
                       </div>
                     )}
                   </div>
-                  
+
                   <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-2 font-mono tabular-nums tracking-tight">{stat.value}</h3>
                   <p className="text-sm md:text-base font-semibold text-slate-700 dark:text-slate-200 mb-1.5">{stat.label}</p>
                   <p className="text-xs md:text-sm leading-relaxed text-slate-500 dark:text-slate-400 mb-4">{stat.description}</p>
-                  
+
                   {/* Data source indicator - no border */}
                   <div className="flex items-center text-xs text-slate-400 dark:text-slate-500">
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse shadow-sm shadow-green-500/50"></div>
@@ -335,21 +355,21 @@ const Home = ({ setActiveTab }) => {
       </motion.div>
 
       {/* Quick Actions */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
         className="card"
       >
         <div className="mb-6">
-        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Quick Actions')}</h2>
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Quick Actions')}</h2>
           <p p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">
             {t('Everything you need to manage your assets on Arc')}
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          <div 
+          <div
             onClick={() => setActiveTab('swap')}
             className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1 cursor-pointer"
           >
@@ -371,7 +391,7 @@ const Home = ({ setActiveTab }) => {
             </div>
           </div>
 
-          <div 
+          <div
             onClick={() => setActiveTab('bridge')}
             className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1 cursor-pointer"
           >
@@ -393,7 +413,7 @@ const Home = ({ setActiveTab }) => {
             </div>
           </div>
 
-          <div 
+          <div
             onClick={() => setActiveTab('liquidity')}
             className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1 cursor-pointer"
           >
@@ -416,54 +436,54 @@ const Home = ({ setActiveTab }) => {
           </div>
         </div>
       </motion.div>
-        
+
       {/* Why Arc Network Section */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
         className="card mt-8 md:mt-12"
       >
-          <div className="mb-6">
-            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Why Arc Network')}</h2>
-            <p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">{t('Experience the next generation of blockchain infrastructure')}</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            <div className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
-              <div className="relative z-10">
-                <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <Zap size={20} className="text-white" />
-                </div>
-                <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white">{t('Lightning Fast')}</h3>
-                <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">{t('Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.')}</p>
+        <div className="mb-6">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Why Arc Network')}</h2>
+          <p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">{t('Experience the next generation of blockchain infrastructure')}</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          <div className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+            <div className="relative z-10">
+              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Zap size={20} className="text-white" />
               </div>
-            </div>
-            
-            <div className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-green-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
-              <div className="relative z-10">
-                <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <DollarSign size={20} className="text-white" />
-                </div>
-                <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white">{t('USDC Gas Fee')}</h3>
-                <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">{t('Predictable transaction costs with stablecoin-based gas fees for better UX.')}</p>
-              </div>
-            </div>
-            
-            <div className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
-              <div className="relative z-10">
-                <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <Shield size={20} className="text-white" />
-                </div>
-                <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white">{t('Enterprise Grade')}</h3>
-                <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">{t('Built for institutional use with advanced security and compliance features.')}</p>
-              </div>
+              <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white">{t('Lightning Fast')}</h3>
+              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">{t('Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.')}</p>
             </div>
           </div>
-        </motion.div>
+
+          <div className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-green-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+            <div className="relative z-10">
+              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <DollarSign size={20} className="text-white" />
+              </div>
+              <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white">{t('USDC Gas Fee')}</h3>
+              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">{t('Predictable transaction costs with stablecoin-based gas fees for better UX.')}</p>
+            </div>
+          </div>
+
+          <div className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+            <div className="relative z-10">
+              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Shield size={20} className="text-white" />
+              </div>
+              <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white">{t('Enterprise Grade')}</h3>
+              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">{t('Built for institutional use with advanced security and compliance features.')}</p>
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 };
