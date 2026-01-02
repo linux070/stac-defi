@@ -27,6 +27,49 @@ const SwapModal = ({
     toAmount,
     swapState
 }) => {
+    const { t } = useTranslation();
+
+    // Helper to simplify technical RPC/Network errors
+    const getCleanErrorMessage = (msg) => {
+        if (!msg) return t('User rejected the transaction in wallet.');
+
+        const lowerMsg = msg.toLowerCase();
+
+        // User rejection
+        if (lowerMsg.includes('user rejected') || lowerMsg.includes('user denied') || lowerMsg.includes('action_rejected')) {
+            return t('Transaction cancelled: You rejected the request in your wallet.');
+        }
+
+        // Insufficient funds
+        if (lowerMsg.includes('insufficient funds') || lowerMsg.includes('exceeds the balance')) {
+            return t('Insufficient funds: You do not have enough native tokens to cover the gas fee.');
+        }
+
+        // Slippage / Price Impact
+        if (lowerMsg.includes('slippage') || lowerMsg.includes('price impact') || lowerMsg.includes('too much')) {
+            return t('Swap failed due to high price impact or slippage. Please try increasing your slippage tolerance.');
+        }
+
+        // RPC / Network Issues
+        const isTechnicalError =
+            lowerMsg.includes('http request failed') ||
+            lowerMsg.includes('unterminated string') ||
+            lowerMsg.includes('json') ||
+            lowerMsg.includes('viem') ||
+            lowerMsg.includes('drpc.org');
+
+        if (isTechnicalError) {
+            return t('Network error: The node is unresponsive. Please wait a moment and try again.');
+        }
+
+        // Fallback for short technical strings but not the massive dev call blocks
+        if (msg.length > 150) {
+            return t('The transaction was cancelled or failed on-chain. Please verify your wallet and try again.');
+        }
+
+        return msg;
+    };
+
     const formatAmount = (val) => {
         if (!val) return '0.00';
         const num = parseFloat(val);
@@ -50,7 +93,6 @@ const SwapModal = ({
         return iconMap[symbol] || null;
     };
 
-    const { t } = useTranslation();
     const { chainId } = useWallet();
     const { address } = useAccount();
     const {
@@ -161,7 +203,7 @@ const SwapModal = ({
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Close Button (Absolute) */}
-                        {!(step === 'success' || step === 'error') && (
+                        {!(step === 'success') && (
                             <button
                                 onClick={onClose}
                                 className="swap-modal-close-button-alt"
@@ -170,28 +212,6 @@ const SwapModal = ({
                             </button>
                         )}
 
-                        {/* Header (Only for Error) */}
-                        {(step === 'error') && (
-                            <div className="swap-modal-header swap-modal-header-error">
-                                <button
-                                    onClick={onClose}
-                                    className="swap-modal-close-button"
-                                >
-                                    <X size={20} />
-                                </button>
-
-                                <div className="flex flex-col items-center">
-                                    <div className="swap-modal-icon-container">
-                                        {step === 'success' && <CheckCircle size={32} />}
-                                        {step === 'error' && <AlertCircle size={32} />}
-                                    </div>
-                                    <h3 className="swap-modal-title">
-                                        {step === 'success' && t('Swap Successful')}
-                                        {step === 'error' && t('Swap Failed')}
-                                    </h3>
-                                </div>
-                            </div>
-                        )}
 
                         <div className="swap-modal-content">
                             {(step === 'confirm' || step === 'processing') && (
@@ -286,7 +306,7 @@ const SwapModal = ({
 
 
                             {step === 'success' && (
-                                <div className="space-y-6 pt-2 pb-4">
+                                <div className="space-y-6 pt-6 pb-4">
                                     <div className="swap-modal-status-card-new">
                                         <div className="swap-modal-success-icon-wrapper">
                                             <div className="swap-modal-checkmark-circle">
@@ -322,19 +342,25 @@ const SwapModal = ({
                             )}
 
                             {step === 'error' && (
-                                <div className="space-y-6">
-                                    <div className="swap-modal-status-card">
-                                        <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-                                        <h4 className="swap-modal-status-title">{t('Something went wrong')}</h4>
-                                        <p className="swap-modal-status-text">
-                                            {error?.message || t('The transaction was cancelled or failed on-chain.')}
+                                <div className="space-y-6 pt-6 pb-4">
+                                    <div className="swap-modal-status-card-new">
+                                        <div className="swap-modal-success-icon-wrapper">
+                                            <div className="swap-modal-error-circle">
+                                                <X size={32} strokeWidth={3} />
+                                            </div>
+                                        </div>
+                                        <h4 className="swap-modal-status-title-new">{t('Swap Failed')}</h4>
+                                        <div className="swap-modal-success-summary-text">
+                                            {t('Something went wrong')}
+                                        </div>
+                                        <p className="swap-modal-status-text px-4">
+                                            {getCleanErrorMessage(error?.message) || t('The transaction was cancelled or failed on-chain.')}
                                         </p>
                                     </div>
 
                                     <button
                                         onClick={() => setStep('confirm')}
-                                        className="swap-modal-action-button"
-                                        style={{ background: 'var(--swap-danger-color)' }}
+                                        className="swap-modal-action-button-secondary-new"
                                     >
                                         {t('Try Again')}
                                     </button>

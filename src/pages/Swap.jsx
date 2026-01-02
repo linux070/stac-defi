@@ -24,8 +24,8 @@ const getTokenIcon = (symbol) => {
     'USDC': '/icons/usdc.png',
     'STCK': '/icons/stac.png',
     'BALL': '/icons/ball.jpg',
-    'MTB': '/icons/mtb.png',
-    'ECR': '/icons/ecr.png'
+    'MTB': '/icons/MTB.png',
+    'ECR': '/icons/ECR.png'
   };
   return iconMap[symbol] || null;
 };
@@ -50,6 +50,7 @@ const Swap = () => {
   const [toast, setToast] = useState({ visible: false, type: 'info', message: '' });
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [liquidityWarning, setLiquidityWarning] = useState('');
+  const [lastEditedField, setLastEditedField] = useState('from'); // 'from' or 'to'
 
   // Modal states
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
@@ -299,32 +300,65 @@ const Swap = () => {
 
   // Calculate swap quote using the useSwap hook
   useEffect(() => {
+    // Sync ToAmount when FromAmount changes (and it was the one edited)
     if (fromAmount && parseFloat(fromAmount) > 0) {
-      if (swapState.expectedOut && swapState.expectedOut !== "0") {
-        setToAmount(swapState.expectedOut);
-
-        // Update the swapQuote object for detail display
-        setSwapQuote({
-          expectedOutput: swapState.expectedOut,
-          price: swapState.price,
-          minReceived: (parseFloat(swapState.expectedOut) * 0.995).toFixed(6),
-          priceImpact: '0.00',
-          networkFee: '0.00'
-        });
-        setShowSwapDetails(true);
+      if (swapState.expectedOut && swapState.expectedOut !== "0" && lastEditedField === 'from') {
+        // Round to 2 decimal places for display
+        const roundedAmount = parseFloat(swapState.expectedOut).toFixed(2);
+        setToAmount(roundedAmount);
       }
-    } else {
-      setToAmount('');
+
+      // Update details for the quote card
+      setSwapQuote({
+        expectedOutput: swapState.expectedOut,
+        price: swapState.price,
+        minReceived: (parseFloat(swapState.expectedOut || 0) * 0.995).toFixed(2),
+        priceImpact: '0.01',
+        networkFee: '0.00'
+      });
+      setShowSwapDetails(true);
+    } else if (!fromAmount && !toAmount) {
       setSwapQuote(null);
       setShowSwapDetails(false);
     }
-  }, [fromAmount, swapState.expectedOut, swapState.price]);
+  }, [fromAmount, swapState.expectedOut, swapState.price, lastEditedField]);
+
+  // Handle bidirectional input
+  const handleFromAmountChange = (val) => {
+    setLastEditedField('from');
+    setFromAmount(val);
+    if (!val || parseFloat(val) <= 0) {
+      setToAmount('');
+    }
+  };
+
+  const handleToAmountChange = (val) => {
+    const sanitized = sanitizeInput(val);
+    setLastEditedField('to');
+    setToAmount(sanitized);
+
+    if (sanitized && parseFloat(sanitized) > 0) {
+      // Calculate inverse amount based on current price
+      if (swapState.price && parseFloat(swapState.price) > 0) {
+        const price = parseFloat(swapState.price);
+        const isBuying = fromToken === 'USDC';
+
+        const calculatedFrom = isBuying
+          ? (parseFloat(sanitized) * price).toFixed(2)
+          : (parseFloat(sanitized) / price).toFixed(2);
+
+        setFromAmount(calculatedFrom);
+      }
+    } else {
+      setFromAmount('');
+    }
+  };
 
   // Handle swap success/error notifications
   useEffect(() => {
     if (swapState.isSuccess) {
       setToast({ visible: true, type: 'success', message: t('Swap Successful!') });
-      setFromAmount('');
+      // Clearing of fromAmount/toAmount moved to handleCloseSwapModal
       refetchFrom();
       refetchTo();
 
@@ -391,6 +425,8 @@ const Swap = () => {
       setToast({ visible: true, type: 'error', message: t('Please enter a valid amount') });
       return;
     }
+
+    // Always open the confirmation modal, it will handle approval if needed
     setIsSwapModalOpen(true);
   };
 
@@ -667,7 +703,7 @@ const Swap = () => {
               type="text"
               inputMode="decimal"
               value={fromAmount}
-              onChange={(e) => setFromAmount(sanitizeInput(e.target.value))}
+              onChange={(e) => handleFromAmountChange(sanitizeInput(e.target.value))}
               placeholder="0.0"
               className="swap-amount-input"
             />
@@ -677,15 +713,15 @@ const Swap = () => {
               className="swap-token-selector"
             >
               <div className="swap-token-icon">
-                {fromToken === 'USDC' ? (
+                {getTokenIcon(fromToken) ? (
                   <img
-                    src="/icons/usdc.png"
+                    src={getTokenIcon(fromToken)}
                     alt={fromToken}
-                    className="w-6 h-6 rounded-full object-contain"
+                    className="w-full h-full rounded-full"
                   />
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                    <span className="text-xs font-bold">{fromToken}</span>
+                  <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                    <span className="text-[10px] font-bold">{fromToken}</span>
                   </div>
                 )}
               </div>
@@ -735,8 +771,9 @@ const Swap = () => {
           <div className="swap-input-row">
             <input
               type="text"
+              inputMode="decimal"
               value={toAmount}
-              readOnly
+              onChange={(e) => handleToAmountChange(e.target.value)}
               placeholder="0.0"
               className="swap-amount-input"
             />
@@ -746,15 +783,15 @@ const Swap = () => {
               className="swap-token-selector"
             >
               <div className="swap-token-icon">
-                {toToken === 'USDC' ? (
+                {getTokenIcon(toToken) ? (
                   <img
-                    src="/icons/usdc.png"
+                    src={getTokenIcon(toToken)}
                     alt={toToken}
-                    className="w-6 h-6 rounded-full object-contain"
+                    className="w-full h-full rounded-full"
                   />
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                    <span className="text-xs font-bold">{toToken}</span>
+                  <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                    <span className="text-[10px] font-bold">{toToken}</span>
                   </div>
                 )}
               </div>
@@ -791,6 +828,18 @@ const Swap = () => {
             </div>
           )}
         </div>
+
+        {/* Price Details - Actual Token Prices */}
+        {fromAmount && toAmount && (
+          <div className="mt-3 px-1 flex items-center gap-1 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+            <Info size={12} className="opacity-60" />
+            <span>
+              1 {fromToken} = {TOKEN_PRICES[toToken] && TOKEN_PRICES[fromToken]
+                ? (TOKEN_PRICES[toToken] / TOKEN_PRICES[fromToken]).toFixed(2)
+                : swapState.price ? parseFloat(swapState.price).toFixed(2) : '0.00'} {toToken}
+            </span>
+          </div>
+        )}
 
 
 
@@ -856,7 +905,7 @@ const Swap = () => {
         <button
           onClick={handleSwapClick}
           className={`swap-button ${(parseFloat(fromAmount) > parseFloat(fromBalance)) ? 'swap-button-failed' : ''}`}
-          disabled={!isConnected || !fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance)}
+          disabled={!isConnected || !fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance) || swapState.isLoading}
         >
           {!isConnected ? (
             <>
@@ -865,15 +914,28 @@ const Swap = () => {
             </>
           ) : parseFloat(fromAmount) > parseFloat(fromBalance) ? (
             <span>{t('Insufficient Balance')}</span>
+          ) : swapState.isLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader className="animate-spin" size={18} />
+              <span>{swapState.isApproving ? 'Approving...' : 'Swapping...'}</span>
+            </div>
+          ) : swapState.needsApproval ? (
+            <span>Approve {fromToken}</span>
           ) : (
-            <span>{t('Swap')}</span>
+            <span>Swap</span>
           )}
         </button>
 
         {/* Modals */}
         <SwapModal
           isOpen={isSwapModalOpen}
-          onClose={() => setIsSwapModalOpen(false)}
+          onClose={() => {
+            setIsSwapModalOpen(false);
+            if (swapState.isSuccess) {
+              setFromAmount('');
+              setToAmount('');
+            }
+          }}
           fromToken={TOKENS[fromToken]}
           toToken={TOKENS[toToken]}
           fromAmount={fromAmount}

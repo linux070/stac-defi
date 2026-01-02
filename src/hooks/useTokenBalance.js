@@ -88,6 +88,24 @@ const useTokenBalance = (tokenSymbol) => {
     };
   }, [isLoading, shouldFetch, isConnected, address, tokenSymbol, chainIdNumber]);
 
+  // Global event listener for balance refresh
+  useEffect(() => {
+    const handleRefresh = () => {
+      if (typeof refetch === 'function') {
+        console.log(`[Balance] Refreshing ${tokenSymbol} balance after faucet claim`);
+        refetch();
+      }
+    };
+
+    window.addEventListener('faucetClaimed', handleRefresh);
+    window.addEventListener('swapTransactionSaved', handleRefresh);
+
+    return () => {
+      window.removeEventListener('faucetClaimed', handleRefresh);
+      window.removeEventListener('swapTransactionSaved', handleRefresh);
+    };
+  }, [refetch, tokenSymbol]);
+
   // Now we can return based on conditions
   if (!isConnected || !address) {
     return {

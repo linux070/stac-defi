@@ -1,0 +1,15 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address[]",
+                "name": "tokens",
+                "type": "address[]"
+            }
+        ],
+        "name": "claimAll",
+        "outputs": [],
+        "stateMutability": "external",
+        "type": "function"
+    }
+]

@@ -2,11 +2,6 @@
 
 export const APP_NAME = 'Stac DeFi';
 export const APP_DESCRIPTION = 'The next generation of blockchain infrastructure on Arc Network';
-
-// ==========================================
-// CONFIGURATION: ARC TESTNET
-// ==========================================
-
 export const DEX_ADDRESS = "0x38699BE95B5E73cd91Ec85Fc5482C9436CF996fA"; // FixedPriceDEX Address (From Remix)
 
 // The Official USDC Address on Arc (Do not change)
@@ -17,7 +12,10 @@ export const TOKENS = {
     STCK: "0x21AC76D470E301e2E8f0C1976E9a07f56B363341", // STCK Address
     BALL: "0xF2EdfA5fae558a05914dABE9Ba4854aa223D3085", // BALL Address
     MTB: "0xD666B6c8Cd8727407a52E69375Ae90009c4b4ce8", // MTB Address
+    ECR: "0x257E6639a9Aa53960a65e8552b30d8db01A557F4", // ECR Address
 };
+
+export const BATCH_FAUCET_ADDRESS = "0x5e0A1e0a40b9Fb56D14eDaa3DFcfD70C556f54a7";
 
 export const DECIMALS = {
     USDC: 6,

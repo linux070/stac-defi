@@ -61,14 +61,14 @@ export const validateAmount = (amount, balance = null, minAmount = 0.000001) => 
   return true;
 };
 
-// Format currency with proper decimal handling
+// Format currency with dollar sign
 export const formatCurrency = (value, decimals = 2) => {
-  if (value === null || value === undefined) return '0.00';
+  if (value === null || value === undefined) return '$0.00';
 
   const num = parseFloat(value);
-  if (isNaN(num)) return '0.00';
+  if (isNaN(num)) return '$0.00';
 
-  return num.toLocaleString(undefined, {
+  return '$' + num.toLocaleString(undefined, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals
   });
@@ -91,6 +91,8 @@ export const formatTokenAmount = (amount, decimals = 6) => {
     maximumFractionDigits: decimals
   });
 };
+
+
 
 // Get filtered token list based on network
 export const getFilteredTokens = (tokenList, chainId) => {

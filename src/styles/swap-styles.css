@@ -305,6 +305,13 @@ html.dark,
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.swap-token-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .swap-token-symbol {
@@ -312,6 +319,12 @@ html.dark,
   font-weight: 600;
   color: var(--swap-text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Ensure token symbols are always visible in dark mode */
+html.dark .swap-token-symbol,
+.dark .swap-token-symbol {
+  color: #ffffff;
 }
 
 .swap-token-chevron {
@@ -1062,7 +1075,8 @@ html.dark .swap-slippage-container,
   height: 24px;
   border-radius: 50%;
   flex-shrink: 0;
-  object-fit: contain;
+  object-fit: cover;
+  display: block;
 }
 
 .swap-token-selector-popular-symbol {
@@ -1070,6 +1084,17 @@ html.dark .swap-slippage-container,
   font-weight: 600;
   color: inherit;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Ensure popular token symbols are visible in dark mode */
+html.dark .swap-token-selector-popular-symbol,
+.dark .swap-token-selector-popular-symbol {
+  color: #ffffff;
+}
+
+html.dark .swap-token-selector-popular-button.active .swap-token-selector-popular-symbol,
+.dark .swap-token-selector-popular-button.active .swap-token-selector-popular-symbol {
+  color: #ffffff;
 }
 
 .swap-token-selector-list {
@@ -1135,7 +1160,7 @@ html.dark .swap-slippage-container,
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .swap-token-selector-list-info {
@@ -1150,6 +1175,12 @@ html.dark .swap-slippage-container,
   color: var(--swap-text-primary);
   margin-bottom: 2px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Ensure token symbols in selector are visible in dark mode */
+html.dark .swap-token-selector-list-symbol,
+.dark .swap-token-selector-list-symbol {
+  color: #ffffff;
 }
 
 .swap-token-selector-list-name {
@@ -1345,7 +1376,7 @@ html.dark .swap-slippage-container,
 .swap-modal-token-icon {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: 50%;
   background: var(--swap-accent-primary);
   display: flex;
   align-items: center;
@@ -1353,6 +1384,13 @@ html.dark .swap-slippage-container,
   font-weight: 700;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.swap-modal-token-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .swap-modal-token-info p {
@@ -1479,16 +1517,18 @@ html.dark .swap-slippage-container,
 
 .swap-modal-step {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
-  padding: 12px;
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  padding: 12px 16px;
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
 }
 
 .swap-modal-step.active {
-  background: var(--swap-surface-card);
-  border: 1px solid var(--swap-border-light);
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.05);
 }
 
 .swap-modal-step.completed {
@@ -1500,8 +1540,8 @@ html.dark .swap-slippage-container,
 }
 
 .swap-modal-step-icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1510,27 +1550,25 @@ html.dark .swap-slippage-container,
   background: var(--swap-bg-secondary);
   border: 2px solid var(--swap-border-light);
   color: var(--swap-text-tertiary);
+  transition: all 0.3s ease;
 }
 
 .swap-modal-step.active .swap-modal-step-icon {
   border-color: var(--swap-accent-primary);
   color: var(--swap-accent-primary);
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+  background: white;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme='dark'] .swap-modal-step.active .swap-modal-step-icon {
+  background: #1a1b1f;
 }
 
 .swap-modal-step.completed .swap-modal-step-icon {
   background: var(--swap-success-color);
-  border-color: #80CBC4;
+  border-color: var(--swap-success-color);
   color: white;
-  box-shadow: 0 0 0 4px rgba(0, 137, 123, 0.1);
-}
-
-[data-theme='light'] .swap-modal-step.completed .swap-modal-step-icon {
-  border-color: #80CBC4;
-}
-
-[data-theme='dark'] .swap-modal-step.completed .swap-modal-step-icon {
-  border-color: rgba(128, 203, 196, 0.3);
+  box-shadow: 0 0 15px rgba(0, 137, 123, 0.2);
 }
 
 .swap-modal-step-number {
@@ -1546,20 +1584,22 @@ html.dark .swap-slippage-container,
   font-size: 15px;
   font-weight: 700;
   color: var(--swap-text-primary);
-  margin: 0 0 2px;
+  margin: 0 0 1px;
 }
 
 .swap-modal-step-desc {
   font-size: 12px;
   color: var(--swap-text-secondary);
+  font-weight: 500;
   margin: 0;
 }
 
 .swap-modal-step-line {
   width: 2px;
-  height: 20px;
+  height: 16px;
   background: var(--swap-border-light);
-  margin-left: 27px;
+  margin-left: 33px;
+  opacity: 0.5;
 }
 
 .swap-modal-step.active .swap-modal-step-line {
@@ -1568,36 +1608,103 @@ html.dark .swap-slippage-container,
 
 .swap-modal-step.completed+.swap-modal-step-line {
   background: var(--swap-success-color);
+  opacity: 1;
 }
 
-.swap-modal-processing-info {
+/* Merged Interactive Action Button */
+.swap-modal-interactive-step-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  background: var(--swap-surface-card);
+  border: 1px solid var(--swap-border-light);
+  border-radius: 20px;
+  margin-top: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: modalSlideUp 0.4s ease-out;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.swap-modal-interactive-step-button:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.04);
+  border-color: var(--swap-accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.08);
+}
+
+.swap-modal-interactive-step-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.swap-modal-interactive-step-button:disabled {
+  cursor: default;
+  background: var(--swap-surface-card);
+  opacity: 0.9;
+}
+
+.swap-modal-processing-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
-  background: var(--swap-surface-card);
-  border-radius: 12px;
-  color: var(--swap-accent-primary);
-  font-weight: 600;
-  font-size: 14px;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .swap-modal-processing-icon-wrapper {
+  background: #1a1b1f;
+}
+
+.swap-modal-processing-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--swap-text-primary);
+  margin-bottom: 2px;
+  line-height: 1.25;
+}
+
+.swap-modal-processing-subtitle {
+  font-size: 12px;
+  color: var(--swap-text-secondary);
+  font-weight: 500;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .swap-modal-close-button-alt {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 20px;
+  right: 20px;
   width: 32px;
   height: 32px;
-  background: var(--swap-surface-hover);
+  background: var(--swap-bg-secondary);
   border: 1px solid var(--swap-border-light);
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  color: var(--swap-text-secondary);
-  z-index: 20;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--swap-text-tertiary);
+  z-index: 50;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .swap-modal-close-button-alt:hover {
@@ -1786,6 +1893,19 @@ html.dark .swap-slippage-container,
   box-shadow: 0 0 20px rgba(0, 137, 123, 0.15);
 }
 
+.swap-modal-error-circle {
+  width: 72px;
+  height: 72px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 2px solid #EF4444;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #EF4444;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+}
+
 .swap-modal-status-title-new {
   font-size: 22px;
   font-weight: 700;
@@ -1823,9 +1943,8 @@ html.dark .swap-slippage-container,
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  object-fit: contain;
+  object-fit: cover;
   background: white;
-  padding: 1px;
 }
 
 .swap-modal-success-path-arrow {
@@ -1903,16 +2022,29 @@ html.dark .swap-slippage-container,
   flex-shrink: 0;
 }
 
+/* Dark mode support for faucet token icons */
+html.dark .faucet-token-icon-wrapper,
+.dark .faucet-token-icon-wrapper {
+  background: #1a1b1f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .faucet-token-icon-wrapper img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .faucet-token-symbol {
   font-size: 15px;
   font-weight: 700;
   color: var(--swap-text-primary);
+}
+
+/* Dark mode support for faucet token symbols */
+html.dark .faucet-token-symbol,
+.dark .faucet-token-symbol {
+  color: #ffffff;
 }
 
 .faucet-token-status {
@@ -1953,4 +2085,90 @@ html.dark .swap-slippage-container,
   color: var(--swap-text-secondary);
   line-height: 1.5;
   margin: 0;
+}
+
+.faucet-external-card {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px dashed var(--swap-accent-primary);
+  background: rgba(59, 130, 246, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faucet-external-card:hover {
+  background: rgba(59, 130, 246, 0.08);
+  transform: translateY(-2px);
+  border-style: solid;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.1);
+}
+
+.faucet-external-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.faucet-external-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode support for faucet external icon */
+html.dark .faucet-external-icon,
+.dark .faucet-external-icon {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.faucet-external-icon img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  padding: 2px;
+}
+
+.faucet-external-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--swap-text-primary);
+  margin: 0;
+}
+
+.faucet-external-subtitle {
+  font-size: 12px;
+  color: var(--swap-accent-primary);
+  font-weight: 600;
+  margin: 0;
+  transition: all 0.2s ease;
+}
+
+.faucet-external-card:hover .faucet-external-subtitle {
+  opacity: 1;
+  filter: brightness(1.1);
+  text-decoration: none;
+}
+
+.faucet-external-link-icon {
+  color: var(--swap-accent-primary);
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.faucet-external-card:hover .faucet-external-link-icon {
+  opacity: 1;
+  transform: translate(2px, -2px);
 }

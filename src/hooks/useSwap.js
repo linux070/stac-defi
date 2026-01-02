@@ -1,7 +1,7 @@
 // src/hooks/useSwap.js
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
-import { parseUnits } from 'viem';
-import { useEffect } from 'react';
+import { parseUnits, formatUnits } from 'viem';
+import { useEffect, useCallback, useMemo } from 'react';
 import { DEX_ADDRESS, USDC_ADDRESS, TOKENS, DECIMALS } from '../config/constants';
 import DexABI from '../abis/DexABI.json';
 import TokenABI from '../abis/TokenABI.json';
@@ -71,8 +71,8 @@ export function useSwap(
     // ------------------------------------------
     // WRITE: Transactions
     // ------------------------------------------
-    const { writeContract: writeApprove, data: approveHash, isPending: isApproving, error: st_error } = useWriteContract();
-    const { writeContract: writeSwap, data: swapHash, isPending: isSwapping, error: sw_error } = useWriteContract();
+    const { writeContract: writeApprove, data: approveHash, isPending: isApproving, error: st_error, reset: resetApprove } = useWriteContract();
+    const { writeContract: writeSwap, data: swapHash, isPending: isSwapping, error: sw_error, reset: resetSwap } = useWriteContract();
 
     const { isSuccess: approveSuccess } = useWaitForTransactionReceipt({ hash: approveHash });
     const { isSuccess: swapSuccess } = useWaitForTransactionReceipt({ hash: swapHash });
@@ -88,16 +88,16 @@ export function useSwap(
     // If allowance is undefined, assume we don't need approval yet to prevent UI flash
     const needsApproval = allowance !== undefined ? allowance < amountInBigInt : false;
 
-    const handleApprove = () => {
+    const handleApprove = useCallback(() => {
         writeApprove({
             address: isBuying ? USDC_ADDRESS : targetTokenAddress,
             abi: TokenABI,
             functionName: 'approve',
             args: [DEX_ADDRESS, BigInt("115792089237316195423570985008687907853269984665640564039457584007913129639935")], // Max Uint256
         });
-    };
+    }, [writeApprove, isBuying, targetTokenAddress]);
 
-    const handleSwap = () => {
+    const handleSwap = useCallback(() => {
         if (!amountInBigInt || minOut === 0n) return;
 
         if (isBuying) {
@@ -115,34 +115,48 @@ export function useSwap(
                 args: [targetTokenAddress, amountInBigInt, minOut],
             });
         }
-    };
+    }, [writeSwap, isBuying, targetTokenAddress, amountInBigInt, minOut]);
+
+    const reset = useCallback(() => {
+        resetApprove();
+        resetSwap();
+    }, [resetApprove, resetSwap]);
 
     // ------------------------------------------
     // DISPLAY VALUES
     // ------------------------------------------
-    let expectedOutFormatted = "0";
-    if (amountInBigInt > 0n && priceBigInt) {
-        const decimalsOut = isBuying ? DECIMALS.OTHERS : DECIMALS.USDC;
-        // Calculation logic is already done in minOut part above, let's just format the expectedOut
-        let expectedOut = 0n;
-        if (isBuying) {
-            expectedOut = (amountInBigInt * BigInt(10 ** 18)) / priceBigInt;
-        } else {
-            expectedOut = (amountInBigInt * priceBigInt) / BigInt(10 ** 18);
+    const expectedOutFormatted = useMemo(() => {
+        if (amountInBigInt > 0n && priceBigInt) {
+            const decimalsOut = isBuying ? DECIMALS.OTHERS : DECIMALS.USDC;
+            let expectedOut = 0n;
+            if (isBuying) {
+                expectedOut = (amountInBigInt * BigInt(10 ** 18)) / priceBigInt;
+            } else {
+                expectedOut = (amountInBigInt * priceBigInt) / BigInt(10 ** 18);
+            }
+
+            // Use standard formatting to maintain precision
+            let formatted = formatUnits(expectedOut, decimalsOut);
+
+            // Trim to reasonable decimals for UI if it's too long, but keep it as string
+            if (formatted.includes('.')) {
+                const [whole, fraction] = formatted.split('.');
+                formatted = `${whole}.${fraction.slice(0, 6)}`;
+            }
+            return formatted;
         }
+        return "0";
+    }, [amountInBigInt, priceBigInt, isBuying]);
 
-        // Manual formatting to avoid complex imports for this tiny task
-        const divisor = BigInt(10 ** decimalsOut);
-        const whole = expectedOut / divisor;
-        const fraction = expectedOut % divisor;
-        const fractionStr = fraction.toString().padStart(decimalsOut, '0').slice(0, 3);
-        expectedOutFormatted = `${whole}.${fractionStr}`;
-    }
+    const displayPrice = useMemo(() => {
+        return priceBigInt ? (Number(priceBigInt) / 1e18).toFixed(6) : "0";
+    }, [priceBigInt]);
 
-    return {
+    return useMemo(() => ({
         needsApproval,
         handleApprove,
         handleSwap,
+        reset,
         isApproving,
         approveSuccess,
         isSwapping,
@@ -152,6 +166,20 @@ export function useSwap(
         txHash: swapHash,
         error: st_error || sw_error,
         expectedOut: expectedOutFormatted,
-        price: priceBigInt ? (Number(priceBigInt) / 1e18).toFixed(6) : "0"
-    };
+        price: displayPrice
+    }), [
+        needsApproval,
+        handleApprove,
+        handleSwap,
+        reset,
+        isApproving,
+        approveSuccess,
+        isSwapping,
+        swapSuccess,
+        swapHash,
+        st_error,
+        sw_error,
+        expectedOutFormatted,
+        displayPrice
+    ]);
 }

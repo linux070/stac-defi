@@ -214,7 +214,26 @@ const useMultiChainBalances = (address, isConnected) => {
     baseSepolia: { usdc: '0.00', loading: false },
   });
 
+  const [refreshCounter, setRefreshCounter] = useState(0);
   const intervalRef = useRef(null);
+
+  // Listen for global refresh events
+  useEffect(() => {
+    const handleRefresh = () => {
+      console.log('[MultiChain] Refreshing balances due to global event');
+      setRefreshCounter(prev => prev + 1);
+    };
+
+    window.addEventListener('faucetClaimed', handleRefresh);
+    window.addEventListener('swapTransactionSaved', handleRefresh);
+    window.addEventListener('retriggerMultiChainFetch', handleRefresh);
+
+    return () => {
+      window.removeEventListener('faucetClaimed', handleRefresh);
+      window.removeEventListener('swapTransactionSaved', handleRefresh);
+      window.removeEventListener('retriggerMultiChainFetch', handleRefresh);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchBalances = async () => {
@@ -284,7 +303,7 @@ const useMultiChainBalances = (address, isConnected) => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [address, isConnected]);
+  }, [address, isConnected, refreshCounter]);
 
   return { balances };
 };

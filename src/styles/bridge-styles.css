@@ -1156,61 +1156,53 @@ html.dark .arrow-divider-button {
   }
 }
 
-/* Bridging Modal Styles  */
+/* Modern Bridging Modal - Premium DeFi Redesign */
 .bridging-modal-backdrop {
   background: rgba(0, 0, 0, 0.4);
+  /* Standard subtle backdrop */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dark mode specific backdrop for that premium depth */
+.dark .bridging-modal-backdrop,
+html.dark .bridging-modal-backdrop {
+  background: rgba(8, 10, 15, 0.85);
+  backdrop-filter: blur(20px);
 }
 
 .bridging-modal-container {
   background: var(--bridge-bg-primary);
+  /* Dark Uniswap-style primary background */
   border: 1px solid var(--bridge-border-medium);
-  border-radius: 28px;
-  box-shadow: 0 32px 64px -16px rgba(0, 0, 0, 0.3);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  max-width: 500px;
+  border-radius: 24px;
+  box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.4);
+  font-family: 'Outfit', 'Inter', sans-serif;
+  max-width: 420px;
+  /* More compact Uniswap width */
   width: 92%;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--bridge-text-primary);
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .bridging-modal-header {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  padding: 40px 24px 32px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.05) 100%);
+  padding: 48px 24px 32px;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.bridging-modal-header::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
-  animation: rotate-slow 20s linear infinite;
-  pointer-events: none;
-}
-
-@keyframes rotate-slow {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .bridging-modal-header-completed {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.05) 100%);
 }
 
 .bridging-modal-close-button {
@@ -1280,159 +1272,123 @@ html.dark .arrow-divider-button {
 }
 
 .bridging-modal-content {
-  padding: 32px 24px;
-  background: var(--bridge-bg-primary);
+  padding: 24px;
+  /* More uniform padding */
+  background: transparent;
 }
 
 .bridging-modal-network-container {
-  background: var(--bridge-bg-secondary);
-  border: 1px solid var(--bridge-border-light);
-  border-radius: 20px;
-  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  padding: 24px;
   margin-bottom: 24px;
 }
 
-.bridging-modal-network-container>div {
+.bridging-modal-network-visualization {
   display: flex;
-  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  position: relative;
+  gap: 12px;
 }
 
 .bridging-modal-network-card {
-  background: var(--bridge-bg-primary);
-  border: 1px solid var(--bridge-border-medium);
-  border-radius: 16px;
-  padding: 14px;
+  background: var(--bridge-surface-card);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 20px;
+  padding: 18px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   flex: 1;
   min-width: 0;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.bridging-modal-network-card:hover {
+  background: var(--bridge-surface-hover);
+  border-color: var(--bridge-border-focus);
+  transform: translateY(-2px);
 }
 
 .bridging-modal-network-icon {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 10px;
-  border-radius: 14px;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 12px;
+  border-radius: 16px;
   padding: 2px;
   background: white;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  object-fit: contain;
 }
 
 .bridging-modal-network-name {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--bridge-text-primary);
   text-align: center;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+  opacity: 0.9;
 }
 
 .bridging-modal-arrow-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: var(--bridge-bg-secondary);
-  border: 1px solid var(--bridge-border-light);
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
   flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
 }
 
-.bridging-modal-arrow {
-  color: var(--bridge-text-secondary);
-}
-
-.bridging-modal-bridge-text {
-  font-size: 14px;
-  color: var(--bridge-text-secondary);
+.bridging-modal-progress-section {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   margin-bottom: 24px;
-  text-align: center;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-weight: 500;
-}
-
-.bridging-modal-bridge-text strong {
-  color: var(--bridge-accent-primary);
-  font-weight: 600;
-}
-
-.bridging-modal-progress-card {
-  background: var(--bridge-bg-secondary);
-  border: 1px solid var(--bridge-border-light);
-  border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 24px;
-}
-
-.bridging-modal-progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 14px;
-}
-
-.bridging-modal-progress-label {
-  font-size: 11px;
-  color: var(--bridge-text-secondary);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.bridging-modal-progress-time {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--bridge-text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-variant-numeric: tabular-nums;
 }
 
 .bridging-modal-progress-bar-container {
   width: 100%;
-  background: var(--bridge-bg-tertiary);
-  border-radius: 10px;
-  height: 10px;
-  margin-bottom: 12px;
-  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  height: 12px;
+  margin: 16px 0;
   overflow: hidden;
+  position: relative;
 }
 
 .bridging-modal-progress-bar {
   background: linear-gradient(90deg, #3b82f6, #60a5fa);
   height: 100%;
-  border-radius: 10px;
-  transition: width 0.5s cubic-bezier(0.1, 1, 0.4, 1);
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+  border-radius: 12px;
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
 }
 
-.bridging-modal-progress-bar::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: progress-shimmer 2s infinite linear;
+@keyframes progress-pulsate {
+  0% {
+    opacity: 0.8;
+  }
+
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+  }
+
+  100% {
+    opacity: 0.8;
+  }
 }
 
-@keyframes progress-shimmer {
-  from {
-    transform: translateX(-100%);
-  }
-
-  to {
-    transform: translateX(100%);
-  }
+.bridging-modal-progress-bar {
+  animation: progress-pulsate 2s infinite ease-in-out;
 }
 
 .bridging-modal-progress-estimate {
@@ -1473,11 +1429,93 @@ html.dark .arrow-divider-button {
 }
 
 .bridging-modal-success-message {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--bridge-text-secondary);
-  margin-bottom: 24px;
+  margin-top: 4px;
   text-align: center;
   line-height: 1.5;
+  font-weight: 500;
+}
+
+
+
+
+
+.bridging-modal-progress-card-new {
+  background: var(--bridge-surface-card);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
+
+.bridging-modal-progress-section {
+  background: var(--bridge-bg-secondary);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--bridge-border-light);
+}
+
+.bridging-modal-progress-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.bridging-modal-progress-estimate {
+  font-size: 12px;
+  color: var(--bridge-text-secondary);
+  font-weight: 500;
+}
+
+.bridging-modal-notice-new {
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.bridging-modal-notice-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.bridging-modal-notice-icon {
+  color: var(--bridge-accent-primary);
+}
+
+.bridging-modal-notice-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bridge-text-primary);
+}
+
+.bridging-modal-notice-text-new {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--bridge-text-secondary);
+  margin: 0;
+  padding-left: 26px;
+}
+
+.bridging-modal-success-time-taken {
+  font-size: 13px;
+  color: var(--bridge-text-secondary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+
+.bridging-modal-success-time-taken span {
+  color: var(--bridge-text-primary);
+  font-variant-numeric: tabular-nums;
 }
 
 .bridging-modal-success-card {
@@ -1486,6 +1524,171 @@ html.dark .arrow-divider-button {
   border-radius: 20px;
   padding: 24px;
   text-align: center;
+}
+
+/* Bridging Steps (based on Swap Modal aesthetic) */
+.bridging-modal-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 12px 0;
+}
+
+.bridging-modal-step {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+}
+
+.bridging-modal-step.active {
+  background: rgba(59, 130, 246, 0.04);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.05);
+}
+
+.bridging-modal-step-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--bridge-bg-secondary);
+  border: 2px solid var(--bridge-border-light);
+  color: var(--bridge-text-tertiary);
+  transition: all 0.3s ease;
+}
+
+.bridging-modal-step.active .bridging-modal-step-icon {
+  border-color: var(--bridge-accent-primary);
+  color: var(--bridge-accent-primary);
+  background: white;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme='dark'] .bridging-modal-step.active .bridging-modal-step-icon {
+  background: #1a1b1f;
+}
+
+.bridging-modal-step.completed .bridging-modal-step-icon {
+  background: #00897B;
+  border-color: #00897B;
+  color: white;
+  box-shadow: 0 0 15px rgba(0, 137, 123, 0.2);
+}
+
+.bridging-modal-step-content {
+  flex: 1;
+}
+
+.bridging-modal-step-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bridge-text-primary);
+  margin: 0;
+}
+
+.bridging-modal-step-desc {
+  font-size: 11px;
+  color: var(--bridge-text-secondary);
+  font-weight: 500;
+  margin: 0;
+}
+
+.bridging-modal-step-line {
+  width: 2px;
+  height: 12px;
+  background: var(--bridge-border-light);
+  margin-left: 31px;
+  opacity: 0.5;
+}
+
+.bridging-modal-step.active .bridging-modal-step-line {
+  background: var(--bridge-accent-primary);
+}
+
+/* Action Required Card */
+.bridging-modal-action-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bridge-surface-card);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 20px;
+  margin-top: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  animation: bridgeModalSlideUp 0.4s ease-out;
+}
+
+@keyframes bridgeModalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bridging-modal-action-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bridging-modal-action-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bridge-accent-primary);
+}
+
+.bridging-modal-action-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.bridging-modal-action-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--bridge-text-primary);
+}
+
+.bridging-modal-action-subtitle {
+  font-size: 12px;
+  color: var(--bridge-text-secondary);
+  font-weight: 500;
+}
+
+.bridging-modal-proceed-button {
+  width: 100%;
+  padding: 14px;
+  background: var(--bridge-accent-primary);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.bridging-modal-proceed-button:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
 .bridging-modal-success-label {
@@ -1679,13 +1882,18 @@ html:not(.dark) .bridging-modal-error-icon,
   }
 
   .bridging-modal-content {
-    padding: 24px 20px;
+    padding: 56px 20px 24px;
   }
 
   .bridging-modal-network-container {
-    padding: 16px;
+    padding: 20px 16px;
     border-radius: 18px;
     margin-bottom: 20px;
+    gap: 16px;
+  }
+
+  .bridging-modal-network-visualization {
+    gap: 8px;
   }
 
   .bridging-modal-network-card {
@@ -1698,6 +1906,7 @@ html:not(.dark) .bridging-modal-error-icon,
     height: 36px;
     margin-bottom: 8px;
     border-radius: 10px;
+    object-fit: cover;
   }
 
   .bridging-modal-network-name {
@@ -1948,11 +2157,11 @@ html:not(.dark) .bridging-modal-error-icon,
 /* Mobile responsive styles for success toast */
 @media (max-width: 640px) {
   .network-success-toast {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: calc(100% - 32px);
-    max-width: 400px;
+    top: 20px;
+    left: 16px;
+    transform: none;
+    width: auto;
+    max-width: calc(100% - 32px);
   }
 
   .network-success-content {
@@ -1990,7 +2199,9 @@ html:not(.dark) .bridging-modal-error-icon,
 @media (max-width: 375px) {
   .network-success-toast {
     top: 10px;
-    width: calc(100% - 20px);
+    left: 10px;
+    width: auto;
+    max-width: calc(100% - 20px);
   }
 
   .network-success-content {
@@ -2085,12 +2296,13 @@ html:not(.dark) .bridging-modal-error-icon,
 }
 
 .bridging-modal-youre-bridging {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--bridge-text-primary);
   margin: 0;
   font-family: 'Inter', sans-serif;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
+  opacity: 0.9;
 }
 
 .bridging-modal-close-button-alt {
@@ -2099,16 +2311,16 @@ html:not(.dark) .bridging-modal-error-icon,
   right: 16px;
   width: 32px;
   height: 32px;
-  background: var(--bridge-surface-hover);
+  background: var(--bridge-surface-card);
   border: 1px solid var(--bridge-border-light);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  color: var(--bridge-text-secondary);
-  z-index: 20;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--bridge-text-tertiary);
+  z-index: 100;
 }
 
 .bridging-modal-close-button-alt:hover {
@@ -2117,7 +2329,8 @@ html:not(.dark) .bridging-modal-error-icon,
   transform: scale(1.05);
 }
 
-/* Success Card - Bridging Redesign */
+
+/* Success Card - Bridging Redesign - Premium Aesthetic */
 .bridging-modal-status-card-new {
   background: var(--bridge-surface-card);
   border: 1px solid var(--bridge-border-light);
@@ -2148,11 +2361,120 @@ html:not(.dark) .bridging-modal-error-icon,
   box-shadow: 0 0 20px rgba(0, 137, 123, 0.15);
 }
 
+.bridging-modal-failed-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.08);
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+}
+
 .bridging-modal-status-title-new {
   font-size: 22px;
   font-weight: 700;
   color: var(--bridge-text-primary);
   letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+.bridging-modal-success-summary-text {
+  font-size: 15px;
+  color: var(--bridge-text-secondary);
+  font-weight: 500;
+}
+
+.bridging-modal-success-details {
+  width: 100%;
+  background: var(--bridge-bg-primary);
+  border-radius: 20px;
+  padding: 16px 20px;
+  margin-top: 8px;
+  border: 1px solid var(--bridge-border-light);
+}
+
+.bridging-modal-success-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.bridging-modal-success-info-row:not(:last-child) {
+  border-bottom: 1px solid var(--bridge-border-light);
+}
+
+.bridging-modal-success-info-row span {
+  font-size: 14px;
+  color: var(--bridge-text-secondary);
+  font-weight: 500;
+}
+
+.bridging-modal-success-info-row .value {
+  color: var(--bridge-text-primary);
+  font-weight: 700;
+}
+
+.bridging-modal-error-box-lite {
+  width: 100%;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.bridging-modal-action-button-secondary-new {
+  width: 100%;
+  background: var(--bridge-bg-primary);
+  color: var(--bridge-text-primary);
+  padding: 18px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 16px;
+  border: 1px solid var(--bridge-border-light);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bridging-modal-action-button-secondary-new:hover {
+  background: var(--bridge-surface-hover);
+  border-color: var(--bridge-accent-primary);
+  transform: translateY(-1px);
+}
+
+.bridging-modal-action-button-failed {
+  width: 100%;
+  padding: 16px;
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bridging-modal-action-button-failed:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.4);
 }
 
 .bridging-modal-success-summary_text {
@@ -2195,22 +2517,190 @@ html:not(.dark) .bridging-modal-error-icon,
   opacity: 0.5;
 }
 
-.bridging-modal-action-button-secondary-new {
-  width: 100%;
-  background: var(--bridge-bg-primary);
-  color: var(--bridge-text-primary);
-  padding: 18px;
-  border-radius: 20px;
-  font-weight: 700;
-  font-size: 16px;
-  border: 1px solid var(--bridge-border-light);
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+/* In-Progress Bridging Modal Refinements - Swap Style */
+.bridging-modal-heading-container {
+  padding-top: 8px;
+  margin-bottom: 24px;
 }
 
-.bridging-modal-action-button-secondary-new:hover {
-  background: var(--bridge-surface-hover);
-  border-color: var(--bridge-accent-primary);
-  transform: translateY(-1px);
+.bridging-modal-youre-bridging {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--bridge-text-primary);
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.02em;
+  text-align: left;
+  opacity: 1;
+}
+
+.bridging-modal-details-new {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bridge-surface-card);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.bridging-modal-amount-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+}
+
+.bridging-modal-token-badge {
+  flex-shrink: 0;
+}
+
+.bridging-modal-token-icon-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+[data-theme='dark'] .bridging-modal-token-icon-small {
+  background: #1a1b1f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bridging-modal-token-icon-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 2px;
+}
+
+.bridging-modal-amount-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bridging-modal-amount-label {
+  font-size: 11px;
+  color: var(--bridge-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.bridging-modal-amount-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--bridge-text-primary);
+  line-height: 1.2;
+  font-family: 'Inter', sans-serif;
+}
+
+.bridging-modal-arrow-container-new {
+  padding: 2px 0;
+  display: flex;
+  align-items: center;
+  margin-left: 9px;
+}
+
+.bridging-modal-arrow-container-new svg {
+  color: var(--bridge-accent-primary);
+  opacity: 0.8;
+}
+
+.bridging-modal-progress-section-new {
+  background: var(--bridge-surface-card);
+  border: 1px solid var(--bridge-border-light);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+}
+
+.bridging-modal-progress-header-new {
+  margin-bottom: 20px;
+}
+
+.bridging-modal-loader-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.bridging-modal-progress-label-new {
+  font-size: 13px;
+  color: var(--bridge-text-secondary);
+  font-weight: 600;
+}
+
+.bridging-modal-progress-time-new {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--bridge-text-primary);
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.bridging-modal-progress-footer-new {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--bridge-border-light);
+}
+
+.bridging-modal-progress-estimate-new {
+  font-size: 13px;
+  color: var(--bridge-accent-primary);
+  font-weight: 600;
+}
+
+.bridging-modal-notice-premium {
+  background: rgba(59, 130, 246, 0.04);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  border-radius: 16px;
+  padding: 18px;
+  color: var(--bridge-text-primary);
+}
+
+/* Light mode specific adjustments */
+:root:not(.dark) .bridging-modal-notice-premium {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+.bridging-modal-notice-icon-wrapper {
+  color: var(--bridge-accent-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.bridging-modal-notice-title-premium {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--bridge-text-primary);
+}
+
+.bridging-modal-notice-text-premium {
+  font-size: 13px;
+  color: var(--bridge-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+html.dark .bridging-modal-notice-premium {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
 }
