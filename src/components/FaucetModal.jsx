@@ -6,7 +6,7 @@ import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagm
 import BatchFaucetABI from '../abis/BatchFaucetABI.json';
 import { getExplorerUrl } from '../utils/blockchain';
 import { useWallet } from '../contexts/WalletContext';
-import { TOKENS, BATCH_FAUCET_ADDRESS, USDC_ADDRESS, CHAINS } from '../config/constants';
+import { TOKENS, BATCH_FAUCET_ADDRESS, USDC_ADDRESS, CHAINS, FAUCET_AMOUNTS } from '../config/constants';
 import { getItem, setItem } from '../utils/indexedDB';
 
 const COOLDOWN_HOURS = 0;
@@ -23,7 +23,7 @@ const getTokenIcon = (symbol) => {
     return null;
 };
 
-const TokenStatus = ({ symbol, hash, error, isPending, isWaiting, isSuccess, chainId }) => {
+const TokenStatus = ({ symbol, amount, hash, error, isPending, isWaiting, isSuccess, chainId, t }) => {
     return (
         <div className="faucet-token-card">
             <div className="faucet-token-info">
@@ -34,22 +34,26 @@ const TokenStatus = ({ symbol, hash, error, isPending, isWaiting, isSuccess, cha
                         <span className="text-xs font-bold text-gray-400">{symbol[0]}</span>
                     )}
                 </div>
-                <span className="faucet-token-symbol">{symbol}</span>
+                <div className="faucet-token-details">
+                    <span className="faucet-token-symbol">{symbol}</span>
+                    <span className="faucet-token-amount">{amount} {t('tokens')}</span>
+                </div>
             </div>
 
-            <div className="faucet-token-status">
-                {isPending || isWaiting ? (
-                    <Loader className="animate-spin text-blue-500" size={14} />
-                ) : isSuccess ? (
-                    <div className="flex items-center gap-2">
-                        <CheckCircle size={14} className="text-[#00897B]" />
-                    </div>
-                ) : error ? (
-                    <AlertCircle size={14} className="text-red-500" />
-                ) : (
-                    <div className="faucet-status-dot" />
-                )}
-            </div>
+            {/* Only show status icons for success/error states */}
+            {(isSuccess || error) && (
+                <div className="faucet-token-status">
+                    {isSuccess ? (
+                        <div className="faucet-status-success">
+                            <Check size={12} strokeWidth={3} />
+                        </div>
+                    ) : error ? (
+                        <div className="faucet-status-error">
+                            <AlertCircle size={14} />
+                        </div>
+                    ) : null}
+                </div>
+            )}
         </div>
     );
 };
@@ -128,7 +132,7 @@ const FaucetModal = ({ isOpen, onClose }) => {
             address: BATCH_FAUCET_ADDRESS,
             abi: BatchFaucetABI,
             functionName: 'claimAll',
-            args: [[USDC_ADDRESS, TOKENS.STCK, TOKENS.BALL, TOKENS.MTB, TOKENS.ECR]],
+            args: [[TOKENS.STCK, TOKENS.BALL, TOKENS.MTB, TOKENS.ECR]],
         });
     };
 
@@ -210,69 +214,68 @@ const FaucetModal = ({ isOpen, onClose }) => {
                                     </div>
                                 )}
 
-                                <div className="faucet-tokens-grid !grid-cols-3">
-                                    <TokenStatus
-                                        symbol="USDC"
-                                        hash={batchClaim.data}
-                                        isPending={false}
-                                        isWaiting={isPending}
-                                        isSuccess={isSuccess}
-                                        error={batchClaim.error}
-                                        chainId={chainId}
-                                    />
+                                <div className="faucet-tokens-grid !grid-cols-2">
+
                                     <TokenStatus
                                         symbol="STCK"
+                                        amount={FAUCET_AMOUNTS.STCK}
                                         hash={batchClaim.data}
                                         isPending={false}
                                         isWaiting={isPending}
                                         isSuccess={isSuccess}
                                         error={batchClaim.error}
                                         chainId={chainId}
+                                        t={t}
                                     />
                                     <TokenStatus
                                         symbol="BALL"
+                                        amount={FAUCET_AMOUNTS.BALL}
                                         hash={batchClaim.data}
                                         isPending={false}
                                         isWaiting={isPending}
                                         isSuccess={isSuccess}
                                         error={batchClaim.error}
                                         chainId={chainId}
+                                        t={t}
                                     />
                                     <TokenStatus
                                         symbol="MTB"
+                                        amount={FAUCET_AMOUNTS.MTB}
                                         hash={batchClaim.data}
                                         isPending={false}
                                         isWaiting={isPending}
                                         isSuccess={isSuccess}
                                         error={batchClaim.error}
                                         chainId={chainId}
+                                        t={t}
                                     />
                                     <TokenStatus
                                         symbol="ECR"
+                                        amount={FAUCET_AMOUNTS.ECR}
                                         hash={batchClaim.data}
                                         isPending={false}
                                         isWaiting={isPending}
                                         isSuccess={isSuccess}
                                         error={batchClaim.error}
                                         chainId={chainId}
+                                        t={t}
                                     />
                                 </div>
-
-
-                                {/* Circle USDC Faucet Link - Rocks in both light & dark mode */}
-                                <div className="faucet-external-card"
-                                    onClick={() => window.open('https://faucet.circle.com/', '_blank')}>
-                                    <div className="faucet-external-info">
-                                        <div className="faucet-external-icon">
+                                {/* Circle USDC Faucet Link - Styled like token cards */}
+                                <div
+                                    className="faucet-usdc-card"
+                                    onClick={() => window.open('https://faucet.circle.com/', '_blank')}
+                                >
+                                    <div className="faucet-token-info">
+                                        <div className="faucet-token-icon-wrapper">
                                             <img src="/icons/usdc.png" alt="USDC" />
                                         </div>
-                                        <div>
-                                            <h5 className="faucet-external-title">{t('Need Official USDC?')}</h5>
-                                            <p className="faucet-external-subtitle">{t('Claim on Circle Faucet')}</p>
+                                        <div className="faucet-token-details">
+                                            <span className="faucet-token-symbol">{t('Need Official USDC?')}</span>
+                                            <span className="faucet-usdc-subtitle">{t('Circle Faucet')}</span>
                                         </div>
                                     </div>
                                 </div>
-
                                 <button
                                     onClick={handleClaimAll}
                                     disabled={isPending || !userAddress}
@@ -284,7 +287,6 @@ const FaucetModal = ({ isOpen, onClose }) => {
                                         </div>
                                     ) : isPending ? (
                                         <div className="flex items-center justify-center gap-2">
-                                            <Loader className="animate-spin" size={18} />
                                             <span>{t('Processing...')}</span>
                                         </div>
                                     ) : cooldownRemaining > 0 ? (
@@ -312,11 +314,11 @@ const FaucetModal = ({ isOpen, onClose }) => {
                                         {t('All test tokens have been sent to your wallet.')}
                                     </div>
 
-                                    <div className="grid grid-cols-3 gap-3 mt-4">
-                                        {['USDC', 'STCK', 'BALL', 'MTB', 'ECR'].map(symbol => (
-                                            <div key={symbol} className="swap-modal-success-token-badge border border-white/5 py-2 px-3 bg-white/5 rounded-xl flex items-center justify-center gap-2">
-                                                <img src={getTokenIcon(symbol)} alt="" className="w-5 h-5 rounded-full" />
-                                                <span className="font-bold text-sm">{symbol}</span>
+                                    <div className="faucet-success-tokens-grid">
+                                        {['STCK', 'BALL', 'MTB', 'ECR'].map(symbol => (
+                                            <div key={symbol} className="faucet-success-token-badge">
+                                                <img src={getTokenIcon(symbol)} alt="" className="faucet-success-token-icon" />
+                                                <span className="faucet-success-token-text">{FAUCET_AMOUNTS[symbol]} {symbol}</span>
                                             </div>
                                         ))}
                                     </div>

@@ -4,7 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useWallet } from '../contexts/WalletContext';
 import {
   Home, ArrowLeftRight, Droplet, Clock, Menu, X,
-  Moon, Sun, Wallet, LogOut, RefreshCw, ChevronDown, Globe
+  Moon, Sun, Wallet, LogOut, RefreshCw, ChevronDown, Globe, ArrowUpDown, Waypoints
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatAddress } from '../utils/blockchain';

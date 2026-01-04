@@ -44,13 +44,20 @@ html.dark,
 .swap-container {
   max-width: 540px;
   margin: 0 auto;
-  background: var(--swap-bg-secondary);
-  border: 1px solid var(--swap-border-light);
-  border-radius: 16px;
+  background: white;
+  border: none;
+  border-radius: 24px;
   padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
   position: relative;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+html.dark .swap-container,
+.dark .swap-container {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 /* Tablet: Moderate padding increase */
@@ -1822,13 +1829,18 @@ html.dark .swap-token-selector-list-symbol,
 
 /* General Modal Polishing */
 .swap-modal-container {
-  background: var(--swap-bg-secondary);
-  border: 1px solid var(--swap-border-light);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
+  position: relative;
 }
 
-[data-theme='light'] .swap-modal-container {
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.1);
+html.dark .swap-modal-container,
+.dark .swap-modal-container {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
 }
 
 .swap-modal-action-button {
@@ -1862,18 +1874,18 @@ html.dark .swap-token-selector-list-symbol,
   color: var(--swap-accent-primary);
 }
 
-/* Success Modal Redesign (Center Card) */
+/* Success Modal Redesign - NO BACKGROUND CONTAINER */
 .swap-modal-status-card-new {
-  background: var(--swap-surface-card);
-  border: 1px solid var(--swap-border-light);
-  border-radius: 28px;
-  padding: 40px 24px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 24px 16px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
 }
 
 .swap-modal-success-icon-wrapper {
@@ -1978,6 +1990,193 @@ html.dark .swap-token-selector-list-symbol,
   transform: translateY(-1px);
 }
 
+/* Swap Modal Close Button - Square Style */
+.swap-modal-close-button-alt {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #6B7280;
+  z-index: 10;
+}
+
+.swap-modal-close-button-alt:hover {
+  background: rgba(107, 114, 128, 0.1);
+  color: #374151;
+}
+
+/* Dark mode adjustments for swap close button */
+html.dark .swap-modal-close-button-alt {
+  color: #D1D5DB;
+}
+
+html.dark .swap-modal-close-button-alt:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #F9FAFB;
+}
+
+/* Mobile responsive close button */
+@media (max-width: 640px) {
+  .swap-modal-close-button-alt {
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .swap-modal-container {
+    border-radius: 20px;
+    margin: 16px;
+    max-width: calc(100% - 32px);
+  }
+
+  .swap-modal-content {
+    padding: 20px 16px;
+  }
+
+  .swap-modal-heading-container {
+    margin-bottom: 16px;
+    padding-top: 24px;
+  }
+
+  .swap-modal-youre-swapping {
+    font-size: 16px;
+  }
+
+  .swap-modal-amount-value {
+    font-size: 16px;
+  }
+
+  .swap-modal-status-card-new {
+    padding: 16px 12px;
+  }
+
+  .swap-modal-status-title-new {
+    font-size: 20px;
+  }
+
+  .swap-modal-checkmark-circle,
+  .swap-modal-error-circle {
+    width: 60px;
+    height: 60px;
+  }
+
+  .swap-modal-checkmark-circle svg,
+  .swap-modal-error-circle svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .swap-modal-success-summary-visual {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  .swap-modal-success-token-badge {
+    font-size: 13px;
+  }
+
+  .swap-modal-action-button,
+  .swap-modal-action-button-secondary-new {
+    padding: 14px;
+    font-size: 15px;
+    border-radius: 14px;
+  }
+
+  .swap-modal-step {
+    padding: 12px;
+  }
+
+  .swap-modal-step-title {
+    font-size: 13px;
+  }
+
+  .swap-modal-step-desc {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 375px) {
+  .swap-modal-close-button-alt {
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .swap-modal-close-button-alt svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .swap-modal-container {
+    border-radius: 18px;
+    margin: 12px;
+  }
+
+  .swap-modal-content {
+    padding: 16px 12px;
+  }
+
+  .swap-modal-heading-container {
+    margin-bottom: 12px;
+  }
+
+  .swap-modal-youre-swapping {
+    font-size: 15px;
+  }
+
+  .swap-modal-amount-value {
+    font-size: 14px;
+  }
+
+  .swap-modal-status-title-new {
+    font-size: 18px;
+  }
+
+  .swap-modal-checkmark-circle,
+  .swap-modal-error-circle {
+    width: 52px;
+    height: 52px;
+  }
+
+  .swap-modal-checkmark-circle svg,
+  .swap-modal-error-circle svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .swap-modal-success-summary-text {
+    font-size: 13px;
+  }
+
+  .swap-modal-success-summary-visual {
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .swap-modal-success-token-badge {
+    font-size: 12px;
+  }
+
+  .swap-modal-action-button,
+  .swap-modal-action-button-secondary-new {
+    padding: 12px;
+    font-size: 14px;
+  }
+}
+
 /* Faucet Modal Specific Styles */
 .faucet-tokens-grid {
   display: grid;
@@ -1998,9 +2197,22 @@ html.dark .swap-token-selector-list-symbol,
   cursor: default;
 }
 
+/* Dark mode faucet token card */
+html.dark .faucet-token-card,
+.dark .faucet-token-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .faucet-token-card:hover {
   background: var(--swap-surface-hover);
   border-color: var(--swap-border-medium);
+}
+
+html.dark .faucet-token-card:hover,
+.dark .faucet-token-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .faucet-token-info {
@@ -2025,7 +2237,7 @@ html.dark .swap-token-selector-list-symbol,
 /* Dark mode support for faucet token icons */
 html.dark .faucet-token-icon-wrapper,
 .dark .faucet-token-icon-wrapper {
-  background: #1a1b1f;
+  background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -2047,6 +2259,97 @@ html.dark .faucet-token-symbol,
   color: #ffffff;
 }
 
+.faucet-token-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.faucet-token-amount {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--swap-text-secondary);
+}
+
+html.dark .faucet-token-amount,
+.dark .faucet-token-amount {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* USDC External Faucet Card - Matches token card style */
+.faucet-usdc-card {
+  background: var(--swap-bg-secondary);
+  border: 1px solid var(--swap-border-light);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  margin-top: 8px;
+  margin-bottom: 24px;
+}
+
+html.dark .faucet-usdc-card,
+.dark .faucet-usdc-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.faucet-usdc-card:hover {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+}
+
+html.dark .faucet-usdc-card:hover,
+.dark .faucet-usdc-card:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+}
+
+.faucet-usdc-subtitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--swap-accent-primary);
+}
+
+html.dark .faucet-usdc-subtitle,
+.dark .faucet-usdc-subtitle {
+  color: #60a5fa;
+}
+
+.faucet-usdc-card:hover {
+  background: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+}
+
+html.dark .faucet-usdc-card:hover,
+.dark .faucet-usdc-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.faucet-usdc-subtitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--swap-accent-primary);
+  opacity: 0.8;
+}
+
+html.dark .faucet-usdc-subtitle,
+.dark .faucet-usdc-subtitle {
+  color: #60a5fa;
+  opacity: 0.9;
+}
+
+
 .faucet-token-status {
   display: flex;
   align-items: center;
@@ -2063,6 +2366,12 @@ html.dark .faucet-token-symbol,
   opacity: 0.3;
 }
 
+html.dark .faucet-status-dot,
+.dark .faucet-status-dot {
+  background: rgba(255, 255, 255, 0.4);
+  opacity: 0.5;
+}
+
 .faucet-notice-card {
   background: rgba(59, 130, 246, 0.04);
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -2074,10 +2383,21 @@ html.dark .faucet-token-symbol,
   margin-bottom: 24px;
 }
 
+html.dark .faucet-notice-card,
+.dark .faucet-notice-card {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
 .faucet-notice-icon {
   color: var(--swap-accent-primary);
   flex-shrink: 0;
   margin-top: 2px;
+}
+
+html.dark .faucet-notice-icon,
+.dark .faucet-notice-icon {
+  color: #60a5fa;
 }
 
 .faucet-notice-text {
@@ -2085,6 +2405,11 @@ html.dark .faucet-token-symbol,
   color: var(--swap-text-secondary);
   line-height: 1.5;
   margin: 0;
+}
+
+html.dark .faucet-notice-text,
+.dark .faucet-notice-text {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .faucet-external-card {
@@ -2101,11 +2426,23 @@ html.dark .faucet-token-symbol,
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+html.dark .faucet-external-card,
+.dark .faucet-external-card {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
 .faucet-external-card:hover {
   background: rgba(59, 130, 246, 0.08);
   transform: translateY(-2px);
   border-style: solid;
   box-shadow: 0 8px 24px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .faucet-external-card:hover,
+.dark .faucet-external-card:hover {
+  background: rgba(59, 130, 246, 0.12);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
 }
 
 .faucet-external-info {
@@ -2129,7 +2466,7 @@ html.dark .faucet-token-symbol,
 /* Dark mode support for faucet external icon */
 html.dark .faucet-external-icon,
 .dark .faucet-external-icon {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
@@ -2148,12 +2485,22 @@ html.dark .faucet-external-icon,
   margin: 0;
 }
 
+html.dark .faucet-external-title,
+.dark .faucet-external-title {
+  color: #ffffff;
+}
+
 .faucet-external-subtitle {
   font-size: 12px;
   color: var(--swap-accent-primary);
   font-weight: 600;
   margin: 0;
   transition: all 0.2s ease;
+}
+
+html.dark .faucet-external-subtitle,
+.dark .faucet-external-subtitle {
+  color: #60a5fa;
 }
 
 .faucet-external-card:hover .faucet-external-subtitle {
@@ -2171,4 +2518,48 @@ html.dark .faucet-external-icon,
 .faucet-external-card:hover .faucet-external-link-icon {
   opacity: 1;
   transform: translate(2px, -2px);
+}
+
+/* Faucet Success State Styles */
+.faucet-success-tokens-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.faucet-success-token-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+html.dark .faucet-success-token-badge,
+.dark .faucet-success-token-badge {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.faucet-success-token-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.faucet-success-token-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--swap-text-primary);
+}
+
+html.dark .faucet-success-token-text,
+.dark .faucet-success-token-text {
+  color: #ffffff;
 }

@@ -17,6 +17,14 @@ export const TOKENS = {
 
 export const BATCH_FAUCET_ADDRESS = "0x5e0A1e0a40b9Fb56D14eDaa3DFcfD70C556f54a7";
 
+// Faucet amounts (in token units, not wei)
+export const FAUCET_AMOUNTS = {
+    STCK: 100,
+    BALL: 100,
+    MTB: 100,
+    ECR: 100,
+};
+
 export const DECIMALS = {
     USDC: 6,
     OTHERS: 18,

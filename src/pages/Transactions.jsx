@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
-import { Copy, ExternalLink, CheckCircle, Clock, XCircle, ArrowLeftRight, RefreshCw, Layers, History } from 'lucide-react';
+import { Copy, ExternalLink, CheckCircle, Check, Clock, XCircle, ArrowLeftRight, RefreshCw, Layers, History } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { timeAgo, formatAddress, copyToClipboard, getExplorerUrl } from '../utils/blockchain';
 import { useTransactionHistory } from '../hooks/useTransactionHistory';
@@ -55,25 +55,28 @@ const getTokenLogo = (symbol) => {
   return null;
 };
 
-const EmptyActivityState = () => (
-  <div className="flex flex-col items-center justify-center py-16 md:py-24 px-6 overflow-hidden text-center">
-    <div className="relative mb-14 md:mb-16 flex items-center justify-center scale-90 md:scale-100">
-      {/* Refined concentric rings */}
-      <div className="absolute w-44 h-44 rounded-full border border-slate-200/60 dark:border-slate-700/40 animate-pulse" />
-      <div className="absolute w-32 h-32 rounded-full border border-slate-300/40 dark:border-slate-600/25" />
+const EmptyActivityState = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center justify-center py-16 md:py-24 px-6 overflow-hidden text-center">
+      <div className="relative mb-14 md:mb-16 flex items-center justify-center scale-90 md:scale-100">
+        {/* Refined concentric rings */}
+        <div className="absolute w-44 h-44 rounded-full border border-slate-200/60 dark:border-slate-700/40 animate-pulse" />
+        <div className="absolute w-32 h-32 rounded-full border border-slate-300/40 dark:border-slate-600/25" />
 
-      {/* Central icon container */}
-      <div className="relative z-10 w-20 h-20 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-200/80 dark:border-slate-700/50 shadow-lg transition-all duration-300">
-        <History size={36} className="text-slate-500 dark:text-slate-400" strokeWidth={1.5} />
+        {/* Central icon container */}
+        <div className="relative z-10 w-20 h-20 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-200/80 dark:border-slate-700/50 shadow-lg transition-all duration-300">
+          <History size={36} className="text-slate-500 dark:text-slate-400" strokeWidth={1.5} />
+        </div>
+      </div>
+      <div className="max-w-[280px] md:max-w-md mx-auto">
+        <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base font-semibold tracking-tight leading-relaxed transition-colors duration-300">
+          {t('This account has no recent activity...')}
+        </p>
       </div>
     </div>
-    <div className="max-w-[280px] md:max-w-md mx-auto">
-      <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base font-semibold tracking-tight leading-relaxed transition-colors duration-300">
-        This account has no recent activity...
-      </p>
-    </div>
-  </div>
-);
+  );
+};
 
 const Transactions = () => {
   const { t } = useTranslation();
@@ -534,13 +537,13 @@ const Transactions = () => {
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 md:py-4 text-xs md:text-sm">Type</th>
-                <th className="text-left py-3 md:py-4 text-xs md:text-sm">From</th>
-                <th className="text-left py-3 md:py-4 text-xs md:text-sm">To</th>
-                <th className="text-left py-3 md:py-4 text-xs md:text-sm">Amount</th>
-                <th className="text-left py-3 md:py-4 text-xs md:text-sm">Time</th>
-                <th className="text-left py-3 md:py-4 text-xs md:text-sm">Status</th>
-                <th className="text-left py-3 md:py-4 text-xs md:text-sm">Transaction Hash</th>
+                <th className="text-left py-3 md:py-4 text-xs md:text-sm">{t('Type')}</th>
+                <th className="text-left py-3 md:py-4 text-xs md:text-sm">{t('From')}</th>
+                <th className="text-left py-3 md:py-4 text-xs md:text-sm">{t('To')}</th>
+                <th className="text-left py-3 md:py-4 text-xs md:text-sm">{t('Amount')}</th>
+                <th className="text-left py-3 md:py-4 text-xs md:text-sm">{t('Time')}</th>
+                <th className="text-left py-3 md:py-4 text-xs md:text-sm">{t('Status')}</th>
+                <th className="text-left py-3 md:py-4 text-xs md:text-sm">{t('Transaction Hash')}</th>
               </tr>
             </thead>
             <tbody>
@@ -569,7 +572,7 @@ const Transactions = () => {
                       <div className="flex flex-col gap-1.5">
                         <span className="text-xs md:text-sm font-bold text-slate-900 dark:text-white">{tx.type}</span>
                         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 w-fit">
-                          <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">Cross-Chain</span>
+                          <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">{t('Cross-Chain')}</span>
                         </div>
                       </div>
                     ) : (
@@ -629,12 +632,12 @@ const Transactions = () => {
                   <td className="py-3 md:py-4 text-xs md:text-sm text-gray-500">{timeAgo(tx.timestamp)}</td>
                   <td className="py-3 md:py-4">
                     {tx.status === 'success' ? (
-                      <span className="inline-flex items-center px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 rounded-lg">
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 mr-2 flex-shrink-0">
-                          <CheckCircle className="text-white" size={14} />
+                      <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 w-fit">
+                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200 dark:shadow-none">
+                          <Check className="text-white" size={12} strokeWidth={4} />
                         </div>
-                        <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Success</span>
-                      </span>
+                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">{t('Success')}</span>
+                      </div>
                     ) : (
                       <div className="flex items-center space-x-1 md:space-x-2">
                         {getStatusIcon(tx.status)}
@@ -676,7 +679,7 @@ const Transactions = () => {
             {transactionsLoading ? (
               <div className="flex flex-col items-center gap-2">
                 <RefreshCw className="animate-spin text-blue-600 dark:text-blue-400" size={24} />
-                <p className="text-gray-500 dark:text-gray-400">Loading transactions...</p>
+                <p className="text-gray-500 dark:text-gray-400">{t('Loading transactions...')}</p>
               </div>
             ) : (
               <EmptyActivityState />
@@ -720,18 +723,12 @@ const Transactions = () => {
                   {/* Centered Success button */}
                   <div className="flex justify-center">
                     {tx.status === 'success' ? (
-                      <span className="inline-flex items-center px-2.5 py-1" style={{
-                        backgroundColor: '#E0F2F1',
-                        border: '1px solid #80CBC4',
-                        borderRadius: '8px'
-                      }}>
-                        <span className="flex items-center justify-center w-4 h-4 rounded-full mr-1.5 flex-shrink-0" style={{
-                          backgroundColor: '#00897B'
-                        }}>
-                          <i className="fa fa-check-circle text-white" style={{ fontSize: '10px', lineHeight: '1' }}></i>
-                        </span>
-                        <span className="text-xs font-semibold" style={{ color: '#00695C' }}>Success</span>
-                      </span>
+                      <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/20 shadow-sm shadow-emerald-50/50">
+                        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500">
+                          <Check className="text-white" size={10} strokeWidth={5} />
+                        </div>
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">{t('Success')}</span>
+                      </div>
                     ) : (
                       <div className="flex items-center space-x-1">
                         {getStatusIcon(tx.status)}
@@ -759,18 +756,12 @@ const Transactions = () => {
                   {/* Centered Success button */}
                   <div className="flex justify-center">
                     {tx.status === 'success' ? (
-                      <span className="inline-flex items-center px-2.5 py-1" style={{
-                        backgroundColor: '#E0F2F1',
-                        border: '1px solid #80CBC4',
-                        borderRadius: '8px'
-                      }}>
-                        <span className="flex items-center justify-center w-4 h-4 rounded-full mr-1.5 flex-shrink-0" style={{
-                          backgroundColor: '#00897B'
-                        }}>
-                          <i className="fa fa-check-circle text-white" style={{ fontSize: '10px', lineHeight: '1' }}></i>
-                        </span>
-                        <span className="text-xs font-semibold" style={{ color: '#00695C' }}>Success</span>
-                      </span>
+                      <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/20 shadow-sm shadow-emerald-50/50">
+                        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500">
+                          <Check className="text-white" size={10} strokeWidth={5} />
+                        </div>
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">{t('Success')}</span>
+                      </div>
                     ) : (
                       <div className="flex items-center space-x-1">
                         {getStatusIcon(tx.status)}
@@ -787,21 +778,21 @@ const Transactions = () => {
                   <div className="rounded-xl border border-blue-100/70 dark:border-blue-900/40 bg-white/70 dark:bg-gray-900/40 p-3">
                     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                       <div className="min-w-0">
-                        <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">You pay</div>
-                        <div className="flex items-center gap-2 min-w-0">
-                          {getTokenLogo(getSwapFromToken(tx)) && (
-                            <img src={getTokenLogo(getSwapFromToken(tx))} alt="" className="w-5 h-5 rounded-full object-cover border border-white/10" />
-                          )}
-                          <div className="flex items-baseline gap-1.5 min-w-0">
+                        <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">{t('You pay')}</div>
+                        <div className="flex gap-2 min-w-0 items-center">
+                          <div className="flex items-baseline gap-1.5 min-w-0 group-hover:scale-105 transition-transform duration-300">
                             {(getSwapFromAmount(tx) || getSwapAmount(tx)) && (
                               <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
                                 {getSwapFromAmount(tx) || getSwapAmount(tx)}
                               </span>
                             )}
-                            <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                              {getSwapFromToken(tx)}
-                            </span>
                           </div>
+                          {getTokenLogo(getSwapFromToken(tx)) && (
+                            <img src={getTokenLogo(getSwapFromToken(tx))} alt="" className="w-5 h-5 rounded-full object-cover border border-white/10 flex-shrink-0 animate-in zoom-in-50 duration-500" />
+                          )}
+                          <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                            {getSwapFromToken(tx)}
+                          </span>
                         </div>
                       </div>
 
@@ -810,21 +801,19 @@ const Transactions = () => {
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1 text-right">You receive</div>
+                        <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1 text-right">{t('You receive')}</div>
                         <div className="flex items-center justify-end gap-2 min-w-0">
-                          <div className="flex items-baseline justify-end gap-1.5 min-w-0 order-1">
-                            {getSwapToAmount(tx) && (
-                              <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
-                                {getSwapToAmount(tx)}
-                              </span>
-                            )}
-                            <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                              {getSwapToToken(tx)}
+                          {getSwapToAmount(tx) && (
+                            <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
+                              {getSwapToAmount(tx)}
                             </span>
-                          </div>
-                          {getTokenLogo(getSwapToToken(tx)) && (
-                            <img src={getTokenLogo(getSwapToToken(tx))} alt="" className="w-5 h-5 rounded-full object-cover border border-white/10 order-2" />
                           )}
+                          {getTokenLogo(getSwapToToken(tx)) && (
+                            <img src={getTokenLogo(getSwapToToken(tx))} alt="" className="w-5 h-5 rounded-full object-cover border border-white/10 flex-shrink-0 animate-in zoom-in-50 duration-500 shadow-sm" />
+                          )}
+                          <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                            {getSwapToToken(tx)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -835,7 +824,7 @@ const Transactions = () => {
                   {/* From/To Row - Improved spacing and layout */}
                   <div className="flex items-center gap-3 py-1.5">
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">From</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t('From')}</div>
                       <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                         {tx.type === 'Bridge' ? (
                           getChainIcon(tx.from) ? (
@@ -853,7 +842,7 @@ const Transactions = () => {
                     </div>
                     <ArrowLeftRight size={18} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0 text-right">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">To</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t('To')}</div>
                       <div className="text-sm font-semibold text-slate-900 dark:text-white truncate flex justify-end">
                         {tx.type === 'Bridge' ? (
                           getChainIcon(tx.to) ? (
@@ -872,9 +861,13 @@ const Transactions = () => {
                   </div>
 
                   {/* Amount - Better visual hierarchy */}
-                  <div className="flex items-center justify-between py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 -mx-1">
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Amount</span>
-                    <span className="text-base font-bold text-slate-900 dark:text-white">{getSwapAmount(tx)}</span>
+                  <div className="flex items-center justify-between py-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl px-4 -mx-1 shadow-inner group/amount transition-colors duration-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{t('Amount')}</span>
+                    <div className="flex items-center gap-2 group-hover/amount:scale-105 transition-transform duration-300">
+                      <span className="text-base font-black text-slate-900 dark:text-white tabular-nums">{getSwapAmount(tx)}</span>
+                      <img src="/icons/usdc.png" alt="USDC" className="w-5 h-5 rounded-full shadow-sm" />
+                      <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">USDC</span>
+                    </div>
                   </div>
                 </>
               )}
@@ -882,7 +875,7 @@ const Transactions = () => {
               {/* Transaction Hash - Improved layout */}
               <div className="pt-2.5 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex flex-col gap-2">
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Transaction Hash</span>
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{t('Transaction Hash')}</span>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleCopyHash(tx.hash)}
@@ -915,7 +908,7 @@ const Transactions = () => {
             {transactionsLoading ? (
               <div className="flex flex-col items-center gap-3">
                 <RefreshCw className="animate-spin text-blue-600 dark:text-blue-400" size={28} />
-                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Loading transactions...</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t('Loading transactions...')}</p>
               </div>
             ) : (
               <EmptyActivityState />
@@ -937,7 +930,7 @@ const Transactions = () => {
           </button>
           <div className="px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Page <span className="text-blue-600 dark:text-blue-400">{currentPage}</span> of {totalPages}
+              {t('Page')} <span className="text-blue-600 dark:text-blue-400">{currentPage}</span> {t('of')} {totalPages}
             </span>
           </div>
           <button

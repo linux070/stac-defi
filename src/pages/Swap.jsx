@@ -629,326 +629,334 @@ const Swap = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="swap-container"
+        className="swap-container group"
       >
-        {/* Header */}
-        <div className="swap-header">
-          <div>
-            <h2 className="swap-header-title">{t('Swap Tokens')}</h2>
-            <p className="swap-header-subtitle">{t('swap.tradeTokensTitle')}</p>
-          </div>
-          <div className="swap-header-actions">
-            <button
-              onClick={handleFaucetClick}
-              className="swap-faucet-button-compact"
-            >
-              <span>Faucet</span>
-            </button>
+        {/* 4-Corner Splitted Glow System */}
+        <div className={`absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+        <div className={`absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+        <div className={`absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+        <div className={`absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
 
-          </div>
-        </div>
-
-
-
-
-
-        {/* Validation Error */}
-        {validationError && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="swap-validation-error"
-          >
-            <AlertTriangle size={16} className="swap-validation-error-icon" />
-            <p className="swap-validation-error-text">{validationError}</p>
-          </motion.div>
-        )}
-
-        {/* Liquidity Warning */}
-        {liquidityWarning && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
-          >
-            <div className="flex items-start gap-3">
-              <AlertTriangle size={18} className="text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200 whitespace-pre-line">
-                  {liquidityWarning}
-                </p>
-              </div>
+        <div className="relative z-10">
+          {/* Header */}
+          <div className="swap-header">
+            <div>
+              <h2 className="swap-header-title">{t('Swap Tokens')}</h2>
+              <p className="swap-header-subtitle">{t('swap.tradeTokensTitle')}</p>
             </div>
-          </motion.div>
-        )}
-
-        {/* From Token */}
-        <div className="swap-input-group">
-          <div className="swap-input-header">
-            <div className="swap-input-label">{t('From')}</div>
-            {isConnected && (
-              <div className="swap-balance-text">
-                Balance: <span>
-                  {fromLoading ? (
-                    <Loader className="animate-spin" size={12} />
-                  ) : (
-                    fromBalance || '0.00'
-                  )}
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="swap-input-row">
-            <input
-              type="text"
-              inputMode="decimal"
-              value={fromAmount}
-              onChange={(e) => handleFromAmountChange(sanitizeInput(e.target.value))}
-              placeholder="0.0"
-              className="swap-amount-input"
-            />
-            <button
-              ref={fromTokenTriggerRef}
-              onClick={() => setShowFromSelector(true)}
-              className="swap-token-selector"
-            >
-              <div className="swap-token-icon">
-                {getTokenIcon(fromToken) ? (
-                  <img
-                    src={getTokenIcon(fromToken)}
-                    alt={fromToken}
-                    className="w-full h-full rounded-full"
-                  />
-                ) : (
-                  <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                    <span className="text-[10px] font-bold">{fromToken}</span>
-                  </div>
-                )}
-              </div>
-              <span className="swap-token-symbol">{fromToken}</span>
-              <ChevronDown size={16} className="swap-token-chevron" />
-            </button>
-          </div>
-          {isConnected && (
-            <div className="flex items-center justify-end mt-2">
+            <div className="swap-header-actions">
               <button
-                onClick={handleMaxClick}
-                className="max-button"
+                onClick={handleFaucetClick}
+                className="swap-faucet-button-compact"
               >
-                {t('Max')}
+                <span>Faucet</span>
               </button>
+
             </div>
+          </div>
+
+
+
+
+
+          {/* Validation Error */}
+          {validationError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="swap-validation-error"
+            >
+              <AlertTriangle size={16} className="swap-validation-error-icon" />
+              <p className="swap-validation-error-text">{validationError}</p>
+            </motion.div>
           )}
-        </div>
 
-        {/* Switch Button */}
-        <div className="swap-direction-container">
-          <button
-            onClick={handleSwitch}
-            className="swap-direction-button"
-            title={t('Switch Tokens')}
-          >
-            <ArrowDownUp size={18} />
-          </button>
-        </div>
-
-        {/* To Token */}
-        <div className="swap-input-group">
-          <div className="swap-input-header">
-            <div className="swap-input-label">{t('To')}</div>
-            {isConnected && (
-              <div className="swap-balance-text">
-                Balance: <span>
-                  {toLoading ? (
-                    <Loader className="animate-spin" size={12} />
-                  ) : (
-                    toBalance || '0.00'
-                  )}
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="swap-input-row">
-            <input
-              type="text"
-              inputMode="decimal"
-              value={toAmount}
-              onChange={(e) => handleToAmountChange(e.target.value)}
-              placeholder="0.0"
-              className="swap-amount-input"
-            />
-            <button
-              ref={toTokenTriggerRef}
-              onClick={() => setShowToSelector(true)}
-              className="swap-token-selector"
+          {/* Liquidity Warning */}
+          {liquidityWarning && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
             >
-              <div className="swap-token-icon">
-                {getTokenIcon(toToken) ? (
-                  <img
-                    src={getTokenIcon(toToken)}
-                    alt={toToken}
-                    className="w-full h-full rounded-full"
-                  />
-                ) : (
-                  <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                    <span className="text-[10px] font-bold">{toToken}</span>
-                  </div>
-                )}
+              <div className="flex items-start gap-3">
+                <AlertTriangle size={18} className="text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200 whitespace-pre-line">
+                    {liquidityWarning}
+                  </p>
+                </div>
               </div>
-              <span className="swap-token-symbol">{toToken}</span>
-              <ChevronDown size={16} className="swap-token-chevron" />
-            </button>
-          </div>
-          {isConnected && (
-            <div className="flex items-center justify-end mt-2">
-              <button
-                onClick={() => {
-                  if (!toBalance || parseFloat(toBalance) === 0) {
-                    setToast({ visible: true, type: 'warning', message: 'No balance available' });
-                    setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
-                    return;
-                  }
-                  // Set the "To" amount to maximum balance
-                  // Note: This will trigger the swap calculation in reverse
-                  setToAmount(toBalance);
-                  // Calculate the required "From" amount based on the "To" amount
-                  try {
-                    const reverseQuote = calculateSwapQuote(toToken, fromToken, toBalance, slippage);
-                    if (reverseQuote) {
-                      setFromAmount(reverseQuote.expectedOutput);
-                    }
-                  } catch (err) {
-                    console.error('Error calculating reverse quote:', err);
-                  }
-                }}
-                className="max-button"
-              >
-                {t('Max')}
-              </button>
-            </div>
+            </motion.div>
           )}
-        </div>
 
-        {/* Price Details - Actual Token Prices */}
-        {fromAmount && toAmount && (
-          <div className="mt-3 px-1 flex items-center gap-1 text-[11px] font-medium text-gray-500 dark:text-gray-400">
-            <Info size={12} className="opacity-60" />
-            <span>
-              1 {fromToken} = {TOKEN_PRICES[toToken] && TOKEN_PRICES[fromToken]
-                ? (TOKEN_PRICES[toToken] / TOKEN_PRICES[fromToken]).toFixed(2)
-                : swapState.price ? parseFloat(swapState.price).toFixed(2) : '0.00'} {toToken}
-            </span>
-          </div>
-        )}
-
-
-
-        {/* Direct Slippage Toolbar - One-Tap Control */}
-        <div className="flex items-center justify-between mb-5 px-1">
-          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em]">
-            Slippage
-          </div>
-          <div className="flex items-center gap-1 p-1 bg-blue-50/50 dark:bg-[#131720]/40 border border-blue-100/50 dark:border-white/5 rounded-2xl shadow-sm backdrop-blur-sm">
-            {[0.1, 0.5, 1.0].map((value) => (
-              <button
-                key={value}
-                onClick={() => {
-                  setSlippage(value);
-                  setCustomSlippage('');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all duration-300 active:scale-95 ${slippage === value && !customSlippage
-                  ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-md ring-1 ring-blue-100/50 dark:ring-blue-500/50'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-blue-500'
-                  }`}
-              >
-                {value}%
-              </button>
-            ))}
-            {/* Direct Editable Input */}
-            <div className="relative flex items-center ml-1">
+          {/* From Token */}
+          <div className="swap-input-group">
+            <div className="swap-input-header">
+              <div className="swap-input-label">{t('From')}</div>
+              {isConnected && (
+                <div className="swap-balance-text">
+                  Balance: <span>
+                    {fromLoading ? (
+                      <Loader className="animate-spin" size={12} />
+                    ) : (
+                      fromBalance || '0.00'
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="swap-input-row">
               <input
                 type="text"
-                placeholder="Custom"
-                value={customSlippage}
-                onChange={(e) => {
-                  const val = sanitizeInput(e.target.value);
-                  setCustomSlippage(val);
-                  if (val && !isNaN(parseFloat(val))) {
-                    setSlippage(parseFloat(val));
-                  }
-                }}
-                className={`w-[94px] pl-2 pr-7 py-1.5 rounded-xl text-[12px] font-bold text-center transition-all duration-300 focus:outline-none ${customSlippage
-                  ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-md ring-1 ring-blue-100 dark:ring-blue-500'
-                  : 'bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500'
-                  }`}
+                inputMode="decimal"
+                value={fromAmount}
+                onChange={(e) => handleFromAmountChange(sanitizeInput(e.target.value))}
+                placeholder="0.0"
+                className="swap-amount-input"
               />
-              <span className={`absolute right-3 text-[11px] font-bold pointer-events-none ${customSlippage ? 'text-blue-300 dark:text-blue-200' : 'text-gray-400/80'
-                }`}>%</span>
+              <button
+                ref={fromTokenTriggerRef}
+                onClick={() => setShowFromSelector(true)}
+                className="swap-token-selector"
+              >
+                <div className="swap-token-icon">
+                  {getTokenIcon(fromToken) ? (
+                    <img
+                      src={getTokenIcon(fromToken)}
+                      alt={fromToken}
+                      className="w-full h-full rounded-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <span className="text-[10px] font-bold">{fromToken}</span>
+                    </div>
+                  )}
+                </div>
+                <span className="swap-token-symbol">{fromToken}</span>
+                <ChevronDown size={16} className="swap-token-chevron" />
+              </button>
+            </div>
+            {isConnected && (
+              <div className="flex items-center justify-end mt-2">
+                <button
+                  onClick={handleMaxClick}
+                  className="max-button"
+                >
+                  {t('Max')}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Switch Button */}
+          <div className="swap-direction-container">
+            <button
+              onClick={handleSwitch}
+              className="swap-direction-button"
+              title={t('Switch Tokens')}
+            >
+              <ArrowDownUp size={18} />
+            </button>
+          </div>
+
+          {/* To Token */}
+          <div className="swap-input-group">
+            <div className="swap-input-header">
+              <div className="swap-input-label">{t('To')}</div>
+              {isConnected && (
+                <div className="swap-balance-text">
+                  Balance: <span>
+                    {toLoading ? (
+                      <Loader className="animate-spin" size={12} />
+                    ) : (
+                      toBalance || '0.00'
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="swap-input-row">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={toAmount}
+                onChange={(e) => handleToAmountChange(e.target.value)}
+                placeholder="0.0"
+                className="swap-amount-input"
+              />
+              <button
+                ref={toTokenTriggerRef}
+                onClick={() => setShowToSelector(true)}
+                className="swap-token-selector"
+              >
+                <div className="swap-token-icon">
+                  {getTokenIcon(toToken) ? (
+                    <img
+                      src={getTokenIcon(toToken)}
+                      alt={toToken}
+                      className="w-full h-full rounded-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <span className="text-[10px] font-bold">{toToken}</span>
+                    </div>
+                  )}
+                </div>
+                <span className="swap-token-symbol">{toToken}</span>
+                <ChevronDown size={16} className="swap-token-chevron" />
+              </button>
+            </div>
+            {isConnected && (
+              <div className="flex items-center justify-end mt-2">
+                <button
+                  onClick={() => {
+                    if (!toBalance || parseFloat(toBalance) === 0) {
+                      setToast({ visible: true, type: 'warning', message: 'No balance available' });
+                      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
+                      return;
+                    }
+                    // Set the "To" amount to maximum balance
+                    // Note: This will trigger the swap calculation in reverse
+                    setToAmount(toBalance);
+                    // Calculate the required "From" amount based on the "To" amount
+                    try {
+                      const reverseQuote = calculateSwapQuote(toToken, fromToken, toBalance, slippage);
+                      if (reverseQuote) {
+                        setFromAmount(reverseQuote.expectedOutput);
+                      }
+                    } catch (err) {
+                      console.error('Error calculating reverse quote:', err);
+                    }
+                  }}
+                  className="max-button"
+                >
+                  {t('Max')}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Price Details - Actual Token Prices */}
+          {fromAmount && toAmount && (
+            <div className="mt-3 px-1 flex items-center gap-1 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+              <Info size={12} className="opacity-60" />
+              <span>
+                1 {fromToken} = {TOKEN_PRICES[toToken] && TOKEN_PRICES[fromToken]
+                  ? (TOKEN_PRICES[toToken] / TOKEN_PRICES[fromToken]).toFixed(2)
+                  : swapState.price ? parseFloat(swapState.price).toFixed(2) : '0.00'} {toToken}
+              </span>
+            </div>
+          )}
+
+
+
+          {/* Direct Slippage Toolbar - One-Tap Control */}
+          <div className="flex items-center justify-between mb-5 px-1">
+            <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em]">
+              Slippage
+            </div>
+            <div className="flex items-center gap-1 p-1 bg-blue-50/50 dark:bg-[#131720]/40 border border-blue-100/50 dark:border-white/5 rounded-2xl shadow-sm backdrop-blur-sm">
+              {[0.1, 0.5, 1.0].map((value) => (
+                <button
+                  key={value}
+                  onClick={() => {
+                    setSlippage(value);
+                    setCustomSlippage('');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all duration-300 active:scale-95 ${slippage === value && !customSlippage
+                    ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-md ring-1 ring-blue-100/50 dark:ring-blue-500/50'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-blue-500'
+                    }`}
+                >
+                  {value}%
+                </button>
+              ))}
+              {/* Direct Editable Input */}
+              <div className="relative flex items-center ml-1">
+                <input
+                  type="text"
+                  placeholder="Custom"
+                  value={customSlippage}
+                  onChange={(e) => {
+                    const val = sanitizeInput(e.target.value);
+                    setCustomSlippage(val);
+                    if (val && !isNaN(parseFloat(val))) {
+                      setSlippage(parseFloat(val));
+                    }
+                  }}
+                  className={`w-[94px] pl-2 pr-7 py-1.5 rounded-xl text-[12px] font-bold text-center transition-all duration-300 focus:outline-none ${customSlippage
+                    ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-md ring-1 ring-blue-100 dark:ring-blue-500'
+                    : 'bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500'
+                    }`}
+                />
+                <span className={`absolute right-3 text-[11px] font-bold pointer-events-none ${customSlippage ? 'text-blue-300 dark:text-blue-200' : 'text-gray-400/80'
+                  }`}>%</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {slippageWarning && (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4 p-2.5 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200/50 dark:border-yellow-700/30 rounded-xl flex items-center gap-2"
-          >
-            <AlertTriangle size={14} className="text-yellow-600 dark:text-yellow-400 shrink-0" />
-            <p className="text-[11px] font-medium text-yellow-800 dark:text-yellow-200 leading-tight">
-              {slippageWarning}
-            </p>
-          </motion.div>
-        )}
-
-        {/* Swap Button */}
-        <button
-          onClick={handleSwapClick}
-          className={`swap-button ${(parseFloat(fromAmount) > parseFloat(fromBalance)) ? 'swap-button-failed' : ''}`}
-          disabled={!isConnected || !fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance) || swapState.isLoading}
-        >
-          {!isConnected ? (
-            <>
-              <Wallet size={18} className="inline mr-2" />
-              <span>{t('Connect Wallet')}</span>
-            </>
-          ) : parseFloat(fromAmount) > parseFloat(fromBalance) ? (
-            <span>{t('Insufficient Balance')}</span>
-          ) : swapState.isLoading ? (
-            <div className="flex items-center justify-center gap-2">
-              <Loader className="animate-spin" size={18} />
-              <span>{swapState.isApproving ? 'Approving...' : 'Swapping...'}</span>
-            </div>
-          ) : swapState.needsApproval ? (
-            <span>Approve {fromToken}</span>
-          ) : (
-            <span>Swap</span>
+          {slippageWarning && (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-2.5 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200/50 dark:border-yellow-700/30 rounded-xl flex items-center gap-2"
+            >
+              <AlertTriangle size={14} className="text-yellow-600 dark:text-yellow-400 shrink-0" />
+              <p className="text-[11px] font-medium text-yellow-800 dark:text-yellow-200 leading-tight">
+                {slippageWarning}
+              </p>
+            </motion.div>
           )}
-        </button>
 
-        {/* Modals */}
-        <SwapModal
-          isOpen={isSwapModalOpen}
-          onClose={() => {
-            setIsSwapModalOpen(false);
-            if (swapState.isSuccess) {
-              setFromAmount('');
-              setToAmount('');
-            }
-          }}
-          fromToken={TOKENS[fromToken]}
-          toToken={TOKENS[toToken]}
-          fromAmount={fromAmount}
-          toAmount={toAmount}
-          swapState={swapState}
-        />
+          {/* Swap Button */}
+          <button
+            onClick={handleSwapClick}
+            className={`swap-button ${(parseFloat(fromAmount) > parseFloat(fromBalance)) ? 'swap-button-failed' : ''}`}
+            disabled={!isConnected || !fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance) || swapState.isLoading}
+          >
+            {!isConnected ? (
+              <>
+                <Wallet size={18} className="inline mr-2" />
+                <span>{t('Connect Wallet')}</span>
+              </>
+            ) : parseFloat(fromAmount) > parseFloat(fromBalance) ? (
+              <span>{t('Insufficient Balance')}</span>
+            ) : swapState.isLoading ? (
+              <div className="flex items-center justify-center gap-2">
+                <Loader className="animate-spin" size={18} />
+                <span>{swapState.isApproving ? 'Approving...' : 'Swapping...'}</span>
+              </div>
+            ) : swapState.needsApproval ? (
+              <span>Approve {fromToken}</span>
+            ) : (
+              <span>Swap</span>
+            )}
+          </button>
 
-        <FaucetModal
-          isOpen={isFaucetModalOpen}
-          onClose={() => setIsFaucetModalOpen(false)}
-        />
+          {/* Modals */}
+          <SwapModal
+            isOpen={isSwapModalOpen}
+            onClose={() => {
+              setIsSwapModalOpen(false);
+              if (swapState.isSuccess) {
+                setFromAmount('');
+                setToAmount('');
+              }
+            }}
+            fromToken={TOKENS[fromToken]}
+            toToken={TOKENS[toToken]}
+            fromAmount={fromAmount}
+            toAmount={toAmount}
+            swapState={swapState}
+          />
+
+          <FaucetModal
+            isOpen={isFaucetModalOpen}
+            onClose={() => setIsFaucetModalOpen(false)}
+          />
 
 
+        </div>
       </motion.div>
 
       {/* Token Selectors */}

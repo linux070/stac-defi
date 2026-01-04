@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins, Zap, ExternalLink, Link, Droplets, Shield, Wifi } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Layers, DollarSign, Users, Activity, ArrowUpRight, ArrowDownRight, Globe, Coins, Zap, ExternalLink, Link, Droplet, Shield, Wifi, ArrowLeftRight, Waypoints, Fuel, Building2, Signal, Hash, Boxes, BarChart3 } from 'lucide-react';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { formatCurrency, formatNumber } from '../utils/blockchain';
 import { ArrowUpDown } from "lucide-react";
 import { useDappTransactionCount } from '../hooks/useDappTransactionCount';
@@ -23,9 +23,9 @@ const Home = ({ setActiveTab }) => {
   const [stats, setStats] = useState({
     volume: { value: totalVolume || 0, change: 0, trend: 'up' },
     tvl: { value: totalValue || 0, change: 0, trend: 'up' },
-    users: { value: activeUsers || 1247, change: usersChange || 12.4, trend: usersTrend || 'up' },
-    transactions: { value: transactionCount || 8934, change: change || 5.2, trend: trend || 'up' },
-    crossChain: { value: bridgeCount || 342, change: bridgeChange || 22.1, trend: bridgeTrend || 'up' },
+    users: { value: activeUsers || 0, change: usersChange || 0, trend: usersTrend || 'stable' },
+    transactions: { value: transactionCount || 0, change: change || 0, trend: trend || 'stable' },
+    crossChain: { value: bridgeCount || 0, change: bridgeChange || 0, trend: bridgeTrend || 'stable' },
     uptime: { value: uptime || 0, change: uptimeChange || 0, trend: uptimeTrend || 'stable' },
   });
 
@@ -120,50 +120,75 @@ const Home = ({ setActiveTab }) => {
     }
   }, [totalValue, tvpLoading]);
 
-  // Simulate live data updates (excluding transactions, volume, and TVP which now use real data)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStats(prevStats => ({
-        ...prevStats,
-        users: {
-          ...prevStats.users,
-          value: prevStats.users.value + Math.floor(Math.random() * 5),
-          change: parseFloat((prevStats.users.change + (Math.random() * 0.3 - 0.15)).toFixed(1))
-        },
-        // Transactions now use real data from Arc network
-      }));
-    }, 30000); // Update every 30 seconds
+  // Animated Number Component with Pulse effect
+  const AnimatedNumber = ({ value, formatFn }) => {
+    const motionValue = useMotionValue(value);
+    const springValue = useSpring(motionValue, {
+      damping: 25,
+      stiffness: 60,
+      restDelta: 0.001
+    });
+    const [display, setDisplay] = useState(formatFn(value));
+    const [isPulsing, setIsPulsing] = useState(false);
 
-    return () => clearInterval(interval);
-  }, []);
+    useEffect(() => {
+      motionValue.set(value);
+      setIsPulsing(true);
+      const timer = setTimeout(() => setIsPulsing(false), 800);
+      return () => clearTimeout(timer);
+    }, [value, motionValue]);
+
+    useEffect(() => {
+      return springValue.on("change", (latest) => {
+        setDisplay(formatFn(latest));
+      });
+    }, [springValue, formatFn]);
+
+    return (
+      <motion.span
+        animate={isPulsing ? {
+          scale: [1, 1.05, 1],
+          filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"],
+        } : {}}
+        transition={{ duration: 0.4 }}
+      >
+        {display}
+      </motion.span>
+    );
+  };
+
+  // The simulation useEffect has been removed to ensure all data is pulled exclusively from the dApp hooks.
 
   const statCards = [
     {
-      id: 'users',
-      label: t('Active Users'),
-      value: formatNumber(stats.users.value),
-      change: stats.users.change,
-      trend: stats.users.trend,
-      icon: Users,
-      lucideIcon: Users,
-      color: 'from-orange-500 to-orange-600',
-      description: t('Total unique wallet addresses')
+      id: 'tvl',
+      label: t('Total Value Processed'),
+      rawValue: stats.tvl.value,
+      formatFn: (val) => formatCurrency(val, 0),
+      change: stats.tvl.change,
+      trend: stats.tvl.trend,
+      icon: Layers,
+      lucideIcon: Layers,
+      color: 'from-blue-500 to-blue-600',
+      description: t('Aggregate of all dApp activities')
     },
     {
       id: 'volume',
       label: t('Swap Volume'),
-      value: formatCurrency(stats.volume.value, 0),
+      rawValue: stats.volume.value,
+      formatFn: (val) => formatCurrency(val, 0),
       change: stats.volume.change,
       trend: stats.volume.trend,
-      icon: DollarSign,
-      lucideIcon: DollarSign,
+      icon: BarChart3,
+      lucideIcon: BarChart3,
       color: 'from-green-500 to-green-600',
       description: t('Total swap volume in USD')
     },
     {
       id: 'Cross-Chain',
       label: t('Cross Chain Transfers'),
-      value: formatNumber(stats.crossChain.value),
+      rawValue: stats.crossChain.value,
+      formatFn: (val) => formatNumber(Math.floor(val)),
       change: stats.crossChain.change,
       trend: stats.crossChain.trend,
       icon: Globe,
@@ -172,35 +197,38 @@ const Home = ({ setActiveTab }) => {
       description: t('Bridge transaction count')
     },
     {
+      id: 'users',
+      label: t('Active Users'),
+      rawValue: stats.users.value,
+      formatFn: (val) => formatNumber(Math.floor(val)),
+      change: stats.users.change,
+      trend: stats.users.trend,
+      icon: Users,
+      lucideIcon: Users,
+      color: 'from-orange-500 to-orange-600',
+      description: t('Total unique wallet addresses')
+    },
+    {
       id: 'transactions',
       label: t('Transaction Count'),
-      value: formatNumber(stats.transactions.value),
+      rawValue: stats.transactions.value,
+      formatFn: (val) => formatNumber(Math.floor(val)),
       change: stats.transactions.change,
       trend: stats.transactions.trend,
-      icon: Activity,
-      lucideIcon: Activity,
+      icon: Boxes,
+      lucideIcon: Boxes,
       color: 'from-purple-500 to-purple-600',
       description: t('Count from indexer')
     },
     {
-      id: 'tvl',
-      label: t('Total Value Processed'),
-      value: formatCurrency(stats.tvl.value, 0),
-      change: stats.tvl.change,
-      trend: stats.tvl.trend,
-      icon: TrendingUp,
-      lucideIcon: TrendingUp,
-      color: 'from-blue-500 to-blue-600',
-      description: t('Aggregate of all dApp activities')
-    },
-    {
       id: 'uptime',
       label: t('Network Uptime'),
-      value: `${stats.uptime.value}%`,
+      rawValue: stats.uptime.value,
+      formatFn: (val) => `${Math.round(val)}%`,
       change: stats.uptime.change,
       trend: stats.uptime.trend,
-      icon: Wifi,
-      lucideIcon: Wifi,
+      icon: Signal,
+      lucideIcon: Signal,
       color: 'from-cyan-500 to-cyan-600',
       description: t('Operational reliability')
     },
@@ -221,8 +249,7 @@ const Home = ({ setActiveTab }) => {
         /* --- DARK MODE (Subtle & Deep) --- */
         dark:bg-slate-800/40 
         dark:from-transparent dark:to-transparent /* Remove gradient in dark mode if you want glass */
-        dark:backdrop-blur-md
-        dark:border dark:border-white/10"
+        dark:backdrop-blur-md"
       >
 
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSg0NSkiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3BhdHRlcm4pIi8+PC9zdmc+')] opacity-20"></div>
@@ -307,7 +334,7 @@ const Home = ({ setActiveTab }) => {
       >
         <div className="mb-6">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Network Statistics')}</h2>
-          <p p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">{t('Real-time metrics updated automatically')}</p>
+          <p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">{t('Real-time metrics updated automatically')}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {statCards.map((stat, index) => {
@@ -318,34 +345,77 @@ const Home = ({ setActiveTab }) => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * index }}
-                className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1"
+                className="group relative overflow-hidden rounded-3xl p-6 md:p-8 bg-white shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-blue-900/20 transition-all duration-500 dark:bg-slate-900/40 backdrop-blur-xl hover:-translate-y-2"
               >
-                {/* Subtle gradient overlay on hover */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                {/* 4-Corner Splitted Glow System */}
+                <div className={`absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br ${stat.color} opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+                <div className={`absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl ${stat.color} opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+                <div className={`absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr ${stat.color} opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+                <div className={`absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl ${stat.color} opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
 
                 <div className="relative z-10">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} neon-icon-container flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                      {stat.lucideIcon && React.createElement(stat.lucideIcon, { size: 20, className: "text-white" })}
+                  <div className="flex items-start justify-between mb-6">
+                    {/* Premium Icon Container */}
+                    <div className="relative w-14 h-14 flex items-center justify-center">
+                      {/* Floating Glow Blob behind icon */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-25 blur-xl rounded-full group-hover:opacity-50 group-hover:scale-150 transition-all duration-700`}></div>
+
+                      {/* Floating Icon - Transparent Background */}
+                      <div className="relative z-10 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-500">
+                        {stat.lucideIcon && (
+                          <stat.lucideIcon
+                            size={32}
+                            className={`transition-colors duration-300 ${stat.id === 'tvl' ? 'text-blue-500' :
+                              stat.id === 'volume' ? 'text-green-500' :
+                                stat.id === 'Cross-Chain' ? 'text-indigo-500' :
+                                  stat.id === 'users' ? 'text-orange-500' :
+                                    stat.id === 'transactions' ? 'text-purple-500' :
+                                      'text-cyan-500'
+                              }`}
+                            strokeWidth={2.5}
+                          />
+                        )}
+                      </div>
                     </div>
+
+                    {/* Modern Trend Badge */}
                     {stat.trend !== 'stable' && (
-                      <div className={`flex items-center space-x-1 text-xs font-semibold px-2.5 py-1.5 rounded-full shadow-sm
-                        ${stat.trend === 'up' ? 'bg-green-50 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/40 dark:text-red-400'}`}
+                      <div className={`flex items-center space-x-1 text-xs font-bold px-3 py-1.5 rounded-full border shadow-sm backdrop-blur-md
+                        ${stat.trend === 'up'
+                          ? 'bg-green-500/10 text-green-600 border-green-500/20 dark:text-green-400'
+                          : 'bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400'}`}
                       >
-                        {TrendIcon && <TrendIcon size={14} />}
-                        <span>{stat.change}%</span>
+                        {TrendIcon && <TrendIcon size={14} strokeWidth={3} />}
+                        <span>{Math.round(stat.change)}%</span>
                       </div>
                     )}
                   </div>
 
-                  <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-2 font-mono tabular-nums tracking-tight">{stat.value}</h3>
-                  <p className="text-sm md:text-base font-semibold text-slate-700 dark:text-slate-200 mb-1.5">{stat.label}</p>
-                  <p className="text-xs md:text-sm leading-relaxed text-slate-500 dark:text-slate-400 mb-4">{stat.description}</p>
+                  <div className="space-y-1">
+                    <h3 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white font-mono tabular-nums tracking-tighter group-hover:scale-105 origin-left transition-transform duration-500">
+                      <AnimatedNumber value={stat.rawValue} formatFn={stat.formatFn} />
+                    </h3>
+                    <p className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 opacity-80 group-hover:opacity-100 transition-opacity">
+                      {stat.label}
+                    </p>
+                  </div>
 
-                  {/* Data source indicator - no border */}
-                  <div className="flex items-center text-xs text-slate-400 dark:text-slate-500">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse shadow-sm shadow-green-500/50"></div>
-                    <span className="font-medium">{t('Live Data')}</span>
+                  <p className="mt-4 text-xs md:text-sm leading-relaxed text-slate-400 dark:text-slate-500 line-clamp-2 min-h-[2.5rem]">
+                    {stat.description}
+                  </p>
+
+                  {/* Enhanced Status Indicator */}
+                  <div className="mt-6 pt-6 flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="relative">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div className="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-ping opacity-75"></div>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{t('Live')}</span>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <Activity size={12} className="text-slate-300 dark:text-slate-600 animate-pulse" />
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -363,74 +433,98 @@ const Home = ({ setActiveTab }) => {
       >
         <div className="mb-6">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Quick Actions')}</h2>
-          <p p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">
+          <p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">
             {t('Everything you need to manage your assets on Arc')}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          {/* Swap Action */}
           <div
             onClick={() => setActiveTab('swap')}
-            className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1 cursor-pointer"
+            className="group relative overflow-hidden rounded-3xl p-6 md:p-8 bg-white shadow-sm hover:shadow-2xl hover:shadow-blue-200/50 dark:hover:shadow-blue-900/20 transition-all duration-500 dark:bg-slate-900/40 backdrop-blur-xl hover:-translate-y-2 cursor-pointer"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+            <div className={`absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <ArrowUpDown size={20} className="text-white" />
+              <div className="relative w-14 h-14 flex items-center justify-center mb-6">
+                <div className={`absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-20 blur-xl rounded-full group-hover:opacity-40 group-hover:scale-150 transition-all duration-700`}></div>
+                <div className="relative z-10 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-500">
+                  <ArrowLeftRight size={32} className="text-blue-500" strokeWidth={2.5} />
+                </div>
               </div>
-              <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <h3 className="font-black text-xl md:text-2xl mb-2 text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors uppercase tracking-tight">
                 {t('Swap Tokens')}
               </h3>
-              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
                 {t('Exchange tokens instantly at the best rates')}
               </p>
-              <div className="flex items-center text-blue-600 dark:text-blue-400 text-xs md:text-sm font-semibold">
+              <div className="flex items-center text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-widest">
                 <span>{t('Start swapping')}</span>
-                <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={14} />
+                <ArrowUpRight className="ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" size={16} strokeWidth={3} />
               </div>
             </div>
           </div>
 
+          {/* Bridge Action */}
           <div
             onClick={() => setActiveTab('bridge')}
-            className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1 cursor-pointer"
+            className="group relative overflow-hidden rounded-3xl p-6 md:p-8 bg-white shadow-sm hover:shadow-2xl hover:shadow-cyan-200/50 dark:hover:shadow-cyan-900/20 transition-all duration-500 dark:bg-slate-900/40 backdrop-blur-xl hover:-translate-y-2 cursor-pointer"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-green-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+            <div className={`absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-cyan-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-cyan-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-cyan-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-cyan-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Link size={20} className="text-white" />
+              <div className="relative w-14 h-14 flex items-center justify-center mb-6">
+                <div className={`absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-600 opacity-20 blur-xl rounded-full group-hover:opacity-40 group-hover:scale-150 transition-all duration-700`}></div>
+                <div className="relative z-10 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-500">
+                  <ArrowUpDown size={32} className="text-cyan-500" strokeWidth={2.5} />
+                </div>
               </div>
-              <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+              <h3 className="font-black text-xl md:text-2xl mb-2 text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors uppercase tracking-tight">
                 {t('Bridge Assets')}
               </h3>
-              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
                 {t('Transfer assets between Sepolia and Arc Testnet')}
               </p>
-              <div className="flex items-center text-green-600 dark:text-green-400 text-xs md:text-sm font-semibold">
+              <div className="flex items-center text-cyan-600 dark:text-cyan-400 text-xs font-bold uppercase tracking-widest">
                 <span>{t('Start bridging')}</span>
-                <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={14} />
+                <ArrowUpRight className="ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" size={16} strokeWidth={3} />
               </div>
             </div>
           </div>
 
+          {/* Liquidity Action */}
           <div
             onClick={() => setActiveTab('liquidity')}
-            className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1 cursor-pointer"
+            className="group relative overflow-hidden rounded-3xl p-6 md:p-8 bg-white shadow-sm hover:shadow-2xl hover:shadow-indigo-200/50 dark:hover:shadow-indigo-900/20 transition-all duration-500 dark:bg-slate-900/40 backdrop-blur-xl hover:-translate-y-2 cursor-pointer"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+            <div className={`absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-indigo-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-indigo-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-indigo-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-indigo-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Droplets size={20} className="text-white" />
+              <div className="relative w-14 h-14 flex items-center justify-center mb-6">
+                <div className={`absolute inset-0 bg-gradient-to-br from-indigo-500 to-blue-600 opacity-20 blur-xl rounded-full group-hover:opacity-40 group-hover:scale-150 transition-all duration-700`}></div>
+                <div className="relative z-10 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-500">
+                  <Droplet size={32} className="text-indigo-500 dark:text-indigo-400" strokeWidth={2.5} />
+                </div>
               </div>
-              <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+              <h3 className="font-black text-xl md:text-2xl mb-2 text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase tracking-tight">
                 {t('Add Liquidity')}
               </h3>
-              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
                 {t('Provide liquidity to earn passive income')}
               </p>
-              <div className="flex items-center text-purple-600 dark:text-purple-400 text-xs md:text-sm font-semibold">
+              <div className="flex items-center text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-widest">
                 <span>{t('Start earning')}</span>
-                <ArrowUpRight className="ml-1 group-hover:translate-x-1 transition-transform" size={14} />
+                <ArrowUpRight className="ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" size={16} strokeWidth={3} />
               </div>
             </div>
           </div>
@@ -450,36 +544,60 @@ const Home = ({ setActiveTab }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          <div className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+          {/* Lightning Fast */}
+          <div className="group relative overflow-hidden rounded-3xl p-6 md:p-8 bg-white shadow-sm hover:shadow-2xl hover:shadow-blue-200/50 dark:hover:shadow-blue-900/20 transition-all duration-500 dark:bg-slate-900/40 backdrop-blur-xl hover:-translate-y-2">
+            <div className={`absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Zap size={20} className="text-white" />
+              <div className="relative w-14 h-14 flex items-center justify-center mb-6">
+                <div className={`absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 opacity-20 blur-xl rounded-full group-hover:opacity-40 group-hover:scale-150 transition-all duration-700`}></div>
+                <div className="relative z-10 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-500">
+                  <Zap size={32} className="text-blue-500" strokeWidth={2.5} />
+                </div>
               </div>
-              <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white">{t('Lightning Fast')}</h3>
-              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">{t('Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.')}</p>
+              <h3 className="font-black text-xl md:text-2xl mb-2 text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors uppercase tracking-tight">{t('Lightning Fast')}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">{t('Sub-second finality with transaction speeds up to 1000x faster than traditional blockchains.')}</p>
             </div>
           </div>
 
-          <div className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-green-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+          {/* USDC Gas Fee */}
+          <div className="group relative overflow-hidden rounded-3xl p-6 md:p-8 bg-white shadow-sm hover:shadow-2xl hover:shadow-green-200/50 dark:hover:shadow-green-900/20 transition-all duration-500 dark:bg-slate-900/40 backdrop-blur-xl hover:-translate-y-2">
+            <div className={`absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-green-500 to-green-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-green-500 to-green-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-green-500 to-green-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-green-500 to-green-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <DollarSign size={20} className="text-white" />
+              <div className="relative w-14 h-14 flex items-center justify-center mb-6">
+                <div className={`absolute inset-0 bg-gradient-to-br from-green-500 to-green-600 opacity-20 blur-xl rounded-full group-hover:opacity-40 group-hover:scale-150 transition-all duration-700`}></div>
+                <div className="relative z-10 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-500">
+                  <Coins size={32} className="text-green-500" strokeWidth={2.5} />
+                </div>
               </div>
-              <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white">{t('USDC Gas Fee')}</h3>
-              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">{t('Predictable transaction costs with stablecoin-based gas fees for better UX.')}</p>
+              <h3 className="font-black text-xl md:text-2xl mb-2 text-slate-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors uppercase tracking-tight">{t('USDC Gas Fee')}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">{t('Predictable transaction costs with stablecoin-based gas fees for better UX.')}</p>
             </div>
           </div>
 
-          <div className="group relative overflow-hidden rounded-2xl p-6 md:p-7 bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all duration-300 dark:bg-slate-900/50 dark:border-slate-800/60 backdrop-blur-sm hover:-translate-y-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+          {/* Enterprise Grade */}
+          <div className="group relative overflow-hidden rounded-3xl p-6 md:p-8 bg-white shadow-sm hover:shadow-2xl hover:shadow-purple-200/50 dark:hover:shadow-purple-900/20 transition-all duration-500 dark:bg-slate-900/40 backdrop-blur-xl hover:-translate-y-2">
+            <div className={`absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-purple-500 to-purple-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-purple-500 to-purple-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-purple-500 to-purple-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+            <div className={`absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-purple-500 to-purple-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Shield size={20} className="text-white" />
+              <div className="relative w-14 h-14 flex items-center justify-center mb-6">
+                <div className={`absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600 opacity-20 blur-xl rounded-full group-hover:opacity-40 group-hover:scale-150 transition-all duration-700`}></div>
+                <div className="relative z-10 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-500">
+                  <Building2 size={32} className="text-purple-500" strokeWidth={2.5} />
+                </div>
               </div>
-              <h3 className="font-bold text-lg md:text-xl mb-2 text-slate-900 dark:text-white">{t('Enterprise Grade')}</h3>
-              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4">{t('Built for institutional use with advanced security and compliance features.')}</p>
+              <h3 className="font-black text-xl md:text-2xl mb-2 text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors uppercase tracking-tight">{t('Enterprise Grade')}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">{t('Built for institutional use with advanced security and compliance features.')}</p>
             </div>
           </div>
         </div>

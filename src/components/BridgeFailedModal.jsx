@@ -86,7 +86,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                   </div>
 
                   <div className="text-center mb-6">
-                    <h4 className="bridging-modal-status-title-new" style={{ color: '#ef4444' }}>
+                    <h4 className="bridging-modal-status-title-new title-failed">
                       {t('Transaction Failed')}
                     </h4>
                     <p className="bridging-modal-success-message">

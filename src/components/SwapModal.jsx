@@ -202,15 +202,14 @@ const SwapModal = ({
                         transition={{ type: 'spring', damping: 25, stiffness: 400 }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Close Button (Absolute) */}
-                        {!(step === 'success') && (
-                            <button
-                                onClick={onClose}
-                                className="swap-modal-close-button-alt"
-                            >
-                                <X size={20} />
-                            </button>
-                        )}
+                        {/* Close Button (Absolute) - Always visible */}
+                        <button
+                            onClick={onClose}
+                            className="swap-modal-close-button-alt"
+                        >
+                            <X size={20} />
+                        </button>
+
 
 
                         <div className="swap-modal-content">
@@ -267,27 +266,72 @@ const SwapModal = ({
 
                                     {/* Transaction Steps Progress */}
                                     <div className="swap-modal-steps">
-                                        <div className={`swap-modal-step ${!needsApproval || approveSuccess ? 'completed' : 'active'}`}>
-                                            <div className="swap-modal-step-icon">
-                                                {(!needsApproval || approveSuccess) ? <Check size={16} /> : isApproving ? <Loader className="animate-spin" size={16} /> : <div className="swap-modal-step-number">1</div>}
-                                            </div>
-                                            <div className="swap-modal-step-content">
-                                                <p className="swap-modal-step-title">{t('Approve in Wallet')}</p>
-                                                <p className="swap-modal-step-desc">{t('Allow Stac to use your')} {fromToken?.symbol}</p>
-                                            </div>
-                                        </div>
+                                        {/* Only show approval step if approval is needed */}
+                                        {(needsApproval && !approveSuccess) && (
+                                            <>
+                                                <div className={`swap-modal-step ${approveSuccess ? 'completed' : 'active'}`}>
+                                                    <div className="swap-modal-step-icon">
+                                                        {approveSuccess ? <Check size={16} /> : isApproving ? <Loader className="animate-spin" size={16} /> : <div className="swap-modal-step-number">1</div>}
+                                                    </div>
+                                                    <div className="swap-modal-step-content">
+                                                        <p className="swap-modal-step-title">{t('Approve in Wallet')}</p>
+                                                        <p className="swap-modal-step-desc">{t('Allow Stac to use your')} {fromToken?.symbol}</p>
+                                                    </div>
+                                                </div>
 
-                                        <div className="swap-modal-step-line" />
+                                                <div className="swap-modal-step-line" />
 
-                                        <div className={`swap-modal-step ${step === 'success' ? 'completed' : (!needsApproval && !isApproving) ? 'active' : 'pending'}`}>
-                                            <div className="swap-modal-step-icon">
-                                                {step === 'success' ? <Check size={16} /> : isSwapping ? <Loader className="animate-spin" size={16} /> : <div className="swap-modal-step-number">2</div>}
+                                                <div className="swap-modal-step pending">
+                                                    <div className="swap-modal-step-icon">
+                                                        <div className="swap-modal-step-number">2</div>
+                                                    </div>
+                                                    <div className="swap-modal-step-content">
+                                                        <p className="swap-modal-step-title">{t('Swap in Wallet')}</p>
+                                                        <p className="swap-modal-step-desc">{t('Execute the swap transaction')}</p>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Show swap step active after approval is successful */}
+                                        {(needsApproval && approveSuccess) && (
+                                            <>
+                                                <div className="swap-modal-step completed">
+                                                    <div className="swap-modal-step-icon">
+                                                        <Check size={16} />
+                                                    </div>
+                                                    <div className="swap-modal-step-content">
+                                                        <p className="swap-modal-step-title">{t('Approve in Wallet')}</p>
+                                                        <p className="swap-modal-step-desc">{t('Allow Stac to use your')} {fromToken?.symbol}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="swap-modal-step-line" />
+
+                                                <div className={`swap-modal-step ${step === 'success' ? 'completed' : 'active'}`}>
+                                                    <div className="swap-modal-step-icon">
+                                                        {step === 'success' ? <Check size={16} /> : isSwapping ? <Loader className="animate-spin" size={16} /> : <div className="swap-modal-step-number">2</div>}
+                                                    </div>
+                                                    <div className="swap-modal-step-content">
+                                                        <p className="swap-modal-step-title">{t('Swap in Wallet')}</p>
+                                                        <p className="swap-modal-step-desc">{t('Execute the swap transaction')}</p>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* When no approval needed, show only the swap step */}
+                                        {!needsApproval && (
+                                            <div className={`swap-modal-step ${step === 'success' ? 'completed' : 'active'}`}>
+                                                <div className="swap-modal-step-icon">
+                                                    {step === 'success' ? <Check size={16} /> : isSwapping ? <Loader className="animate-spin" size={16} /> : <Check size={16} />}
+                                                </div>
+                                                <div className="swap-modal-step-content">
+                                                    <p className="swap-modal-step-title">{t('Swap in Wallet')}</p>
+                                                    <p className="swap-modal-step-desc">{t('Execute the swap transaction')}</p>
+                                                </div>
                                             </div>
-                                            <div className="swap-modal-step-content">
-                                                <p className="swap-modal-step-title">{t('Swap in Wallet')}</p>
-                                                <p className="swap-modal-step-desc">{t('Execute the swap transaction')}</p>
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
 
                                     {/* Action Button */}

@@ -72,14 +72,28 @@ html.dark,
 .bridge-container {
   max-width: 540px;
   margin: 0 auto;
-  background: var(--bridge-bg-secondary);
-  border: 1px solid var(--bridge-border-light);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  background: white;
+  border: none;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
   position: relative;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+@media (min-width: 380px) {
+  .bridge-container {
+    padding: 24px;
+    border-radius: 24px;
+  }
+}
+
+html.dark .bridge-container,
+.dark .bridge-container {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 /* Tablet: Moderate padding increase */
@@ -184,10 +198,10 @@ html.dark,
   width: 100%;
   background: var(--bridge-surface-card);
   border: 1px solid var(--bridge-border-medium);
-  padding: 16px 20px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 0;
@@ -246,9 +260,9 @@ html.dark,
 }
 
 .network-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
   display: flex;
   align-items: center;
@@ -506,15 +520,18 @@ html.dark .arrow-divider-button {
   background: transparent;
   border: none;
   color: #64748b;
-  /* Muted grey like in image */
-  font-size: 32px;
-  /* Made larger to match img2 */
+  font-size: 28px;
   font-weight: 600;
   outline: none;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-width: 0;
   padding-top: 4px;
-  /* Move down slightly to align with label */
+}
+
+@media (min-width: 400px) {
+  .amount-input {
+    font-size: 32px;
+  }
 }
 
 @media (min-width: 768px) {
@@ -717,14 +734,27 @@ html.dark .arrow-divider-button {
   font-size: 18px;
   font-weight: 600;
   color: var(--bridge-text-primary);
-  margin-bottom: 20px;
+  margin-bottom: 4px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.bridge-subtitle {
+  font-size: 13px;
+  color: var(--bridge-text-secondary);
+  margin-bottom: 0;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 /* Desktop: More header spacing */
 @media (min-width: 768px) {
   .bridge-header {
-    margin-bottom: 24px;
+    margin-bottom: 6px;
+  }
+
+  .bridge-subtitle {
+    margin-bottom: 0;
+    font-size: 14px;
   }
 }
 
@@ -753,9 +783,6 @@ html.dark .arrow-divider-button {
 
 /* Add Arc Testnet Button - Top Right */
 .add-arc-button {
-  position: absolute;
-  top: 24px;
-  right: 24px;
   padding: 8px 14px;
   font-size: 11px;
   color: var(--bridge-text-primary);
@@ -769,6 +796,14 @@ html.dark .arrow-divider-button {
   align-items: center;
   gap: 6px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 2px;
+}
+
+/* Desktop Styles */
+@media (min-width: 768px) {
+  .add-arc-button {
+    margin-top: 4px;
+  }
 }
 
 .add-arc-button:hover {
@@ -1882,7 +1917,76 @@ html:not(.dark) .bridging-modal-error-icon,
   }
 
   .bridging-modal-content {
-    padding: 56px 20px 24px;
+    padding: 24px 16px 20px;
+  }
+
+  .bridging-modal-heading-container {
+    margin-bottom: 20px;
+  }
+
+  .bridging-modal-youre-bridging {
+    font-size: 16px;
+  }
+
+  .bridging-modal-details-new {
+    padding: 16px;
+    border-radius: 18px;
+    margin-bottom: 20px;
+  }
+
+  .bridging-modal-amount-row {
+    gap: 12px;
+  }
+
+  .bridging-modal-amount-value {
+    font-size: 15px;
+  }
+
+  .bridging-modal-progress-section-new {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+
+  .bridging-modal-progress-time-new {
+    font-size: 18px;
+  }
+
+  .bridging-modal-notice-premium {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .bridging-modal-notice-title-premium {
+    font-size: 14px;
+  }
+
+  .bridging-modal-notice-text-premium {
+    font-size: 12px;
+  }
+
+  .bridging-modal-status-card-new {
+    padding: 32px 20px;
+    border-radius: 24px;
+    gap: 10px;
+  }
+
+  .bridging-modal-status-title-new {
+    font-size: 20px;
+  }
+
+  .bridging-modal-success-details {
+    padding: 12px 16px;
+    border-radius: 16px;
+  }
+
+  .bridging-modal-success-info-row span {
+    font-size: 13px;
+  }
+
+  .bridging-modal-action-button-secondary-new {
+    padding: 14px;
+    font-size: 15px;
+    border-radius: 16px;
   }
 
   .bridging-modal-network-container {
@@ -1958,8 +2062,26 @@ html:not(.dark) .bridging-modal-error-icon,
     padding: 20px;
   }
 
+  .bridging-modal-checkmark-circle,
+  .bridging-modal-failed-circle {
+    width: 60px;
+    height: 60px;
+  }
+
+  .bridging-modal-checkmark-circle svg,
+  .bridging-modal-failed-circle svg {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
   .bridging-modal-success-time {
     font-size: 28px;
+  }
+
+  .bridging-modal-success-message {
+    font-size: 13px;
+    margin-top: -4px;
+    margin-bottom: 20px !important;
   }
 }
 
@@ -1990,7 +2112,62 @@ html:not(.dark) .bridging-modal-error-icon,
   }
 
   .bridging-modal-content {
+    padding: 20px 12px 16px;
+  }
+
+  .bridging-modal-heading-container {
+    margin-bottom: 16px;
+  }
+
+  .bridging-modal-youre-bridging {
+    font-size: 15px;
+  }
+
+  .bridging-modal-details-new {
     padding: 12px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+  }
+
+  .bridging-modal-amount-value {
+    font-size: 14px;
+  }
+
+  .bridging-modal-progress-section-new {
+    padding: 16px 12px;
+  }
+
+  .bridging-modal-progress-time-new {
+    font-size: 16px;
+  }
+
+  .bridging-modal-notice-premium {
+    padding: 14px;
+  }
+
+  .bridging-modal-notice-title-premium {
+    font-size: 13px;
+  }
+
+  .bridging-modal-notice-text-premium {
+    font-size: 11px;
+  }
+
+  .bridging-modal-status-card-new {
+    padding: 24px 16px;
+  }
+
+  .bridging-modal-status-title-new {
+    font-size: 18px;
+  }
+
+  .bridging-modal-success-details {
+    padding: 10px 14px;
+  }
+
+  .bridging-modal-action-button-secondary-new {
+    padding: 12px;
+    font-size: 14px;
   }
 
   .bridging-modal-network-container {
@@ -2038,6 +2215,18 @@ html:not(.dark) .bridging-modal-error-icon,
 
   .bridging-modal-success-time {
     font-size: 22px;
+  }
+
+  .bridging-modal-checkmark-circle,
+  .bridging-modal-failed-circle {
+    width: 52px;
+    height: 52px;
+  }
+
+  .bridging-modal-checkmark-circle svg,
+  .bridging-modal-failed-circle svg {
+    width: 28px !important;
+    height: 28px !important;
   }
 
   .bridging-modal-title {
@@ -2309,39 +2498,73 @@ html:not(.dark) .bridging-modal-error-icon,
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 32px;
-  height: 32px;
-  background: var(--bridge-surface-card);
-  border: 1px solid var(--bridge-border-light);
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  color: var(--bridge-text-tertiary);
-  z-index: 100;
+  transition: all 0.2s ease;
+  color: #6B7280;
+  z-index: 10;
 }
 
 .bridging-modal-close-button-alt:hover {
-  background: var(--bridge-bg-tertiary);
-  color: var(--bridge-text-primary);
-  transform: scale(1.05);
+  background: rgba(107, 114, 128, 0.1);
+  color: #374151;
+}
+
+/* Dark mode adjustments for close button - HIGH VISIBILITY */
+html.dark .bridging-modal-close-button-alt {
+  color: #D1D5DB;
+}
+
+html.dark .bridging-modal-close-button-alt:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #F9FAFB;
+}
+
+/* Mobile responsive close button */
+@media (max-width: 640px) {
+  .bridging-modal-close-button-alt {
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 375px) {
+  .bridging-modal-close-button-alt {
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .bridging-modal-close-button-alt svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 
-/* Success Card - Bridging Redesign - Premium Aesthetic */
+/* Success Card - Bridging Redesign - NO BACKGROUND CONTAINER */
 .bridging-modal-status-card-new {
-  background: var(--bridge-surface-card);
-  border: 1px solid var(--bridge-border-light);
-  border-radius: 28px;
-  padding: 40px 24px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 24px 16px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
 }
 
 .bridging-modal-success-icon-wrapper {
@@ -2380,6 +2603,10 @@ html:not(.dark) .bridging-modal-error-icon,
   color: var(--bridge-text-primary);
   letter-spacing: -0.01em;
   margin-bottom: 4px;
+}
+
+.bridging-modal-status-title-new.title-failed {
+  color: #ef4444;
 }
 
 .bridging-modal-success-summary-text {

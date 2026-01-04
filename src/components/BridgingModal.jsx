@@ -118,16 +118,15 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button (Absolute) - Match SwapModal alt button style */}
-            {modalState !== 'completed' && (
-              <button
-                onClick={onClose}
-                className="bridging-modal-close-button-alt"
-                aria-label="Close"
-              >
-                <X size={20} />
-              </button>
-            )}
+            {/* Close Button (Absolute) - Always visible */}
+            <button
+              onClick={onClose}
+              className="bridging-modal-close-button-alt"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+
 
             <div className="bridging-modal-content">
               {/* Unified In-Progress Content Row */}
@@ -261,7 +260,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
                       </div>
                     </div>
 
-                    <p className="bridging-modal-success-message mb-6" style={{ fontSize: '14px', color: 'var(--bridge-text-secondary)', lineHeight: '1.5', marginTop: '-8px' }}>
+                    <p className="bridging-modal-success-message mb-6">
                       {t('Your funds have been successfully bridged and are now available on the destination network.')}
                     </p>
 

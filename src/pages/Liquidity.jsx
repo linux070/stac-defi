@@ -1,131 +1,92 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useWallet } from '../contexts/WalletContext';
-import { Plus, Minus, TrendingUp, DollarSign, PieChart, Activity, Filter, Search, ChevronDown, AlertCircle } from 'lucide-react';
+import { LucideClock, Sparkles, Droplets } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { TOKENS } from '../config/networks';
-import { formatCurrency } from '../utils/blockchain';
 
 const Liquidity = () => {
   const { t } = useTranslation();
-  const { isConnected } = useWallet();
-  const [activeTab, setActiveTab] = useState('positions');
-  const [showAddLiquidity, setShowAddLiquidity] = useState(false);
-  const [filterType, setFilterType] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // Enhanced positions data with pool types and fee tiers
-  const positions = [
-    {
-      id: 1,
-      pair: 'ETH/USDC',
-      poolType: 'Standard',
-      liquidity: 5000,
-      share: 0.12,
-      feesEarned: 45.30,
-      apr: 24.5,
-      feeTier: 0.3,
-      priceRange: null,
-      token1: 'ETH',
-      token2: 'USDC',
-      amount1: '2.5',
-      amount2: '5000',
-      status: 'Active',
-      unclaimedFees: 12.50
-    },
-    {
-      id: 2,
-      pair: 'USDC/USDT',
-      poolType: 'Stable',
-      liquidity: 10000,
-      share: 0.08,
-      feesEarned: 12.50,
-      apr: 8.2,
-      feeTier: 0.05,
-      priceRange: null,
-      token1: 'USDC',
-      token2: 'USDT',
-      amount1: '5000',
-      amount2: '5000',
-      status: 'Active',
-      unclaimedFees: 3.20
-    },
-    {
-      id: 3,
-      pair: 'ETH/DAI',
-      poolType: 'Concentrated',
-      liquidity: 7500,
-      share: 0.15,
-      feesEarned: 68.40,
-      apr: 32.1,
-      feeTier: 0.3,
-      priceRange: { min: 2500, max: 3000 },
-      token1: 'ETH',
-      token2: 'DAI',
-      amount1: '1.8',
-      amount2: '5200',
-      status: 'Out of Range',
-      unclaimedFees: 22.75
-    },
-  ];
-
-
-  // Filter positions based on type and search term
-  const filteredPositions = positions.filter(position => {
-    const matchesType = filterType === 'all' || position.poolType === filterType;
-    const matchesSearch = position.pair.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         position.token1.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         position.token2.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesType && matchesSearch;
-  });
-
-  // Get status badge class
-  const getStatusClass = (status) => {
-    switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-      case 'Out of Range':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-      case 'Inactive':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-  };
-
-  // Get pool type badge class
-  const getPoolTypeClass = (type) => {
-    switch (type) {
-      case 'Standard':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'Concentrated':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
-      case 'Stable':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-  };
 
   return (
-    <div className="max-w-6xl mx-auto w-full px-4 sm:px-0 flex items-center justify-center h-full">
-      <div className="text-center py-16 md:py-20 flex flex-col items-center">
-        <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center animate-pulse">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+    <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 flex items-center justify-center py-10 md:py-20 min-h-[80vh]">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="w-full relative group"
+      >
+        {/* Superior Ambient Glows - Rebranded to Arc Blues */}
+        <div className="absolute -top-12 -left-12 w-48 h-48 md:w-72 md:h-72 bg-blue-600/20 blur-[60px] md:blur-[100px] rounded-full group-hover:opacity-60 transition-opacity"></div>
+        <div className="absolute -bottom-12 -right-12 w-48 h-48 md:w-72 md:h-72 bg-indigo-600/20 blur-[60px] md:blur-[100px] rounded-full group-hover:opacity-60 transition-opacity"></div>
+
+        <div className="relative z-10 bg-white/70 dark:bg-slate-900/40 backdrop-blur-3xl border border-slate-200/60 dark:border-white/10 rounded-[32px] md:rounded-[48px] p-8 md:p-16 text-center shadow-2xl overflow-hidden">
+          {/* Top light sweep decoration - Arc Blue */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
+
+          <div className="flex flex-col items-center">
+            {/* Visual Centerpiece - Arc Logo Themed */}
+            <div className="relative mb-10 md:mb-14">
+              <motion.div
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.2, 0.4, 0.2]
+                }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-0 bg-blue-500/40 blur-3xl rounded-full"
+              ></motion.div>
+
+              <div className="relative w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-[#1e40af] to-[#60a5fa] rounded-[24px] md:rounded-[28px] flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-700 shadow-2xl overflow-hidden">
+                <LucideClock size={36} className="text-white md:hidden" strokeWidth={2} />
+                <LucideClock size={48} className="text-white hidden md:block" strokeWidth={1.5} />
+                {/* Gloss effect on icon */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-50"></div>
+              </div>
+            </div>
+
+            {/* Content Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="space-y-6 md:space-y-8"
+            >
+              <div className="flex items-center justify-center gap-3 md:gap-6">
+                <div className="h-px w-8 md:w-16 bg-gradient-to-r from-transparent to-blue-500/40 dark:to-blue-400"></div>
+                <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-blue-600 dark:text-blue-300">
+                  {t('Coming Soon')}
+                </span>
+                <div className="h-px w-8 md:w-16 bg-gradient-to-l from-transparent to-blue-500/40 dark:to-blue-400"></div>
+              </div>
+
+              <p className="text-sm md:text-xl text-slate-700 dark:text-slate-200 max-w-lg mx-auto leading-relaxed font-bold tracking-tight">
+                {t('liquidity.poolsLaunchingSoon')}
+              </p>
+            </motion.div>
+
+            {/* Bottom Status Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mt-12 md:mt-20 w-full max-w-2xl border-t border-slate-200 dark:border-white/5 pt-10 md:pt-14">
+              {[
+                { label: t('Yield') },
+                { label: t('Liquidity') },
+                { label: t('Farming') },
+                { label: t('Governance') }
+              ].map((item, i) => (
+                <div key={i} className="flex flex-col items-center gap-3 opacity-60 dark:opacity-40 group-hover:opacity-100 dark:group-hover:opacity-80 transition-all duration-500">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.4)]"></div>
+                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 dark:text-slate-300">
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900 dark:text-white">
-          {t('liquidity.underConstruction')}
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 px-4">
-          {t('liquidity.poolsLaunchingSoon')}
-        </p>
-      </div>
+      </motion.div>
     </div>
   );
 };
+
+// Simple icon fallbacks for the grid items to avoid complex imports if not needed
+const TrendingUp = () => <div className="w-4 h-4 rounded-full border-2 border-slate-500"></div>;
+const Shield = () => <div className="w-4 h-4 rounded-full border-2 border-slate-500"></div>;
 
 export default Liquidity;
