@@ -85,7 +85,7 @@ const SwapModal = ({
     const getTokenIcon = (symbol) => {
         const iconMap = {
             'USDC': '/icons/usdc.png',
-            'STCK': '/icons/stac.png',
+            'STC': '/icons/stac.png',
             'BALL': '/icons/ball.jpg',
             'MTB': '/icons/MTB.png',
             'ECR': '/icons/ECR.png'

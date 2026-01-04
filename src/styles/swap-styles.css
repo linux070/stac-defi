@@ -930,15 +930,23 @@ html.dark .swap-slippage-container,
 
 /* Token Selector Modal */
 .swap-token-selector-modal-backdrop {
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
   position: fixed;
   inset: 0;
   z-index: 1000;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: 80px 20px 20px;
+  align-items: center;
+  /* Center vertically for a more balanced look */
+  padding: 20px;
+}
+
+@media (min-width: 768px) {
+  .swap-token-selector-modal-backdrop {
+    align-items: flex-start;
+    padding: 80px 20px 20px;
+  }
 }
 
 .swap-token-selector-modal {
@@ -1227,53 +1235,93 @@ html.dark .swap-token-selector-list-symbol,
 /* Mobile Responsive for Token Selector Modal */
 @media (max-width: 640px) {
   .swap-token-selector-modal {
-    max-width: calc(100% - 32px);
-    width: calc(100% - 32px);
+    max-width: calc(100% - 24px);
+    width: calc(100% - 24px);
     margin: auto;
-    border-radius: 16px;
-    max-height: 80vh;
+    border-radius: 20px;
+    max-height: 85vh;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    border-color: rgba(59, 130, 246, 0.3);
   }
 
   .swap-token-selector-header {
-    padding: 16px;
+    padding: 20px 20px 16px;
   }
 
   .swap-token-selector-title {
-    font-size: 16px;
+    font-size: 17px;
   }
 
   .swap-token-selector-close-button {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
   }
 
   .swap-token-selector-search {
-    padding: 0 16px 12px;
+    padding: 0 20px 16px;
+  }
+
+  .swap-token-selector-search-input {
+    padding: 14px 18px;
+    font-size: 15px;
   }
 
   .swap-token-selector-popular-section {
-    padding: 0 16px 12px;
+    padding: 0 20px 16px;
+  }
+
+  .swap-token-selector-popular-label {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .swap-token-selector-popular-button {
+    padding: 10px 14px;
+    gap: 8px;
+    border-radius: 12px;
+  }
+
+  .swap-token-selector-popular-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .swap-token-selector-popular-symbol {
+    font-size: 14px;
   }
 
   .swap-token-selector-list {
-    padding: 0 16px 16px;
+    padding: 0 12px 20px;
   }
 
   .swap-token-selector-list-item {
-    padding: 12px;
+    padding: 16px 14px;
+    margin-bottom: 6px;
+    border-radius: 16px;
+  }
+
+  .swap-token-selector-list-item-content {
+    gap: 14px;
   }
 
   .swap-token-selector-list-icon {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
   }
 
   .swap-token-selector-list-symbol {
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .swap-token-selector-list-name {
-    font-size: 11px;
+    font-size: 12px;
+  }
+
+  .swap-token-selector-list-balance-amount {
+    font-size: 14px;
   }
 }
 

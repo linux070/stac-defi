@@ -2,17 +2,17 @@
 
 export const APP_NAME = 'Stac DeFi';
 export const APP_DESCRIPTION = 'The next generation of blockchain infrastructure on Arc Network';
-export const DEX_ADDRESS = "0x38699BE95B5E73cd91Ec85Fc5482C9436CF996fA"; // FixedPriceDEX Address (From Remix)
+export const DEX_ADDRESS = "0xf910763933b1af74C45B7E3D947fB14460bD8C40"; // StacDEX Address (From Remix)
 
 // The Official USDC Address on Arc (Do not change)
 export const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
 
 // Your 4 Token Addresses
 export const TOKENS = {
-    STCK: "0x21AC76D470E301e2E8f0C1976E9a07f56B363341", // STCK Address
-    BALL: "0xF2EdfA5fae558a05914dABE9Ba4854aa223D3085", // BALL Address
-    MTB: "0xD666B6c8Cd8727407a52E69375Ae90009c4b4ce8", // MTB Address
-    ECR: "0x257E6639a9Aa53960a65e8552b30d8db01A557F4", // ECR Address
+    STC: "0x1116a7f6424350691D427fE8eF686550889947D1", // STC Address
+    BALL: "0x779665f58a31faD7D7E3700700026053Aea7276C", // BALL Address
+    MTB: "0x138f4ffa41dADB7860f429c1d1c2FF04736665e9", // MTB Address
+    ECR: "0x39a319F0B9D122ad4F4B714A2e1ebc204AB3Bc43", // ECR Address
 };
 
 export const DECIMALS = {

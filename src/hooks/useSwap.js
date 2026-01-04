@@ -3,8 +3,8 @@ import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAcc
 import { parseUnits, formatUnits } from 'viem';
 import { useEffect, useCallback, useMemo } from 'react';
 import { DEX_ADDRESS, USDC_ADDRESS, TOKENS, DECIMALS } from '../config/constants';
-import DexABI from '../abis/DexABI.json';
-import TokenABI from '../abis/TokenABI.json';
+import DexABI from '../abis/StacDEX.json';
+import TokenABI from '../abis/StandardToken.json';
 
 export function useSwap(
     fromTokenSymbol, // e.g. "USDC"
@@ -105,14 +105,14 @@ export function useSwap(
                 address: DEX_ADDRESS,
                 abi: DexABI,
                 functionName: 'swapUSDCForToken',
-                args: [targetTokenAddress, amountInBigInt, minOut],
+                args: [targetTokenAddress, amountInBigInt],
             });
         } else {
             writeSwap({
                 address: DEX_ADDRESS,
                 abi: DexABI,
                 functionName: 'swapTokenForUSDC',
-                args: [targetTokenAddress, amountInBigInt, minOut],
+                args: [targetTokenAddress, amountInBigInt],
             });
         }
     }, [writeSwap, isBuying, targetTokenAddress, amountInBigInt, minOut]);

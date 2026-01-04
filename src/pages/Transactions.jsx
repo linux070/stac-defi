@@ -46,7 +46,7 @@ const getTokenLogo = (symbol) => {
   if (!symbol) return null;
   const s = String(symbol).toLowerCase();
   if (s.includes('usdc')) return '/icons/usdc.png';
-  if (s.includes('stck') || s.includes('stac')) return '/icons/stac.png';
+  if (s.includes('stc') || s.includes('stac')) return '/icons/stac.png';
   if (s.includes('ball')) return '/icons/ball.jpg';
   if (s.includes('mtb')) return '/icons/MTB.png';
   if (s.includes('ecr')) return '/icons/ECR.png';

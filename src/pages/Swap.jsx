@@ -21,7 +21,7 @@ const USDC_ADDRESS = CONSTANT_USDC_ADDRESS;
 const getTokenIcon = (symbol) => {
   const iconMap = {
     'USDC': '/icons/usdc.png',
-    'STCK': '/icons/stac.png',
+    'STC': '/icons/stac.png',
     'BALL': '/icons/ball.jpg',
     'MTB': '/icons/MTB.png',
     'ECR': '/icons/ECR.png'
@@ -34,7 +34,7 @@ const Swap = () => {
   const { isConnected, balance, chainId } = useWallet();
   const { address } = useAccount();
   const [fromToken, setFromToken] = useState('USDC');
-  const [toToken, setToToken] = useState('STCK');
+  const [toToken, setToToken] = useState('STC');
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
   const [slippage, setSlippage] = useState(0.5);
@@ -269,8 +269,8 @@ const Swap = () => {
   // Reset selected tokens when network changes to ARC or Sepolia and ETH was selected
   useEffect(() => {
     const networksExcludingETH = [
-      '0xCF4B1', // ARC Testnet
-      '0xaa36a7' // Sepolia
+      '0x4cef52', // ARC Testnet (5042002)
+      '0xaa36a7' // Sepolia (11155111)
     ];
 
     if (networksExcludingETH.includes(chainId)) {
@@ -459,7 +459,7 @@ const Swap = () => {
         token &&
         token.symbol &&
         typeof token.symbol === 'string' &&
-        ['USDC', 'STCK', 'BALL', 'MTB', 'ECR'].includes(token.symbol)
+        ['USDC', 'STC', 'BALL', 'MTB', 'ECR'].includes(token.symbol)
       );
     }, [tokenList]);
 
@@ -526,7 +526,7 @@ const Swap = () => {
 
     return (
       <div
-        className="fixed inset-0 z-[1000] flex items-start justify-center p-4 pt-24 swap-token-selector-modal-backdrop"
+        className="swap-token-selector-modal-backdrop"
         onClick={onClose}
       >
         <div

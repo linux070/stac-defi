@@ -81,12 +81,12 @@ export const TOKENS = {
     },
   },
 
-  STCK: {
-    symbol: 'STCK',
+  STC: {
+    symbol: 'STC',
     name: 'Stack Token',
     decimals: 18,
     address: {
-      [NETWORKS.ARC_TESTNET.chainId]: '0x21AC76D470E301e2E8f0C1976E9a07f56B363341',
+      [NETWORKS.ARC_TESTNET.chainId]: '0x1116a7f6424350691D427fE8eF686550889947D1',
     },
     logo: 'coins',
   },
@@ -95,7 +95,7 @@ export const TOKENS = {
     name: 'Ball Token',
     decimals: 18,
     address: {
-      [NETWORKS.ARC_TESTNET.chainId]: '0xF2EdfA5fae558a05914dABE9Ba4854aa223D3085',
+      [NETWORKS.ARC_TESTNET.chainId]: '0x779665f58a31faD7D7E3700700026053Aea7276C',
     },
     logo: 'circle',
   },
@@ -104,7 +104,7 @@ export const TOKENS = {
     name: 'MTB Token',
     decimals: 18,
     address: {
-      [NETWORKS.ARC_TESTNET.chainId]: '0xD666B6c8Cd8727407a52E69375Ae90009c4b4ce8',
+      [NETWORKS.ARC_TESTNET.chainId]: '0x138f4ffa41dADB7860f429c1d1c2FF04736665e9',
     },
     logo: 'mountain',
   },
@@ -113,7 +113,7 @@ export const TOKENS = {
     name: 'ECR Token',
     decimals: 18,
     address: {
-      [NETWORKS.ARC_TESTNET.chainId]: '0x257E6639a9Aa53960a65e8552b30d8db01A557F4',
+      [NETWORKS.ARC_TESTNET.chainId]: '0x39a319F0B9D122ad4F4B714A2e1ebc204AB3Bc43',
     },
     logo: 'landmark',
   },
@@ -123,27 +123,13 @@ export const TOKENS = {
 export const TOKEN_PRICES = {
   USDC: 1,
   // EUR: 1.1,
-  STCK: 0.72,
+  STC: 0.72,
   BALL: 0.22,
   MTB: 0.17,
   ECR: 0.0778,
 };
 
-// Contract addresses - Updated with deployed contracts
-export const CONTRACTS = {
-  [NETWORKS.ARC_TESTNET.chainId]: {
-    SWAP_ROUTER: '0x38699BE95B5E73cd91Ec85Fc5482C9436CF996fA', // Custom DEX acts as Router
-    SWAP_FACTORY: '0x2ab5A54A25AD34Aaefb8038A1832fAd639d911A5', // Deployed SwapFactory
-    BRIDGE: '0x', // Bridge contract (not deployed yet)
-    LP_MANAGER: '0x', // LP Manager (not deployed yet)
-  },
-  [NETWORKS.ETHEREUM_SEPOLIA.chainId]: {
-    SWAP_ROUTER: '0x38699BE95B5E73cd91Ec85Fc5482C9436CF996fA', // Custom DEX acts as Router
-    SWAP_FACTORY: '0x2ab5A54A25AD34Aaefb8038A1832fAd639d911A5', // Deployed SwapFactory
-    BRIDGE: '0x', // Bridge contract (not deployed yet)
-    LP_MANAGER: '0x', // LP Manager (not deployed yet)
-  },
-};
+
 
 // Helper functions
 export const getNetworkByChainId = (chainId) => {
