@@ -13,9 +13,7 @@
     (function () {
       try {
         const saved = localStorage.getItem('darkMode');
-        const isDark = saved !== null
-          ? JSON.parse(saved)
-          : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        const isDark = saved !== null ? JSON.parse(saved) : false;
 
         if (isDark) {
           document.documentElement.classList.add('dark');

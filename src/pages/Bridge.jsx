@@ -1177,7 +1177,30 @@ const Bridge = () => {
             </button>
           </div>
 
-
+          {/* Bridge Limitation Notice */}
+          <div className="alert-box notice-banner" style={{
+            marginBottom: '28px',
+            background: 'var(--bridge-alert-bg)',
+            borderColor: 'var(--bridge-alert-border)',
+            borderWidth: '2px',
+            padding: '16px 20px',
+            boxShadow: '0 4px 20px rgba(59, 130, 246, 0.15)',
+            borderStyle: 'solid'
+          }}>
+            <Info className="alert-icon" size={22} style={{ color: 'var(--bridge-alert-text)', marginTop: '1px' }} />
+            <div className="alert-content">
+              <p className="alert-text" style={{
+                color: 'var(--bridge-alert-text)',
+                fontSize: '12.5px',
+                fontWeight: '900',
+                lineHeight: '1.4',
+                letterSpacing: '0.07em',
+                textTransform: 'uppercase'
+              }}>
+                {t('bridge.onlyBaseSepoliaArc')}
+              </p>
+            </div>
+          </div>
 
           {/* Network Selection Section */}
           <div className="network-selector">

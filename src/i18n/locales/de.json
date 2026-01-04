@@ -179,5 +179,6 @@
   "Bridging": "Überbrückung",
   "Error": "Fehler",
   "Max": "Max",
-  "Powered by Circle CCTP": "Unterstützt durch Circle CCTP"
+  "Powered by Circle CCTP": "Unterstützt durch Circle CCTP",
+  "bridge.onlyBaseSepoliaArc": "NETZWERKHINWEIS: ÜBERWEISUNGEN WERDEN DERZEIT AUSSCHLIESSLICH ZWISCHEN BASE SEPOLIA UND ARC TESTNET UNTERSTÜTZT."
 }

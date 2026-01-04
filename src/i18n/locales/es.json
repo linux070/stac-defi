@@ -177,5 +177,6 @@
   "Bridging": "Conectando",
   "Error": "Error",
   "Max": "Máx",
-  "Powered by Circle CCTP": "Impulsado por Circle CCTP"
+  "Powered by Circle CCTP": "Impulsado por Circle CCTP",
+  "bridge.onlyBaseSepoliaArc": "AVISO DE RED: LAS TRANSFERENCIAS ESTÁN ACTUALMENTE SOPORTADAS EXCLUSIVAMENTE ENTRE BASE SEPOLIA Y ARC TESTNET."
 }

@@ -14,7 +14,6 @@ import Toast from '../components/Toast';
 import { DEX_ADDRESS, USDC_ADDRESS as CONSTANT_USDC_ADDRESS } from '../config/constants';
 import { useSwap } from '../hooks/useSwap';
 import SwapModal from '../components/SwapModal';
-import FaucetModal from '../components/FaucetModal';
 import '../styles/swap-styles.css';
 
 const USDC_ADDRESS = CONSTANT_USDC_ADDRESS;
@@ -54,7 +53,6 @@ const Swap = () => {
 
   // Modal states
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
-  const [isFaucetModalOpen, setIsFaucetModalOpen] = useState(false);
 
 
   // Wagmi-based Swap Hook
@@ -413,7 +411,7 @@ const Swap = () => {
 
   const handleFaucetClick = (e) => {
     e.preventDefault();
-    setIsFaucetModalOpen(true);
+    window.open('https://faucet.circle.com/', '_blank');
   };
 
   const handleSwapClick = () => {
@@ -948,11 +946,6 @@ const Swap = () => {
             fromAmount={fromAmount}
             toAmount={toAmount}
             swapState={swapState}
-          />
-
-          <FaucetModal
-            isOpen={isFaucetModalOpen}
-            onClose={() => setIsFaucetModalOpen(false)}
           />
 
 
