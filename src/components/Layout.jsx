@@ -152,12 +152,12 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                 onClick={() => setActiveTab(item.id)}
                 className={`py-3 px-0 text-xs font-bold transition-all duration-200 flex flex-col items-center justify-center nav-link
                   ${activeTab === item.id
-                    ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-gray-700 dark:text-gray-200'
+                    ? 'text-blue-500 dark:text-blue-400'
+                    : 'text-gray-400 dark:text-gray-500'
                   }`}
               >
-                <Icon size={20} className="mb-1" />
-                <span className="text-[10px] font-bold">{item.label}</span>
+                <Icon size={24} strokeWidth={2.2} className="mb-0.5" />
+                <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
               </button>
             );
           })}
@@ -209,7 +209,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className={`min-h-screen w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : 'bg-slate-50 dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-48 md:pt-32 pb-24 md:pb-12 overflow-visible flex-grow relative z-10`}>
+      <main className={`min-h-fit w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : 'bg-slate-50 dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 md:pt-32 pb-32 md:pb-12 overflow-visible flex-grow relative z-10`}>
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}

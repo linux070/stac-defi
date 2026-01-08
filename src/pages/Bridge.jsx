@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
 import { useSwitchChain, useChains } from 'wagmi';
-import { ArrowLeftRight, Loader, AlertCircle, Info, Wallet, X, Settings, ChevronDown, CheckCircle, RefreshCw } from 'lucide-react';
+import { ArrowUpDown, Loader, AlertCircle, Info, Wallet, X, Settings, ChevronDown, CheckCircle, RefreshCw, CreditCard, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
 import { sanitizeInput } from '../utils/blockchain';
@@ -1148,28 +1148,28 @@ const Bridge = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto w-full px-4 sm:px-0">
+    <div className="max-w-[540px] mx-auto w-full">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bridge-container group"
       >
-        {/* 4-Corner Splitted Glow System */}
-        <div className={`absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-indigo-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
-        <div className={`absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-indigo-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
-        <div className={`absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-indigo-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
-        <div className={`absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-indigo-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
+        {/* 4-Corner Glow System - Desktop Only */}
+        <div className="hidden md:block absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-indigo-500 to-blue-600 opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-indigo-500 to-blue-600 opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-indigo-500 to-blue-600 opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-indigo-500 to-blue-600 opacity-[0.1] blur-[60px] rounded-full"></div>
 
         <div className="relative z-10">
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="bridge-header">{t('Bridge Assets')}</h2>
-              <p className="bridge-subtitle">{t('Secure, Real-Time Cross-Chain Bridging')}</p>
+              <p className="bridge-subtitle hidden md:block">{t('Secure, Real-Time Cross-Chain Bridging')}</p>
             </div>
 
             <button
               onClick={addArcNetwork}
-              className="add-arc-button"
+              className="add-arc-button flex"
               aria-label="Add Arc Testnet to Wallet"
             >
               <Wallet size={14} />
@@ -1177,30 +1177,7 @@ const Bridge = () => {
             </button>
           </div>
 
-          {/* Bridge Limitation Notice */}
-          <div className="alert-box notice-banner" style={{
-            marginBottom: '28px',
-            background: 'var(--bridge-alert-bg)',
-            borderColor: 'var(--bridge-alert-border)',
-            borderWidth: '2px',
-            padding: '16px 20px',
-            boxShadow: '0 4px 20px rgba(59, 130, 246, 0.15)',
-            borderStyle: 'solid'
-          }}>
-            <Info className="alert-icon" size={22} style={{ color: 'var(--bridge-alert-text)', marginTop: '1px' }} />
-            <div className="alert-content">
-              <p className="alert-text" style={{
-                color: 'var(--bridge-alert-text)',
-                fontSize: '12.5px',
-                fontWeight: '900',
-                lineHeight: '1.4',
-                letterSpacing: '0.07em',
-                textTransform: 'uppercase'
-              }}>
-                {t('bridge.onlyBaseSepoliaArc')}
-              </p>
-            </div>
-          </div>
+
 
           {/* Network Selection Section */}
           <div className="network-selector">
@@ -1250,15 +1227,12 @@ const Bridge = () => {
                 })()}
               </div>
               <div className="network-info">
-                {/* Mobile Label: Above */}
-                <p className="network-chain mobile-only">{t('From')}</p>
+                <p className="network-chain">{t('FROM')}</p>
                 <p className="network-name">
                   {bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain}
                 </p>
-                {/* Desktop Label: Below */}
-                <p className="network-chain desktop-only">{t('Source')}</p>
               </div>
-              <ChevronDown size={20} style={{ marginLeft: 'auto', opacity: 0.6 }} />
+              <ChevronDown size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
             </button>
 
             {/* Switch Button */}
@@ -1315,7 +1289,7 @@ const Bridge = () => {
               aria-label="Switch Networks"
               className="arrow-divider-button"
             >
-              <ArrowLeftRight size={18} />
+              <ArrowUpDown size={16} />
             </button>
 
             {/* To Network */}
@@ -1364,15 +1338,12 @@ const Bridge = () => {
                 })()}
               </div>
               <div className="network-info">
-                {/* Mobile Label: Above */}
-                <p className="network-chain mobile-only">{t('To')}</p>
+                <p className="network-chain">{t('TO')}</p>
                 <p className="network-name">
                   {bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain}
                 </p>
-                {/* Desktop Label: Below */}
-                <p className="network-chain desktop-only">{t('Destination')}</p>
               </div>
-              <ChevronDown size={20} style={{ marginLeft: 'auto', opacity: 0.6 }} />
+              <ChevronDown size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
             </button>
           </div>
 
@@ -1396,19 +1367,16 @@ const Bridge = () => {
               {/* Token Pill - Static, no dropdown */}
               <div className="token-selector">
                 <div className="token-icon">
-                  <img
-                    src="/icons/usdc.png"
-                    alt="USDC"
-                    className="w-6 h-6 rounded-full object-contain"
-                  />
+                  <img src="/icons/usdc.png" alt="USDC" className="w-full h-full object-contain" />
                 </div>
                 <span className="token-symbol">USDC</span>
               </div>
             </div>
             {isConnected && (
               <div className="input-footer">
-                <div className="balance-text">
-                  {t('Bal')}: <span>
+                <div className="flex items-center text-[12px] font-bold text-slate-500">
+                  <span className="mr-1 opacity-60">Bal:</span>
+                  <span className="text-slate-700">
                     {isLoadingBalance ? (
                       <Loader className="animate-spin inline" size={11} />
                     ) : balanceError ? (
@@ -1433,8 +1401,10 @@ const Bridge = () => {
           </div>
 
           {/* Security Notice */}
-          <div className="alert-box">
-            <AlertCircle className="alert-icon" size={16} />
+          <div className="alert-box warning">
+            <div className="warning-icon-wrapper">
+              <AlertCircle size={16} />
+            </div>
             <div className="alert-content">
               <p className="alert-text">
                 {t('Cross-chain transfers are irreversible. Please verify all details before confirming the transaction.')}
@@ -1463,8 +1433,8 @@ const Bridge = () => {
             )}
           </button>
 
-          {/* Powered by Circle CCTP Badge - Below Bridge Button */}
-          <div className="powered-by-badge-bottom">
+          {/* Powered by Circle CCTP Badge - Desktop Only */}
+          <div className="powered-by-badge-bottom hidden md:block">
             <span>{t('Powered by Circle CCTP')}</span>
           </div>
         </div>

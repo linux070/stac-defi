@@ -1,6 +1,13 @@
 /* Dark Mode Theme - Bridge Component Only */
 
 /* Prevent horizontal scroll on mobile */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
 }
@@ -32,18 +39,18 @@ html:not(.dark),
   --bridge-bg-primary: #ffffff;
   --bridge-bg-secondary: #f8f9fa;
   --bridge-bg-tertiary: #f1f3f5;
-  --bridge-surface-card: rgba(0, 0, 0, 0.03);
-  --bridge-surface-hover: rgba(0, 0, 0, 0.05);
-  --bridge-border-light: rgba(0, 0, 0, 0.1);
-  --bridge-border-medium: rgba(0, 0, 0, 0.12);
+  --bridge-surface-card: rgba(248, 249, 250, 1);
+  --bridge-surface-hover: rgba(241, 243, 245, 1);
+  --bridge-border-light: rgba(0, 0, 0, 0.05);
+  --bridge-border-medium: rgba(0, 0, 0, 0.08);
   --bridge-border-focus: rgba(59, 130, 246, 0.4);
   --bridge-text-primary: #1a1a1a;
-  --bridge-text-secondary: #4a5568;
-  --bridge-text-tertiary: #718096;
+  --bridge-text-secondary: #64748b;
+  --bridge-text-tertiary: #94a3b8;
   --bridge-accent-primary: #3b82f6;
   --bridge-accent-secondary: #60a5fa;
-  --bridge-alert-bg: rgba(59, 130, 246, 0.1);
-  --bridge-alert-border: rgba(59, 130, 246, 0.3);
+  --bridge-alert-bg: rgba(239, 246, 255, 1);
+  --bridge-alert-border: rgba(191, 219, 254, 0.8);
   --bridge-alert-text: #2563eb;
 }
 
@@ -74,40 +81,25 @@ html.dark,
   margin: 0 auto;
   background: white;
   border: none;
-  border-radius: 20px;
-  padding: 16px;
+  border-radius: 24px;
+  padding: 24px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
   position: relative;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-@media (min-width: 380px) {
-  .bridge-container {
-    padding: 24px;
-    border-radius: 24px;
-  }
-}
-
-html.dark .bridge-container,
-.dark .bridge-container {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(24px);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
-}
-
-/* Tablet: Moderate padding increase */
 @media (min-width: 640px) {
   .bridge-container {
     padding: 28px;
   }
 }
 
-/* Desktop: Increase padding for more breathing room */
 @media (min-width: 768px) {
   .bridge-container {
-    padding: 36px;
-    max-width: 600px;
+    padding: 32px;
+    max-width: 520px;
+    /* Increased for better name visibility and spacious feel */
   }
 }
 
@@ -151,15 +143,16 @@ html.dark .bridge-container,
   display: flex;
   flex-direction: column;
   position: relative;
-  margin-bottom: 20px;
-  gap: 0;
+  margin-bottom: 24px;
+  gap: 12px;
 }
 
 @media (min-width: 768px) {
   .network-selector {
     flex-direction: row;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    /* Slightly tighter gap to give more room to cards */
   }
 }
 
@@ -207,32 +200,21 @@ html.dark .bridge-container,
   border-radius: 0;
 }
 
-@media (max-width: 767px) {
-  .network-card:first-child {
-    border-top-left-radius: 16px;
-    border-top-right-radius: 16px;
-    border-bottom: none;
-  }
-
-  .network-card:last-child {
-    border-bottom-left-radius: 16px;
-    border-bottom-right-radius: 16px;
-    border-top: 1px solid var(--bridge-border-light);
-  }
-}
+/* Consolidated mobile network styles handled in responsive section */
 
 @media (min-width: 768px) {
   .network-card {
     flex: 1;
-    width: 0;
-    min-width: 230px;
-    min-height: 85px;
+    min-width: 0;
+    /* Allow cards to shrink to fit container */
+    min-height: 80px;
     border-radius: 12px !important;
     border: 1px solid var(--bridge-border-medium) !important;
-    padding: 12px 18px;
+    padding: 12px 12px;
+    /* Restored horizontal padding */
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
   }
 
   .network-info {
@@ -247,9 +229,11 @@ html.dark .bridge-container,
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 16px !important;
+    font-size: 15px !important;
+    /* Slightly smaller for better fit */
     line-height: 1.2;
-    max-width: 135px;
+    max-width: none;
+    /* Removed constraint to show full names */
   }
 }
 
@@ -260,15 +244,16 @@ html.dark .bridge-container,
 }
 
 .network-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 @media (min-width: 768px) {
@@ -291,22 +276,22 @@ html.dark .bridge-container,
 }
 
 .network-name {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--bridge-text-primary);
-  margin-top: 2px;
+  margin-top: 1px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   letter-spacing: -0.01em;
 }
 
 .network-chain {
   font-size: 11px;
-  color: var(--bridge-text-secondary);
-  font-weight: 600;
+  color: var(--bridge-text-tertiary);
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  opacity: 0.7;
+  margin-bottom: 2px;
 }
 
 .arrow-divider {
@@ -324,19 +309,19 @@ html.dark .bridge-container,
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 2;
-  background: #1a1a1a;
-  border: 4px solid var(--bridge-bg-secondary);
-  border-radius: 10px;
-  padding: 6px;
+  z-index: 10;
+  background: white;
+  border: 4px solid var(--bridge-bg-primary);
+  border-radius: 12px;
+  padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  color: var(--bridge-text-primary);
+  color: var(--bridge-text-secondary);
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* Light Mode Specific Toggle Style */
@@ -428,7 +413,10 @@ html.dark .arrow-divider-button {
 /* Desktop: More padding for input groups */
 @media (min-width: 768px) {
   .input-group {
-    padding: 22px;
+    padding: 20px 16px;
+    /* Reduced side padding */
+    max-width: 100%;
+    /* Keep it within container */
   }
 }
 
@@ -536,25 +524,28 @@ html.dark .arrow-divider-button {
 
 @media (min-width: 768px) {
   .amount-input {
-    font-size: 36px;
+    font-size: 32px;
+    /* Reduced from 36px */
   }
 }
 
 .amount-input::placeholder {
-  color: var(--bridge-text-tertiary);
+  color: #94a3b8;
+  opacity: 1;
 }
 
 .token-selector {
-  background: var(--bridge-surface-hover);
+  background: white;
   border: 1px solid var(--bridge-border-medium);
-  border-radius: 10px;
-  padding: 8px 12px;
+  border-radius: 24px;
+  padding: 8px 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 10px;
+  cursor: default;
+  transition: all 0.2s ease;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 /* Desktop: Larger token selector */
@@ -575,6 +566,18 @@ html.dark .arrow-divider-button {
   height: 24px;
   border-radius: 50%;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: white;
+  /* Added background for logos */
+}
+
+.token-icon img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
 .token-symbol {
@@ -591,27 +594,28 @@ html.dark .arrow-divider-button {
 
 /* Max Button */
 .max-button {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--bridge-accent-secondary);
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.2s ease;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .max-button:hover {
   background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.4);
-  color: var(--bridge-accent-primary);
-  transform: scale(1.05);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
-.max-button:active {
-  transform: scale(0.95);
+.input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 /* Info Grid */
@@ -651,13 +655,12 @@ html.dark .arrow-divider-button {
 .alert-box {
   background: var(--bridge-alert-bg);
   border: 1px solid var(--bridge-alert-border);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 12px 14px;
   display: flex;
   gap: 10px;
-  align-items: flex-start;
-  margin-bottom: 20px;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 .alert-icon {
@@ -667,16 +670,34 @@ html.dark .arrow-divider-button {
   margin-top: 1px;
 }
 
-.alert-content {
-  flex: 1;
-}
-
 .alert-text {
   font-size: 12px;
-  color: var(--bridge-text-primary);
-  line-height: 1.5;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  opacity: 0.9;
+  color: #64748b;
+  line-height: 1.4;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+
+/* Warning State for Alert Box */
+.alert-box.warning {
+  background: #fff8eb;
+  border: 1px solid #fee2b3;
+}
+
+.warning-icon-wrapper {
+  width: 22px;
+  height: 22px;
+  background: #f59e0b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.alert-box.warning .alert-text {
+  color: #92400e;
 }
 
 /* Primary Bridge Button */
@@ -685,10 +706,15 @@ html.dark .arrow-divider-button {
   background: linear-gradient(135deg, var(--bridge-accent-primary), var(--bridge-accent-secondary));
   border: none;
   border-radius: 10px;
+  /* Matched Swap */
   padding: 14px;
+  /* Matched Swap */
   font-size: 14px;
+  /* Matched Swap */
   font-weight: 600;
-  color: var(--bridge-text-primary);
+  /* Matched Swap */
+  color: var(--bridge-text-primary) !important;
+  /* Matched Swap text color */
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -709,7 +735,7 @@ html.dark .arrow-divider-button {
   transform: scale(0.98);
 }
 
-/* Desktop: Larger button padding */
+/* Desktop: Match swap button desktop padding */
 @media (min-width: 768px) {
   .bridge-button {
     padding: 16px;
@@ -717,24 +743,24 @@ html.dark .arrow-divider-button {
   }
 }
 
-/* Bridge Button Failed State */
-.bridge-button-failed {
+/* Bridge Button Failed State - Matched Swap */
+.bridge-button.bridge-button-failed {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #f87171;
+  color: #f87171 !important;
 }
 
-.bridge-button-failed:hover:not(:disabled) {
+.bridge-button.bridge-button-failed:hover:not(:disabled) {
   background: rgba(239, 68, 68, 0.15);
   filter: none;
 }
 
 /* Header Title */
 .bridge-header {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: var(--bridge-text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -850,74 +876,31 @@ html.dark .arrow-divider-button {
   }
 }
 
-/* Responsive Design - Mobile First  */
+/* Mobile Responsive */
 @media (max-width: 640px) {
-
-  /* Override parent wrapper constraints on mobile - target the div wrapping bridge-container */
-  div.max-w-lg.mx-auto {
-    max-width: 100% !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    width: 100% !important;
-  }
-
-  /* Ensure parent wrapper doesn't add padding on mobile */
   .bridge-container {
-    padding: 14px;
-    padding-bottom: 40px;
-    /* Add extra bottom padding for badge */
-    border-radius: 16px;
-    margin: 90px auto 16px !important;
-    /* Increased top margin to clear fixed header */
-    max-width: calc(100% - 24px) !important;
-    width: calc(100% - 24px) !important;
-    box-sizing: border-box;
-    border-left: 1px solid var(--bridge-border-light);
-    border-right: 1px solid var(--bridge-border-light);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    padding: 16px;
+    border-radius: 20px;
+    margin: 0 auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none;
+    border: none;
+    overflow: hidden;
+    position: relative;
+    background: white;
   }
 
   /* Settings and badge positioning */
   .settings-button {
-    top: 16px;
-    right: 16px;
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    min-height: 36px;
-    z-index: 10;
+    width: 28px;
+    height: 28px;
   }
 
-  /* Powered by badge - move to bottom on mobile to avoid collision */
-  .powered-by-badge {
-    position: absolute !important;
-    bottom: 16px !important;
-    right: 16px !important;
-    top: auto !important;
-    padding: 6px 10px;
-    font-size: 9px;
-    max-width: calc(100% - 32px);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    z-index: 5;
-  }
-
-  .powered-by-badge span {
-    display: inline-block;
-  }
-
-  /* Add Arc Testnet button - mobile positioning */
   .add-arc-button {
-    top: 16px !important;
-    right: 16px !important;
     padding: 6px 10px;
     font-size: 10px;
     gap: 4px;
-    z-index: 10;
-    white-space: nowrap;
   }
 
   .add-arc-button svg {
@@ -925,271 +908,154 @@ html.dark .arrow-divider-button {
     height: 12px;
   }
 
-  /* Powered by badge bottom - mobile spacing */
-  .powered-by-badge-bottom {
-    margin-top: 12px;
-    padding: 6px 10px;
-    font-size: 10px;
-  }
-
-  /* Header adjustments - no collision with badge on mobile */
+  /* Header adjustments */
   .bridge-header {
     font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 16px;
-    padding-right: 0;
-    padding-top: 0;
-    line-height: 1.2;
-    width: 100%;
-    box-sizing: border-box;
-    margin-top: 0;
+    margin-bottom: 0px;
+    /* Reduced since parent has gap/mb */
+    padding: 0;
   }
 
-  /* Network selector - full width cards */
+  /* Network selector */
   .network-selector {
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
     margin-bottom: 16px;
+    position: relative;
   }
 
   .network-card {
     width: 100%;
-    padding: 12px 16px;
-    min-height: 60px;
+    padding: 14px 18px;
+    background: var(--bridge-surface-card);
+    border: 1px solid var(--bridge-border-light);
+    border-radius: 12px !important;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    transition: all 0.2s ease;
   }
 
   .network-icon {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 10px;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    margin-right: 12px;
   }
 
   .network-name {
     font-size: 15px;
   }
 
-  .network-chain {
-    font-size: 10px;
-  }
-
+  /* Divider button position/size */
   .arrow-divider-button {
+    position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%) rotate(90deg);
-    width: 32px;
-    height: 32px;
-    padding: 6px;
-    margin: 0;
-    align-self: auto;
-    min-width: 32px;
-    min-height: 32px;
+    transform: translate(-50%, -50%);
+    width: 36px;
+    height: 36px;
     border-radius: 8px;
-    border-width: 3px;
+    border: 1px solid var(--bridge-border-light);
+    background: white !important;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    color: var(--bridge-text-secondary);
   }
 
   .arrow-divider-button svg {
+    width: 16px;
+    height: 16px;
     transform: none;
-    /* Rotate is handled by the parent button's transform */
-    width: 14px;
-    height: 14px;
+    /* Removed the 90deg rotation */
   }
 
-  /* Input groups - full width, better spacing */
+  /* Input groups */
   .input-group {
-    padding: 14px;
+    padding: 14px 16px 12px;
     margin-bottom: 12px;
-    border-radius: 12px;
-  }
-
-  .input-header {
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-
-  .input-label {
-    font-size: 13px;
-    font-weight: 500;
-    opacity: 0.9;
-  }
-
-  .balance-text {
-    font-size: 12px;
-    white-space: nowrap;
-  }
-
-  .balance-text span {
-    font-weight: 600;
-  }
-
-  /* Input row - better mobile layout */
-  .input-row {
-    flex-wrap: nowrap;
-    gap: 12px;
-    align-items: center;
+    border-radius: 16px;
   }
 
   .amount-input {
-    font-size: 24px;
-    font-weight: 600;
-    min-width: 0;
-    flex: 1 1 auto;
-    width: 0;
-    /* Force flex to work properly */
+    font-size: 32px;
+    color: var(--bridge-text-primary);
+    font-weight: 500;
   }
 
   .token-selector {
-    flex-shrink: 0;
-    padding: 10px 14px;
     min-width: 80px;
-    border-radius: 10px;
+    padding: 4px 10px;
+    border-radius: 20px;
   }
 
   .token-icon {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
   }
 
   .token-symbol {
-    font-size: 14px;
-    font-weight: 600;
-  }
-
-  /* Max button */
-  .max-button {
-    padding: 6px 12px;
     font-size: 12px;
-    font-weight: 600;
-    min-height: 32px;
-    border-radius: 8px;
   }
 
-  /* Info grid - single column */
-  .info-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-
-  .info-card {
-    padding: 14px;
-    border-radius: 12px;
-  }
-
-  .info-card-label {
-    font-size: 11px;
-    margin-bottom: 8px;
-  }
-
-  .info-card-value {
-    font-size: 16px;
-  }
-
-  /* Alert box - better mobile spacing */
-  .alert-box {
-    padding: 12px 14px;
-    gap: 10px;
-    margin-bottom: 16px;
-    border-radius: 12px;
-  }
-
-  .alert-icon {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-
-  .alert-text {
-    font-size: 13px;
-    line-height: 1.5;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-  }
-
-  /* Bridge button - full width, larger touch target */
+  /* Bridge button */
   .bridge-button {
     padding: 16px;
     font-size: 16px;
-    font-weight: 600;
-    min-height: 56px;
-    border-radius: 12px;
-    width: 100%;
-  }
-
-  /* Section label */
-  .section-label {
-    font-size: 12px;
-    margin-bottom: 12px;
+    font-weight: 700;
   }
 }
 
-/* Extra small devices (phones in portrait) */
+/* notice-banner styles deleted */
+
+@media (min-width: 768px) {
+  .notice-banner {
+    margin-bottom: 28px;
+    padding: 16px 20px;
+  }
+}
+
+.notice-banner .alert-text {
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--bridge-alert-text);
+  opacity: 1;
+}
+
+@media (min-width: 768px) {
+  .notice-banner .alert-text {
+    font-size: 12.5px;
+  }
+}
+
+/* Extra small devices */
 @media (max-width: 375px) {
   .bridge-container {
     padding: 12px;
-    padding-bottom: 45px;
-    /* Add extra bottom padding for badge */
-  }
-
-  .bridge-header {
-    font-size: 18px;
-    padding-right: 0;
-  }
-
-  .powered-by-badge {
-    bottom: 12px !important;
-    right: 12px !important;
-    top: auto !important;
-    font-size: 8px;
-    padding: 5px 8px;
-    max-width: calc(100% - 24px);
-  }
-
-  .settings-button {
-    top: 12px;
-    right: 12px;
-    width: 32px;
-    height: 32px;
-  }
-
-  .add-arc-button {
-    top: 12px !important;
-    right: 12px !important;
-    padding: 5px 8px;
-    font-size: 9px;
-    gap: 3px;
-  }
-
-  .add-arc-button svg {
-    width: 11px;
-    height: 11px;
-  }
-
-  .powered-by-badge-bottom {
-    margin-top: 10px;
-    padding: 5px 8px;
-    font-size: 9px;
-  }
-
-  .network-card {
-    padding: 14px;
+    max-width: calc(100% - 24px) !important;
+    width: calc(100% - 24px) !important;
   }
 
   .input-group {
-    padding: 14px;
+    padding: 12px;
   }
 
   .amount-input {
-    font-size: 24px;
+    font-size: 18px;
   }
 
   .bridge-button {
     padding: 14px;
-    font-size: 15px;
-    min-height: 52px;
+    font-size: 14px;
   }
 }
+
+/* Old media queries removed/consolidated */
 
 /* Modern Bridging Modal - Premium DeFi Redesign */
 .bridging-modal-backdrop {
@@ -1510,6 +1376,14 @@ html.dark .bridging-modal-backdrop {
   border: 1px solid rgba(59, 130, 246, 0.1);
   border-radius: 20px;
   padding: 20px;
+}
+
+.bridging-modal-not.input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .bridging-modal-notice-header {
