@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
 import { useSwitchChain, useChains } from 'wagmi';
-import { ArrowUpDown, Loader, AlertCircle, Info, Wallet, X, Settings, ChevronDown, CheckCircle, RefreshCw, CreditCard, DollarSign } from 'lucide-react';
+import { ArrowUpDown, Loader, AlertCircle, Info, Wallet, X, Settings, ChevronDown, CheckCircle, Check, RefreshCw, CreditCard, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS, TOKENS } from '../config/networks';
 import { sanitizeInput } from '../utils/blockchain';
