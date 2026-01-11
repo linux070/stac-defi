@@ -1497,28 +1497,38 @@ const Bridge = () => {
                 onClick={() => setShowNetworkSuccess(false)}
               />
               <motion.div
-                initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                className="network-success-toast"
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
+                className="fixed bottom-12 left-4 md:left-1/2 md:-translate-x-1/2 z-[9999] flex justify-start md:justify-center w-auto"
               >
-                <div className="network-success-content">
-                  <div className="network-success-header">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle size={18} className="text-white" />
-                      <span className="network-success-title">{t('Success')}</span>
+                <div className="flex items-center gap-4 px-5 py-4 rounded-[16px] bg-[#059669] border border-emerald-500/30 shadow-[0_12px_40px_rgba(5,150,105,0.25)] min-w-[320px] max-w-md">
+                  {/* Icon Section */}
+                  <div className="flex-shrink-0">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full border-[1.5px] border-white">
+                      <Check size={16} className="text-white" strokeWidth={3} />
                     </div>
-                    <button
-                      onClick={() => setShowNetworkSuccess(false)}
-                      className="network-success-close"
-                      aria-label="Close notification"
-                    >
-                      <X size={16} />
-                    </button>
                   </div>
-                  <p className="network-success-message">
-                    {t('Successfully added network to your wallet')}
-                  </p>
+
+                  {/* Text Section */}
+                  <div className="flex-1 flex flex-col min-w-0">
+                    <span className="text-[15px] font-bold text-white leading-tight">
+                      {t('Success')}
+                    </span>
+                    <span className="text-[13px] text-emerald-50 mt-0.5 leading-snug">
+                      {t('Successfully added network to your wallet')}
+                    </span>
+                  </div>
+
+                  {/* Close Button */}
+                  <button
+                    onClick={() => setShowNetworkSuccess(false)}
+                    className="flex-shrink-0 p-1 hover:bg-white/10 rounded-full transition-colors"
+                    aria-label="Close"
+                  >
+                    <X size={18} className="text-emerald-100" />
+                  </button>
                 </div>
               </motion.div>
             </div>

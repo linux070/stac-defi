@@ -230,7 +230,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       </AnimatePresence >
 
       {/* Main Content */}
-      <main className={`min-h-fit w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'activity' ? 'bg-white dark:bg-black' : activeTab === 'liquidity' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 md:pt-32 pb-32 md:pb-12 overflow-visible flex-grow relative z-10`}>
+      <main className={`min-h-fit w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'activity' ? 'bg-white dark:bg-black' : activeTab === 'liquidity' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-32 md:pb-12 overflow-x-hidden md:overflow-visible flex-grow relative z-10`}>
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}

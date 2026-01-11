@@ -113,6 +113,13 @@ const Transactions = () => {
   const { totalVolume: swapVolume, loading: swapVolumeLoading } = useTotalVolume(walletFilterForVolume);
   const { totalVolume: bridgeVolume, loading: bridgeVolumeLoading } = useTotalBridgeVolume(walletFilterForVolume);
 
+  // Calculate swap count for the volume card
+  const swapCount = useMemo(() => {
+    const txs = activeActivityTab === 'my' ? myTransactions : blockchainTransactions;
+    if (!txs || !Array.isArray(txs)) return 0;
+    return txs.filter(tx => tx.type === 'Swap' && tx.status === 'success').length;
+  }, [activeActivityTab, myTransactions, blockchainTransactions]);
+
   // Helper: Backup transactions to sessionStorage for recovery
   const backupToSessionStorage = (address, transactions) => {
     try {
@@ -388,7 +395,7 @@ const Transactions = () => {
       case 'pending':
         return (
           <div className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 shadow-sm">
-            <Loader className="text-white" size={11} strokeWidth={4} />
+            <Clock className="text-white" size={11} strokeWidth={4} />
           </div>
         );
       case 'failed':
@@ -627,12 +634,12 @@ const Transactions = () => {
                 <span className="text-[11px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">{activeActivityTab === 'my' ? t('My Swap Volume') : t('Total Swap Volume')}</span>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-2xl font-extrabold text-slate-800 dark:text-white">
-                    {swapVolumeLoading ? '...' : `$${swapVolume.toLocaleString()}`}
+                    {swapVolumeLoading ? '...' : `$${(activeActivityTab === 'my' && !isConnected) ? '0' : swapVolume.toLocaleString()}`}
                   </span>
                   <span className="text-emerald-500 text-lg">↑</span>
                 </div>
                 <div className="text-xs font-medium text-emerald-500 mt-0.5">
-                  +12% {t('this month')}
+                  {swapCount} {swapCount === 1 ? t('swap completed') : t('swaps completed')}
                 </div>
               </div>
             </div>
@@ -648,7 +655,7 @@ const Transactions = () => {
                 <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{activeActivityTab === 'my' ? t('My Bridge Volume') : t('Total Bridge Volume')}</span>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-2xl font-extrabold text-slate-800 dark:text-white">
-                    {bridgeVolumeLoading ? '...' : `$${bridgeVolume.toLocaleString()}`}
+                    {bridgeVolumeLoading ? '...' : `$${(activeActivityTab === 'my' && !isConnected) ? '0' : bridgeVolume.toLocaleString()}`}
                   </span>
                   <Layers className="w-5 h-5 text-indigo-500" strokeWidth={2} />
                 </div>
@@ -700,7 +707,7 @@ const Transactions = () => {
               )}
               {statusFilter === 'pending' && (
                 <div className="flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 shadow-sm mr-1">
-                  <Loader className="text-white" size={10} strokeWidth={4} />
+                  <Clock className="text-white" size={10} strokeWidth={4} />
                 </div>
               )}
               {statusFilter === 'failed' && (
@@ -735,7 +742,7 @@ const Transactions = () => {
                     {
                       value: 'pending', label: t('Pending'), icon: (
                         <div className="flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 shadow-sm">
-                          <Loader className="text-white" size={10} strokeWidth={4} />
+                          <Clock className="text-white" size={10} strokeWidth={4} />
                         </div>
                       )
                     },
@@ -1264,7 +1271,7 @@ const Transactions = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
-            className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[9999] flex justify-center w-[90%] md:w-auto"
+            className="fixed bottom-12 left-4 md:left-1/2 md:-translate-x-1/2 z-[9999] flex justify-start md:justify-center w-auto"
           >
             <div className="flex items-center gap-4 px-5 py-4 rounded-[16px] bg-white dark:bg-[#0d0d0d] border border-slate-200 dark:border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.12)] min-w-[320px] max-w-md">
 
