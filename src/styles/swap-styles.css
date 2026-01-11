@@ -44,21 +44,25 @@ html.dark,
 .swap-container {
   max-width: 540px;
   margin: 0 auto;
-  background: white;
-  border: none;
+  background: var(--swap-bg-primary);
+  border: 1px solid var(--swap-border-light);
   border-radius: 24px;
   padding: 24px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
   position: relative;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: transform 0.2s ease;
+  color: var(--swap-text-primary);
 }
 
+/* Dark mode container enhancements - matching Bridge page */
 html.dark .swap-container,
 .dark .swap-container {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(24px);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+  background: rgba(20, 20, 25, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
+
 
 /* Tablet: Moderate padding increase */
 @media (min-width: 640px) {
@@ -313,12 +317,28 @@ html.dark .swap-container,
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  background: transparent;
 }
 
 .swap-token-icon img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Seamless dark mode token icons - no white backgrounds */
+html.dark .swap-token-icon,
+.dark .swap-token-icon {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+html.dark .swap-token-icon img,
+.dark .swap-token-icon img {
+  filter: none;
+  background: transparent;
 }
 
 .swap-token-symbol {
@@ -333,6 +353,7 @@ html.dark .swap-token-symbol,
 .dark .swap-token-symbol {
   color: #ffffff;
 }
+
 
 .swap-token-chevron {
   color: var(--swap-text-secondary);
@@ -358,8 +379,8 @@ html.dark .swap-token-symbol,
   height: 40px;
   margin: 0 auto;
   background: var(--swap-surface-hover);
-  border: 2px solid var(--swap-border-medium);
-  border-radius: 10px;
+  border: 4px solid var(--swap-bg-primary);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -367,12 +388,20 @@ html.dark .swap-token-symbol,
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--swap-text-primary);
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+html.dark .swap-direction-button {
+  background: #1e1e1e;
+  border-color: #0d0d0d;
+  color: #ffffff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .swap-direction-button:hover:not(:disabled) {
   background: var(--swap-bg-tertiary);
-  border-color: var(--swap-border-focus);
-  transform: scale(1.05);
+  transform: scale(1.1);
+  color: var(--swap-accent-primary);
 }
 
 .swap-direction-button:disabled {

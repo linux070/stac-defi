@@ -18,13 +18,13 @@ const getActiveUsers = async () => {
   try {
     const transactions = await getItem(TRANSACTIONS_KEY);
     if (!transactions || !Array.isArray(transactions)) return 0;
-    
+
     // Filter for successful transactions (all time, not just 24h)
-    const successfulTransactions = transactions.filter(tx => 
+    const successfulTransactions = transactions.filter(tx =>
       tx.status === 'success' &&
       tx.address // Must have an address
     );
-    
+
     // Extract unique wallet addresses (case-insensitive)
     const uniqueAddresses = new Set();
     successfulTransactions.forEach(tx => {
@@ -32,7 +32,7 @@ const getActiveUsers = async () => {
         uniqueAddresses.add(tx.address.toLowerCase());
       }
     });
-    
+
     return uniqueAddresses.size;
   } catch (err) {
     console.error('Error counting active users:', err);
@@ -48,85 +48,70 @@ export function useActiveUsers() {
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef(null);
 
-  useEffect(() => {
-    const updateActiveUsers = async () => {
+  const updateActiveUsers = async () => {
+    try {
+      // Count current active users from IndexedDB (source of truth)
+      const currentCount = await getActiveUsers();
+
+      // Get previous count from IndexedDB cache (for percentage calculation)
+      let previousCount = null;
       try {
-        // Count current active users from IndexedDB (source of truth)
-        const currentCount = await getActiveUsers();
-        
-        // Get previous count from IndexedDB cache (for percentage calculation)
-        let previousCount = null;
-        try {
-          const cached = await getItem(CACHE_KEY);
-          if (cached && cached.value !== undefined) {
-            previousCount = cached.value;
-          }
-        } catch (err) {
-          // Fallback to localStorage
-          try {
-            const localCached = getItemSync(CACHE_KEY);
-            if (localCached) {
-              const parsed = typeof localCached === 'string' ? JSON.parse(localCached) : localCached;
-              if (parsed && parsed.value !== undefined) {
-                previousCount = parsed.value;
-              }
-            }
-          } catch (e) {
-            // Ignore cache errors
-          }
+        const cached = await getItem(CACHE_KEY);
+        if (cached && cached.value !== undefined) {
+          previousCount = cached.value;
         }
-
-        // Determine the count to display
-        // Always use actual count from transactions (source of truth)
-        // If count is 0 but we have cached value > 0, check if transactions exist
-        let finalCount = currentCount;
-        if (currentCount === 0 && previousCount !== null && previousCount > 0) {
-          // Check if transactions array exists and has items (might be loading)
-          const transactions = await getItem(TRANSACTIONS_KEY);
-          if (transactions && Array.isArray(transactions) && transactions.length > 0) {
-            // Transactions exist, so count should be > 0 if there are matching transactions
-            // Double-check by counting again (in case of timing issue)
-            const doubleCheckCount = await getActiveUsers();
-            if (doubleCheckCount > 0) {
-              finalCount = doubleCheckCount;
-            } else {
-              // Transactions exist but none are successful - use cached value for persistence
-              finalCount = previousCount;
-            }
-          } else {
-            // No transactions in IndexedDB - might be cleared or not loaded yet
-            // Use cached value to maintain persistence
-            finalCount = previousCount;
-          }
-        }
-
-        // Set the count state
-        setActiveUsers(finalCount);
-
-        // Calculate percentage change (use previousCount vs finalCount)
-        if (previousCount !== null && previousCount !== finalCount && finalCount > 0) {
-          const percentageChange = calculatePercentageChange(finalCount, previousCount);
-          if (percentageChange !== null) {
-            setChange(Math.abs(percentageChange));
-            setTrend(percentageChange > 0 ? 'up' : 'down');
-          }
-        } else {
-          setChange(null);
-          setTrend('stable');
-        }
-
-        // Always cache the count we're displaying in IndexedDB (persistent storage)
-        await setItem(CACHE_KEY, {
-          value: finalCount,
-          timestamp: Date.now(),
-        });
-
-        setLoading(false);
       } catch (err) {
-        console.error('Error updating active users:', err);
-        setLoading(false);
+        // Fallback to localStorage
+        try {
+          const localCached = getItemSync(CACHE_KEY);
+          if (localCached) {
+            const parsed = typeof localCached === 'string' ? JSON.parse(localCached) : localCached;
+            if (parsed && parsed.value !== undefined) {
+              previousCount = parsed.value;
+            }
+          }
+        } catch (e) {
+          // Ignore cache errors
+        }
       }
-    };
+
+      // Set the count state (real count only)
+      setActiveUsers(currentCount);
+
+      // Calculate percentage change
+      if (previousCount !== null && previousCount !== currentCount && currentCount > 0) {
+        const percentageChange = calculatePercentageChange(currentCount, previousCount);
+        if (percentageChange !== null) {
+          setChange(Math.abs(percentageChange));
+          setTrend(percentageChange > 0 ? 'up' : 'down');
+        }
+      } else {
+        setChange(null);
+        setTrend('stable');
+      }
+
+      // Cache the count in IndexedDB
+      await setItem(CACHE_KEY, {
+        value: currentCount,
+        timestamp: Date.now(),
+      });
+
+      setLoading(false);
+    } catch (err) {
+      console.error('Error updating active users:', err);
+      setActiveUsers(0);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initial load
+    updateActiveUsers();
+
+    // Refresh on mount and poll every 30 seconds
+    intervalRef.current = setInterval(() => {
+      updateActiveUsers();
+    }, 30000);
 
     // Load cached value immediately on mount (before first calculation)
     const loadCachedValue = async (retryCount = 0) => {
@@ -135,14 +120,14 @@ export function useActiveUsers() {
         if (retryCount === 0) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
-        
+
         const cached = await getItem(CACHE_KEY);
         if (cached && cached.value !== undefined) {
           setActiveUsers(cached.value);
           setLoading(false);
           return true;
         }
-        
+
         // Try localStorage fallback
         try {
           const localCached = getItemSync(CACHE_KEY);
@@ -159,7 +144,7 @@ export function useActiveUsers() {
         } catch (e) {
           // Ignore
         }
-        
+
         return false;
       } catch (err) {
         // Retry once if first attempt failed

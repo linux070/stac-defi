@@ -172,5 +172,22 @@
   "Error": "Error",
   "Max": "Max",
   "Powered by Circle CCTP": "Powered by Circle CCTP",
-  "bridge.onlyBaseSepoliaArc": "NETWORK NOTICE: TRANSFERS ARE CURRENTLY EXCLUSIVELY SUPPORTED BETWEEN BASE SEPOLIA AND ARC TESTNET."
+  "bridge.onlyBaseSepoliaArc": "NETWORK NOTICE: TRANSFERS ARE CURRENTLY EXCLUSIVELY SUPPORTED BETWEEN BASE SEPOLIA AND ARC TESTNET.",
+  "Total Swap Volume": "Total Swap Volume",
+  "Total Bridge Volume": "Total Bridge Volume",
+  "My Swap Volume": "My Swap Volume",
+  "My Bridge Volume": "My Bridge Volume",
+  "Across 3 networks": "Across 3 networks",
+  "this month": "this month",
+  "Showing": "Showing",
+  "DEX": "DEX",
+  "Copy Hash": "Copy Hash",
+  "Search by transaction hash or token symbol...": "Search by transaction hash or token symbol...",
+  "Date Range": "Date Range",
+  "Pending": "Pending",
+  "Failed": "Failed",
+  "transactions": "transactions",
+  "Copied to clipboard!": "Copied to clipboard!",
+  "Search by hash, token, or wallet address...": "Search by hash, token, or wallet address...",
+  "total transactions": "total transactions"
 }

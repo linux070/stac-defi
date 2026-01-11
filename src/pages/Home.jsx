@@ -162,7 +162,7 @@ const Home = ({ setActiveTab }) => {
   const statCards = [
     {
       id: 'tvl',
-      label: t('Total Value Processed'),
+      label: t('Total Volume'),
       rawValue: stats.tvl.value,
       formatFn: (val) => formatCurrency(val, 0),
       change: stats.tvl.change,
@@ -170,7 +170,7 @@ const Home = ({ setActiveTab }) => {
       icon: Layers,
       lucideIcon: Layers,
       color: 'from-blue-500 to-blue-600',
-      description: t('Aggregate of all dApp activities')
+      description: t('Swaps, Bridges & LP combined')
     },
     {
       id: 'volume',

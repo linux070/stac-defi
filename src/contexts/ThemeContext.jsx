@@ -58,18 +58,62 @@ export const ThemeProvider = ({ children }) => {
 
 
   const toggleDarkMode = () => {
+    // Add a temporary style to disable all transitions for instant theme switch
+    const disableTransitions = document.createElement('style');
+    disableTransitions.innerHTML = `
+      * {
+        -webkit-transition: none !important;
+        -moz-transition: none !important;
+        -o-transition: none !important;
+        -ms-transition: none !important;
+        transition: none !important;
+      }
+    `;
+    document.head.appendChild(disableTransitions);
+
     setDarkMode((prev) => {
       const newValue = !prev;
-      // Apply changes synchronously for instant theme switch
       applyThemeImmediately(newValue);
+
+      // Remove the style after a brief delay to re-enable transitions for other interactions
+      // Using requestAnimationFrame to ensure it happens after the next paint
+      requestAnimationFrame(() => {
+        // Double RAF to be extra sure the theme has applied without transitions
+        requestAnimationFrame(() => {
+          if (document.head.contains(disableTransitions)) {
+            document.head.removeChild(disableTransitions);
+          }
+        });
+      });
+
       return newValue;
     });
   };
 
   const setTheme = (isDark) => {
-    // Apply changes synchronously for instant theme switch
+    // Same immediate logic for direct set
+    const disableTransitions = document.createElement('style');
+    disableTransitions.innerHTML = `
+      * {
+        -webkit-transition: none !important;
+        -moz-transition: none !important;
+        -o-transition: none !important;
+        -ms-transition: none !important;
+        transition: none !important;
+      }
+    `;
+    document.head.appendChild(disableTransitions);
+
     applyThemeImmediately(isDark);
     setDarkMode(isDark);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (document.head.contains(disableTransitions)) {
+          document.head.removeChild(disableTransitions);
+        }
+      });
+    });
   };
 
   return (

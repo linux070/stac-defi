@@ -21,7 +21,7 @@ const USDC_ADDRESS = CONSTANT_USDC_ADDRESS;
 const getTokenIcon = (symbol) => {
   const iconMap = {
     'USDC': '/icons/usdc.png',
-    'STC': '/icons/stac.png',
+    'STC': '/icons/STC.png',
     'BALL': '/icons/ball.jpg',
     'MTB': '/icons/MTB.png',
     'ECR': '/icons/ECR.png'

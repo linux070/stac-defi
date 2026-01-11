@@ -79,14 +79,23 @@ html.dark,
 .bridge-container {
   max-width: 540px;
   margin: 0 auto;
-  background: white;
-  border: none;
+  background: var(--bridge-bg-primary);
+  border: 1px solid var(--bridge-border-light);
   border-radius: 24px;
   padding: 24px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
   position: relative;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease;
+  color: var(--bridge-text-primary);
+}
+
+/* Dark mode container enhancements */
+html.dark .bridge-container,
+.dark .bridge-container {
+  background: rgba(20, 20, 25, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 @media (min-width: 640px) {
@@ -144,7 +153,7 @@ html.dark,
   flex-direction: column;
   position: relative;
   margin-bottom: 24px;
-  gap: 12px;
+  gap: 16px;
 }
 
 @media (min-width: 768px) {
@@ -256,6 +265,19 @@ html.dark,
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
+/* Seamless dark mode network icons - no white backgrounds */
+html.dark .network-icon,
+.dark .network-icon {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+html.dark .network-icon img,
+.dark .network-icon img {
+  background: transparent;
+}
+
 @media (min-width: 768px) {
   .network-icon {
     width: 34px;
@@ -269,6 +291,7 @@ html.dark,
   height: 100%;
   object-fit: contain;
 }
+
 
 .network-info {
   flex: 1;
@@ -309,38 +332,39 @@ html.dark,
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 10;
+  z-index: 20;
   background: white;
   border: 4px solid var(--bridge-bg-primary);
   border-radius: 12px;
-  padding: 8px;
+  width: 42px;
+  height: 42px;
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  color: var(--bridge-text-secondary);
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-/* Light Mode Specific Toggle Style */
-:root:not(.dark) .arrow-divider-button,
-html:not(.dark) .arrow-divider-button {
-  background: #ffffff;
-  border-color: var(--bridge-bg-secondary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   color: #1a1a1a;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  outline: none;
 }
 
 html.dark .arrow-divider-button {
-  background: #1a1a1a;
-  border-color: var(--bridge-bg-secondary);
+  background: #1e1e1e !important;
+  border-color: #0d0d0d !important;
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 .arrow-divider-button:hover:not(:disabled) {
-  background: var(--bridge-bg-tertiary);
   transform: translate(-50%, -50%) scale(1.1);
+  background: var(--bridge-bg-tertiary);
+  color: var(--bridge-accent-primary);
+}
+
+.arrow-divider-button:active:not(:disabled) {
+  transform: translate(-50%, -50%) scale(0.95);
 }
 
 @media (min-width: 768px) {
@@ -507,7 +531,7 @@ html.dark .arrow-divider-button {
   flex: 1;
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--bridge-text-primary);
   font-size: 28px;
   font-weight: 600;
   outline: none;
@@ -530,8 +554,8 @@ html.dark .arrow-divider-button {
 }
 
 .amount-input::placeholder {
-  color: #94a3b8;
-  opacity: 1;
+  color: var(--bridge-text-secondary);
+  opacity: 0.7;
 }
 
 .token-selector {
@@ -574,11 +598,25 @@ html.dark .arrow-divider-button {
   /* Added background for logos */
 }
 
-.token-icon img {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
+/* Seamless dark mode token icons - no white backgrounds */
+html.dark .token-icon,
+.dark .token-icon {
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
+
+html.dark .token-icon img,
+.dark .token-icon img {
+  background: transparent;
+}
+
+.token-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 
 .token-symbol {
   font-size: 14px;
@@ -586,6 +624,7 @@ html.dark .arrow-divider-button {
   color: var(--bridge-text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
+
 
 .dropdown-arrow {
   color: var(--bridge-text-tertiary);
@@ -888,7 +927,7 @@ html.dark .arrow-divider-button {
     border: none;
     overflow: hidden;
     position: relative;
-    background: white;
+    background: var(--bridge-bg-primary);
   }
 
   /* Settings and badge positioning */
@@ -1056,6 +1095,183 @@ html.dark .arrow-divider-button {
 }
 
 /* Old media queries removed/consolidated */
+
+/* ====== COMPREHENSIVE DARK MODE OVERRIDES ====== */
+html.dark .bridge-header,
+.dark .bridge-header {
+  color: var(--bridge-text-primary);
+}
+
+html.dark .bridge-subtitle,
+.dark .bridge-subtitle {
+  color: var(--bridge-text-secondary);
+}
+
+html.dark .network-card,
+.dark .network-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark .network-card:hover,
+.dark .network-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+html.dark .network-icon,
+.dark .network-icon {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .network-label,
+.dark .network-label {
+  color: var(--bridge-text-secondary);
+}
+
+html.dark .network-name,
+.dark .network-name {
+  color: var(--bridge-text-primary);
+}
+
+html.dark .input-group,
+.dark .input-group {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+html.dark .input-group:focus-within,
+.dark .input-group:focus-within {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+html.dark .input-label,
+.dark .input-label {
+  color: var(--bridge-text-secondary);
+}
+
+html.dark .amount-input,
+.dark .amount-input {
+  color: var(--bridge-text-primary);
+}
+
+html.dark .amount-input::placeholder,
+.dark .amount-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+html.dark .token-selector,
+.dark .token-selector {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark .token-symbol,
+.dark .token-symbol {
+  color: var(--bridge-text-primary);
+}
+
+html.dark .balance-text,
+.dark .balance-text {
+  color: var(--bridge-text-secondary);
+}
+
+html.dark .balance-text span,
+.dark .balance-text span {
+  color: var(--bridge-text-primary);
+}
+
+html.dark .max-button,
+.dark .max-button {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+}
+
+html.dark .max-button:hover,
+.dark .max-button:hover {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+html.dark .alert-box,
+.dark .alert-box {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+html.dark .alert-text,
+.dark .alert-text {
+  color: #93c5fd;
+}
+
+html.dark .alert-box.warning,
+.dark .alert-box.warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+html.dark .alert-box.warning .alert-text,
+.dark .alert-box.warning .alert-text {
+  color: #fcd34d;
+}
+
+html.dark .arrow-divider-button,
+.dark .arrow-divider-button {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--bridge-text-primary);
+}
+
+html.dark .arrow-divider-button:hover:not(:disabled),
+.dark .arrow-divider-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+html.dark .add-arc-button,
+.dark .add-arc-button {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--bridge-text-primary);
+}
+
+html.dark .add-arc-button:hover,
+.dark .add-arc-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+html.dark .powered-by-badge-bottom,
+.dark .powered-by-badge-bottom {
+  color: var(--bridge-text-secondary);
+}
+
+html.dark .bridge-button,
+.dark .bridge-button {
+  color: #ffffff !important;
+}
+
+html.dark .info-card,
+.dark .info-card {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+html.dark .info-card-label,
+.dark .info-card-label {
+  color: var(--bridge-text-secondary);
+}
+
+html.dark .info-card-value,
+.dark .info-card-value {
+  color: var(--bridge-text-primary);
+}
+
+/* ====== END DARK MODE OVERRIDES ====== */
+
 
 /* Modern Bridging Modal - Premium DeFi Redesign */
 .bridging-modal-backdrop {

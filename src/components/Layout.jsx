@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatAddress } from '../utils/blockchain';
 import WalletModal from './WalletModal';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useNavigate, Link } from 'react-router-dom';
 import LanguageSelector from './LanguageSelector';
 import BackgroundGradient from './BackgroundGradient';
 import FeedbackButton from './FeedbackButton';
@@ -29,7 +30,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
   ];
 
   return (
-    <div className={`min-h-screen flex flex-col ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : 'bg-white dark:bg-black'}`}>
+    <div className={`min-h-screen flex flex-col ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'activity' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'}`}>
       {/* Animated Background Gradient - Only for Swap and Bridge pages */}
       {(activeTab === 'swap' || activeTab === 'bridge') && <BackgroundGradient />}
 
@@ -40,16 +41,26 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         <div className="md:hidden fixed top-4 left-0 right-0 mx-auto w-[95%] mb-4">
           <div className="flex items-center justify-between rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2">
             {/* Logo with text */}
-            <a href="/" className="flex items-center gap-2 pl-3 cursor-pointer flex-shrink-0">
-              <img
-                src="/icons/stac.png"
-                alt="Stac Logo"
-                className="w-8 h-8 rounded-lg object-cover dark:invert dark:brightness-110"
-              />
-              <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap tracking-tight">
-                Stac
-              </span>
-            </a>
+            <div className="flex items-center cursor-pointer transition-all duration-300 hover:opacity-80 active:scale-95 flex-shrink-0 isolation-isolate" onClick={() => window.location.href = '/'}>
+              {/* Icon Part - Narrower to exclude the 'S' */}
+              <div className="h-8 w-6 overflow-hidden flex-shrink-0 bg-transparent">
+                <img
+                  src="/icons/Stac.png"
+                  alt=""
+                  className="h-8 max-w-none object-cover dark:invert"
+                  style={{ objectPosition: 'left' }}
+                />
+              </div>
+              {/* Spaced Text Part - Starts from the 'S' */}
+              <div className="h-8 overflow-hidden flex-shrink-0 ml-3 bg-transparent">
+                <img
+                  src="/icons/Stac.png"
+                  alt="Stac"
+                  className="h-8 max-w-none object-cover dark:invert"
+                  style={{ marginLeft: '-24px' }}
+                />
+              </div>
+            </div>
 
             {/* Controls - Theme Toggle */}
             <div className="flex items-center gap-2">
@@ -79,27 +90,37 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         {/* Desktop Header - Floating Island */}
         <div className="hidden md:block md:fixed md:top-4 md:left-0 md:right-0 md:flex md:justify-center">
           <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-6 py-2.5 mx-auto w-fit max-w-full md:min-w-[500px] md:max-w-[1200px] flex-nowrap overflow-hidden">
-            {/* Logo with text */}
-            <a href="/" className="flex items-center gap-2 cursor-pointer flex-shrink-0">
-              <img
-                src="/icons/stac.png"
-                alt="Stac Logo"
-                className="w-8 h-8 rounded-lg object-cover dark:invert dark:brightness-110"
-              />
-              <span className="text-lg font-bold text-slate-900 dark:text-white whitespace-nowrap tracking-tight select-none">
-                Stac
-              </span>
-            </a>
+            {/* Logo Section */}
+            <div className="flex items-center cursor-pointer transition-all duration-300 hover:opacity-80 active:scale-95 flex-shrink-0 mr-6 md:mr-10 isolation-isolate" onClick={() => window.location.href = '/'}>
+              {/* Icon Part - Narrower to exclude the 'S' */}
+              <div className="h-9 w-7 overflow-hidden flex-shrink-0 bg-transparent">
+                <img
+                  src="/icons/Stac.png"
+                  alt=""
+                  className="h-9 max-w-none object-cover dark:invert"
+                  style={{ objectPosition: 'left' }}
+                />
+              </div>
+              {/* Spaced Text Part - Starts from the 'S' */}
+              <div className="h-9 overflow-hidden flex-shrink-0 ml-4 bg-transparent">
+                <img
+                  src="/icons/Stac.png"
+                  alt="Stac"
+                  className="h-9 max-w-none object-cover dark:invert"
+                  style={{ marginLeft: '-28px' }}
+                />
+              </div>
+            </div>
 
             {/* Desktop Navigation */}
-            <nav className="flex items-center gap-2 md:gap-4 ml-4">
+            <nav className="flex items-center gap-2 md:gap-4">
               {navItems.map((item) => {
                 const Icon = item.icon;
+                const path = item.id === 'home' ? '/home' : `/${item.id}`;
                 return (
-                  <button
+                  <Link
                     key={item.id}
-                    data-nav={item.id}
-                    onClick={() => setActiveTab(item.id)}
+                    to={path}
                     className={`px-3 py-2 rounded-full text-sm font-bold transition-all duration-200 flex items-center nav-link whitespace-nowrap
                       ${activeTab === item.id
                         ? 'bg-blue-100/50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
@@ -108,7 +129,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                   >
                     <Icon size={16} className="mr-2 flex-shrink-0" />
                     <span className="font-bold whitespace-nowrap">{item.label}</span>
-                  </button>
+                  </Link>
                 );
               })}
             </nav>
@@ -145,11 +166,11 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         <div className="grid grid-cols-5">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const path = item.id === 'home' ? '/home' : `/${item.id}`;
             return (
-              <button
+              <Link
                 key={item.id}
-                data-nav={item.id}
-                onClick={() => setActiveTab(item.id)}
+                to={path}
                 className={`py-3 px-0 text-xs font-bold transition-all duration-200 flex flex-col items-center justify-center nav-link
                   ${activeTab === item.id
                     ? 'text-blue-500 dark:text-blue-400'
@@ -158,14 +179,14 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               >
                 <Icon size={24} strokeWidth={2.2} className="mb-0.5" />
                 <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
-              </button>
+              </Link>
             );
           })}
         </div>
-      </nav>
+      </nav >
 
       {/* Mobile Sidebar - Adjusted for bottom nav */}
-      <AnimatePresence>
+      < AnimatePresence >
         {sidebarOpen && (
           <>
             <motion.div
@@ -206,10 +227,10 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence >
 
       {/* Main Content */}
-      <main className={`min-h-fit w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : 'bg-slate-50 dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 md:pt-32 pb-32 md:pb-12 overflow-visible flex-grow relative z-10`}>
+      <main className={`min-h-fit w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'activity' ? 'bg-white dark:bg-black' : activeTab === 'liquidity' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 md:pt-32 pb-32 md:pb-12 overflow-visible flex-grow relative z-10`}>
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}
@@ -252,9 +273,34 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               </p>
             </div>
 
-            {/* Right Section - Empty spacer on desktop to maintain balance */}
-            <div className="flex-shrink-0 md:w-auto hidden md:block">
-              {/* This empty div balances the left element on desktop */}
+            {/* Right Section - Footer Links */}
+            <div className="flex items-center gap-6 md:gap-8 w-full md:w-auto justify-center md:justify-end">
+              <a
+                href="#"
+                className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                Docs
+              </a>
+              <a
+                href="#"
+                className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                Terms
+              </a>
+              <a
+                href="https://x.com/stac_defi"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                Twitter
+              </a>
+              <a
+                href="#"
+                className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                Discord
+              </a>
             </div>
           </div>
         </div>

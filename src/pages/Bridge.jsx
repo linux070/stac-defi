@@ -1180,171 +1180,173 @@ const Bridge = () => {
 
 
           {/* Network Selection Section */}
-          <div className="network-selector">
-            {/* From Network */}
-            {/* Use initial chains if bridge was initiated, otherwise use current chains */}
-            <button
-              ref={fromChainTriggerRef}
-              onClick={() => {
-                // Prevent chain switching during bridge transactions
-                const isBridgeInProgress = bridgeLoading ||
-                  state.isLoading ||
-                  (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
+          <div className="p-2 md:p-3 rounded-[20px] border border-slate-200/60 dark:border-white/5 bg-gradient-to-b from-slate-50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/30 shadow-sm mb-6">
+            <div className="network-selector !mb-0">
+              {/* From Network */}
+              {/* Use initial chains if bridge was initiated, otherwise use current chains */}
+              <button
+                ref={fromChainTriggerRef}
+                onClick={() => {
+                  // Prevent chain switching during bridge transactions
+                  const isBridgeInProgress = bridgeLoading ||
+                    state.isLoading ||
+                    (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
 
-                if (!isBridgeInProgress) {
-                  setShowChainSelector('from');
-                }
-              }}
-              disabled={bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')}
-              className="network-card"
-              style={{
-                cursor: (bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')) ? 'not-allowed' : 'pointer',
-                opacity: (bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')) ? 0.6 : 1,
-              }}
-            >
-              <div className="network-icon">
-                {(() => {
-                  const displayFromChain = bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain;
-                  return displayFromChain.includes('Arc') ? (
-                    <img
-                      src="/icons/Arc.png"
-                      alt="Arc Testnet"
-                      className="w-8 h-8 rounded-full object-contain"
-                    />
-                  ) : displayFromChain.includes('Base') ? (
-                    <img
-                      src="/icons/base.png"
-                      alt="Base Sepolia"
-                      className="w-8 h-8 rounded-lg object-cover"
-                    />
-                  ) : displayFromChain.includes('Sepolia') ? (
-                    <img
-                      src="/icons/eth.png"
-                      alt="Sepolia"
-                      className="w-8 h-8 rounded-full object-contain"
-                    />
-                  ) : null;
-                })()}
-              </div>
-              <div className="network-info">
-                <p className="network-chain">{t('FROM')}</p>
-                <p className="network-name">
-                  {bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain}
-                </p>
-              </div>
-              <ChevronDown size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-            </button>
+                  if (!isBridgeInProgress) {
+                    setShowChainSelector('from');
+                  }
+                }}
+                disabled={bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')}
+                className="network-card"
+                style={{
+                  cursor: (bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')) ? 'not-allowed' : 'pointer',
+                  opacity: (bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')) ? 0.6 : 1,
+                }}
+              >
+                <div className="network-icon">
+                  {(() => {
+                    const displayFromChain = bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain;
+                    return displayFromChain.includes('Arc') ? (
+                      <img
+                        src="/icons/Arc.png"
+                        alt="Arc Testnet"
+                        className="w-8 h-8 rounded-full object-contain"
+                      />
+                    ) : displayFromChain.includes('Base') ? (
+                      <img
+                        src="/icons/base.png"
+                        alt="Base Sepolia"
+                        className="w-8 h-8 rounded-lg object-cover"
+                      />
+                    ) : displayFromChain.includes('Sepolia') ? (
+                      <img
+                        src="/icons/eth.png"
+                        alt="Sepolia"
+                        className="w-8 h-8 rounded-full object-contain"
+                      />
+                    ) : null;
+                  })()}
+                </div>
+                <div className="network-info">
+                  <p className="network-chain">{t('FROM')}</p>
+                  <p className="network-name">
+                    {bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain}
+                  </p>
+                </div>
+                <ChevronDown size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+              </button>
 
-            {/* Switch Button */}
-            <button
-              onClick={() => {
-                // Prevent chain switching during bridge transactions
-                const isBridgeInProgress = bridgeLoading ||
-                  state.isLoading ||
-                  (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
+              {/* Switch Button */}
+              <button
+                onClick={() => {
+                  // Prevent chain switching during bridge transactions
+                  const isBridgeInProgress = bridgeLoading ||
+                    state.isLoading ||
+                    (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
 
-                if (isBridgeInProgress) {
-                  return; // Don't allow chain switching during bridge
-                }
-
-                try {
-                  // Store current values temporarily
-                  const tempFromChain = fromChain;
-                  const tempToChain = toChain;
-
-                  bridgeInitiatedRef.current = false;
-                  initialFromChainRef.current = null;
-                  initialToChainRef.current = null;
-
-                  // Swap the chains in UI first
-                  setFromChain(tempToChain);
-                  setToChain(tempFromChain);
-
-                  // Also swap in wallet if connected
-                  if (isConnected) {
-                    // Get the chain ID for the new 'from' chain (which was previously the 'to' chain)
-                    const newFromChainId = getChainIdByName(tempToChain);
-                    if (newFromChainId) {
-                      switchChainAsync({ chainId: newFromChainId }).catch(err => {
-                        console.warn('Failed to switch network in wallet:', err);
-                        // Even if wallet switch fails, UI has already been updated
-                      });
-                    } else {
-                      console.warn('Could not get chain ID for:', tempToChain);
-                    }
+                  if (isBridgeInProgress) {
+                    return; // Don't allow chain switching during bridge
                   }
 
-                  // Refresh balance for the new 'from' chain
-                  if (isConnected) {
-                    const newFromChainId = getChainIdByName(tempToChain);
-                    if (newFromChainId) {
-                      fetchTokenBalance('USDC', newFromChainId);
+                  try {
+                    // Store current values temporarily
+                    const tempFromChain = fromChain;
+                    const tempToChain = toChain;
+
+                    bridgeInitiatedRef.current = false;
+                    initialFromChainRef.current = null;
+                    initialToChainRef.current = null;
+
+                    // Swap the chains in UI first
+                    setFromChain(tempToChain);
+                    setToChain(tempFromChain);
+
+                    // Also swap in wallet if connected
+                    if (isConnected) {
+                      // Get the chain ID for the new 'from' chain (which was previously the 'to' chain)
+                      const newFromChainId = getChainIdByName(tempToChain);
+                      if (newFromChainId) {
+                        switchChainAsync({ chainId: newFromChainId }).catch(err => {
+                          console.warn('Failed to switch network in wallet:', err);
+                          // Even if wallet switch fails, UI has already been updated
+                        });
+                      } else {
+                        console.warn('Could not get chain ID for:', tempToChain);
+                      }
                     }
+
+                    // Refresh balance for the new 'from' chain
+                    if (isConnected) {
+                      const newFromChainId = getChainIdByName(tempToChain);
+                      if (newFromChainId) {
+                        fetchTokenBalance('USDC', newFromChainId);
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Error swapping chains:', error);
                   }
-                } catch (error) {
-                  console.error('Error swapping chains:', error);
-                }
-              }}
-              disabled={bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')}
-              aria-label="Switch Networks"
-              className="arrow-divider-button"
-            >
-              <ArrowUpDown size={16} />
-            </button>
+                }}
+                disabled={bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')}
+                aria-label="Switch Networks"
+                className="arrow-divider-button"
+              >
+                <ArrowUpDown size={16} />
+              </button>
 
-            {/* To Network */}
-            {/* Use initial chains if bridge was initiated, otherwise use current chains */}
-            <button
-              ref={toChainTriggerRef}
-              onClick={() => {
-                // Prevent chain switching during bridge transactions
-                const isBridgeInProgress = bridgeLoading ||
-                  state.isLoading ||
-                  (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
+              {/* To Network */}
+              {/* Use initial chains if bridge was initiated, otherwise use current chains */}
+              <button
+                ref={toChainTriggerRef}
+                onClick={() => {
+                  // Prevent chain switching during bridge transactions
+                  const isBridgeInProgress = bridgeLoading ||
+                    state.isLoading ||
+                    (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
 
-                if (!isBridgeInProgress) {
-                  setShowChainSelector('to');
-                }
-              }}
-              disabled={bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')}
-              className="network-card"
-              style={{
-                cursor: (bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')) ? 'not-allowed' : 'pointer',
-                opacity: (bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')) ? 0.6 : 1,
-              }}
-            >
-              <div className="network-icon">
-                {(() => {
-                  const displayToChain = bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain;
-                  return displayToChain.includes('Arc') ? (
-                    <img
-                      src="/icons/Arc.png"
-                      alt="Arc Testnet"
-                      className="w-8 h-8 rounded-full object-contain"
-                    />
-                  ) : displayToChain.includes('Base') ? (
-                    <img
-                      src="/icons/base.png"
-                      alt="Base Sepolia"
-                      className="w-8 h-8 rounded-lg object-cover"
-                    />
-                  ) : displayToChain.includes('Sepolia') ? (
-                    <img
-                      src="/icons/eth.png"
-                      alt="Sepolia"
-                      className="w-8 h-8 rounded-full object-contain"
-                    />
-                  ) : null;
-                })()}
-              </div>
-              <div className="network-info">
-                <p className="network-chain">{t('TO')}</p>
-                <p className="network-name">
-                  {bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain}
-                </p>
-              </div>
-              <ChevronDown size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-            </button>
+                  if (!isBridgeInProgress) {
+                    setShowChainSelector('to');
+                  }
+                }}
+                disabled={bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')}
+                className="network-card"
+                style={{
+                  cursor: (bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')) ? 'not-allowed' : 'pointer',
+                  opacity: (bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')) ? 0.6 : 1,
+                }}
+              >
+                <div className="network-icon">
+                  {(() => {
+                    const displayToChain = bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain;
+                    return displayToChain.includes('Arc') ? (
+                      <img
+                        src="/icons/Arc.png"
+                        alt="Arc Testnet"
+                        className="w-8 h-8 rounded-full object-contain"
+                      />
+                    ) : displayToChain.includes('Base') ? (
+                      <img
+                        src="/icons/base.png"
+                        alt="Base Sepolia"
+                        className="w-8 h-8 rounded-lg object-cover"
+                      />
+                    ) : displayToChain.includes('Sepolia') ? (
+                      <img
+                        src="/icons/eth.png"
+                        alt="Sepolia"
+                        className="w-8 h-8 rounded-full object-contain"
+                      />
+                    ) : null;
+                  })()}
+                </div>
+                <div className="network-info">
+                  <p className="network-chain">{t('TO')}</p>
+                  <p className="network-name">
+                    {bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain}
+                  </p>
+                </div>
+                <ChevronDown size={16} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+              </button>
+            </div>
           </div>
 
           {/* Asset Input Section */}
@@ -1374,9 +1376,9 @@ const Bridge = () => {
             </div>
             {isConnected && (
               <div className="input-footer">
-                <div className="flex items-center text-[12px] font-bold text-slate-500">
+                <div className="flex items-center text-[12px] font-bold text-slate-500 dark:text-slate-400">
                   <span className="mr-1 opacity-60">Bal:</span>
-                  <span className="text-slate-700">
+                  <span className="text-slate-700 dark:text-slate-200">
                     {isLoadingBalance ? (
                       <Loader className="animate-spin inline" size={11} />
                     ) : balanceError ? (
