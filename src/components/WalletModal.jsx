@@ -45,7 +45,7 @@ const WalletModal = ({ isOpen, onClose }) => {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-none shadow-2xl p-6"
+          className="relative w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl p-6 max-h-[80dvh] overflow-y-auto rounded-xl"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">{t('Connect Wallet')}</h2>

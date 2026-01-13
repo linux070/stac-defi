@@ -7,7 +7,7 @@ const Liquidity = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 flex items-center justify-center py-10 md:py-20 min-h-[80vh]">
+    <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 flex items-center justify-center py-10 md:py-20 min-h-[80dvh]">
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}

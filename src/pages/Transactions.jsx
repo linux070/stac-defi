@@ -607,7 +607,7 @@ const Transactions = () => {
                   />
                 )}
                 <span className={`relative z-10 ${activeActivityTab === tab ? 'text-white dark:text-black' : 'text-slate-500 dark:text-slate-400'}`}>
-                  {tab === 'my' ? t('My Activity') : t('All Activity')}
+                  {tab === 'my' ? t('My Transactions') : t('All Transactions')}
                 </span>
               </button>
             ))}
@@ -691,14 +691,7 @@ const Transactions = () => {
                 setShowStatusDropdown(!showStatusDropdown);
                 setShowDateDropdown(false);
               }}
-              className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors text-sm font-medium ${statusFilter !== 'all'
-                ? statusFilter === 'success'
-                  ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400'
-                  : statusFilter === 'pending'
-                    ? 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-700 text-yellow-700 dark:text-yellow-400'
-                    : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 text-red-700 dark:text-red-400'
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0d0d0d] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
+              className="flex items-center gap-2 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0d0d0d] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm font-medium"
             >
               {statusFilter === 'success' && (
                 <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 shadow-sm mr-1">
@@ -706,13 +699,13 @@ const Transactions = () => {
                 </div>
               )}
               {statusFilter === 'pending' && (
-                <div className="flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 shadow-sm mr-1">
-                  <Clock className="text-white" size={10} strokeWidth={4} />
+                <div className="flex items-center justify-center w-5 h-5 mr-1">
+                  <Clock className="text-amber-500" size={16} strokeWidth={3} />
                 </div>
               )}
               {statusFilter === 'failed' && (
-                <div className="flex items-center justify-center w-4 h-4 rounded-full bg-red-500 shadow-sm mr-1">
-                  <X className="text-white" size={10} strokeWidth={4} />
+                <div className="flex items-center justify-center w-5 h-5 mr-1">
+                  <X className="text-red-500" size={16} strokeWidth={3} />
                 </div>
               )}
               {statusFilter === 'all' && <SlidersHorizontal size={16} />}
@@ -741,15 +734,15 @@ const Transactions = () => {
                     },
                     {
                       value: 'pending', label: t('Pending'), icon: (
-                        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 shadow-sm">
-                          <Clock className="text-white" size={10} strokeWidth={4} />
+                        <div className="flex items-center justify-center w-5 h-5">
+                          <Clock className="text-amber-500" size={16} strokeWidth={3} />
                         </div>
                       )
                     },
                     {
                       value: 'failed', label: t('Failed'), icon: (
-                        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-red-500 shadow-sm">
-                          <X className="text-white" size={10} strokeWidth={4} />
+                        <div className="flex items-center justify-center w-5 h-5">
+                          <X className="text-red-500" size={16} strokeWidth={3} />
                         </div>
                       )
                     }
@@ -761,7 +754,7 @@ const Transactions = () => {
                         setShowStatusDropdown(false);
                       }}
                       className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors flex items-center gap-3 ${statusFilter === option.value
-                        ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
+                        ? 'text-blue-600 dark:text-blue-400'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-gray-800/50'
                         }`}
                     >
@@ -908,24 +901,18 @@ const Transactions = () => {
                     </td>
                     <td>
                       {tx.status === 'success' ? (
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-800/20">
-                          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 shadow-sm">
-                            <Check className="text-white" size={11} strokeWidth={3} />
-                          </div>
+                        <div className="inline-flex items-center gap-2">
+                          <CheckCircle2 className="text-emerald-500" size={16} />
                           <span className="text-sm font-medium text-emerald-500 dark:text-emerald-400">{t('Success')}</span>
                         </div>
                       ) : tx.status === 'pending' ? (
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-800/20 shadow-sm">
-                          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 shadow-sm animate-pulse">
-                            <Clock className="text-white" size={11} strokeWidth={3} />
-                          </div>
+                        <div className="inline-flex items-center gap-2">
+                          <Clock className="text-amber-500" size={16} />
                           <span className="text-sm font-medium text-amber-500 dark:text-amber-400">{t('Pending')}</span>
                         </div>
                       ) : (
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50/50 dark:bg-red-900/10 border border-red-100/50 dark:border-red-800/20 shadow-sm">
-                          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-red-500 shadow-sm">
-                            <X className="text-white" size={11} strokeWidth={3} />
-                          </div>
+                        <div className="inline-flex items-center gap-2">
+                          <XCircle className="text-red-500" size={16} />
                           <span className="text-sm font-medium text-red-500 dark:text-red-400">{t('Failed')}</span>
                         </div>
                       )}
@@ -938,7 +925,7 @@ const Transactions = () => {
                           title={t('Copy Hash')}
                         >
                           <span>{formatAddress(tx.hash)}</span>
-                          {copiedHash === tx.hash ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} className="opacity-40" />}
+                          <Copy size={14} className="opacity-40" />
                         </button>
                         <a
                           href={getExplorerUrl(tx.hash, tx.chainId || chainId || 11155111)}
@@ -1026,24 +1013,18 @@ const Transactions = () => {
                   {/* Centered Success button */}
                   <div className="flex justify-center">
                     {tx.status === 'success' ? (
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-800/20 shadow-sm">
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 shadow-sm">
-                          <Check className="text-white" size={11} strokeWidth={3} />
-                        </div>
+                      <div className="inline-flex items-center gap-2">
+                        <CheckCircle2 className="text-emerald-500" size={16} />
                         <span className="text-sm font-medium text-emerald-500 dark:text-emerald-400">{t('Success')}</span>
                       </div>
                     ) : tx.status === 'pending' ? (
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-800/20 shadow-sm">
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 shadow-sm animate-pulse">
-                          <Clock className="text-white" size={11} strokeWidth={3} />
-                        </div>
+                      <div className="inline-flex items-center gap-2">
+                        <Clock className="text-amber-500" size={16} />
                         <span className="text-sm font-medium text-amber-500 dark:text-amber-400">{t('Pending')}</span>
                       </div>
                     ) : (
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50/50 dark:bg-red-900/10 border border-red-100/50 dark:border-red-800/20 shadow-sm">
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-red-500 shadow-sm">
-                          <X className="text-white" size={11} strokeWidth={3} />
-                        </div>
+                      <div className="inline-flex items-center gap-2">
+                        <XCircle className="text-red-500" size={16} />
                         <span className="text-sm font-medium text-red-500 dark:text-red-400">{t('Failed')}</span>
                       </div>
                     )}
@@ -1068,24 +1049,18 @@ const Transactions = () => {
                   {/* Centered Success button */}
                   <div className="flex justify-center">
                     {tx.status === 'success' ? (
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50/30 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-800/20 shadow-sm">
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 shadow-sm">
-                          <Check className="text-white" size={11} strokeWidth={3} />
-                        </div>
+                      <div className="inline-flex items-center gap-2">
+                        <CheckCircle2 className="text-emerald-500" size={16} />
                         <span className="text-sm font-medium text-emerald-500 dark:text-emerald-400">{t('Success')}</span>
                       </div>
                     ) : tx.status === 'pending' ? (
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100/50 dark:border-amber-800/20 shadow-sm">
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 shadow-sm animate-pulse">
-                          <Clock className="text-white" size={11} strokeWidth={3} />
-                        </div>
+                      <div className="inline-flex items-center gap-2">
+                        <Clock className="text-amber-500" size={16} />
                         <span className="text-sm font-medium text-amber-500 dark:text-amber-400">{t('Pending')}</span>
                       </div>
                     ) : (
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50/50 dark:bg-red-900/10 border border-red-100/50 dark:border-red-800/20 shadow-sm">
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-red-500 shadow-sm">
-                          <X className="text-white" size={11} strokeWidth={3} />
-                        </div>
+                      <div className="inline-flex items-center gap-2">
+                        <XCircle className="text-red-500" size={16} />
                         <span className="text-sm font-medium text-red-500 dark:text-red-400">{t('Failed')}</span>
                       </div>
                     )}
@@ -1115,26 +1090,24 @@ const Transactions = () => {
                             {getSwapFromToken(tx)}
                           </span>
                         </div>
-                      </div>
-
-                      <div className="flex items-center justify-center">
-                        <ArrowLeftRight size={18} className="text-blue-400 dark:text-blue-500 flex-shrink-0" />
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1 text-right">{t('You receive')}</div>
-                        <div className="flex items-center justify-end gap-2 min-w-0">
-                          {getSwapToAmount(tx) && (
-                            <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
-                              {getSwapToAmount(tx)}
+                        <div className="flex items-center justify-center">
+                          <ArrowLeftRight size={18} className="text-blue-400 dark:text-blue-500 flex-shrink-0" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1 text-right">{t('You receive')}</div>
+                          <div className="flex items-center justify-end gap-2 min-w-0">
+                            {getSwapToAmount(tx) && (
+                              <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
+                                {getSwapToAmount(tx)}
+                              </span>
+                            )}
+                            {getTokenLogo(getSwapToToken(tx)) && (
+                              <img src={getTokenLogo(getSwapToToken(tx))} alt="" className="w-5 h-5 rounded-full object-cover border border-white/10 flex-shrink-0 animate-in zoom-in-50 duration-500 shadow-sm" />
+                            )}
+                            <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                              {getSwapToToken(tx)}
                             </span>
-                          )}
-                          {getTokenLogo(getSwapToToken(tx)) && (
-                            <img src={getTokenLogo(getSwapToToken(tx))} alt="" className="w-5 h-5 rounded-full object-cover border border-white/10 flex-shrink-0 animate-in zoom-in-50 duration-500 shadow-sm" />
-                          )}
-                          <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                            {getSwapToToken(tx)}
-                          </span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1204,11 +1177,7 @@ const Transactions = () => {
                       title="Copy"
                     >
                       <span className="truncate">{formatAddress(tx.hash)}</span>
-                      {copiedHash === tx.hash ? (
-                        <CheckCircle size={16} className="text-green-600 flex-shrink-0" />
-                      ) : (
-                        <Copy size={16} className="flex-shrink-0 opacity-60" />
-                      )}
+                      <Copy size={16} className="flex-shrink-0 opacity-60" />
                     </button>
                     <a
                       href={getExplorerUrl(tx.hash, tx.chainId || chainId || 11155111)}
@@ -1264,48 +1233,36 @@ const Transactions = () => {
       </div>
 
       {/* Floating Copy Success Toast - Rebranded to Minimalist Card Style */}
-      {showCopyToast && ReactDOM.createPortal(
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
-            className="fixed bottom-12 left-4 md:left-1/2 md:-translate-x-1/2 z-[9999] flex justify-start md:justify-center w-auto"
-          >
-            <div className="flex items-center gap-4 px-5 py-4 rounded-[16px] bg-white dark:bg-[#0d0d0d] border border-slate-200 dark:border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.12)] min-w-[320px] max-w-md">
-
-              {/* Icon Section */}
-              <div className="flex-shrink-0">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full border-[1.5px] border-slate-900 dark:border-white">
-                  <Check size={16} className="text-slate-900 dark:text-white" strokeWidth={3} />
+      {
+        showCopyToast && ReactDOM.createPortal(
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="fixed bottom-24 left-4 right-4 md:left-auto md:right-8 md:w-80 z-[1000]"
+            >
+              <div className="bg-white dark:bg-[#131720] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 flex items-start gap-4 backdrop-blur-xl">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                  <Check className="text-emerald-500" size={20} />
                 </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">{t('Copied!')}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('Transaction hash copied to clipboard')}</p>
+                </div>
+                <button
+                  onClick={() => setShowCopyToast(false)}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+                >
+                  <X size={16} />
+                </button>
               </div>
-
-              {/* Text Section */}
-              <div className="flex-1 flex flex-col min-w-0">
-                <span className="text-[15px] font-bold text-slate-900 dark:text-white leading-tight">
-                  {t('Copied!')}
-                </span>
-                <span className="text-[13px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                  {t('Transaction address copied to clipboard')}
-                </span>
-              </div>
-
-              {/* Close Button */}
-              <button
-                onClick={() => setShowCopyToast(false)}
-                className="flex-shrink-0 p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors"
-                aria-label="Close"
-              >
-                <X size={18} className="text-slate-400 dark:text-slate-500" />
-              </button>
-            </div>
-          </motion.div>
-        </AnimatePresence>,
-        document.body
-      )}
-    </div>
+            </motion.div>
+          </AnimatePresence>,
+          document.body
+        )
+      }
+    </div >
   );
 };
 

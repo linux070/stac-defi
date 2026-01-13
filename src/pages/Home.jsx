@@ -255,7 +255,7 @@ const Home = ({ setActiveTab }) => {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSg0NSkiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3BhdHRlcm4pIi8+PC9zdmc+')] opacity-20"></div>
         <div className="relative z-10">
 
-          <h1 className="text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold mb-3 md:mb-4 leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-3 md:mb-4 leading-tight">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-200 to-white bg-[length:200%_auto] animate-text-shimmer">
               {t('Welcome to Stac')}
             </span>
@@ -264,7 +264,7 @@ const Home = ({ setActiveTab }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-base md:text-lg lg:text-2xl opacity-90 mb-2 md:mb-3 max-w-2xl"
+            className="text-base sm:text-lg md:text-xl lg:text-2xl opacity-90 mb-2 md:mb-3 max-w-2xl"
           >
             {t('Home of Defi on Arc')}
           </motion.p>
@@ -303,7 +303,7 @@ const Home = ({ setActiveTab }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="mt-6 md:mt-8 flex flex-wrap gap-4 md:gap-6 text-xs md:text-sm"
+            className="mt-6 md:mt-8 flex flex-wrap gap-x-6 gap-y-3 text-xs md:text-sm"
           >
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -336,7 +336,7 @@ const Home = ({ setActiveTab }) => {
           <h2 className="text-xl md:text-2xl lg:text-3xl font-bold font-display tracking-tight text-slate-900 dark:text-white mb-2">{t('Network Statistics')}</h2>
           <p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">{t('Real-time metrics updated automatically')}</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {statCards.map((stat, index) => {
             const TrendIcon = stat.trend === 'up' ? ArrowUpRight : stat.trend === 'down' ? ArrowDownRight : null;
             return (
@@ -438,7 +438,7 @@ const Home = ({ setActiveTab }) => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {/* Swap Action */}
           <div
             onClick={() => setActiveTab('swap')}
@@ -543,7 +543,7 @@ const Home = ({ setActiveTab }) => {
           <p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400 mb-6 md:mb-8 max-w-2xl">{t('Experience the next generation of blockchain infrastructure')}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {/* Lightning Fast */}
           <div className="group relative overflow-hidden rounded-3xl p-6 md:p-8 bg-white shadow-sm hover:shadow-2xl hover:shadow-blue-200/50 dark:hover:shadow-blue-900/20 transition-all duration-500 dark:bg-slate-900/40 backdrop-blur-xl hover:-translate-y-2">
             <div className={`absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>

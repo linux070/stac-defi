@@ -726,12 +726,11 @@ html.dark .token-icon img,
 .warning-icon-wrapper {
   width: 22px;
   height: 22px;
-  background: #f59e0b;
-  border-radius: 50%;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #f59e0b;
   flex-shrink: 0;
 }
 
@@ -804,7 +803,7 @@ html.dark .token-icon img,
 }
 
 .bridge-subtitle {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--bridge-text-secondary);
   margin-bottom: 0;
   font-weight: 500;
@@ -819,7 +818,7 @@ html.dark .token-icon img,
 
   .bridge-subtitle {
     margin-bottom: 0;
-    font-size: 14px;
+    font-size: 12px;
   }
 }
 
@@ -1304,7 +1303,8 @@ html.dark .bridging-modal-backdrop {
   position: relative;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   color: var(--bridge-text-primary);
-  overflow: hidden;
+  overflow-y: auto;
+  max-height: 80dvh;
 }
 
 .bridging-modal-header {
@@ -1976,7 +1976,7 @@ html:not(.dark) .bridging-modal-error-icon,
     max-width: 100%;
     width: 100%;
     border-radius: 24px;
-    max-height: 90vh;
+    max-height: 90dvh;
   }
 
   .bridging-modal-header {
@@ -2184,7 +2184,7 @@ html:not(.dark) .bridging-modal-error-icon,
   .bridging-modal-container {
     max-width: calc(100% - 24px);
     width: calc(100% - 24px);
-    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
     border-radius: 16px;
   }
 

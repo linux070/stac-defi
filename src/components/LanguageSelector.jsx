@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, Check } from 'lucide-react';
+import { Globe, Check, ChevronRight } from 'lucide-react';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -54,6 +54,9 @@ const LanguageSelector = ({ placement = 'header' }) => {
     if (placement === 'footer') {
       return 'relative inline-block';
     }
+    if (placement === 'mobile-menu') {
+      return 'relative flex items-center justify-between w-full h-full';
+    }
     return 'relative';
   };
 
@@ -61,12 +64,18 @@ const LanguageSelector = ({ placement = 'header' }) => {
     if (placement === 'footer') {
       return 'flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors bg-white dark:bg-gray-800 rounded-lg px-3 py-2 shadow-sm';
     }
+    if (placement === 'mobile-menu') {
+      return 'flex items-center gap-2 w-full justify-between';
+    }
     return 'p-2 rounded-full hover:bg-white/10 dark:hover:bg-white/5 mx-1 flex items-center';
   };
 
   const getDropdownPosition = () => {
     if (placement === 'footer') {
       return 'absolute bottom-full right-0 mb-2';
+    }
+    if (placement === 'mobile-menu') {
+      return 'absolute bottom-full right-0 mb-4';
     }
     return 'absolute right-0 top-full mt-1';
   };
@@ -80,44 +89,68 @@ const LanguageSelector = ({ placement = 'header' }) => {
         aria-expanded={isOpen}
         title={t('changeLanguage')}
       >
-        <img
-          src={currentLanguage.flag}
-          alt={currentLanguage.name}
-          className="w-4 h-3 object-cover rounded-sm shadow-sm"
-        />
-        <span className="uppercase">{currentLanguage.code}</span>
-        <ChevronDown size={16} />
+        {placement === 'mobile-menu' ? (
+          <>
+            <div className="flex items-center gap-4">
+              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+                <Globe size={18} className="text-slate-400" />
+              </div>
+              <span className="text-[17px] font-semibold text-slate-900 dark:text-white">{t('Language')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                {i18n.language === 'en' ? 'EN-US' : i18n.language.toUpperCase()}
+              </span>
+              <ChevronRight size={18} className={`text-slate-300 dark:text-slate-600 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
+            </div>
+          </>
+        ) : (
+          <>
+            <img
+              src={currentLanguage.flag}
+              alt={currentLanguage.name}
+              className="w-4 h-3 object-cover rounded-sm shadow-sm"
+            />
+            <span className="uppercase">{currentLanguage.code}</span>
+            <ChevronDown size={16} />
+          </>
+        )}
       </button>
 
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className={`${getDropdownPosition()} z-50 w-48 bg-white dark:bg-black rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 overflow-hidden`}
-            style={{ zIndex: 1000 }}
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            className={`${getDropdownPosition()} z-[2000] w-48 bg-white dark:bg-[#1a1c23] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden backdrop-blur-xl`}
           >
-            {languages.map((lang) => (
-              <button
-                key={lang.code}
-                onClick={() => changeLanguage(lang.code)}
-                className={`w-full px-4 py-2 text-left text-sm flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${i18n.language === lang.code
-                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                  : 'text-gray-700 dark:text-gray-300'
-                  }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <img
-                    src={lang.flag}
-                    alt={lang.name}
-                    className="w-4 h-3 object-cover rounded-sm shadow-sm"
-                  />
-                  <span>{lang.name}</span>
-                </div>
-                {i18n.language === lang.code && <Check size={16} />}
-              </button>
-            ))}
+            <div className="p-2 space-y-1">
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => changeLanguage(lang.code)}
+                  className={`w-full px-4 py-3 rounded-xl text-left text-sm flex items-center justify-between transition-all ${i18n.language === lang.code
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-500/10 font-bold'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                    }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <img
+                      src={lang.flag}
+                      alt={lang.name}
+                      className="w-5 h-4 object-cover rounded shadow-sm"
+                    />
+                    <span className="font-medium">{lang.name}</span>
+                  </div>
+                  {i18n.language === lang.code && (
+                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                      <Check size={12} className="text-white" strokeWidth={4} />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -849,11 +849,11 @@ const Swap = () => {
 
 
           {/* Direct Slippage Toolbar - One-Tap Control */}
-          <div className="flex items-center justify-between mb-5 px-1">
-            <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em]">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]">
               Slippage
             </div>
-            <div className="flex items-center gap-1 p-1 bg-blue-50/50 dark:bg-[#131720]/40 border border-blue-100/50 dark:border-white/5 rounded-2xl shadow-sm backdrop-blur-sm">
+            <div className="flex items-center gap-0.5 sm:gap-1 p-1 bg-blue-50/50 dark:bg-[#131720]/40 border border-blue-100/50 dark:border-white/5 rounded-2xl shadow-sm backdrop-blur-sm transform-gpu">
               {[0.1, 0.5, 1.0].map((value) => (
                 <button
                   key={value}
@@ -861,7 +861,7 @@ const Swap = () => {
                     setSlippage(value);
                     setCustomSlippage('');
                   }}
-                  className={`px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all duration-300 active:scale-95 ${slippage === value && !customSlippage
+                  className={`px-2 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-[12px] font-bold transition-all duration-300 active:scale-95 ${slippage === value && !customSlippage
                     ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-md ring-1 ring-blue-100/50 dark:ring-blue-500/50'
                     : 'text-gray-500 dark:text-gray-400 hover:text-blue-500'
                     }`}
@@ -882,7 +882,7 @@ const Swap = () => {
                       setSlippage(parseFloat(val));
                     }
                   }}
-                  className={`w-[94px] pl-2 pr-7 py-1.5 rounded-xl text-[12px] font-bold text-center transition-all duration-300 focus:outline-none ${customSlippage
+                  className={`w-[70px] sm:w-[94px] pl-1.5 sm:pl-2 pr-6 sm:pr-7 py-1.5 rounded-xl text-[11px] sm:text-[12px] font-bold text-center transition-all duration-300 focus:outline-none ${customSlippage
                     ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-md ring-1 ring-blue-100 dark:ring-blue-500'
                     : 'bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500'
                     }`}

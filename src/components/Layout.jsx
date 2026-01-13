@@ -4,7 +4,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useWallet } from '../contexts/WalletContext';
 import {
   Home, ArrowLeftRight, Droplet, Clock, Menu, X,
-  Moon, Sun, Wallet, LogOut, RefreshCw, ChevronDown, Globe, ArrowUpDown, Waypoints
+  Moon, Sun, Wallet, LogOut, RefreshCw, ChevronDown, Globe, ArrowUpDown, Waypoints,
+  Twitter, MessageSquare, ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatAddress } from '../utils/blockchain';
@@ -20,79 +21,60 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
   const { darkMode, toggleDarkMode } = useTheme();
   const { walletAddress, balance, isConnected, disconnect, fetchBalance } = useWallet();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const navItems = [
-    { id: 'home', label: t('Home'), icon: Home },
-    { id: 'swap', label: t('Swap'), icon: ArrowLeftRight },
-    { id: 'bridge', label: t('Bridge'), icon: Globe },
-    { id: 'liquidity', label: t('Liquidity'), icon: Droplet },
-    { id: 'activity', label: t('Activity'), icon: Clock },
+    { id: 'home', label: t('Home') },
+    { id: 'swap', label: t('Swap') },
+    { id: 'bridge', label: t('Bridge') },
+    { id: 'liquidity', label: t('Liquidity') },
+    { id: 'transactions', label: t('Transactions') },
   ];
 
   return (
-    <div className={`min-h-screen flex flex-col ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'activity' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'}`}>
+    <div className={`min-h-[100dvh] flex flex-col ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'transactions' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'}`}>
       {/* Animated Background Gradient - Only for Swap and Bridge pages */}
       {(activeTab === 'swap' || activeTab === 'bridge') && <BackgroundGradient />}
 
-      {/* Transparent Header Container */}
-      <header className="fixed top-4 left-0 right-0 z-50 bg-transparent">
-        {/* Mobile Header - Dual-Stack Layout */}
-        {/* Top Bar: Logo & Wallet */}
-        <div className="md:hidden fixed top-4 left-0 right-0 mx-auto w-[95%] mb-4">
-          <div className="flex items-center justify-between rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-4 py-2">
-            {/* Logo with text */}
-            <div className="flex items-center cursor-pointer transition-all duration-300 hover:opacity-80 active:scale-95 flex-shrink-0 isolation-isolate" onClick={() => window.location.href = '/'}>
-              {/* Icon Part - Narrower to exclude the 'S' */}
-              <div className="h-8 w-6 overflow-hidden flex-shrink-0 bg-transparent">
-                <img
-                  src="/icons/Stac.png"
-                  alt=""
-                  className="h-8 max-w-none object-cover dark:invert"
-                  style={{ objectPosition: 'left' }}
-                />
-              </div>
-              {/* Spaced Text Part - Starts from the 'S' */}
-              <div className="h-8 overflow-hidden flex-shrink-0 ml-3 bg-transparent">
-                <img
-                  src="/icons/Stac.png"
-                  alt="Stac"
-                  className="h-8 max-w-none object-cover dark:invert"
-                  style={{ marginLeft: '-24px' }}
-                />
-              </div>
+      {/* Header - Immersive full-width design */}
+      <div className="fixed top-0 left-0 right-0 z-[1000] transition-all duration-300">
+        {/* Mobile Header (Relay Style) */}
+        <div className="lg:hidden w-full h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 px-4 flex items-center justify-between">
+          {/* Logo Section */}
+          <div className="flex items-center cursor-pointer transition-all duration-300 hover:opacity-80 active:scale-95" onClick={() => setActiveTab('home')}>
+            <div className="h-8 w-6 overflow-hidden flex-shrink-0 bg-transparent">
+              <img
+                src="/icons/Stac.png"
+                alt=""
+                className="h-8 max-w-none object-cover dark:invert"
+                style={{ objectPosition: 'left' }}
+              />
             </div>
-
-            {/* Controls - Theme Toggle */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 rounded-full hover:bg-white/10 dark:hover:bg-white/5 mx-1"
-              >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-
-              {/* Wallet Button */}
-              <ConnectButton
-                showBalance={false}
-                accountStatus={{
-                  smallScreen: 'avatar',
-                  largeScreen: 'full',
-                }}
-                chainStatus={{
-                  smallScreen: 'icon',
-                  largeScreen: 'full',
-                }}
+            <div className="h-8 overflow-hidden flex-shrink-0 ml-1.5 bg-transparent">
+              <img
+                src="/icons/Stac.png"
+                alt="Stac"
+                className="h-8 max-w-none object-cover dark:invert"
+                style={{ marginLeft: '-24px' }}
               />
             </div>
           </div>
+
+          {/* Menu Button - Far Right */}
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all active:scale-90 touch-manipulation"
+            aria-label="Open Menu"
+          >
+            <Menu size={26} />
+          </button>
         </div>
 
-        {/* Desktop Header - Floating Island */}
-        <div className="hidden md:block md:fixed md:top-4 md:left-0 md:right-0 md:flex md:justify-center">
-          <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-6 py-2.5 mx-auto w-fit max-w-full md:min-w-[500px] md:max-w-[1200px] flex-nowrap overflow-hidden">
+        {/* Desktop Header - Floating Island (Preserved for desktop) */}
+        <div className="hidden lg:flex lg:h-20 lg:items-center lg:justify-center">
+          <div className="flex items-center rounded-full bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-lg dark:shadow-black/20 px-6 py-2.5 w-fit max-w-full lg:min-w-[500px] lg:max-w-[1200px] flex-nowrap overflow-hidden">
             {/* Logo Section */}
-            <div className="flex items-center cursor-pointer transition-all duration-300 hover:opacity-80 active:scale-95 flex-shrink-0 mr-6 md:mr-10 isolation-isolate" onClick={() => window.location.href = '/'}>
-              {/* Icon Part - Narrower to exclude the 'S' */}
+            <div className="flex items-center cursor-pointer transition-all duration-300 hover:opacity-80 active:scale-95 flex-shrink-0 mr-6 md:mr-10 isolation-isolate" onClick={() => setActiveTab('home')}>
               <div className="h-9 w-7 overflow-hidden flex-shrink-0 bg-transparent">
                 <img
                   src="/icons/Stac.png"
@@ -101,7 +83,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                   style={{ objectPosition: 'left' }}
                 />
               </div>
-              {/* Spaced Text Part - Starts from the 'S' */}
               <div className="h-9 overflow-hidden flex-shrink-0 ml-4 bg-transparent">
                 <img
                   src="/icons/Stac.png"
@@ -113,28 +94,25 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="flex items-center gap-2 md:gap-4">
+            <nav className="flex items-center gap-1 md:gap-2">
               {navItems.map((item) => {
-                const Icon = item.icon;
                 const path = item.id === 'home' ? '/home' : `/${item.id}`;
                 return (
                   <Link
                     key={item.id}
                     to={path}
-                    className={`px-3 py-2 rounded-full text-sm font-bold transition-all duration-200 flex items-center nav-link whitespace-nowrap
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 flex items-center nav-link whitespace-nowrap
                       ${activeTab === item.id
-                        ? 'bg-blue-100/50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                        : 'text-gray-700 hover:bg-gray-100/50 dark:text-gray-200 dark:hover:bg-gray-700/50'
+                        ? 'bg-blue-100/50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400'
+                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5'
                       }`}
                   >
-                    <Icon size={16} className="mr-2 flex-shrink-0" />
-                    <span className="font-bold whitespace-nowrap">{item.label}</span>
+                    <span className="whitespace-nowrap">{item.label}</span>
                   </Link>
                 );
               })}
             </nav>
 
-            {/* Spacer to push controls to the right */}
             <div className="flex-grow"></div>
 
             {/* Theme Toggle */}
@@ -159,78 +137,175 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             />
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Mobile Bottom Navigation - Fixed at bottom with glassmorphism effect */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 dark:bg-[#131720]/80 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 shadow-lg">
-        <div className="grid grid-cols-5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const path = item.id === 'home' ? '/home' : `/${item.id}`;
-            return (
-              <Link
-                key={item.id}
-                to={path}
-                className={`py-3 px-0 text-xs font-bold transition-all duration-200 flex flex-col items-center justify-center nav-link
-                  ${activeTab === item.id
-                    ? 'text-blue-500 dark:text-blue-400'
-                    : 'text-gray-400 dark:text-gray-500'
-                  }`}
+      {/* Full-Screen Mobile Menu Overlay (Relay Aesthetic) */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[2000] bg-white dark:bg-black flex flex-col lg:hidden overflow-y-auto"
+          >
+            {/* Top Bar */}
+            <div className="w-full h-16 px-4 flex-shrink-0 flex items-center justify-between border-b border-slate-200 dark:border-white/10">
+              {/* Logo */}
+              <div className="flex items-center cursor-pointer" onClick={() => { setIsMenuOpen(false); setActiveTab('home'); }}>
+                <div className="h-8 w-6 overflow-hidden flex-shrink-0">
+                  <img src="/icons/Stac.png" alt="" className="h-8 max-w-none object-cover dark:invert" style={{ objectPosition: 'left' }} />
+                </div>
+                <div className="h-8 overflow-hidden flex-shrink-0 ml-1.5">
+                  <img src="/icons/Stac.png" alt="Stac" className="h-8 max-w-none object-cover dark:invert" style={{ marginLeft: '-24px' }} />
+                </div>
+              </div>
+              {/* Close Button */}
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                className="p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
               >
-                <Icon size={24} strokeWidth={2.2} className="mb-0.5" />
-                <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav >
+                <X size={28} />
+              </button>
+            </div>
 
-      {/* Mobile Sidebar - Adjusted for bottom nav */}
-      < AnimatePresence >
-        {sidebarOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-            <motion.div
-              initial={{ x: -300 }}
-              animate={{ x: 0 }}
-              exit={{ x: -300 }}
-              className="fixed left-0 top-16 bottom-16 w-64 bg-white dark:bg-gray-900 shadow-xl z-50 lg:hidden"
-            >
-              <nav className="p-4 space-y-2">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
+            {/* Navigation Links - Centered */}
+            <nav className="flex-grow flex flex-col justify-center items-start px-8 gap-2">
+              {navItems.map((item) => {
+                const path = item.id === 'home' ? '/home' : `/${item.id}`;
+                return (
+                  <Link
+                    key={item.id}
+                    to={path}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`text-xl font-semibold tracking-tight py-2 transition-all duration-300 relative
+                      ${activeTab === item.id
+                        ? 'text-blue-600 dark:text-blue-400'
+                        : 'text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                  >
+                    {activeTab === item.id && (
+                      <motion.div
+                        layoutId="mobile-active-indicator"
+                        className="absolute left-[-12px] top-1/2 -translate-y-1/2 w-1 h-5 bg-blue-600 dark:bg-blue-400 rounded-full"
+                      />
+                    )}
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Bottom Controls - Relay Style iOS Action Rows */}
+            <div className="mt-auto w-full flex flex-col bg-white dark:bg-black border-t border-slate-100 dark:border-white/5">
+              <ConnectButton.Custom>
+                {({
+                  account,
+                  chain,
+                  openAccountModal,
+                  openChainModal,
+                  openConnectModal,
+                  mounted,
+                }) => {
+                  const ready = mounted;
+                  const connected = ready && account && chain;
+
+                  if (!connected) {
+                    return (
+                      <div className="p-6">
+                        <button
+                          onClick={openConnectModal}
+                          className="w-full h-16 bg-blue-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                        >
+                          {t('Connect Wallet')}
+                        </button>
+                      </div>
+                    );
+                  }
+
                   return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setActiveTab(item.id);
-                        setSidebarOpen(false);
-                      }}
-                      className={`w-full px-4 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center space-x-3
-                        ${activeTab === item.id
-                          ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg'
-                          : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-gray-700'
-                        }`}
-                    >
-                      <Icon size={20} />
-                      <span className="font-semibold">{item.label}</span>
-                    </button>
+                    <div className="flex flex-col w-full">
+                      {/* Row 1: Network */}
+                      <button
+                        onClick={openChainModal}
+                        className="w-full h-16 px-8 flex items-center justify-between border-b border-slate-100 dark:border-white/5 active:bg-slate-50 dark:active:bg-white/5 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          {chain.hasIcon && chain.iconUrl ? (
+                            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+                              <img
+                                alt={chain.name ?? 'Chain icon'}
+                                src={chain.iconUrl}
+                                className="w-6 h-6"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+                              <Globe size={18} className="text-slate-400" />
+                            </div>
+                          )}
+                          <span className="text-[17px] font-semibold text-slate-900 dark:text-white">{chain.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-400">Switch</span>
+                          <ChevronRight size={20} className="text-slate-300 dark:text-slate-600" />
+                        </div>
+                      </button>
+
+                      {/* Row 2: Wallet */}
+                      <button
+                        onClick={openAccountModal}
+                        className="w-full h-16 px-8 flex items-center justify-between border-b border-slate-100 dark:border-white/5 active:bg-slate-50 dark:active:bg-white/5 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-500 flex-shrink-0">
+                            {account.ensAvatar ? (
+                              <img src={account.ensAvatar} className="w-full h-full" alt="" />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600" />
+                            )}
+                          </div>
+                          <span className="text-[17px] font-semibold text-slate-900 dark:text-white">{account.displayName}</span>
+                        </div>
+                        <LogOut size={20} className="text-slate-400" />
+                      </button>
+                    </div>
                   );
-                })}
-              </nav>
-            </motion.div>
-          </>
+                }}
+              </ConnectButton.Custom>
+
+              {/* Row 3: Language */}
+              <div className="w-full h-16 px-8 flex items-center border-b border-slate-100 dark:border-white/5 active:bg-slate-50 dark:active:bg-white/5 transition-colors">
+                <LanguageSelector placement="mobile-menu" />
+              </div>
+
+              {/* Row 4: Theme */}
+              <button
+                onClick={toggleDarkMode}
+                className="w-full h-16 px-8 flex items-center justify-between border-b border-slate-100 dark:border-white/5 active:bg-slate-50 dark:active:bg-white/5 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+                    {darkMode ? <Moon size={18} className="text-blue-400" /> : <Sun size={18} className="text-amber-400" />}
+                  </div>
+                  <span className="text-[17px] font-semibold text-slate-900 dark:text-white">Theme</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-slate-400 uppercase">{darkMode ? 'Dark' : 'Light'}</span>
+                  <div className={`w-10 h-6 rounded-full p-1 transition-colors ${darkMode ? 'bg-blue-600' : 'bg-slate-200'}`}>
+                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${darkMode ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </div>
+                </div>
+              </button>
+
+              {/* Bottom Padding for Safe Area */}
+              <div style={{ height: 'env(safe-area-inset-bottom)', minHeight: '1.5rem' }} />
+            </div>
+          </motion.div>
         )}
-      </AnimatePresence >
+      </AnimatePresence>
 
       {/* Main Content */}
-      <main className={`min-h-fit w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'activity' ? 'bg-white dark:bg-black' : activeTab === 'liquidity' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-32 md:pb-12 overflow-x-hidden md:overflow-visible flex-grow relative z-10`}>
+      <main className={`min-h-fit w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'transactions' ? 'bg-white dark:bg-black' : activeTab === 'liquidity' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12 md:pb-12 overflow-x-hidden md:overflow-visible flex-grow relative z-10`}>
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 20 }}
@@ -246,26 +321,29 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       <WalletModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
 
       {/* Footer */}
-      <footer className={`mt-auto border-t border-gray-200 dark:border-gray-700 ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-white/80 dark:bg-black/80 backdrop-blur-sm' : 'bg-white dark:bg-black'} relative z-20 md:py-4 py-6 pb-20 md:pb-4`}>
+      <footer
+        className={`mt-auto border-t border-gray-200 dark:border-gray-700 ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-white/80 dark:bg-black/80 backdrop-blur-sm' : 'bg-white dark:bg-black'} relative z-20 md:py-8 py-8`}
+        style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Flex container that stacks on mobile and aligns horizontally on desktop */}
-          <div className="flex flex-col md:flex-row items-center justify-between min-h-[60px] gap-4 md:gap-0">
-            {/* Left Section - Language Selector */}
-            <div className="flex-shrink-0 md:mr-4 w-full md:w-auto flex justify-center md:justify-start">
+          <div className="flex flex-col lg:flex-row items-center justify-between min-h-[60px] gap-6 lg:gap-0">
+            {/* Left Section - Language Selector (hidden on mobile) */}
+            <div className="hidden lg:flex flex-shrink-0 lg:mr-4 w-full lg:w-auto justify-center lg:justify-start">
               <LanguageSelector placement="footer" />
             </div>
 
             {/* Center Section - Copyright and Attribution */}
-            <div className="text-center w-full md:w-auto">
-              <p className="text-sm md:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                <span className="block md:inline">© {new Date().getFullYear()} Stac. All rights reserved.</span>
-                <span className="hidden md:inline"> · </span>
-                <span className="block md:inline mt-1 md:mt-0">
+            <div className="text-center w-full lg:w-auto">
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                <span className="block lg:inline">© {new Date().getFullYear()} Stac. All rights reserved.</span>
+                <span className="hidden lg:inline"> · </span>
+                <span className="block lg:inline mt-1 lg:mt-0">
                   Built by : <a
                     href="https://x.com/linux_mode"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors font-semibold no-underline cursor-pointer"
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold no-underline cursor-pointer"
                   >
                     Linux🏅🃏
                   </a>
@@ -274,7 +352,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             </div>
 
             {/* Right Section - Footer Links */}
-            <div className="flex items-center gap-6 md:gap-8 w-full md:w-auto justify-center md:justify-end">
+            <div className="flex items-center gap-6 md:gap-8 w-full lg:w-auto justify-center lg:justify-end">
               <a
                 href="#"
                 className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -287,11 +365,12 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               >
                 Terms
               </a>
+              {/* Twitter link - hidden on mobile */}
               <a
                 href="https://x.com/stac_defi"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="hidden lg:block text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 Twitter
               </a>

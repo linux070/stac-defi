@@ -55,6 +55,7 @@
     height: 100%;
     /* Use dvh for mobile viewport height stability in wallet browsers */
     min-height: 100dvh;
+    height: 100dvh;
   }
 
   body {
@@ -249,6 +250,7 @@
   footer {
     border-top-width: 2px !important;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    padding-bottom: env(safe-area-inset-bottom) !important;
   }
 
   html.dark footer {
@@ -384,11 +386,10 @@
   @apply bg-dark-500 dark:bg-dark-600;
 }
 
-/* Ensure proper viewport settings for mobile */
 /* Feedback Button Styling */
 .feedback-widget {
   position: fixed !important;
-  z-index: 99999 !important;
+  z-index: 40 !important;
   /* Mobile positioning: Elevated to clear Activity tab */
   right: 20px !important;
   bottom: 110px !important;

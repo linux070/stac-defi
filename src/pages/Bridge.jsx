@@ -1501,9 +1501,9 @@ const Bridge = () => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
-                className="fixed bottom-12 left-4 md:left-1/2 md:-translate-x-1/2 z-[9999] flex justify-start md:justify-center w-auto"
+                className="fixed top-24 left-4 md:top-32 md:left-1/2 md:-translate-x-1/2 z-[9999] flex justify-start md:justify-center w-auto"
               >
-                <div className="flex items-center gap-4 px-5 py-4 rounded-[16px] bg-[#059669] border border-emerald-500/30 shadow-[0_12px_40px_rgba(5,150,105,0.25)] min-w-[320px] max-w-md">
+                <div className="flex items-center gap-3 md:gap-4 px-4 py-3 md:px-5 md:py-4 rounded-[16px] bg-[#059669] border border-emerald-500/30 shadow-[0_12px_40px_rgba(5,150,105,0.25)] min-w-[280px] md:min-w-[320px] max-w-md">
                   {/* Icon Section */}
                   <div className="flex-shrink-0">
                     <div className="flex items-center justify-center w-8 h-8 rounded-full border-[1.5px] border-white">

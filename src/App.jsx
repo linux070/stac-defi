@@ -22,7 +22,7 @@ const AppContent = () => {
     if (path === '/swap') return 'swap';
     if (path === '/bridge') return 'bridge';
     if (path === '/liquidity') return 'liquidity';
-    if (path === '/activity') return 'activity';
+    if (path === '/transactions') return 'transactions';
     return 'home';
   };
 
@@ -33,7 +33,7 @@ const AppContent = () => {
       'swap': '/swap',
       'bridge': '/bridge',
       'liquidity': '/liquidity',
-      'activity': '/activity'
+      'transactions': '/transactions'
     };
     navigate(routes[tabId] || '/home');
   };
@@ -46,7 +46,7 @@ const AppContent = () => {
         <Route path="/swap" element={<Swap />} />
         <Route path="/bridge" element={<Bridge />} />
         <Route path="/liquidity" element={<Liquidity />} />
-        <Route path="/activity" element={<Transactions />} />
+        <Route path="/transactions" element={<Transactions />} />
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
