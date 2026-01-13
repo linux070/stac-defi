@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, Check, ChevronRight } from 'lucide-react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronRight, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const LanguageSelector = ({ placement = 'header' }) => {
@@ -92,16 +91,13 @@ const LanguageSelector = ({ placement = 'header' }) => {
         {placement === 'mobile-menu' ? (
           <>
             <div className="flex items-center gap-4">
-              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-                <Globe size={18} className="text-slate-400" />
-              </div>
-              <span className="text-[17px] font-semibold text-slate-900 dark:text-white">{t('Language')}</span>
+              <span className="text-[15px] font-semibold text-slate-900 dark:text-white">{t('Language')}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+              <span className="text-[13px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
                 {i18n.language === 'en' ? 'EN-US' : i18n.language.toUpperCase()}
               </span>
-              <ChevronRight size={18} className={`text-slate-300 dark:text-slate-600 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
+              {!isOpen && <ChevronRight size={16} className="text-slate-300 dark:text-slate-600" />}
             </div>
           </>
         ) : (
@@ -143,11 +139,6 @@ const LanguageSelector = ({ placement = 'header' }) => {
                     />
                     <span className="font-medium">{lang.name}</span>
                   </div>
-                  {i18n.language === lang.code && (
-                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                      <Check size={12} className="text-white" strokeWidth={4} />
-                    </div>
-                  )}
                 </button>
               ))}
             </div>

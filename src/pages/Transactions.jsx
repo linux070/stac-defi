@@ -989,182 +989,119 @@ const Transactions = () => {
               transition={{ delay: index * 0.05 }}
               className={`card p-4 space-y-3.5 touch-manipulation ${tx.type === 'Swap'
                 ? 'border border-blue-100/80 dark:border-blue-900/40 bg-gradient-to-b from-white to-blue-50/40 dark:from-gray-900 dark:to-blue-950/15'
-                : ''
+                : 'border border-slate-100 dark:border-slate-800'
                 }`}
             >
-              {/* Header Row - Type, Status, and Time */}
-              {tx.type === 'Swap' ? (
-                <div className="flex flex-col gap-2">
-                  {/* Top row: Swap title and Time */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-sm font-semibold text-slate-900 dark:text-white">{tx.type}</span>
-                      {getNetworkName(tx.chainId) && (
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 w-fit">
-                          <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3 h-3 object-contain" />
-                          <span className="text-[10px] font-bold uppercase tracking-wider">
-                            {getNetworkName(tx.chainId)}
-                          </span>
-                        </div>
-                      )}
+              {/* Header Row - Type and Time */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">{tx.type}</span>
+                  {tx.type === 'Swap' && getNetworkName(tx.chainId) && (
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 w-fit">
+                      <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3 h-3 object-contain" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">
+                        {getNetworkName(tx.chainId)}
+                      </span>
                     </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">{timeAgo(tx.timestamp)}</span>
+                  )}
+                  {tx.type === 'Bridge' && (
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 w-fit">
+                      <ArrowLeftRight size={10} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">{t('Cross-Chain')}</span>
+                    </div>
+                  )}
+                </div>
+                <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap flex-shrink-0 font-medium">{timeAgo(tx.timestamp)}</span>
+              </div>
+
+              {/* Centered Status */}
+              <div className="flex justify-center py-1">
+                {tx.status === 'success' ? (
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
+                    <CheckCircle2 className="text-emerald-500" size={14} />
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">{t('Success')}</span>
                   </div>
-                  {/* Centered Success button */}
-                  <div className="flex justify-center">
-                    {tx.status === 'success' ? (
-                      <div className="inline-flex items-center gap-2">
-                        <CheckCircle2 className="text-emerald-500" size={16} />
-                        <span className="text-sm font-medium text-emerald-500 dark:text-emerald-400">{t('Success')}</span>
-                      </div>
-                    ) : tx.status === 'pending' ? (
-                      <div className="inline-flex items-center gap-2">
-                        <Clock className="text-amber-500" size={16} />
-                        <span className="text-sm font-medium text-amber-500 dark:text-amber-400">{t('Pending')}</span>
-                      </div>
+                ) : tx.status === 'pending' ? (
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20">
+                    <Clock className="text-amber-500" size={14} />
+                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide">{t('Pending')}</span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20">
+                    <XCircle className="text-red-500" size={14} />
+                    <span className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wide">{t('Failed')}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* From/To (You Pay/You Receive) Row - Unified for Swap and Bridge */}
+              <div className="flex items-center gap-3 py-1 bg-slate-50/50 dark:bg-white/5 rounded-2xl px-3 border border-slate-100/50 dark:border-white/5">
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider">
+                    {tx.type === 'Swap' ? t('You Pay') : t('From')}
+                  </div>
+                  <div className="flex items-center gap-2 min-w-0">
+                    {tx.type === 'Bridge' ? (
+                      <>
+                        <img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate">{tx.from}</span>
+                      </>
                     ) : (
-                      <div className="inline-flex items-center gap-2">
-                        <XCircle className="text-red-500" size={16} />
-                        <span className="text-sm font-medium text-red-500 dark:text-red-400">{t('Failed')}</span>
-                      </div>
+                      <>
+                        <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/STC.png'} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate uppercase">{getSwapFromToken(tx)}</span>
+                      </>
                     )}
                   </div>
                 </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {/* Top row: Bridge title and Time */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-col gap-1.5">
-                      {tx.type === 'Bridge' ? (
-                        <span className="text-sm font-semibold text-slate-900 dark:text-white">{tx.type}</span>
-                      ) : (
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getTypeColor(tx.type)}`}>
-                          {getTypeIcon(tx.type)}
-                          {tx.type}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">{timeAgo(tx.timestamp)}</span>
+
+                <div className="flex flex-col items-center justify-center gap-1 px-1">
+                  <div className="w-8 h-[2px] bg-slate-200 dark:bg-slate-700 rounded-full" />
+                  <ArrowLeftRight size={14} className="text-blue-500 dark:text-blue-400" />
+                  <div className="w-8 h-[2px] bg-slate-200 dark:bg-slate-700 rounded-full" />
+                </div>
+
+                <div className="flex-1 min-w-0 text-right">
+                  <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider">
+                    {tx.type === 'Swap' ? t('You Receive') : t('To')}
                   </div>
-                  {/* Centered Success button */}
-                  <div className="flex justify-center">
-                    {tx.status === 'success' ? (
-                      <div className="inline-flex items-center gap-2">
-                        <CheckCircle2 className="text-emerald-500" size={16} />
-                        <span className="text-sm font-medium text-emerald-500 dark:text-emerald-400">{t('Success')}</span>
-                      </div>
-                    ) : tx.status === 'pending' ? (
-                      <div className="inline-flex items-center gap-2">
-                        <Clock className="text-amber-500" size={16} />
-                        <span className="text-sm font-medium text-amber-500 dark:text-amber-400">{t('Pending')}</span>
-                      </div>
+                  <div className="flex items-center justify-end gap-2 min-w-0">
+                    {tx.type === 'Bridge' ? (
+                      <>
+                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate">{tx.to}</span>
+                        <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" className="w-5 h-5 rounded-full object-cover" />
+                      </>
                     ) : (
-                      <div className="inline-flex items-center gap-2">
-                        <XCircle className="text-red-500" size={16} />
-                        <span className="text-sm font-medium text-red-500 dark:text-red-400">{t('Failed')}</span>
-                      </div>
+                      <>
+                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate uppercase">{getSwapToToken(tx)}</span>
+                        <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/STC.png'} alt="" className="w-5 h-5 rounded-full object-cover shadow-sm" />
+                      </>
                     )}
                   </div>
                 </div>
-              )}
+              </div>
 
-              {tx.type === 'Swap' ? (
-                <>
-                  {/* Swap Summary - Mobile optimized */}
-                  <div className="rounded-xl border border-blue-100/70 dark:border-blue-900/40 bg-white/70 dark:bg-gray-900/40 p-3">
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">{t('You pay')}</div>
-                        <div className="flex gap-2 min-w-0 items-center">
-                          <div className="flex items-baseline gap-1.5 min-w-0 group-hover:scale-105 transition-transform duration-300">
-                            {(getSwapFromAmount(tx) || getSwapAmount(tx)) && (
-                              <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
-                                {getSwapFromAmount(tx) || getSwapAmount(tx)}
-                              </span>
-                            )}
-                          </div>
-                          {getTokenLogo(getSwapFromToken(tx)) && (
-                            <img src={getTokenLogo(getSwapFromToken(tx))} alt="" className="w-5 h-5 rounded-full object-cover border border-white/10 flex-shrink-0 animate-in zoom-in-50 duration-500" />
-                          )}
-                          <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                            {getSwapFromToken(tx)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-center">
-                          <ArrowLeftRight size={18} className="text-blue-400 dark:text-blue-500 flex-shrink-0" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1 text-right">{t('You receive')}</div>
-                          <div className="flex items-center justify-end gap-2 min-w-0">
-                            {getSwapToAmount(tx) && (
-                              <span className="text-base font-extrabold text-slate-900 dark:text-white tabular-nums truncate">
-                                {getSwapToAmount(tx)}
-                              </span>
-                            )}
-                            {getTokenLogo(getSwapToToken(tx)) && (
-                              <img src={getTokenLogo(getSwapToToken(tx))} alt="" className="w-5 h-5 rounded-full object-cover border border-white/10 flex-shrink-0 animate-in zoom-in-50 duration-500 shadow-sm" />
-                            )}
-                            <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                              {getSwapToToken(tx)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* From/To Row - Improved spacing and layout */}
-                  <div className="flex items-center gap-3 py-1.5">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t('From')}</div>
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                        {tx.type === 'Bridge' ? (
-                          getChainIcon(tx.from) ? (
-                            <div className="flex items-center gap-1.5">
-                              <img src={getChainIcon(tx.from)} alt={tx.from} className="w-4 h-4 rounded-full object-cover" />
-                              <span>{tx.from}</span>
-                            </div>
-                          ) : (
-                            tx.from
-                          )
-                        ) : (
-                          getSwapFromToken(tx)
-                        )}
-                      </div>
-                    </div>
-                    <ArrowLeftRight size={18} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                    <div className="flex-1 min-w-0 text-right">
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{t('To')}</div>
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white truncate flex justify-end">
-                        {tx.type === 'Bridge' ? (
-                          getChainIcon(tx.to) ? (
-                            <div className="flex items-center gap-1.5">
-                              <img src={getChainIcon(tx.to)} alt={tx.to} className="w-4 h-4 rounded-full object-cover" />
-                              <span>{tx.to}</span>
-                            </div>
-                          ) : (
-                            tx.to
-                          )
-                        ) : (
-                          getSwapToToken(tx)
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Amount - Better visual hierarchy */}
-                  <div className="flex items-center justify-between py-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl px-4 -mx-1 shadow-inner group/amount transition-colors duration-300 hover:bg-slate-100 dark:hover:bg-slate-800">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{t('Amount')}</span>
-                    <div className="flex items-center gap-2 group-hover/amount:scale-105 transition-transform duration-300">
-                      <span className="text-base font-black text-slate-900 dark:text-white tabular-nums">{getSwapAmount(tx)}</span>
-                      <img src="/icons/usdc.png" alt="USDC" className="w-5 h-5 rounded-full shadow-sm" />
-                      <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">USDC</span>
-                    </div>
-                  </div>
-                </>
-              )}
+              {/* Amount Row - Unified */}
+              <div className="flex items-center justify-between py-2.5 bg-slate-900/[0.03] dark:bg-white/[0.03] rounded-xl px-4 border border-slate-900/[0.05] dark:border-white/[0.05] shadow-inner group/amount transition-all duration-300">
+                <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">{t('Amount')}</span>
+                <div className="flex items-center gap-2 group-hover/amount:scale-[1.02] transition-transform duration-300">
+                  <span className="text-base font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+                    {tx.type === 'Swap' ? (getSwapToAmount(tx) || getSwapAmount(tx)) : getSwapAmount(tx)}
+                  </span>
+                  {tx.type === 'Swap' ? (
+                    // Swap Amount: Just the number, No icon or symbol as requested
+                    null
+                  ) : (
+                    <>
+                      {/* Bridge dynamic token display - Default to USDC if no symbol found in amount */}
+                      <img src={getTokenLogo(tx.amount?.includes(' ') ? tx.amount.split(' ')[1] : 'USDC') || '/icons/usdc.png'} alt="" className="w-5 h-5 rounded-full shadow-sm" />
+                      <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+                        {tx.amount?.includes(' ') ? tx.amount.split(' ')[1] : 'USDC'}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
 
               {/* Transaction Hash - Improved layout */}
               <div className="pt-2.5 border-t border-gray-200 dark:border-gray-700">

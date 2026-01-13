@@ -1073,8 +1073,8 @@ html.dark .swap-slippage-container,
 }
 
 .swap-token-selector-popular-tokens {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
   gap: 8px;
 }
 
@@ -1124,10 +1124,13 @@ html.dark .swap-slippage-container,
 }
 
 .swap-token-selector-popular-symbol {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: inherit;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Ensure popular token symbols are visible in dark mode */
@@ -1237,11 +1240,13 @@ html.dark .swap-token-selector-list-symbol,
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  justify-content: center;
+  margin-left: 12px;
 }
 
 .swap-token-selector-list-balance-amount {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--swap-text-primary);
   margin-bottom: 2px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -1251,6 +1256,8 @@ html.dark .swap-token-selector-list-symbol,
   font-size: 11px;
   color: var(--swap-text-tertiary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+  text-transform: lowercase;
 }
 
 .swap-token-selector-empty {
@@ -1307,10 +1314,16 @@ html.dark .swap-token-selector-list-symbol,
     margin-bottom: 10px;
   }
 
-  .swap-token-selector-popular-button {
-    padding: 10px 14px;
+  .swap-token-selector-popular-tokens {
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
+  }
+
+  .swap-token-selector-popular-button {
+    padding: 10px 8px;
+    gap: 6px;
     border-radius: 12px;
+    justify-content: center;
   }
 
   .swap-token-selector-popular-icon {
@@ -1319,7 +1332,7 @@ html.dark .swap-token-selector-list-symbol,
   }
 
   .swap-token-selector-popular-symbol {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .swap-token-selector-list {

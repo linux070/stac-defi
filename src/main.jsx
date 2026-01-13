@@ -21,6 +21,21 @@ import {
   rainbowWallet,
   baseAccount,
 } from '@rainbow-me/rainbowkit/wallets';
+import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
+
+// Define Custom Avatar component for project-wide consistency
+const CustomAvatar = ({ address, ensImage, size }) => {
+  return ensImage ? (
+    <img
+      src={ensImage}
+      width={size}
+      height={size}
+      style={{ borderRadius: 999 }}
+    />
+  ) : (
+    <Jazzicon diameter={size} seed={jsNumberForAddress(address)} />
+  );
+};
 
 // Define Arc Testnet chain
 const arcTestnet = {
@@ -112,7 +127,7 @@ try {
       <React.StrictMode>
         <WagmiProvider config={config}>
           <QueryClientProvider client={queryClient}>
-            <RainbowKitProvider>
+            <RainbowKitProvider avatar={CustomAvatar}>
               <App />
             </RainbowKitProvider>
           </QueryClientProvider>

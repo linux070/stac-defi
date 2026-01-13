@@ -62,22 +62,6 @@ const Bridge = () => {
   const fromChainTriggerRef = useRef(null);
   const toChainTriggerRef = useRef(null);
 
-  // Effect to handle body overflow when modals are open
-  useEffect(() => {
-    const isModalOpen = showChainSelector || showBridgingModal || showBridgeFailedModal;
-    if (isModalOpen) {
-      // Prevent background scrolling when modal is open
-      document.body.style.overflow = 'hidden';
-    } else {
-      // Restore normal scrolling when modal is closed
-      document.body.style.overflow = 'visible';
-    }
-
-    // Cleanup function to restore overflow when component unmounts
-    return () => {
-      document.body.style.overflow = 'visible';
-    };
-  }, [showChainSelector, showBridgingModal, showBridgeFailedModal]);
 
   // Cleanup effect to clear balance interval on component unmount
   useEffect(() => {

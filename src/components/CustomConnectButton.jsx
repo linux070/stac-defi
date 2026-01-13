@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount, useBalance, useSwitchChain, useDisconnect } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import { Loader, X, Copy, LogOut, Check } from 'lucide-react';
 import useTokenBalance from '../hooks/useTokenBalance';
 import useMultiChainBalances from '../hooks/useMultiChainBalances';
@@ -155,8 +156,8 @@ const CustomConnectButton = () => {
                             </span>
                           </div>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
-                          {account.displayName?.charAt(0) || 'W'}
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-900 shadow-inner">
+                          <Jazzicon diameter={32} seed={jsNumberForAddress(account.address)} />
                         </div>
                       </button>
 
@@ -327,8 +328,8 @@ const CustomConnectButton = () => {
 
                             {/* Wallet Avatar */}
                             <div className="flex flex-col items-center mb-6">
-                              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-2xl font-bold mb-3">
-                                {account.displayName?.charAt(0) || 'W'}
+                              <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-900 shadow-xl mb-4 border-2 border-white dark:border-gray-700">
+                                <Jazzicon diameter={80} seed={jsNumberForAddress(account.address)} />
                               </div>
 
                               {/* Wallet Address */}

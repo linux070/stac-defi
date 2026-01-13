@@ -390,9 +390,9 @@
 .feedback-widget {
   position: fixed !important;
   z-index: 40 !important;
-  /* Mobile positioning: Elevated to clear Activity tab */
-  right: 20px !important;
-  bottom: 110px !important;
+  /* Mobile positioning: Corner aligned */
+  right: 16px !important;
+  bottom: 16px !important;
   display: block !important;
 }
 
@@ -457,11 +457,11 @@ html.dark .feedback-button {
 /* Pulse animation for mobile FAB */
 @media (max-width: 767px) {
   .feedback-button {
-    background: #131720 !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    width: 56px !important;
-    height: 56px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+    background: #3b82f6 !important;
+    border: none !important;
+    width: 60px !important;
+    height: 60px !important;
+    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.4) !important;
   }
 
   .feedback-button::after {

@@ -154,22 +154,6 @@ const Swap = () => {
   // Multi-chain balances for USDC (fetches both chains simultaneously)
   const { balances: multiChainBalances } = useMultiChainBalances(address, isConnected);
 
-  // Effect to handle body overflow when modals are open
-  useEffect(() => {
-    const isModalOpen = showFromSelector || showToSelector;
-    if (isModalOpen) {
-      // Prevent background scrolling when modal is open
-      document.body.style.overflow = 'hidden';
-    } else {
-      // Restore normal scrolling when modal is closed
-      document.body.style.overflow = 'visible';
-    }
-
-    // Cleanup function to restore overflow when component unmounts
-    return () => {
-      document.body.style.overflow = 'visible';
-    };
-  }, [showFromSelector, showToSelector]);
 
   // For USDC, use multi-chain balances; for other tokens, use regular balance hook
   const { balance: fromBalanceRegular, loading: fromLoadingRegular, refetch: refetchFrom } = useTokenBalance((fromToken === 'USDC') ? null : fromToken);
@@ -523,8 +507,7 @@ const Swap = () => {
     };
 
     if (!isOpen) return null;
-
-    return (
+    return createPortal(
       <div
         className="swap-token-selector-modal-backdrop"
         onClick={onClose}
@@ -618,7 +601,8 @@ const Swap = () => {
             )}
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   };
 
