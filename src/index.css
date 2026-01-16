@@ -86,12 +86,8 @@
   *::before,
   *::after {
     /* Theme properties: instant (0s) - critical for mobile */
-    transition: background-color 0s, border-color 0s, color 0s, fill 0s, stroke 0s,
-      /* Other properties: smooth (200ms) */
-      opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
-      transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
-      box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
-      filter 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    /* opacity and transform are handled by Framer Motion, so we exclude them from global transitions to avoid flickering */
+    transition: background-color 0s, border-color 0s, color 0s, fill 0s, stroke 0s, box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1), filter 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
 }
@@ -229,8 +225,6 @@
     transition: background-color 0s,
       border-color 0s,
       color 0s,
-      opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
-      transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
       box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
 
@@ -242,8 +236,7 @@
   nav {
     transition: background-color 0s,
       border-color 0s,
-      color 0s,
-      opacity 200ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+      color 0s !important;
   }
 
   /* Footer improvements for mobile visibility */
