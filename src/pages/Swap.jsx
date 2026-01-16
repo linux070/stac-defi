@@ -17,6 +17,7 @@ import { getItem, setItem } from '../utils/indexedDB';
 import SwapModal from '../components/SwapModal';
 import SwapSuccessModal from '../components/SwapSuccessModal';
 import SwapFailedModal from '../components/SwapFailedModal';
+import SwapRejectedModal from '../components/SwapRejectedModal';
 import '../styles/swap-styles.css';
 
 const USDC_ADDRESS = CONSTANT_USDC_ADDRESS;
@@ -58,6 +59,7 @@ const Swap = () => {
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   const [showSwapSuccessModal, setShowSwapSuccessModal] = useState(false);
   const [showSwapFailedModal, setShowSwapFailedModal] = useState(false);
+  const [showSwapRejectedModal, setShowSwapRejectedModal] = useState(false);
   const [lastSwapTxHash, setLastSwapTxHash] = useState(null);
   const [swapError, setSwapError] = useState(null);
   const [frozenSwapData, setFrozenSwapData] = useState(null);
@@ -394,9 +396,22 @@ const Swap = () => {
       // Reset swap state after showing success to avoid re-triggering
       if (swapState.reset) swapState.reset();
     } else if (swapState.error && isSwapModalOpen) {
+      const errorMsg = swapState.error?.message || swapState.error || "";
+      const isRejection =
+        errorMsg.toLowerCase().includes('user rejected') ||
+        errorMsg.toLowerCase().includes('user denied') ||
+        errorMsg.toLowerCase().includes('action_rejected') ||
+        swapState.error?.code === 4001;
+
       setSwapError(swapState.error);
       setIsSwapModalOpen(false);
-      setShowSwapFailedModal(true);
+
+      if (isRejection) {
+        setShowSwapRejectedModal(true);
+      } else {
+        setShowSwapFailedModal(true);
+      }
+
       // Reset swap state after showing error to avoid re-triggering
       if (swapState.reset) swapState.reset();
     }
@@ -1037,6 +1052,14 @@ const Swap = () => {
         message={toast.message}
         visible={toast.visible}
         onClose={() => setToast({ ...toast, visible: false })}
+      />
+
+      {/* Swap Rejected Modal */}
+      <SwapRejectedModal
+        isOpen={showSwapRejectedModal}
+        onClose={() => setShowSwapRejectedModal(false)}
+        fromToken={frozenSwapData?.fromToken || fromTokenObj}
+        toToken={frozenSwapData?.toToken || toTokenObj}
       />
 
     </div >

@@ -936,22 +936,24 @@ html.dark .token-icon img,
   }
 
   .add-arc-button {
-    padding: 6px 10px;
-    font-size: 10px;
-    gap: 4px;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    gap: 6px;
+    border-radius: 10px;
   }
 
   .add-arc-button svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
   }
 
   /* Header adjustments */
   .bridge-header {
-    font-size: 18px;
-    margin-bottom: 0px;
-    /* Reduced since parent has gap/mb */
+    font-size: 21px;
+    margin-bottom: 4px;
     padding: 0;
+    letter-spacing: -0.01em;
   }
 
   /* Network selector */
@@ -3020,4 +3022,20 @@ html.dark .bridging-modal-close-button-alt:hover {
 html.dark .bridging-modal-notice-premium {
   background: rgba(255, 255, 255, 0.02);
   border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Final Responsiveness Polish for All Bridge Modals */
+@media (max-width: 640px) {
+  .bridging-modal-backdrop {
+    padding: 12px !important;
+  }
+
+  .bridging-modal-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 92dvh !important;
+    border-radius: 24px !important;
+    margin: 0 !important;
+    overflow-y: auto !important;
+  }
 }

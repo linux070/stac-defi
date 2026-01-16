@@ -5,7 +5,7 @@ import { useWallet } from '../contexts/WalletContext';
 import {
   Home, ArrowLeftRight, Droplet, Clock, Menu, X,
   Moon, Sun, Wallet, LogOut, RefreshCw, ChevronDown, Globe, ArrowUpDown, Waypoints,
-  Twitter, MessageSquare, ChevronRight, FileText
+  Twitter, MessageSquare, ChevronRight, FileText, Github
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatAddress } from '../utils/blockchain';
@@ -58,7 +58,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       {/* Header - Immersive full-width design */}
       <div className="fixed top-0 left-0 right-0 z-[99999] transition-all duration-300">
         {/* Mobile Header (Relay Style) - Always visible */}
-        <div className="lg:hidden w-full h-16 bg-white dark:bg-black border-b border-slate-200 dark:border-white/10 px-4 flex items-center justify-between relative z-[7000]">
+        <div className="lg:hidden w-full h-16 bg-white dark:bg-black border-b border-slate-200 dark:border-white/10 px-4 flex items-center justify-between relative z-[99999]">
           {/* Logo Section */}
           <div className="flex items-center cursor-pointer transition-all duration-300 hover:opacity-80 active:scale-95" onClick={() => setActiveTab('home')}>
             <div className="h-8 w-6 overflow-hidden flex-shrink-0 bg-transparent">
@@ -85,10 +85,10 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               e.stopPropagation();
               setIsMenuOpen(prev => !prev);
             }}
-            className="p-2.5 -mr-2 rounded-xl text-slate-900 dark:text-white bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-all active:scale-90 touch-manipulation shadow-sm relative z-[1000]"
+            className="p-2 -mr-2 text-slate-900 dark:text-white transition-all active:scale-90 touch-manipulation relative z-[99999]"
             aria-label={isMenuOpen ? "Close Menu" : "Open Menu"}
           >
-            {isMenuOpen ? <X size={24} strokeWidth={2.5} /> : <Menu size={24} strokeWidth={2.5} />}
+            {isMenuOpen ? <X size={26} strokeWidth={2.5} /> : <Menu size={26} strokeWidth={2.5} />}
           </button>
         </div>
 
@@ -310,6 +310,9 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                     </svg>
                   </a>
+                  <a href="https://github.com/linux070/stac-defi" target="_blank" rel="noopener noreferrer" className="p-2 text-slate-400 hover:text-blue-500 transition-colors" title="GitHub">
+                    <Github size={24} />
+                  </a>
                   <a href="#" className="p-2 text-slate-400 hover:text-blue-500 transition-colors" title="Discord">
                     <MessageSquare size={24} />
                   </a>
@@ -321,13 +324,13 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className={`min-h-fit w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'transactions' ? 'bg-white dark:bg-black' : activeTab === 'liquidity' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12 md:pb-12 overflow-x-hidden md:overflow-visible flex-grow relative z-10`}>
+      <main className={`min-h-fit w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'transactions' ? 'bg-white dark:bg-black' : activeTab === 'liquidity' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-24 md:pb-12 overflow-x-hidden md:overflow-visible flex-grow relative z-10`}>
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
         >
           {children}
         </motion.div>
@@ -338,8 +341,8 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
       {/* Footer */}
       <footer
-        className={`mt-auto border-t border-gray-200 dark:border-gray-700 ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-white/80 dark:bg-black/80 backdrop-blur-sm' : 'bg-white dark:bg-black'} relative z-20 md:py-8 py-8`}
-        style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}
+        className={`mt-auto border-t border-gray-200 dark:border-gray-700 ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-white/80 dark:bg-black/80 backdrop-blur-sm' : 'bg-white dark:bg-black'} fixed lg:relative bottom-0 left-0 right-0 lg:bottom-auto z-20 py-4 lg:py-8`}
+        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Flex container that stacks on mobile and aligns horizontally on desktop */}

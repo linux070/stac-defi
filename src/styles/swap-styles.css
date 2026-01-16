@@ -1163,7 +1163,9 @@ html.dark .swap-token-selector-popular-button.active .swap-token-selector-popula
 .swap-token-selector-list {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
   padding: 0 24px 24px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .swap-token-selector-list-item {
@@ -1298,8 +1300,8 @@ html.dark .swap-token-selector-list-symbol,
     width: calc(100% - 24px);
     margin: auto;
     border-radius: 20px;
-    max-height: 85vh;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+    max-height: calc(100dvh - 40px);
+    height: auto;
     display: flex;
     flex-direction: column;
     border-color: rgba(59, 130, 246, 0.3);
@@ -2675,4 +2677,19 @@ html.dark .faucet-success-token-badge,
 html.dark .faucet-success-token-text,
 .dark .faucet-success-token-text {
   color: #ffffff;
+}
+/* Final Responsiveness Polish for All Swap Modals */
+@media (max-width: 640px) {
+  .swap-modal-backdrop {
+    padding: 12px !important;
+  }
+
+  .swap-modal-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 92dvh !important;
+    border-radius: 24px !important;
+    margin: 0 !important;
+    overflow-y: auto !important;
+  }
 }

@@ -2,39 +2,11 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 import '../styles/swap-styles.css';
 
-const SwapFailedModal = ({ isOpen, onClose, error, fromToken, toToken }) => {
+const SwapRejectedModal = ({ isOpen, onClose, fromToken, toToken }) => {
     const { t } = useTranslation();
-
-    const getCleanErrorMessage = (msg) => {
-        if (!msg) return t('User rejected the transaction in wallet.');
-
-        const lowerMsg = msg.toLowerCase();
-
-        // User rejection
-        if (lowerMsg.includes('user rejected') || lowerMsg.includes('user denied') || lowerMsg.includes('action_rejected')) {
-            return t('Transaction cancelled: You rejected the request in your wallet.');
-        }
-
-        // Insufficient funds
-        if (lowerMsg.includes('insufficient funds') || lowerMsg.includes('exceeds the balance')) {
-            return t('Insufficient funds: You do not have enough native tokens to cover the gas fee.');
-        }
-
-        // Slippage / Price Impact
-        if (lowerMsg.includes('slippage') || lowerMsg.includes('price impact') || lowerMsg.includes('too much')) {
-            return t('Swap failed due to high price impact or slippage. Please try increasing your slippage tolerance.');
-        }
-
-        // fallback for short technical strings
-        if (msg.length > 150) {
-            return t('The transaction was cancelled or failed on-chain. Please verify your wallet and try again.');
-        }
-
-        return msg;
-    };
 
     const getTokenIcon = (symbol) => {
         const iconMap = {
@@ -77,29 +49,32 @@ const SwapFailedModal = ({ isOpen, onClose, error, fromToken, toToken }) => {
                             <div className="swap-modal-status-card-new">
                                 <div className="swap-modal-success-icon-wrapper">
                                     <motion.div
-                                        className="swap-modal-failed-circle"
+                                        className="swap-modal-error-circle"
+                                        style={{ backgroundColor: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.2)' }}
                                         initial={{ scale: 0, rotate: -45 }}
                                         animate={{ scale: 1, rotate: 0 }}
                                         transition={{ delay: 0.2, type: 'spring' }}
                                     >
-                                        <X size={40} strokeWidth={4} />
+                                        <AlertTriangle size={40} strokeWidth={3} />
                                     </motion.div>
                                 </div>
 
-                                <h4 className="swap-modal-status-title-new title-failed">
-                                    {t('Swap Failed')}
-                                </h4>
+                                <h4 className="swap-modal-status-title-new" style={{ color: '#f59e0b' }}>{t('Transaction Rejected')}</h4>
+                                <p className="swap-modal-success-summary-text">
+                                    {t('User Rejected Request')}
+                                </p>
 
                                 <p className="text-center text-slate-500 dark:text-slate-400 text-sm px-6 mb-4">
-                                    {getCleanErrorMessage(error?.message || error)}
+                                    {t('The transaction was rejected in your wallet. If this was a mistake, please try again.')}
                                 </p>
+
 
 
                                 <button
                                     onClick={onClose}
                                     className="swap-modal-action-button-secondary-new"
                                 >
-                                    {t('Try Again')}
+                                    {t('Back to Swap')}
                                 </button>
                             </div>
                         </div>
@@ -112,4 +87,4 @@ const SwapFailedModal = ({ isOpen, onClose, error, fromToken, toToken }) => {
     return createPortal(modalContent, document.body);
 };
 
-export default SwapFailedModal;
+export default SwapRejectedModal;

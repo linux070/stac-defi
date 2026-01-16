@@ -61,26 +61,11 @@ const BridgeRejectedModal = ({ isOpen, onClose, fromChain, toChain }) => {
                                     {t('User Rejected Request')}
                                 </p>
 
-                                <p className="text-center text-slate-500 dark:text-slate-400 text-sm px-6 mb-8">
+                                <p className="text-center text-slate-500 dark:text-slate-400 text-sm px-6 mb-4">
                                     {t('The transaction was rejected in your wallet. If this was a mistake, please try again.')}
                                 </p>
 
-                                <div className="bridging-modal-success-details mb-8">
-                                    <div className="bridging-modal-success-info-row">
-                                        <span>{t('Source')}</span>
-                                        <div className="flex items-center gap-2">
-                                            <img src={getChainIcon(fromChain)} alt="" className="w-5 h-5 rounded-full object-cover" />
-                                            <span className="value">{fromChain}</span>
-                                        </div>
-                                    </div>
-                                    <div className="bridging-modal-success-info-row">
-                                        <span>{t('Destination')}</span>
-                                        <div className="flex items-center gap-2">
-                                            <img src={getChainIcon(toChain)} alt="" className="w-5 h-5 rounded-full object-cover" />
-                                            <span className="value">{toChain}</span>
-                                        </div>
-                                    </div>
-                                </div>
+
 
                                 <button
                                     onClick={onClose}

@@ -49,7 +49,7 @@ const FeedbackButton = () => {
 
                     {/* Sidebar / Modal Container - Forced Light Mode High-End Card */}
                     <div
-                        className={`relative w-[92%] max-w-[360px] md:max-w-[480px] h-[80vh] md:h-full max-h-[700px] md:max-h-[820px] bg-white border border-[#00000015] rounded-[28px] md:rounded-[32px] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] flex flex-col transition-all duration-500 cubic-bezier(0.22, 1, 0.36, 1) ${isOpen ? 'translate-x-0 translate-y-0 scale-100 opacity-100' : 'translate-x-0 md:translate-x-16 translate-y-12 md:translate-y-0 scale-95 opacity-0'}`}
+                        className={`relative w-[92%] max-w-[360px] md:max-w-[480px] h-[85dvh] md:h-full max-h-[700px] md:max-h-[820px] bg-white border border-[#00000015] rounded-[28px] md:rounded-[32px] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] flex flex-col transition-all duration-500 cubic-bezier(0.22, 1, 0.36, 1) ${isOpen ? 'translate-x-0 translate-y-0 scale-100 opacity-100' : 'translate-x-0 md:translate-x-16 translate-y-12 md:translate-y-0 scale-95 opacity-0'}`}
                     >
                         {/* Header - Light Institutional Style */}
                         <div className="flex items-center justify-between p-6 border-b border-[#00000008] bg-gray-50/80">

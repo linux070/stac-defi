@@ -99,7 +99,8 @@ const Bridge = () => {
 
         setShowBridgingModal(false);
         setShowBridgeRejectedModal(true);
-        setBridgeButtonText('Bridge Failed');
+        setShowBridgeFailedModal(false); // Ensure failure modal is hidden
+        setBridgeButtonText('Bridge'); // Don't show "Bridge Failed" on button immediately
         setBridgeLoading(false);
         reset();
       }
@@ -124,6 +125,7 @@ const Bridge = () => {
             message: 'Transaction cancelled: Wallet disconnected during bridging.'
           });
           setShowBridgeFailedModal(true);
+          setShowBridgeRejectedModal(false); // Ensure rejected modal is hidden
           setBridgeButtonText('Bridge Failed');
           setBridgeLoading(false);
           reset();
@@ -901,10 +903,17 @@ const Bridge = () => {
         });
       }
 
-      // ALWAYS show the failed modal for any error in catch block
+      // ALWAYS show the failed modal for any error in catch block (unless it's a user rejection)
       // Set button to Bridge Failed state
       setBridgeButtonText('Bridge Failed');
-      setShowBridgeFailedModal(true);
+
+      if (isUserRejection) {
+        setShowBridgeRejectedModal(true);
+        setShowBridgeFailedModal(false); // Explicitly ensure failed modal is hidden
+      } else {
+        setShowBridgeFailedModal(true);
+        setShowBridgeRejectedModal(false); // Explicitly ensure rejected modal is hidden
+      }
 
       // Log that we're showing the modal
       console.log('Showing Bridge Failed modal - Error caught:', error.message || error);
@@ -932,6 +941,7 @@ const Bridge = () => {
         message: 'Transaction cancelled: User closed the bridging modal.'
       });
       setShowBridgeFailedModal(true);
+      setShowBridgeRejectedModal(false); // Ensure rejected modal is hidden
       setBridgeButtonText('Bridge Failed');
       setBridgeLoading(false);
       reset();
@@ -1160,10 +1170,10 @@ const Bridge = () => {
         <div className="hidden md:block absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-indigo-500 to-blue-600 opacity-[0.1] blur-[60px] rounded-full"></div>
 
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6 md:mb-8 bridge-header-row">
             <div>
               <h2 className="bridge-header">{t('Bridge Assets')}</h2>
-              <p className="bridge-subtitle hidden md:block">{t('Secure, Real-Time Cross-Chain Bridging')}</p>
+              <p className="bridge-subtitle hidden md:block">{t('Secure, Real-Time Cross Chain Bridging')}</p>
             </div>
 
             <button
@@ -1408,7 +1418,7 @@ const Bridge = () => {
             </div>
             <div className="alert-content">
               <p className="alert-text">
-                {t('Cross-chain transfers are irreversible. Please verify all details before confirming the transaction.')}
+                {t('Cross chain transfers are irreversible. Please verify all details before confirming the transaction.')}
               </p>
             </div>
           </div>
@@ -1474,7 +1484,10 @@ const Bridge = () => {
 
       <BridgeFailedModal
         isOpen={showBridgeFailedModal}
-        onClose={() => setShowBridgeFailedModal(false)}
+        onClose={() => {
+          setShowBridgeFailedModal(false);
+          setBridgeButtonText('Bridge');
+        }}
         fromChain={fromChain}
         toChain={toChain}
         errorTitle={bridgeError.title}
@@ -1493,7 +1506,10 @@ const Bridge = () => {
 
       <BridgeRejectedModal
         isOpen={showBridgeRejectedModal}
-        onClose={() => setShowBridgeRejectedModal(false)}
+        onClose={() => {
+          setShowBridgeRejectedModal(false);
+          setBridgeButtonText('Bridge');
+        }}
         fromChain={fromChain}
         toChain={toChain}
       />
