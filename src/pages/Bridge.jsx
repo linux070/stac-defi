@@ -11,6 +11,9 @@ import { useBridge } from '../hooks/useBridge';
 import { getItem, setItem } from '../utils/indexedDB';
 import BridgingModal from '../components/BridgingModal';
 import BridgeFailedModal from '../components/BridgeFailedModal';
+import BridgeSuccessModal from '../components/BridgeSuccessModal';
+import BridgeRejectedModal from '../components/BridgeRejectedModal';
+import BridgeCancelledModal from '../components/BridgeCancelledModal';
 import '../styles/bridge-styles.css';
 
 const Bridge = () => {
@@ -29,6 +32,11 @@ const Bridge = () => {
   const [bridgeButtonText, setBridgeButtonText] = useState('Bridge');
   const [stopTimer, setStopTimer] = useState(false);
   const [showNetworkSuccess, setShowNetworkSuccess] = useState(false);
+  const [showBridgeSuccessModal, setShowBridgeSuccessModal] = useState(false);
+  const [showBridgeRejectedModal, setShowBridgeRejectedModal] = useState(false);
+  const [showBridgeCancelledModal, setShowBridgeCancelledModal] = useState(false);
+  const [bridgeFinalTime, setBridgeFinalTime] = useState(null);
+  const [sourceTxHash, setSourceTxHash] = useState(null);
 
   // Initialize the useBridge hook
   const { bridge, state, reset, fetchTokenBalance, tokenBalance, isLoadingBalance, balanceError, clearBalance } = useBridge();
@@ -90,11 +98,7 @@ const Bridge = () => {
         }
 
         setShowBridgingModal(false);
-        setBridgeError({
-          title: 'Transaction Rejected',
-          message: 'Transaction cancelled: User rejected the transaction in wallet.'
-        });
-        setShowBridgeFailedModal(true);
+        setShowBridgeRejectedModal(true);
         setBridgeButtonText('Bridge Failed');
         setBridgeLoading(false);
         reset();
@@ -377,6 +381,17 @@ const Bridge = () => {
   // Effect to refresh balances after successful bridge transaction and save transaction
   useEffect(() => {
     if (state.step === 'success' && state.sourceTxHash) {
+      // Set success modal states
+      setSourceTxHash(state.sourceTxHash);
+      if (bridgeStartTime) {
+        const time = (Date.now() - bridgeStartTime) / 1000;
+        const mins = Math.floor(time / 60);
+        const secs = Math.floor(time % 60);
+        setBridgeFinalTime(mins > 0 ? `${mins}m ${secs}s` : `${secs}s`);
+      }
+      setShowBridgingModal(false);
+      setShowBridgeSuccessModal(true);
+
       // Save successful bridge transaction
       saveBridgeTransaction(state.sourceTxHash || state.receiveTxHash, 'success');
 
@@ -1457,14 +1472,37 @@ const Bridge = () => {
         stopTimer={stopTimer}
       />
 
-      {/* Bridge Failed Modal */}
       <BridgeFailedModal
         isOpen={showBridgeFailedModal}
-        onClose={closeBridgeFailedModal}
+        onClose={() => setShowBridgeFailedModal(false)}
         fromChain={fromChain}
         toChain={toChain}
         errorTitle={bridgeError.title}
         errorMessage={bridgeError.message}
+      />
+
+      <BridgeSuccessModal
+        isOpen={showBridgeSuccessModal}
+        onClose={() => setShowBridgeSuccessModal(false)}
+        fromChain={fromChain}
+        toChain={toChain}
+        amount={amount}
+        timeTaken={bridgeFinalTime}
+        txHash={sourceTxHash}
+      />
+
+      <BridgeRejectedModal
+        isOpen={showBridgeRejectedModal}
+        onClose={() => setShowBridgeRejectedModal(false)}
+        fromChain={fromChain}
+        toChain={toChain}
+      />
+
+      <BridgeCancelledModal
+        isOpen={showBridgeCancelledModal}
+        onClose={() => setShowBridgeCancelledModal(false)}
+        fromChain={fromChain}
+        toChain={toChain}
       />
 
       {/* Network Added Success Notification */}

@@ -56,40 +56,41 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       {(activeTab === 'swap' || activeTab === 'bridge') && <BackgroundGradient />}
 
       {/* Header - Immersive full-width design */}
-      <div className="fixed top-0 left-0 right-0 z-[6000] transition-all duration-300">
-        {/* Mobile Header (Relay Style) */}
-        {!isMenuOpen && (
-          <div className="lg:hidden w-full h-16 bg-white dark:bg-black border-b border-slate-200 dark:border-white/10 px-4 flex items-center justify-between z-[5000]">
-            {/* Logo Section */}
-            <div className="flex items-center cursor-pointer transition-all duration-300 hover:opacity-80 active:scale-95" onClick={() => setActiveTab('home')}>
-              <div className="h-8 w-6 overflow-hidden flex-shrink-0 bg-transparent">
-                <img
-                  src="/icons/Stac.png"
-                  alt=""
-                  className="h-8 max-w-none object-cover dark:invert"
-                  style={{ objectPosition: 'left' }}
-                />
-              </div>
-              <div className="h-8 overflow-hidden flex-shrink-0 ml-1.5 bg-transparent">
-                <img
-                  src="/icons/Stac.png"
-                  alt="Stac"
-                  className="h-8 max-w-none object-cover dark:invert"
-                  style={{ marginLeft: '-24px' }}
-                />
-              </div>
+      <div className="fixed top-0 left-0 right-0 z-[99999] transition-all duration-300">
+        {/* Mobile Header (Relay Style) - Always visible */}
+        <div className="lg:hidden w-full h-16 bg-white dark:bg-black border-b border-slate-200 dark:border-white/10 px-4 flex items-center justify-between relative z-[7000]">
+          {/* Logo Section */}
+          <div className="flex items-center cursor-pointer transition-all duration-300 hover:opacity-80 active:scale-95" onClick={() => setActiveTab('home')}>
+            <div className="h-8 w-6 overflow-hidden flex-shrink-0 bg-transparent">
+              <img
+                src="/icons/Stac.png"
+                alt=""
+                className="h-8 max-w-none object-cover dark:invert"
+                style={{ objectPosition: 'left' }}
+              />
             </div>
-
-            {/* Menu Button - Far Right */}
-            <button
-              onClick={() => setIsMenuOpen(true)}
-              className="p-3 -mr-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all active:scale-90 touch-manipulation"
-              aria-label="Open Menu"
-            >
-              <Menu size={28} />
-            </button>
+            <div className="h-8 overflow-hidden flex-shrink-0 ml-1.5 bg-transparent">
+              <img
+                src="/icons/Stac.png"
+                alt="Stac"
+                className="h-8 max-w-none object-cover dark:invert"
+                style={{ marginLeft: '-24px' }}
+              />
+            </div>
           </div>
-        )}
+
+          {/* Menu Button - Always accessible */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMenuOpen(prev => !prev);
+            }}
+            className="p-2.5 -mr-2 rounded-xl text-slate-900 dark:text-white bg-slate-100/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-all active:scale-90 touch-manipulation shadow-sm relative z-[1000]"
+            aria-label={isMenuOpen ? "Close Menu" : "Open Menu"}
+          >
+            {isMenuOpen ? <X size={24} strokeWidth={2.5} /> : <Menu size={24} strokeWidth={2.5} />}
+          </button>
+        </div>
 
         {/* Desktop Header - Floating Island (Preserved for desktop) */}
         <div className="hidden lg:flex lg:h-20 lg:items-center lg:justify-center">
@@ -164,31 +165,13 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[2000] bg-white dark:bg-black flex flex-col lg:hidden"
+            className="fixed inset-0 z-[7000] bg-white dark:bg-black flex flex-col lg:hidden pt-16"
           >
-            {/* Top Bar for Mobile Menu */}
-            <div className="w-full h-16 px-4 flex-shrink-0 flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white dark:bg-black">
-              {/* Logo */}
-              <div className="flex items-center cursor-pointer" onClick={() => { setIsMenuOpen(false); setActiveTab('home'); }}>
-                <div className="h-8 w-6 overflow-hidden flex-shrink-0">
-                  <img src="/icons/Stac.png" alt="" className="h-8 max-w-none object-cover dark:invert" style={{ objectPosition: 'left' }} />
-                </div>
-                <div className="h-8 overflow-hidden flex-shrink-0 ml-1.5">
-                  <img src="/icons/Stac.png" alt="Stac" className="h-8 max-w-none object-cover dark:invert" style={{ marginLeft: '-24px' }} />
-                </div>
-              </div>
-              {/* Close Button */}
-              <button
-                onClick={() => setIsMenuOpen(false)}
-                className="p-2 rounded-lg text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
-              >
-                <X size={28} />
-              </button>
-            </div>
+
 
             {/* Scrollable Content Area */}
             <div className="flex-grow overflow-y-auto flex flex-col">

@@ -140,45 +140,10 @@ const SwapModal = ({
     useEffect(() => {
         if (isLoading) {
             setStep('processing');
-        } else if (isSuccess) {
-            setStep('success');
-            // Log transaction to history
-            if (txHash && address) {
-                const logTransaction = async () => {
-                    try {
-                        const history = await getItem('myTransactions') || [];
-                        const exists = history.some(tx => tx.hash === txHash);
-                        if (!exists) {
-                            // Use frozen data if available, otherwise current props
-                            const dataToLog = frozenData || { fromAmount, toAmount, fromToken, toToken };
-                            const newTx = {
-                                id: txHash,
-                                hash: txHash,
-                                type: 'Swap',
-                                from: `${dataToLog.fromAmount} ${dataToLog.fromToken?.symbol}`,
-                                to: `${dataToLog.toAmount} ${dataToLog.toToken?.symbol}`,
-                                amount: `${dataToLog.fromAmount} ${dataToLog.fromToken?.symbol} → ${dataToLog.toAmount} ${dataToLog.toToken?.symbol}`,
-                                timestamp: Date.now(),
-                                status: 'success',
-                                address: address.toLowerCase(),
-                                chainId: chainId
-                            };
-                            await setItem('myTransactions', [newTx, ...history].slice(0, 100));
-                            // Dispatch event to update transaction page immediately
-                            window.dispatchEvent(new CustomEvent('swapTransactionSaved'));
-                        }
-                    } catch (err) {
-                        console.error('Failed to log swap transaction:', err);
-                    }
-                };
-                logTransaction();
-            }
-        } else if (error) {
-            setStep('error');
         } else if (!isOpen || (!isLoading && !isSuccess)) {
             setStep('confirm');
         }
-    }, [isLoading, isSuccess, error, isOpen, txHash, address, fromToken, toToken, fromAmount, toAmount, chainId, frozenData]);
+    }, [isLoading, isSuccess, error, isOpen]);
 
     if (!isOpen) return null;
 
@@ -347,69 +312,7 @@ const SwapModal = ({
                                 </div>
                             )}
 
-
-
-                            {step === 'success' && (
-                                <div className="space-y-6 pt-6 pb-4">
-                                    <div className="swap-modal-status-card-new">
-                                        <div className="swap-modal-success-icon-wrapper">
-                                            <div className="swap-modal-checkmark-circle">
-                                                <Check size={32} strokeWidth={3} />
-                                            </div>
-                                        </div>
-                                        <h4 className="swap-modal-status-title-new">{t('Transaction Confirmed!')}</h4>
-                                        <div className="swap-modal-success-summary-text">
-                                            {t('You swapped')}
-                                        </div>
-                                        <div className="swap-modal-success-summary-visual">
-                                            <div className="swap-modal-success-token-badge">
-                                                <img src={getTokenIcon(frozenData?.fromToken?.symbol || fromToken?.symbol)} alt="" className="swap-modal-success-token-img" />
-                                                <span>{formatAmount(frozenData?.fromAmount || fromAmount, frozenData?.fromToken?.symbol || fromToken?.symbol)} {frozenData?.fromToken?.symbol || fromToken?.symbol}</span>
-                                            </div>
-                                            <div className="swap-modal-success-path-arrow">
-                                                <ArrowDown size={14} className="rotate-[-90deg]" />
-                                            </div>
-                                            <div className="swap-modal-success-token-badge">
-                                                <img src={getTokenIcon(frozenData?.toToken?.symbol || toToken?.symbol)} alt="" className="swap-modal-success-token-img" />
-                                                <span>{formatAmount(frozenData?.toAmount || toAmount, frozenData?.toToken?.symbol || toToken?.symbol)} {frozenData?.toToken?.symbol || toToken?.symbol}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        onClick={onClose}
-                                        className="swap-modal-action-button-secondary-new"
-                                    >
-                                        {t('Close')}
-                                    </button>
-                                </div>
-                            )}
-
-                            {step === 'error' && (
-                                <div className="space-y-6 pt-6 pb-4">
-                                    <div className="swap-modal-status-card-new">
-                                        <div className="swap-modal-success-icon-wrapper">
-                                            <div className="swap-modal-error-circle">
-                                                <X size={32} strokeWidth={3} />
-                                            </div>
-                                        </div>
-                                        <h4 className="swap-modal-status-title-new">{t('Swap Failed')}</h4>
-                                        <div className="swap-modal-success-summary-text">
-                                            {t('Something went wrong')}
-                                        </div>
-                                        <p className="swap-modal-status-text px-4">
-                                            {getCleanErrorMessage(error?.message) || t('The transaction was cancelled or failed on-chain.')}
-                                        </p>
-                                    </div>
-
-                                    <button
-                                        onClick={() => setStep('confirm')}
-                                        className="swap-modal-action-button-secondary-new"
-                                    >
-                                        {t('Try Again')}
-                                    </button>
-                                </div>
-                            )}
+                            {/* Success and Error states are now handled by specialized modals in Swap.jsx */}
                         </div>
                     </motion.div>
                 </motion.div>

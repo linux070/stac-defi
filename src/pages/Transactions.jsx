@@ -332,7 +332,8 @@ const Transactions = () => {
     const handleClickOutside = (event) => {
       if (showStatusDropdown || showDateDropdown) {
         const target = event.target;
-        if (!target.closest('.relative')) {
+        // Specifically allow hamburger menu button to trigger its own events without dropdown interference
+        if (!target.closest('.relative') || target.closest('button[aria-label]')) {
           setShowStatusDropdown(false);
           setShowDateDropdown(false);
         }
@@ -1203,4 +1204,4 @@ const Transactions = () => {
   );
 };
 
-export default Transactions;
+export default React.memo(Transactions);

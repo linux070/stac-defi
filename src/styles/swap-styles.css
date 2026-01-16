@@ -979,20 +979,26 @@ html.dark .swap-slippage-container,
 }
 
 .swap-token-selector-modal {
-  background: var(--swap-bg-secondary);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 28px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  max-width: 420px;
+  max-width: 440px;
   width: 100%;
-  max-height: 80vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   position: relative;
   margin: auto;
-  /* Ensure centering */
+}
+
+[data-theme='dark'] .swap-token-selector-modal,
+html.dark .swap-token-selector-modal {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
 }
 
 .swap-token-selector-header {
@@ -1005,10 +1011,11 @@ html.dark .swap-slippage-container,
 }
 
 .swap-token-selector-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 700;
   color: var(--swap-text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.01em;
 }
 
 .swap-token-selector-close-button {
@@ -1033,30 +1040,32 @@ html.dark .swap-slippage-container,
 }
 
 .swap-token-selector-search {
-  padding: 0 24px 16px;
+  padding: 0 20px 20px;
   flex-shrink: 0;
 }
 
 .swap-token-selector-search-input {
   width: 100%;
-  padding: 12px 16px;
-  background: var(--swap-surface-card);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 10px;
-  font-size: 14px;
+  padding: 14px 20px;
+  background: rgba(59, 130, 246, 0.04);
+  border: 1px solid rgba(59, 130, 246, 0.08);
+  border-radius: 14px;
+  font-size: 15px;
   color: var(--swap-text-primary);
   outline: none;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s ease;
 }
 
 .swap-token-selector-search-input::placeholder {
   color: var(--swap-text-tertiary);
+  opacity: 0.8;
 }
 
 .swap-token-selector-search-input:focus {
-  border-color: var(--swap-border-focus);
-  background: var(--swap-surface-hover);
+  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(59, 130, 246, 0.06);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.05);
 }
 
 .swap-token-selector-popular-section {
@@ -1079,23 +1088,30 @@ html.dark .swap-slippage-container,
 }
 
 .swap-token-selector-popular-button {
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  background: var(--swap-surface-card);
+  font-family: 'Inter', sans-serif;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.03);
   color: var(--swap-text-secondary);
 }
 
+[data-theme='dark'] .swap-token-selector-popular-button,
+html.dark .swap-token-selector-popular-button {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .swap-token-selector-popular-button.active {
-  background: linear-gradient(135deg, var(--swap-accent-primary), var(--swap-accent-secondary));
-  color: var(--swap-text-primary);
+  background: #3b82f6;
+  color: white;
   border-color: transparent;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 .swap-token-selector-popular-button:hover:not(.active):not(.disabled) {
@@ -1152,26 +1168,24 @@ html.dark .swap-token-selector-popular-button.active .swap-token-selector-popula
 
 .swap-token-selector-list-item {
   width: 100%;
-  padding: 14px;
-  border-radius: 12px;
+  padding: 12px 16px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-bottom: 8px;
+  transition: all 0.2s ease;
+  margin-bottom: 4px;
   border: 2px solid transparent;
   background: transparent;
-  position: relative;
 }
 
 .swap-token-selector-list-item:hover {
-  background: var(--swap-surface-hover);
-  border-color: rgba(59, 130, 246, 0.2);
+  background: rgba(59, 130, 246, 0.04);
 }
 
 .swap-token-selector-list-item.selected {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(59, 130, 246, 0.06);
   border-color: rgba(59, 130, 246, 0.4);
 }
 
@@ -1193,14 +1207,23 @@ html.dark .swap-token-selector-popular-button.active .swap-token-selector-popula
 }
 
 .swap-token-selector-list-icon {
-  width: 40px;
-  height: 40px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--swap-surface-hover);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+[data-theme='dark'] .swap-token-selector-list-icon,
+html.dark .swap-token-selector-list-icon {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .swap-token-selector-list-icon img {
@@ -1217,11 +1240,11 @@ html.dark .swap-token-selector-popular-button.active .swap-token-selector-popula
 }
 
 .swap-token-selector-list-symbol {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--swap-text-primary);
-  margin-bottom: 2px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin-bottom: 1px;
+  font-family: 'Inter', sans-serif;
 }
 
 /* Ensure token symbols in selector are visible in dark mode */

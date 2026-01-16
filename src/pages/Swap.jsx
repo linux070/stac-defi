@@ -13,7 +13,10 @@ import useMultiChainBalances from '../hooks/useMultiChainBalances';
 import Toast from '../components/Toast';
 import { DEX_ADDRESS, USDC_ADDRESS as CONSTANT_USDC_ADDRESS } from '../config/constants';
 import { useSwap } from '../hooks/useSwap';
+import { getItem, setItem } from '../utils/indexedDB';
 import SwapModal from '../components/SwapModal';
+import SwapSuccessModal from '../components/SwapSuccessModal';
+import SwapFailedModal from '../components/SwapFailedModal';
 import '../styles/swap-styles.css';
 
 const USDC_ADDRESS = CONSTANT_USDC_ADDRESS;
@@ -53,6 +56,15 @@ const Swap = () => {
 
   // Modal states
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
+  const [showSwapSuccessModal, setShowSwapSuccessModal] = useState(false);
+  const [showSwapFailedModal, setShowSwapFailedModal] = useState(false);
+  const [lastSwapTxHash, setLastSwapTxHash] = useState(null);
+  const [swapError, setSwapError] = useState(null);
+  const [frozenSwapData, setFrozenSwapData] = useState(null);
+
+  // Token objects based on current selection
+  const fromTokenObj = useMemo(() => TOKENS[fromToken], [fromToken]);
+  const toTokenObj = useMemo(() => TOKENS[toToken], [toToken]);
 
 
   // Wagmi-based Swap Hook
@@ -336,32 +348,59 @@ const Swap = () => {
     }
   };
 
-  // Handle swap success/error notifications
+  // Effect to handle swap success/error and show specialized modals
   useEffect(() => {
-    if (swapState.isSuccess) {
-      setToast({ visible: true, type: 'success', message: t('Swap Successful!') });
-      // Clearing of fromAmount/toAmount moved to handleCloseSwapModal
-      refetchFrom();
-      refetchTo();
+    if (swapState.isSuccess && swapState.txHash) {
+      setLastSwapTxHash(swapState.txHash);
+      const frozen = {
+        fromToken: fromTokenObj,
+        toToken: toTokenObj,
+        fromAmount,
+        toAmount: swapState.expectedOut || toAmount
+      };
+      setFrozenSwapData(frozen);
+      setIsSwapModalOpen(false);
+      setShowSwapSuccessModal(true);
 
-      const timer = setTimeout(() => {
-        setToast({ visible: false, type: 'info', message: '' });
-      }, 5000);
-      return () => clearTimeout(timer);
+      // Log transaction to history
+      if (swapState.txHash && address) {
+        const logTransaction = async () => {
+          try {
+            const history = await getItem('myTransactions') || [];
+            const exists = history.some(tx => tx.hash === swapState.txHash);
+            if (!exists) {
+              const newTx = {
+                id: swapState.txHash,
+                hash: swapState.txHash,
+                type: 'Swap',
+                from: `${frozen.fromAmount} ${frozen.fromToken?.symbol}`,
+                to: `${frozen.toAmount} ${frozen.toToken?.symbol}`,
+                amount: `${frozen.fromAmount} ${frozen.fromToken?.symbol} → ${frozen.toAmount} ${frozen.toToken?.symbol}`,
+                timestamp: Date.now(),
+                status: 'success',
+                address: address.toLowerCase(),
+                chainId: chainId
+              };
+              await setItem('myTransactions', [newTx, ...history].slice(0, 100));
+              window.dispatchEvent(new CustomEvent('swapTransactionSaved'));
+            }
+          } catch (err) {
+            console.error('Failed to log swap transaction:', err);
+          }
+        };
+        logTransaction();
+      }
+
+      // Reset swap state after showing success to avoid re-triggering
+      if (swapState.reset) swapState.reset();
+    } else if (swapState.error && isSwapModalOpen) {
+      setSwapError(swapState.error);
+      setIsSwapModalOpen(false);
+      setShowSwapFailedModal(true);
+      // Reset swap state after showing error to avoid re-triggering
+      if (swapState.reset) swapState.reset();
     }
-  }, [swapState.isSuccess, t, refetchFrom, refetchTo]);
-
-  useEffect(() => {
-    if (swapState.error) {
-      const errorMessage = swapState.error.shortMessage || swapState.error.message || 'Transaction failed';
-      setToast({ visible: true, type: 'error', message: errorMessage });
-
-      const timer = setTimeout(() => {
-        setToast({ visible: false, type: 'info', message: '' });
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [swapState.error]);
+  }, [swapState.isSuccess, swapState.txHash, swapState.error, isSwapModalOpen, fromAmount, toAmount, fromTokenObj, toTokenObj, swapState, address, chainId]);
 
   const handleSwitch = () => {
     // Add animation class for smooth transition
@@ -932,7 +971,25 @@ const Swap = () => {
             swapState={swapState}
           />
 
+          {/* Swap Success Modal */}
+          <SwapSuccessModal
+            isOpen={showSwapSuccessModal}
+            onClose={() => setShowSwapSuccessModal(false)}
+            fromToken={frozenSwapData?.fromToken}
+            toToken={frozenSwapData?.toToken}
+            fromAmount={frozenSwapData?.fromAmount}
+            toAmount={frozenSwapData?.toAmount}
+            txHash={lastSwapTxHash}
+          />
 
+          {/* Swap Failed Modal */}
+          <SwapFailedModal
+            isOpen={showSwapFailedModal}
+            onClose={() => setShowSwapFailedModal(false)}
+            error={swapError}
+            fromToken={fromTokenObj}
+            toToken={toTokenObj}
+          />
         </div>
       </motion.div>
 
@@ -982,7 +1039,7 @@ const Swap = () => {
         onClose={() => setToast({ ...toast, visible: false })}
       />
 
-    </div>
+    </div >
   );
 };
 

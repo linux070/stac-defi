@@ -149,14 +149,10 @@ export const switchNetwork = async (provider, networkConfig) => {
   } catch (switchError) {
     // This error code indicates that the chain has not been added to MetaMask
     if (switchError.code === 4902) {
-      try {
-        await provider.request({
-          method: 'wallet_addEthereumChain',
-          params: [networkConfig],
-        });
-      } catch (addError) {
-        throw addError;
-      }
+      await provider.request({
+        method: 'wallet_addEthereumChain',
+        params: [networkConfig],
+      });
     } else {
       throw switchError;
     }
