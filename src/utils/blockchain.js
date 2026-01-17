@@ -217,7 +217,19 @@ export const getTokenBalance = async (provider, tokenAddress, walletAddress) => 
         provider
       );
       const balance = await tokenContract.balanceOf(walletAddress);
-      return ethers.formatUnits(balance, TOKENS[tokenAddress]?.decimals || 18);
+
+      // Look up decimals from config
+      let decimals = 18;
+      const foundToken = Object.values(TOKENS).find(t =>
+        (t.address && typeof t.address === 'string' && t.address.toLowerCase() === tokenAddress.toLowerCase()) ||
+        (t.address && typeof t.address === 'object' && Object.values(t.address).some(addr => String(addr).toLowerCase() === tokenAddress.toLowerCase()))
+      );
+
+      if (foundToken) {
+        decimals = foundToken.decimals || 18;
+      }
+
+      return ethers.formatUnits(balance, decimals);
     }
   } catch (err) {
     console.error('Error fetching token balance:', err);
@@ -234,7 +246,18 @@ export const approveToken = async (signer, tokenAddress, spenderAddress, amount)
       signer
     );
 
-    const tx = await tokenContract.approve(spenderAddress, ethers.parseUnits(amount, 18));
+    // Look up decimals appropriately
+    let decimals = 18;
+    const foundToken = Object.values(TOKENS).find(t =>
+      (t.address && typeof t.address === 'string' && t.address.toLowerCase() === tokenAddress.toLowerCase()) ||
+      (t.address && typeof t.address === 'object' && Object.values(t.address).some(addr => String(addr).toLowerCase() === tokenAddress.toLowerCase()))
+    );
+
+    if (foundToken) {
+      decimals = foundToken.decimals || 18;
+    }
+
+    const tx = await tokenContract.approve(spenderAddress, ethers.parseUnits(amount, decimals));
     await tx.wait();
     return tx.hash;
   } catch (err) {

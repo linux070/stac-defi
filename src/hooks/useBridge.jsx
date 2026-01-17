@@ -12,7 +12,7 @@ export const arcTestnet = defineChain({
   name: 'Arc Testnet',
   nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.testnet.arc.network'] },
+    default: { http: [import.meta.env.VITE_ARC_RPC_URL] },
   },
   blockExplorers: {
     default: { name: 'ArcScan', url: 'https://testnet.arcscan.app' },
@@ -23,7 +23,7 @@ export const sepolia = defineChain({
   ...sepoliaChain,
   rpcUrls: {
     ...sepoliaChain.rpcUrls,
-    default: { http: ['https://ethereum-sepolia-rpc.publicnode.com'] },
+    default: { http: [import.meta.env.VITE_SEPOLIA_RPC_URL] },
   },
 });
 
@@ -55,8 +55,8 @@ export const publicClient = createPublicClient({
   chain: sepolia,
   transport: fallback([
     // Dedicated High-Limit Providers
-    http('https://ethereum-sepolia-rpc.publicnode.com', { fetch: safeRpcFetch }),
-    http('https://rpc.sepolia.org', { fetch: safeRpcFetch }),
+    http(import.meta.env.VITE_SEPOLIA_RPC_URL, { fetch: safeRpcFetch }),
+    http(import.meta.env.VITE_SEPOLIA_RPC_URL_ALT, { fetch: safeRpcFetch }),
     http('https://rpc2.sepolia.org', { fetch: safeRpcFetch }),
   ], {
     rank: true,
@@ -104,12 +104,12 @@ export const BASE_SEPOLIA_CHAIN_ID = 84532;
 
 // RPC URLs for balance fetching
 const ARC_RPC_URLS = [
-  'https://rpc.testnet.arc.network',
+  import.meta.env.VITE_ARC_RPC_URL,
 ];
 
 const BASE_SEPOLIA_RPC_URLS = [
-  'https://sepolia.base.org',
-  'https://base-sepolia.blockpi.network/v1/rpc/public',
+  import.meta.env.VITE_BASE_SEPOLIA_RPC_URL,
+  import.meta.env.VITE_BASE_SEPOLIA_RPC_URL_ALT,
 ];
 
 // --- Main Hook ---
@@ -171,8 +171,8 @@ export function useBridge() {
       if (sourceChainId === SEPOLIA_CHAIN_ID) {
         // Try multiple Sepolia RPC endpoints for reliability
         const sepoliaRpcUrls = [
-          'https://ethereum-sepolia-rpc.publicnode.com',
-          'https://rpc.sepolia.org',
+          import.meta.env.VITE_SEPOLIA_RPC_URL,
+          import.meta.env.VITE_SEPOLIA_RPC_URL_ALT,
         ];
 
         for (const rpcUrl of sepoliaRpcUrls) {

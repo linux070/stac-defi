@@ -9,7 +9,7 @@ export const NETWORKS = {
       symbol: 'USDC',
       decimals: 18,
     },
-    rpcUrls: ['https://rpc.testnet.arc.network'],
+    rpcUrls: [import.meta.env.VITE_ARC_RPC_URL],
     blockExplorerUrls: ['https://testnet.arcscan.app/'],
     gasToken: 'USDC', // Arc uses USDC for gas
     iconUrl: '/icons/Arc.png',
@@ -23,7 +23,7 @@ export const NETWORKS = {
       symbol: 'ETH',
       decimals: 18,
     },
-    rpcUrls: ['https://ethereum-sepolia-rpc.publicnode.com'],
+    rpcUrls: [import.meta.env.VITE_SEPOLIA_RPC_URL],
     blockExplorerUrls: ['https://sepolia.etherscan.io/'],
   },
   BASE_SEPOLIA: {
@@ -34,7 +34,7 @@ export const NETWORKS = {
       symbol: 'ETH',
       decimals: 18,
     },
-    rpcUrls: ['https://sepolia.base.org'],
+    rpcUrls: [import.meta.env.VITE_BASE_SEPOLIA_RPC_URL],
     blockExplorerUrls: ['https://sepolia.basescan.org/'],
   },
 }; export const SUPPORTED_CHAINS = [

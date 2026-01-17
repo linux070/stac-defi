@@ -44,11 +44,11 @@ const arcTestnet = {
   nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
   rpcUrls: {
     default: {
-      http: ['https://rpc.testnet.arc.network'],
+      http: [import.meta.env.VITE_ARC_RPC_URL],
       iconUrls: ['https://stac-defi.vercel.app/icons/Arc.png'] // Absolute URL preferred for wallets
     },
     public: {
-      http: ['https://rpc.testnet.arc.network'],
+      http: [import.meta.env.VITE_ARC_RPC_URL],
       iconUrls: ['https://stac-defi.vercel.app/icons/Arc.png']
     },
   },
@@ -65,7 +65,7 @@ const sepolia = {
   ...sepoliaChain,
   rpcUrls: {
     ...sepoliaChain.rpcUrls,
-    default: { http: ['https://ethereum-sepolia-rpc.publicnode.com'] },
+    default: { http: [import.meta.env.VITE_SEPOLIA_RPC_URL] },
   },
   iconUrl: '/icons/eth.png',
   iconBackground: '#484c50',
@@ -78,11 +78,11 @@ const baseSepolia = {
   nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
     default: {
-      http: ['https://sepolia.base.org'],
+      http: [import.meta.env.VITE_BASE_SEPOLIA_RPC_URL],
       iconUrls: ['/icons/base.png']
     },
     public: {
-      http: ['https://sepolia.base.org'],
+      http: [import.meta.env.VITE_BASE_SEPOLIA_RPC_URL],
       iconUrls: ['/icons/base.png']
     },
   },
@@ -94,9 +94,11 @@ const baseSepolia = {
   iconBackground: '#0052ff',
 };
 
+import GlobalErrorBoundary from './components/GlobalErrorBoundary';
+
 const config = getDefaultConfig({
   appName: 'Stac',
-  projectId: '7d4d84f37143c02aea3560eedfebb918',
+  projectId: import.meta.env.VITE_PROJECT_ID,
   chains: [arcTestnet, sepolia, baseSepolia],
   ssr: true,
   wallets: [
@@ -117,14 +119,11 @@ const config = getDefaultConfig({
 
 const queryClient = new QueryClient();
 
-// Add error boundary
-try {
-  const rootElement = document.getElementById('root');
-  if (!rootElement) {
-    console.error('Failed to find the root element');
-  } else {
-    ReactDOM.createRoot(rootElement).render(
-      <React.StrictMode>
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <GlobalErrorBoundary>
         <WagmiProvider config={config}>
           <QueryClientProvider client={queryClient}>
             <RainbowKitProvider avatar={CustomAvatar}>
@@ -132,16 +131,7 @@ try {
             </RainbowKitProvider>
           </QueryClientProvider>
         </WagmiProvider>
-      </React.StrictMode>,
-    )
-  }
-} catch (error) {
-  console.error('Error rendering the application:', error);
-  document.getElementById('root').innerHTML = `
-    <div style="padding: 20px; text-align: center; color: #ef4444;">
-      <h1>Error Loading Application</h1>
-      <p>${error.message}</p>
-      <p>Please check the console for more details.</p>
-    </div>
-  `;
+      </GlobalErrorBoundary>
+    </React.StrictMode>
+  );
 }
