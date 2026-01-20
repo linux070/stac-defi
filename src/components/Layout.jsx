@@ -17,7 +17,7 @@ import LanguageSelector from './LanguageSelector';
 import BackgroundGradient from './BackgroundGradient';
 import FeedbackButton from './FeedbackButton';
 
-const Layout = ({ children, activeTab, setActiveTab, location }) => {
+const Layout = ({ children, activeTab, setActiveTab }) => {
   const { t, i18n } = useTranslation();
   const { darkMode, toggleDarkMode } = useTheme();
   const { walletAddress, balance, isConnected, disconnect, fetchBalance } = useWallet();
@@ -56,7 +56,7 @@ const Layout = ({ children, activeTab, setActiveTab, location }) => {
       {(activeTab === 'swap' || activeTab === 'bridge') && <BackgroundGradient />}
 
       {/* Header - Immersive full-width design */}
-      <div className="layout-header fixed top-0 left-0 right-0 z-[99999] transition-all duration-300">
+      <div className="fixed top-0 left-0 right-0 z-[99999] transition-all duration-300">
         {/* Mobile Header (Relay Style) - Always visible */}
         <div className="lg:hidden w-full h-16 bg-white dark:bg-black border-b border-slate-200 dark:border-white/10 px-4 flex items-center justify-between relative z-[99999]">
           {/* Logo Section */}
@@ -328,7 +328,7 @@ const Layout = ({ children, activeTab, setActiveTab, location }) => {
       <main className={`flex-grow w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12 overflow-x-hidden md:overflow-visible relative z-10 flex flex-col`}>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            key={location?.pathname || activeTab}
+            key={activeTab}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -345,7 +345,7 @@ const Layout = ({ children, activeTab, setActiveTab, location }) => {
 
       {/* Footer */}
       <footer
-        className={`layout-footer mt-auto border-t border-gray-200 dark:border-gray-700 ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-white/80 dark:bg-black/80 backdrop-blur-sm' : 'bg-white dark:bg-black'} relative z-20 py-4 lg:py-8`}
+        className={`mt-auto border-t border-gray-200 dark:border-gray-700 ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-white/80 dark:bg-black/80 backdrop-blur-sm' : 'bg-white dark:bg-black'} relative z-20 py-4 lg:py-8`}
         style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

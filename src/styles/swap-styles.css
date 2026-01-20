@@ -963,30 +963,13 @@ html.dark .swap-slippage-container,
   backdrop-filter: blur(8px);
   position: fixed;
   inset: 0;
-  z-index: 100000;
-  /* Above header which is z-99999 */
+  z-index: 1000;
   display: flex;
   justify-content: center;
   align-items: center;
   /* Center vertically for a more balanced look */
   padding: 20px;
 }
-
-/* Hide header and footer when token selector modal is open */
-body:has(.swap-token-selector-modal-backdrop) .layout-header,
-body:has(.swap-token-selector-modal-backdrop) .layout-footer {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-/* Hide header and footer when bridge chain selector is open */
-body:has(.bridge-chain-selector-backdrop) .layout-header,
-body:has(.bridge-chain-selector-backdrop) .layout-footer {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-
 
 @media (min-width: 768px) {
   .swap-token-selector-modal-backdrop {
@@ -1013,9 +996,9 @@ body:has(.bridge-chain-selector-backdrop) .layout-footer {
 
 [data-theme='dark'] .swap-token-selector-modal,
 html.dark .swap-token-selector-modal {
-  background: #0a0a0a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
 }
 
 .swap-token-selector-header {
@@ -1241,7 +1224,7 @@ html.dark .swap-token-selector-popular-button.active .swap-token-selector-popula
 
 [data-theme='dark'] .swap-token-selector-list-icon,
 html.dark .swap-token-selector-list-icon {
-  background: #1a1a1a;
+  background: #1e293b;
   border-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -1308,169 +1291,6 @@ html.dark .swap-token-selector-list-symbol,
   color: var(--swap-text-tertiary);
   font-size: 14px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-/* Token Badge Icon System - Composite Token + Network Logo */
-.token-badge-container {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.token-badge-logo {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-html.dark .token-badge-logo,
-.dark .token-badge-logo {
-  background: #1a1a1a;
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.token-badge-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  color: white;
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.token-badge-network {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  border-radius: 50%;
-  border: 2px solid #ffffff;
-  background: #ffffff;
-  object-fit: cover;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-}
-
-html.dark .token-badge-network,
-.dark .token-badge-network {
-  border-color: #1a1a1a;
-  background: #1a1a1a;
-}
-
-/* Search Input with Icon */
-.swap-token-selector-search-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.swap-token-selector-search-icon {
-  position: absolute;
-  left: 16px;
-  color: var(--swap-text-tertiary);
-  pointer-events: none;
-}
-
-.swap-token-selector-search-wrapper .swap-token-selector-search-input {
-  padding-left: 44px;
-}
-
-/* Mobile Network Filter Bar */
-.network-filter-bar {
-  display: none;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 0 20px 16px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.network-filter-bar::-webkit-scrollbar {
-  display: none;
-}
-
-/* Show on mobile only */
-@media (max-width: 767px) {
-  .network-filter-bar {
-    display: flex;
-  }
-}
-
-.network-filter-pill {
-  flex-shrink: 0;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  background: rgba(59, 130, 246, 0.04);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  color: var(--swap-text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-.network-filter-pill:hover:not(.active) {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: rgba(59, 130, 246, 0.2);
-}
-
-.network-filter-pill.active {
-  background: #3b82f6;
-  color: white;
-  border-color: transparent;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
-}
-
-.network-filter-pill:active {
-  transform: scale(0.96);
-}
-
-.network-filter-icon {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-html.dark .network-filter-pill,
-.dark .network-filter-pill {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.08);
-  color: var(--swap-text-secondary);
-}
-
-html.dark .network-filter-pill:hover:not(.active),
-.dark .network-filter-pill:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-/* Token Address Display in List */
-.swap-token-selector-list-address {
-  font-size: 12px;
-  color: var(--swap-text-tertiary);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-.swap-token-selector-list-address .address-separator {
-  opacity: 0.5;
-  font-size: 8px;
-}
-
-.swap-token-selector-list-address .truncated-address {
-  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-  font-size: 11px;
-  opacity: 0.7;
 }
 
 /* Mobile Responsive for Token Selector Modal */

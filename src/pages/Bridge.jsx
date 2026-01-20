@@ -1026,90 +1026,135 @@ const Bridge = () => {
 
     return (
       <>
-        {isOpen && createPortal(
+        {isOpen && (
           <div
-            className="bridge-chain-selector-backdrop"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{
+              background: 'rgba(0, 0, 0, 0.8)',
+              backdropFilter: 'blur(8px)',
+            }}
             onClick={onClose}
           >
             <div
               ref={selectorRef}
-              className="bridge-chain-selector-modal"
-              onClick={(e) => e.stopPropagation()}
+              className="relative p-6 w-full max-w-md flex flex-col max-h-[80vh] overflow-hidden"
+              style={{
+                background: 'var(--bridge-bg-secondary)',
+                border: '1px solid var(--bridge-border-light)',
+                borderRadius: '16px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+              }}
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
             >
-              {/* Header */}
-              <div className="bridge-chain-selector-header">
-                <h3 className="bridge-chain-selector-title">{t('Select Network')}</h3>
+              <div className="flex justify-between items-center mb-4 flex-shrink-0">
+                <h3 className="bridge-header" style={{ marginBottom: 0, fontSize: '18px' }}>{t('Select Network')}</h3>
                 <button
                   onClick={onClose}
-                  className="bridge-chain-selector-close-button"
+                  className="settings-button"
+                  style={{ position: 'static', width: '32px', height: '32px' }}
                 >
-                  <X size={18} />
+                  <X size={20} />
                 </button>
               </div>
 
-              {/* Chain List */}
-              <div className="bridge-chain-selector-list">
-                {chainList.map((chainName) => {
-                  const isExcluded = chainName === exclude;
-                  const isSelected = chainName === selectedChain;
+              <div className="flex-1 overflow-y-auto -mx-6 px-6">
+                {/* Chain List */}
+                <div className="space-y-2">
+                  {chainList.map((chainName) => {
+                    const isExcluded = chainName === exclude;
+                    const isSelected = chainName === selectedChain;
 
-                  // Find chain object to get iconUrl
-                  const chainObj = chains.find(c => c.name === chainName || (chainName === 'Sepolia' && c.name.includes('Sepolia')));
-                  const iconUrl = chainObj?.iconUrl;
+                    // Find chain object to get iconUrl
+                    const chainObj = chains.find(c => c.name === chainName || (chainName === 'Sepolia' && c.name.includes('Sepolia')));
+                    const iconUrl = chainObj?.iconUrl;
 
-                  return (
-                    <button
-                      key={chainName}
-                      disabled={isExcluded}
-                      onClick={() => {
-                        if (!isExcluded) {
-                          onSelect(chainName);
-                          onClose();
-                        }
-                      }}
-                      className={`bridge-chain-selector-item ${isSelected ? 'selected' : ''} ${isExcluded ? 'disabled' : ''}`}
-                    >
-                      <div className="bridge-chain-selector-item-content">
-                        <div className="bridge-chain-selector-icon">
-                          {iconUrl ? (
-                            <img
-                              src={iconUrl}
-                              alt={chainName}
-                              className="w-full h-full object-contain"
-                            />
-                          ) : (
-                            <span className="text-xs font-bold">{chainName.substring(0, 1)}</span>
+                    return (
+                      <button
+                        key={chainName}
+                        disabled={isExcluded}
+                        onClick={() => {
+                          if (!isExcluded) {
+                            onSelect(chainName);
+                            onClose();
+                          }
+                        }}
+                        className={`w-full p-4 rounded-lg flex items-center justify-between transition-all duration-200
+                          ${isSelected ? 'border-2' : 'border-2 border-transparent'}`}
+                        style={{
+                          background: isSelected ? 'var(--bridge-alert-bg)' : 'transparent',
+                          borderColor: isSelected ? 'var(--bridge-accent-primary)' : 'transparent',
+                          opacity: 1, // Keep full visibility for all networks
+                          cursor: isExcluded ? 'not-allowed' : 'pointer'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected && !isExcluded) {
+                            e.currentTarget.style.background = 'var(--bridge-surface-hover)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected && !isExcluded) {
+                            e.currentTarget.style.background = 'transparent';
+                          }
+                        }}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="network-icon">
+                            {iconUrl ? (
+                              <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
+                                style={{ background: chainName.includes('Arc') ? '#131720' : (chainObj.iconBackground || '#000') }}
+                              >
+                                <img
+                                  src={iconUrl}
+                                  alt={chainName}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+                                <span className="text-xs font-bold">{chainName.substring(0, 1)}</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-left">
+                            <p className="network-name">{chainName}</p>
+                            <p className="network-chain">{t('Testnet')}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {isExcluded && (
+                            <div className="px-1.5 py-0.5 text-xs rounded-md" style={{
+                              background: 'var(--bridge-surface-card)',
+                              color: 'var(--bridge-text-secondary)',
+                              fontSize: '10px',
+                              fontWeight: '600'
+                            }}>
+                              {t('Selected')}
+                            </div>
                           )}
                         </div>
-                        <div className="bridge-chain-selector-info">
-                          <p className="bridge-chain-selector-name">{chainName}</p>
-                          <p className="bridge-chain-selector-type">{t('Testnet')}</p>
-                        </div>
-                      </div>
-                      {isExcluded && (
-                        <div className="bridge-chain-selector-badge">
-                          {t('Selected')}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Info Box */}
-              <div className="bridge-chain-selector-info-box">
-                <Info size={16} />
-                <p>{t('Select a different network for your destination chain. The same network cannot be used for both source and destination.')}</p>
+              <div className="alert-box mt-4 flex-shrink-0">
+                <Info className="alert-icon" size={16} />
+                <div className="alert-content">
+                  <p className="alert-text">
+                    {t('Select a different network for your destination chain. The same network cannot be used for both source and destination.')}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>,
-          document.body
+          </div>
         )}
       </>
     );
 
   };
-
 
   return (
     <div className="max-w-[540px] mx-auto w-full">
