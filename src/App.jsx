@@ -7,10 +7,21 @@ import Swap from './pages/Swap';
 import Bridge from './pages/Bridge';
 import Liquidity from './pages/Liquidity';
 import Transactions from './pages/Transactions';
+import Maintenance from './pages/Maintenance';
+import { isMaintenanceMode } from './config/maintenance';
 import { Analytics } from '@vercel/analytics/react';
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
+
+  if (isMaintenanceMode) {
+    return (
+      <ThemeProvider>
+        <Maintenance />
+        <Analytics />
+      </ThemeProvider>
+    );
+  }
 
   const renderContent = () => {
     switch (activeTab) {
