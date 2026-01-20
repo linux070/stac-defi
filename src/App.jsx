@@ -39,8 +39,8 @@ const AppContent = () => {
   };
 
   return (
-    <Layout activeTab={getActiveTab()} setActiveTab={setActiveTab}>
-      <Routes>
+    <Layout activeTab={getActiveTab()} setActiveTab={setActiveTab} location={location}>
+      <Routes location={location}>
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/home" element={<Home setActiveTab={setActiveTab} />} />
         <Route path="/swap" element={<Swap />} />
