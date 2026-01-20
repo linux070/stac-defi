@@ -636,13 +636,12 @@ export function useTransactionHistory() {
       ]);
 
       const globalTxs = [...arcTxs, ...sepoliaTxs, ...baseSepoliaTxs];
-      if (globalTxs.length > 0) {
-        const existingGlobal = await getItem(GLOBAL_TX_KEY) || [];
-        const merged = [...globalTxs, ...existingGlobal].slice(0, 200);
-        await setItem(GLOBAL_TX_KEY, merged);
-        // Trigger event for other hooks
-        window.dispatchEvent(new CustomEvent('globalStatsUpdated'));
-      }
+      const existingGlobal = await getItem(GLOBAL_TX_KEY) || [];
+      const merged = [...globalTxs, ...existingGlobal].slice(0, 200);
+      await setItem(GLOBAL_TX_KEY, merged);
+
+      // Trigger event for other hooks even if 0 found (to stop loading states)
+      window.dispatchEvent(new CustomEvent('globalStatsUpdated'));
     } catch (err) {
       console.error('Error fetching global stats:', err);
     }

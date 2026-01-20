@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react';
 import { getItem, setItem } from '../utils/indexedDB';
-import { BASE_STATS } from '../config/baseStats';
-
-// Cache key for IndexedDB
 const CACHE_KEY = 'dapp_transaction_count';
 
 // Calculate percentage change
@@ -14,9 +11,9 @@ const calculatePercentageChange = (current, previous) => {
 
 // Lightweight hook to track dapp-specific total transaction count
 export function useDappTransactionCount() {
-    const [transactionCount, setTransactionCount] = useState(BASE_STATS.transactionCount);
-    const [change, setChange] = useState(BASE_STATS.transactionChange);
-    const [trend, setTrend] = useState('up');
+    const [transactionCount, setTransactionCount] = useState(null);
+    const [change, setChange] = useState(null);
+    const [trend, setTrend] = useState('stable');
     const [loading, setLoading] = useState(true);
 
     const updateTransactionCount = async () => {
@@ -37,8 +34,8 @@ export function useDappTransactionCount() {
                 }
             });
 
-            // Base count + live count
-            const currentCount = uniqueHashes.size + BASE_STATS.transactionCount;
+            // Live count only
+            const currentCount = uniqueHashes.size;
 
             // Get previous count from cache
             let previousCount = null;
@@ -57,9 +54,6 @@ export function useDappTransactionCount() {
                     setChange(Math.abs(percentageChange));
                     setTrend(percentageChange > 0 ? 'up' : 'down');
                 }
-            } else if (BASE_STATS.transactionChange) {
-                setChange(BASE_STATS.transactionChange);
-                setTrend('up');
             } else {
                 setChange(null);
                 setTrend('stable');
