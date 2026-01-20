@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getItem } from '../utils/indexedDB';
 import { TOKEN_PRICES } from '../config/networks';
+import { BASE_STATS } from '../config/baseStats';
 
 /**
  * Hook to calculate total swap volume in USD from transactions stored in IndexedDB
@@ -9,7 +10,7 @@ import { TOKEN_PRICES } from '../config/networks';
  *                                       If null/undefined, all transactions are counted.
  */
 export function useTotalVolume(walletAddress = null) {
-    const [totalVolume, setTotalVolume] = useState(0);
+    const [totalVolume, setTotalVolume] = useState(BASE_STATS.totalVolume);
     const [loading, setLoading] = useState(true);
 
     const calculateTotalVolume = async () => {
@@ -70,7 +71,9 @@ export function useTotalVolume(walletAddress = null) {
                 }
             });
 
-            setTotalVolume(Math.round(volumeUSD));
+            // Add base volume for starting point
+            const finalVolume = Math.round(volumeUSD) + BASE_STATS.totalVolume;
+            setTotalVolume(finalVolume);
             setLoading(false);
         } catch (error) {
             console.error('Error calculating swap volume:', error);

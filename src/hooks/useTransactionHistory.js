@@ -523,9 +523,12 @@ export function useTransactionHistory() {
       const logs = [...logsFrom, ...logsTo];
       const txHashes = [...new Set(logs.map(log => log.transactionHash))];
 
+      // Get hashes we already have in state to avoid redundant RPC calls
+      const existingHashes = new Set(transactions.map(tx => tx.hash));
+
       const txPromises = txHashes
-        .filter(hash => !fetchedHashesRef.current.has(hash))
-        .slice(0, 20)
+        .filter(hash => !fetchedHashesRef.current.has(hash) && !existingHashes.has(hash))
+        .slice(0, 15) // Limit concurrent fetches
         .map(async (hash) => {
           try {
             const [tx, receipt] = await Promise.all([
@@ -567,7 +570,7 @@ export function useTransactionHistory() {
       console.error(`Error fetching transactions from ${chainName}:`, err);
       return [];
     }
-  }, [address]);
+  }, [address, transactions]);
 
   // Fetch all transactions from all chains
   const fetchTransactions = useCallback(async () => {
@@ -577,7 +580,7 @@ export function useTransactionHistory() {
     }
 
     const now = Date.now();
-    if (now - lastFetchRef.current < 30000) {
+    if (now - lastFetchRef.current < 20000) {
       return;
     }
 
@@ -597,16 +600,20 @@ export function useTransactionHistory() {
       ]);
 
       const combinedTxs = [...arcTxs, ...sepoliaTxs, ...baseSepoliaTxs];
-      const deduplicatedTxs = deduplicateBridgeTransactions(combinedTxs);
-      const allTxs = deduplicatedTxs.sort((a, b) => b.timestamp - a.timestamp);
 
-      // Update state with new transactions
-      setTransactions(prev => {
-        const existingHashes = new Set(prev.map(tx => tx.hash));
-        const newTxs = allTxs.filter(tx => !existingHashes.has(tx.hash));
-        const merged = [...newTxs, ...prev].slice(0, 100);
-        return merged;
-      });
+      if (combinedTxs.length > 0) {
+        const deduplicatedTxs = deduplicateBridgeTransactions(combinedTxs);
+        const sorted = deduplicatedTxs.sort((a, b) => b.timestamp - a.timestamp);
+
+        // Update state with new transactions
+        setTransactions(prev => {
+          const existingHashes = new Set(prev.map(tx => tx.hash));
+          const newTxs = sorted.filter(tx => !existingHashes.has(tx.hash));
+          if (newTxs.length === 0) return prev;
+          const merged = [...newTxs, ...prev].slice(0, 100);
+          return merged;
+        });
+      }
     } catch (err) {
       console.error('Error fetching transaction history:', err);
       setError(err.message);
@@ -654,6 +661,8 @@ export function useTransactionHistory() {
         // Wallet disconnected - clear transactions but data is already saved
         setTransactions([]);
         previousAddressRef.current = null;
+        // Even when disconnected, trigger global fetch to ensure empty state has baseline data
+        fetchGlobalStats();
         return;
       }
 
@@ -676,6 +685,9 @@ export function useTransactionHistory() {
             setTransactions([]);
             console.log(`📭 No saved transactions for ${address.slice(0, 6)}...`);
           }
+
+          // Trigger global fetch as well
+          fetchGlobalStats();
         } catch (err) {
           console.error('Error loading wallet transactions:', err);
           setTransactions([]);
@@ -686,10 +698,13 @@ export function useTransactionHistory() {
     };
 
     handleWalletChange();
-  }, [isConnected, address, loadWalletTransactions]);
+  }, [isConnected, address, loadWalletTransactions, fetchGlobalStats]);
 
   // Effect: Set up polling when wallet is connected
   useEffect(() => {
+    // Initial global fetch regardless of connection
+    fetchGlobalStats();
+
     if (!isConnected || !address) {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
@@ -706,6 +721,7 @@ export function useTransactionHistory() {
     // Poll every 30 seconds
     pollingIntervalRef.current = setInterval(() => {
       fetchTransactions();
+      fetchGlobalStats();
     }, 30000);
 
     return () => {
@@ -715,7 +731,7 @@ export function useTransactionHistory() {
         pollingIntervalRef.current = null;
       }
     };
-  }, [isConnected, address, fetchTransactions]);
+  }, [isConnected, address, fetchTransactions, fetchGlobalStats]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -1,5 +1,4 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { WalletProvider } from './contexts/WalletContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout';
@@ -10,57 +9,32 @@ import Liquidity from './pages/Liquidity';
 import Transactions from './pages/Transactions';
 import { Analytics } from '@vercel/analytics/react';
 
-// Wrapper component to handle routing and pass navigation to Layout
-const AppContent = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Map pathname to tab id
-  const getActiveTab = () => {
-    const path = location.pathname;
-    if (path === '/' || path === '/home') return 'home';
-    if (path === '/swap') return 'swap';
-    if (path === '/bridge') return 'bridge';
-    if (path === '/liquidity') return 'liquidity';
-    if (path === '/transactions') return 'transactions';
-    return 'home';
-  };
-
-  // Navigate to tab by updating URL
-  const setActiveTab = (tabId) => {
-    const routes = {
-      'home': '/home',
-      'swap': '/swap',
-      'bridge': '/bridge',
-      'liquidity': '/liquidity',
-      'transactions': '/transactions'
-    };
-    navigate(routes[tabId] || '/home');
-  };
-
-  return (
-    <Layout activeTab={getActiveTab()} setActiveTab={setActiveTab} location={location}>
-      <Routes location={location}>
-        <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="/home" element={<Home setActiveTab={setActiveTab} />} />
-        <Route path="/swap" element={<Swap />} />
-        <Route path="/bridge" element={<Bridge />} />
-        <Route path="/liquidity" element={<Liquidity />} />
-        <Route path="/transactions" element={<Transactions />} />
-        {/* Fallback route */}
-        <Route path="*" element={<Navigate to="/home" replace />} />
-      </Routes>
-    </Layout>
-  );
-};
-
 function App() {
+  const [activeTab, setActiveTab] = useState('home');
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return <Home setActiveTab={setActiveTab} />;
+      case 'swap':
+        return <Swap />;
+      case 'bridge':
+        return <Bridge />;
+      case 'liquidity':
+        return <Liquidity />;
+      case 'transactions':
+        return <Transactions />;
+      default:
+        return <Home setActiveTab={setActiveTab} />;
+    }
+  };
+
   return (
     <ThemeProvider>
       <WalletProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
+        <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+          {renderContent()}
+        </Layout>
         <Analytics />
       </WalletProvider>
     </ThemeProvider>

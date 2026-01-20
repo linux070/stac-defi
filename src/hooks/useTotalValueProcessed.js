@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getItem, setItem } from '../utils/indexedDB';
 import { TOKEN_PRICES } from '../config/networks';
+import { BASE_STATS } from '../config/baseStats';
 
 // Cache key for IndexedDB
 const CACHE_KEY = 'dapp_total_value_processed';
@@ -10,7 +11,7 @@ const CACHE_KEY = 'dapp_total_value_processed';
  * Includes: Swaps, Bridges, and future Liquidity operations
  */
 export function useTotalValueProcessed() {
-    const [totalValue, setTotalValue] = useState(0);
+    const [totalValue, setTotalValue] = useState(BASE_STATS.totalVolume);
     const [loading, setLoading] = useState(true);
 
     const calculateTotalValue = async () => {
@@ -69,7 +70,8 @@ export function useTotalValueProcessed() {
                 }
             });
 
-            const finalValue = Math.round(totalUSD);
+            // Add base volume for starting point
+            const finalValue = Math.round(totalUSD) + BASE_STATS.totalVolume;
             setTotalValue(finalValue);
             await setItem(CACHE_KEY, { value: finalValue, timestamp: Date.now() });
             setLoading(false);

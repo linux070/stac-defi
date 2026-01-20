@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getItem, setItem } from '../utils/indexedDB';
+import { BASE_STATS } from '../config/baseStats';
 
 // Cache key for IndexedDB
 const CACHE_KEY = 'dapp_bridge_count';
@@ -13,8 +14,8 @@ const calculatePercentageChange = (current, previous) => {
 
 // Lightweight hook to track dapp-specific bridge transaction count
 export function useDappBridgeCount() {
-    const [bridgeCount, setBridgeCount] = useState(null);
-    const [change, setChange] = useState(null);
+    const [bridgeCount, setBridgeCount] = useState(BASE_STATS.bridgeCount);
+    const [change, setChange] = useState(BASE_STATS.bridgeChange);
     const [trend, setTrend] = useState('stable');
     const [loading, setLoading] = useState(true);
 
@@ -36,7 +37,8 @@ export function useDappBridgeCount() {
                 }
             });
 
-            const currentCount = uniqueHashes.size;
+            // Base count + live count
+            const currentCount = uniqueHashes.size + BASE_STATS.bridgeCount;
 
             // Get previous count from cache
             let previousCount = null;
@@ -55,6 +57,9 @@ export function useDappBridgeCount() {
                     setChange(Math.abs(percentageChange));
                     setTrend(percentageChange > 0 ? 'up' : 'down');
                 }
+            } else if (BASE_STATS.bridgeChange) {
+                setChange(BASE_STATS.bridgeChange);
+                setTrend('up');
             } else {
                 setChange(null);
                 setTrend('stable');

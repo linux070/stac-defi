@@ -11,7 +11,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatAddress } from '../utils/blockchain';
 import WalletModal from './WalletModal';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useNavigate, Link } from 'react-router-dom';
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import LanguageSelector from './LanguageSelector';
 import BackgroundGradient from './BackgroundGradient';
@@ -118,19 +117,18 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             {/* Desktop Navigation */}
             <nav className="flex items-center gap-1 md:gap-2">
               {navItems.map((item) => {
-                const path = item.id === 'home' ? '/home' : `/${item.id}`;
                 return (
-                  <Link
+                  <div
                     key={item.id}
-                    to={path}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 flex items-center nav-link whitespace-nowrap
+                    onClick={() => setActiveTab(item.id)}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 flex items-center nav-link whitespace-nowrap cursor-pointer
                       ${activeTab === item.id
                         ? 'bg-blue-100/50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400'
                         : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5'
                       }`}
                   >
                     <span className="whitespace-nowrap">{item.label}</span>
-                  </Link>
+                  </div>
                 );
               })}
             </nav>
@@ -178,13 +176,14 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               {/* Navigation Links */}
               <nav className="flex flex-col items-start px-8 pt-8 pb-8 gap-0.5">
                 {navItems.map((item) => {
-                  const path = item.id === 'home' ? '/home' : `/${item.id}`;
                   return (
-                    <Link
+                    <div
                       key={item.id}
-                      to={path}
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`text-[18px] font-semibold tracking-tight py-2 transition-all duration-300 relative
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setIsMenuOpen(false);
+                      }}
+                      className={`text-[18px] font-semibold tracking-tight py-2 transition-all duration-300 relative cursor-pointer
                         ${activeTab === item.id
                           ? 'text-blue-600 dark:text-blue-400'
                           : 'text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
@@ -197,7 +196,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                         />
                       )}
                       {item.label}
-                    </Link>
+                    </div>
                   );
                 })}
               </nav>

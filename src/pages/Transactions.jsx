@@ -245,8 +245,11 @@ const Transactions = () => {
 
     // 3. Add blockchain transactions that don't exist in local storage
     const blockchainOnly = filteredBlockchain.filter(tx => {
+      // Deduplicate against local storage
       if (localSet.has(tx.hash)) return false;
-      if (tx.type === 'Bridge' || tx.type === 'Transfer') return false;
+
+      // We allow Bridge/Transfer transactions from the blockchain as a fallback
+      // useTransactionHistory already attempts to format them correctly
       return true;
     });
 
