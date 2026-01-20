@@ -10,10 +10,12 @@ export default defineConfig({
     react(),
     nodePolyfills(), // Add this function call to the plugins array
   ],
-  //    server: {
-  //   host: true
-  // }
-  // ... rest of your config
+  server: {
+    port: 5173,       // This forces the port to be 5173
+    strictPort: true, // This stops it from switching to 5174/5175 if busy
+    host: true  // Optional: Helpful if you want to test on mobile via LAN
+  }
+
+
 })
 
-// 

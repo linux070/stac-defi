@@ -56,7 +56,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       {(activeTab === 'swap' || activeTab === 'bridge') && <BackgroundGradient />}
 
       {/* Header - Immersive full-width design */}
-      <div className="fixed top-0 left-0 right-0 z-[99999] transition-all duration-300">
+      <div className="layout-header fixed top-0 left-0 right-0 z-[99999] transition-all duration-300">
         {/* Mobile Header (Relay Style) - Always visible */}
         <div className="lg:hidden w-full h-16 bg-white dark:bg-black border-b border-slate-200 dark:border-white/10 px-4 flex items-center justify-between relative z-[99999]">
           {/* Logo Section */}
@@ -324,15 +324,16 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className={`min-h-fit w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'transactions' ? 'bg-white dark:bg-black' : activeTab === 'liquidity' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-24 md:pb-12 overflow-x-hidden md:overflow-visible flex-grow relative z-10`}>
-        <AnimatePresence mode="wait">
+      {/* Main Content */}
+      <main className={`flex-grow w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12 overflow-x-hidden md:overflow-visible relative z-10 flex flex-col`}>
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={activeTab}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            style={{ willChange: 'opacity' }}
+            transition={{ duration: 0.15, ease: "easeInOut" }}
+            className="w-full flex-grow flex flex-col"
           >
             {children}
           </motion.div>
@@ -344,7 +345,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
       {/* Footer */}
       <footer
-        className={`mt-auto border-t border-gray-200 dark:border-gray-700 ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-white/80 dark:bg-black/80 backdrop-blur-sm' : 'bg-white dark:bg-black'} fixed lg:relative bottom-0 left-0 right-0 lg:bottom-auto z-20 py-4 lg:py-8`}
+        className={`layout-footer mt-auto border-t border-gray-200 dark:border-gray-700 ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-white/80 dark:bg-black/80 backdrop-blur-sm' : 'bg-white dark:bg-black'} relative z-20 py-4 lg:py-8`}
         style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -373,34 +374,41 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               </p>
             </div>
 
-            {/* Right Section - Footer Links */}
+            {/* Right Section - Footer Links - Modernized with Icons */}
             <div className="flex items-center gap-6 md:gap-8 w-full lg:w-auto justify-center lg:justify-end">
               <a
                 href="#"
-                className="hidden lg:block text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="hidden lg:flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 hover:scale-110"
+                title="Docs"
               >
-                Docs
+                <FileText size={20} />
               </a>
               <a
-                href="#"
-                className="hidden lg:block text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                href="https://github.com/linux070/stac-defi"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden lg:flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 hover:scale-110"
+                title="GitHub"
               >
-                Terms
+                <Github size={20} />
               </a>
-              {/* Twitter link - hidden on mobile */}
               <a
                 href="https://x.com/stac_defi"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hidden lg:block text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="hidden lg:flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 hover:scale-110"
+                title="Twitter"
               >
-                Twitter
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
               </a>
               <a
                 href="#"
-                className="hidden lg:block text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="hidden lg:flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 hover:scale-110"
+                title="Discord"
               >
-                Discord
+                <MessageSquare size={20} />
               </a>
             </div>
           </div>

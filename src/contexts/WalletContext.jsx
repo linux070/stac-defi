@@ -20,7 +20,7 @@ export const WalletProvider = ({ children }) => {
   const { switchChain } = useSwitchChain();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
-  
+
   const [walletAddress, setWalletAddress] = useState('');
   const [chainId, setChainId] = useState(null);
   const [provider, setProvider] = useState(null);
@@ -33,16 +33,16 @@ export const WalletProvider = ({ children }) => {
   useEffect(() => {
     setWalletAddress(address || '');
     setChainId(wagmiChainId ? '0x' + wagmiChainId.toString(16) : null);
-    
+
     if (balanceData) {
       setBalance(ethers.formatEther(balanceData.value));
     }
-    
+
     // Set provider and signer
     if (publicClient) {
       setProvider(publicClient);
     }
-    
+
     if (walletClient) {
       setSigner(walletClient);
     }
@@ -53,7 +53,7 @@ export const WalletProvider = ({ children }) => {
     // This function is kept for backward compatibility
     setIsConnecting(true);
     setError('');
-    
+
     try {
       // In a real implementation, you would trigger RainbowKit's connect button
       // For now, we'll simulate a successful connection

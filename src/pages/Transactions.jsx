@@ -98,6 +98,13 @@ const Transactions = () => {
   const [loadingLocalTransactions, setLoadingLocalTransactions] = useState(true);
   const [activeActivityTab, setActiveActivityTab] = useState('my'); // 'my' or 'all'
 
+  // Automatically switch to 'all' tab if wallet is disconnected
+  useEffect(() => {
+    if (!isConnected && activeActivityTab === 'my') {
+      setActiveActivityTab('all');
+    }
+  }, [isConnected, activeActivityTab]);
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'success', 'pending', 'failed'
@@ -594,24 +601,26 @@ const Transactions = () => {
 
           {/* Tab Selector */}
           <div className="activity-tabs">
-            {['my', 'all'].map((tab) => (
-              <button
-                key={tab}
-                className={`activity-tab ${activeActivityTab === tab ? 'active' : ''}`}
-                onClick={() => setActiveActivityTab(tab)}
-              >
-                {activeActivityTab === tab && (
-                  <motion.div
-                    layoutId="activeTabPill"
-                    className="absolute inset-0 bg-slate-900 dark:bg-white rounded-[10px] shadow-sm"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                <span className={`relative z-10 ${activeActivityTab === tab ? 'text-white dark:text-black' : 'text-slate-500 dark:text-slate-400'}`}>
-                  {tab === 'my' ? t('My Transactions') : t('All Transactions')}
-                </span>
-              </button>
-            ))}
+            {['my', 'all']
+              .filter(tab => tab === 'all' || isConnected)
+              .map((tab) => (
+                <button
+                  key={tab}
+                  className={`activity-tab ${activeActivityTab === tab ? 'active' : ''}`}
+                  onClick={() => setActiveActivityTab(tab)}
+                >
+                  {activeActivityTab === tab && (
+                    <motion.div
+                      layoutId="activeTabPill"
+                      className="absolute inset-0 bg-slate-900 dark:bg-white rounded-[10px] shadow-sm"
+                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  <span className={`relative z-10 ${activeActivityTab === tab ? 'text-white dark:text-black' : 'text-slate-500 dark:text-slate-400'}`}>
+                    {tab === 'my' ? t('My Transactions') : t('All Transactions')}
+                  </span>
+                </button>
+              ))}
           </div>
         </div>
 
@@ -1175,24 +1184,24 @@ const Transactions = () => {
         showCopyToast && ReactDOM.createPortal(
           <AnimatePresence>
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="fixed bottom-24 left-4 right-4 md:left-auto md:right-8 md:w-80 z-[1000]"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="fixed bottom-24 left-4 right-4 md:left-8 md:right-auto md:w-80 z-[99999]"
             >
-              <div className="bg-white dark:bg-[#131720] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 flex items-start gap-4 backdrop-blur-xl">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                  <Check className="text-emerald-500" size={20} />
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-4 flex items-center gap-4 backdrop-blur-xl">
+                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                  <Check className="text-slate-900 dark:text-white" size={20} strokeWidth={3} />
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">{t('Copied!')}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('Transaction hash copied to clipboard')}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-bold text-slate-900 dark:text-white leading-tight">{t('Copied!')}</p>
+                  <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{t('Transaction hash copied')}</p>
                 </div>
                 <button
                   onClick={() => setShowCopyToast(false)}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
             </motion.div>

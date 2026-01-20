@@ -1026,135 +1026,90 @@ const Bridge = () => {
 
     return (
       <>
-        {isOpen && (
+        {isOpen && createPortal(
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{
-              background: 'rgba(0, 0, 0, 0.8)',
-              backdropFilter: 'blur(8px)',
-            }}
+            className="bridge-chain-selector-backdrop"
             onClick={onClose}
           >
             <div
               ref={selectorRef}
-              className="relative p-6 w-full max-w-md flex flex-col max-h-[80vh] overflow-hidden"
-              style={{
-                background: 'var(--bridge-bg-secondary)',
-                border: '1px solid var(--bridge-border-light)',
-                borderRadius: '16px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-              }}
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+              className="bridge-chain-selector-modal"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                <h3 className="bridge-header" style={{ marginBottom: 0, fontSize: '18px' }}>{t('Select Network')}</h3>
+              {/* Header */}
+              <div className="bridge-chain-selector-header">
+                <h3 className="bridge-chain-selector-title">{t('Select Network')}</h3>
                 <button
                   onClick={onClose}
-                  className="settings-button"
-                  style={{ position: 'static', width: '32px', height: '32px' }}
+                  className="bridge-chain-selector-close-button"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto -mx-6 px-6">
-                {/* Chain List */}
-                <div className="space-y-2">
-                  {chainList.map((chainName) => {
-                    const isExcluded = chainName === exclude;
-                    const isSelected = chainName === selectedChain;
+              {/* Chain List */}
+              <div className="bridge-chain-selector-list">
+                {chainList.map((chainName) => {
+                  const isExcluded = chainName === exclude;
+                  const isSelected = chainName === selectedChain;
 
-                    // Find chain object to get iconUrl
-                    const chainObj = chains.find(c => c.name === chainName || (chainName === 'Sepolia' && c.name.includes('Sepolia')));
-                    const iconUrl = chainObj?.iconUrl;
+                  // Find chain object to get iconUrl
+                  const chainObj = chains.find(c => c.name === chainName || (chainName === 'Sepolia' && c.name.includes('Sepolia')));
+                  const iconUrl = chainObj?.iconUrl;
 
-                    return (
-                      <button
-                        key={chainName}
-                        disabled={isExcluded}
-                        onClick={() => {
-                          if (!isExcluded) {
-                            onSelect(chainName);
-                            onClose();
-                          }
-                        }}
-                        className={`w-full p-4 rounded-lg flex items-center justify-between transition-all duration-200
-                          ${isSelected ? 'border-2' : 'border-2 border-transparent'}`}
-                        style={{
-                          background: isSelected ? 'var(--bridge-alert-bg)' : 'transparent',
-                          borderColor: isSelected ? 'var(--bridge-accent-primary)' : 'transparent',
-                          opacity: 1, // Keep full visibility for all networks
-                          cursor: isExcluded ? 'not-allowed' : 'pointer'
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isSelected && !isExcluded) {
-                            e.currentTarget.style.background = 'var(--bridge-surface-hover)';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isSelected && !isExcluded) {
-                            e.currentTarget.style.background = 'transparent';
-                          }
-                        }}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="network-icon">
-                            {iconUrl ? (
-                              <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
-                                style={{ background: chainName.includes('Arc') ? '#131720' : (chainObj.iconBackground || '#000') }}
-                              >
-                                <img
-                                  src={iconUrl}
-                                  alt={chainName}
-                                  className="w-full h-full object-contain"
-                                />
-                              </div>
-                            ) : (
-                              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
-                                <span className="text-xs font-bold">{chainName.substring(0, 1)}</span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-left">
-                            <p className="network-name">{chainName}</p>
-                            <p className="network-chain">{t('Testnet')}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {isExcluded && (
-                            <div className="px-1.5 py-0.5 text-xs rounded-md" style={{
-                              background: 'var(--bridge-surface-card)',
-                              color: 'var(--bridge-text-secondary)',
-                              fontSize: '10px',
-                              fontWeight: '600'
-                            }}>
-                              {t('Selected')}
-                            </div>
+                  return (
+                    <button
+                      key={chainName}
+                      disabled={isExcluded}
+                      onClick={() => {
+                        if (!isExcluded) {
+                          onSelect(chainName);
+                          onClose();
+                        }
+                      }}
+                      className={`bridge-chain-selector-item ${isSelected ? 'selected' : ''} ${isExcluded ? 'disabled' : ''}`}
+                    >
+                      <div className="bridge-chain-selector-item-content">
+                        <div className="bridge-chain-selector-icon">
+                          {iconUrl ? (
+                            <img
+                              src={iconUrl}
+                              alt={chainName}
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <span className="text-xs font-bold">{chainName.substring(0, 1)}</span>
                           )}
                         </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                        <div className="bridge-chain-selector-info">
+                          <p className="bridge-chain-selector-name">{chainName}</p>
+                          <p className="bridge-chain-selector-type">{t('Testnet')}</p>
+                        </div>
+                      </div>
+                      {isExcluded && (
+                        <div className="bridge-chain-selector-badge">
+                          {t('Selected')}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Info Box */}
-              <div className="alert-box mt-4 flex-shrink-0">
-                <Info className="alert-icon" size={16} />
-                <div className="alert-content">
-                  <p className="alert-text">
-                    {t('Select a different network for your destination chain. The same network cannot be used for both source and destination.')}
-                  </p>
-                </div>
+              <div className="bridge-chain-selector-info-box">
+                <Info size={16} />
+                <p>{t('Select a different network for your destination chain. The same network cannot be used for both source and destination.')}</p>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </>
     );
 
   };
+
 
   return (
     <div className="max-w-[540px] mx-auto w-full">
@@ -1526,46 +1481,25 @@ const Bridge = () => {
         <AnimatePresence>
           {showNetworkSuccess && (
             <div className="network-success-portal-container">
-              {/* Backdrop for mobile to make it feel like a modal */}
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.5 }}
-                exit={{ opacity: 0 }}
-                className="network-success-backdrop md:hidden"
-                onClick={() => setShowNetworkSuccess(false)}
-              />
-              <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
-                className="fixed top-24 left-4 md:top-32 md:left-1/2 md:-translate-x-1/2 z-[9999] flex justify-start md:justify-center w-auto"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="fixed bottom-24 left-4 right-4 md:left-8 md:right-auto md:w-80 z-[99999]"
               >
-                <div className="flex items-center gap-3 md:gap-4 px-4 py-3 md:px-5 md:py-4 rounded-[16px] bg-[#059669] border border-emerald-500/30 shadow-[0_12px_40px_rgba(5,150,105,0.25)] min-w-[280px] md:min-w-[320px] max-w-md">
-                  {/* Icon Section */}
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full border-[1.5px] border-white">
-                      <Check size={16} className="text-white" strokeWidth={3} />
-                    </div>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-4 flex items-center gap-4 backdrop-blur-xl">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                    <Check className="text-slate-900 dark:text-white" size={20} strokeWidth={3} />
                   </div>
-
-                  {/* Text Section */}
-                  <div className="flex-1 flex flex-col min-w-0">
-                    <span className="text-[15px] font-bold text-white leading-tight">
-                      {t('Success')}
-                    </span>
-                    <span className="text-[13px] text-emerald-50 mt-0.5 leading-snug">
-                      {t('Successfully added network to your wallet')}
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-bold text-slate-900 dark:text-white leading-tight">{t('Success')}</p>
+                    <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{t('Successfully added network')}</p>
                   </div>
-
-                  {/* Close Button */}
                   <button
                     onClick={() => setShowNetworkSuccess(false)}
-                    className="flex-shrink-0 p-1 hover:bg-white/10 rounded-full transition-colors"
-                    aria-label="Close"
+                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
                   >
-                    <X size={18} className="text-emerald-100" />
+                    <X size={18} />
                   </button>
                 </div>
               </motion.div>

@@ -12,7 +12,6 @@ const ARC_RPC_URLS = [
 
 const SEPOLIA_RPC_URLS = [
   'https://ethereum-sepolia-rpc.publicnode.com',
-  'https://rpc.sepolia.org',
 ];
 
 const BASE_SEPOLIA_RPC_URLS = [
@@ -39,8 +38,8 @@ const TRANSFER_EVENT_SIGNATURE = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4
 
 // Storage key for all transactions (shared across wallets)
 const TRANSACTIONS_STORAGE_KEY = 'myTransactions';
-
-// Backup to sessionStorage for recovery after site clear
+const GLOBAL_STATS_KEY = 'globalStats'; // Key for global dashboard metrics
+const GLOBAL_TX_KEY = 'globalTransactions'; // Cache for global transactions
 const backupToSessionStorage = (walletAddress, transactions) => {
   try {
     if (typeof sessionStorage !== 'undefined') {
@@ -293,6 +292,37 @@ const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
   };
 };
 
+/**
+ * Enhanced format for Global Transactions (Anonymous)
+ */
+const formatGlobalTransaction = (log, chainId, chainName) => {
+  const timestamp = Date.now(); // We don't fetch blocks for global for speed
+  let amount = '0.00';
+
+  try {
+    if (log.args && log.args.value) {
+      amount = (Number(log.args.value) / 1000000).toFixed(2);
+    } else if (log.data && log.data !== '0x') {
+      const hexAmount = log.data.startsWith('0x') ? log.data.slice(2) : log.data;
+      amount = (Number(BigInt('0x' + hexAmount)) / 1000000).toFixed(2);
+    }
+  } catch (err) {
+    amount = '0.00';
+  }
+
+  return {
+    id: log.transactionHash,
+    hash: log.transactionHash,
+    type: 'Swap', // Heuristic for global dashboard
+    amount,
+    timestamp,
+    status: 'success',
+    chainId,
+    chainName,
+    isGlobal: true
+  };
+};
+
 // Deduplicate bridge transactions
 const deduplicateBridgeTransactions = (transactions) => {
   console.log(`🔍 Deduplicating ${transactions.length} transactions...`);
@@ -424,8 +454,30 @@ export function useTransactionHistory() {
   }, []);
 
   // Fetch transactions from a specific chain
-  const fetchChainTransactions = useCallback(async (chainId, chainName, client) => {
-    if (!client || !address) return [];
+  const fetchChainTransactions = useCallback(async (chainId, chainName, client, targetAddress = null) => {
+    if (!client) return [];
+    const searchAddress = targetAddress || address;
+    if (!searchAddress && !targetAddress) {
+      // Global fetch mode
+      try {
+        const currentBlock = await client.getBlockNumber();
+        const logs = await client.getLogs({
+          address: USDC_CONTRACTS[chainId],
+          event: {
+            type: 'event',
+            name: 'Transfer',
+            inputs: [
+              { type: 'address', indexed: true, name: 'from' },
+              { type: 'address', indexed: true, name: 'to' },
+              { type: 'uint256', indexed: false, name: 'value' },
+            ],
+          },
+          fromBlock: currentBlock - 50n > 0n ? currentBlock - 50n : 0n,
+          toBlock: currentBlock,
+        });
+        return logs.map(log => formatGlobalTransaction(log, chainId, chainName));
+      } catch (e) { return []; }
+    }
 
     try {
       const currentBlock = await client.getBlockNumber();
@@ -563,6 +615,32 @@ export function useTransactionHistory() {
     }
   }, [isConnected, address, fetchChainTransactions]);
 
+  // Global Stat Updater (Doesn't require connection)
+  const fetchGlobalStats = useCallback(async () => {
+    try {
+      const arcClient = createArcClient();
+      const sepoliaClient = createSepoliaClient();
+      const baseSepoliaClient = createBaseSepoliaClient();
+
+      const [arcTxs, sepoliaTxs, baseSepoliaTxs] = await Promise.all([
+        arcClient ? fetchChainTransactions(ARC_CHAIN_ID, 'Arc Testnet', arcClient, null) : [],
+        sepoliaClient ? fetchChainTransactions(SEPOLIA_CHAIN_ID, 'Sepolia', sepoliaClient, null) : [],
+        baseSepoliaClient ? fetchChainTransactions(BASE_SEPOLIA_CHAIN_ID, 'Base Sepolia', baseSepoliaClient, null) : [],
+      ]);
+
+      const globalTxs = [...arcTxs, ...sepoliaTxs, ...baseSepoliaTxs];
+      if (globalTxs.length > 0) {
+        const existingGlobal = await getItem(GLOBAL_TX_KEY) || [];
+        const merged = [...globalTxs, ...existingGlobal].slice(0, 200);
+        await setItem(GLOBAL_TX_KEY, merged);
+        // Trigger event for other hooks
+        window.dispatchEvent(new CustomEvent('globalStatsUpdated'));
+      }
+    } catch (err) {
+      console.error('Error fetching global stats:', err);
+    }
+  }, [fetchChainTransactions]);
+
   // Effect: Handle wallet connection/disconnection and address changes
   useEffect(() => {
     const handleWalletChange = async () => {
@@ -653,6 +731,7 @@ export function useTransactionHistory() {
     loading,
     error,
     refetch: fetchTransactions,
+    fetchGlobalStats,
   };
 }
 

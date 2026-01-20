@@ -18,6 +18,7 @@ import SwapModal from '../components/SwapModal';
 import SwapSuccessModal from '../components/SwapSuccessModal';
 import SwapFailedModal from '../components/SwapFailedModal';
 import SwapRejectedModal from '../components/SwapRejectedModal';
+import TokenSelectorModal from '../components/TokenSelectorModal';
 import '../styles/swap-styles.css';
 
 const USDC_ADDRESS = CONSTANT_USDC_ADDRESS;
@@ -1009,7 +1010,7 @@ const Swap = () => {
       </motion.div>
 
       {/* Token Selectors */}
-      <TokenSelector
+      <TokenSelectorModal
         isOpen={showFromSelector}
         onClose={() => setShowFromSelector(false)}
         selectedToken={fromToken}
@@ -1021,13 +1022,12 @@ const Swap = () => {
           }
         }}
         exclude={toToken}
-        triggerRef={fromTokenTriggerRef}
-        fromToken={fromToken}
-        toToken={toToken}
-        fromBalance={fromBalance}
-        toBalance={toBalance}
+        tokenList={tokenList}
+        chainId={chainId}
+        isConnected={isConnected}
+        t={t}
       />
-      <TokenSelector
+      <TokenSelectorModal
         isOpen={showToSelector}
         onClose={() => setShowToSelector(false)}
         selectedToken={toToken}
@@ -1039,11 +1039,10 @@ const Swap = () => {
           }
         }}
         exclude={fromToken}
-        triggerRef={toTokenTriggerRef}
-        fromToken={fromToken}
-        toToken={toToken}
-        fromBalance={fromBalance}
-        toBalance={toBalance}
+        tokenList={tokenList}
+        chainId={chainId}
+        isConnected={isConnected}
+        t={t}
       />
 
       {/* Toast Notifications */}

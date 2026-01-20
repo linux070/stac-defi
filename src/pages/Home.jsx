@@ -11,14 +11,25 @@ import { useNetworkUptime } from '../hooks/useNetworkUptime';
 import { useTotalVolume } from '../hooks/useTotalVolume';
 import { useTotalValueProcessed } from '../hooks/useTotalValueProcessed';
 
+import { useTransactionHistory } from '../hooks/useTransactionHistory';
+
 const Home = ({ setActiveTab }) => {
   const { t } = useTranslation();
+  const { fetchGlobalStats } = useTransactionHistory();
   const { transactionCount, change, trend, loading: txLoading } = useDappTransactionCount();
   const { bridgeCount, change: bridgeChange, trend: bridgeTrend } = useDappBridgeCount();
   const { activeUsers, change: usersChange, trend: usersTrend } = useActiveUsers();
   const { uptime, change: uptimeChange, trend: uptimeTrend } = useNetworkUptime();
   const { totalVolume, loading: volumeLoading } = useTotalVolume();
   const { totalValue, loading: tvpLoading } = useTotalValueProcessed();
+
+  // Initial fetch for global stats
+  useEffect(() => {
+    fetchGlobalStats();
+    // Poll for global updates every minute
+    const interval = setInterval(fetchGlobalStats, 60000);
+    return () => clearInterval(interval);
+  }, [fetchGlobalStats]);
 
   const [stats, setStats] = useState({
     volume: { value: totalVolume || 0, change: 0, trend: 'up' },

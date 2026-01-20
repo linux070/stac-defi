@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { getItem } from '../utils/indexedDB';
+import { getItem, setItem } from '../utils/indexedDB';
 import { TOKEN_PRICES } from '../config/networks';
+
+// Cache key for IndexedDB
+const CACHE_KEY = 'dapp_total_value_processed';
 
 /**
  * Hook to calculate total value processed across all dApp activities
  * Includes: Swaps, Bridges, and future Liquidity operations
- * Converts all amounts to USD using TOKEN_PRICES
  */
 export function useTotalValueProcessed() {
     const [totalValue, setTotalValue] = useState(0);
@@ -15,84 +17,88 @@ export function useTotalValueProcessed() {
         try {
             setLoading(true);
 
-            // Get all transactions from IndexedDB
-            const transactions = await getItem('myTransactions');
+            // Get personal and global transactions
+            const [personalTxs, globalTxs] = await Promise.all([
+                getItem('myTransactions'),
+                getItem('globalTransactions')
+            ]);
 
-            // Calculate total volume in USD from real transactions
+            const allTransactions = [...(Array.isArray(personalTxs) ? personalTxs : []), ...(Array.isArray(globalTxs) ? globalTxs : [])];
+
             let totalUSD = 0;
+            const processedHashes = new Set();
 
-            if (transactions && Array.isArray(transactions)) {
-                transactions.forEach(tx => {
-                    if (!tx.amount || tx.status !== 'success') return;
+            allTransactions.forEach(tx => {
+                if (!tx.hash || processedHashes.has(tx.hash) || tx.status !== 'success' || !tx.amount) return;
+                processedHashes.add(tx.hash);
 
-                    let amount = 0;
-                    let tokenSymbol = '';
+                let amount = 0;
+                let tokenSymbol = 'USDC';
 
-                    const amountStr = String(tx.amount);
+                const amountStr = String(tx.amount);
 
-                    // Handle different transaction types
-                    if (tx.type === 'Swap') {
-                        if (amountStr.includes('→')) {
-                            const parts = amountStr.split('→');
-                            const firstPart = parts[0].trim();
-                            const numberMatch = firstPart.match(/^([\d.]+)/);
-                            if (numberMatch && numberMatch[1]) amount = parseFloat(numberMatch[1]);
-                            const tokenMatch = firstPart.match(/[\d.]+\s+([A-Z]+)/);
-                            if (tokenMatch && tokenMatch[1]) tokenSymbol = tokenMatch[1];
-                        }
-                    } else if (tx.type === 'Bridge') {
+                if (tx.type === 'Swap') {
+                    if (amountStr.includes('→')) {
+                        const parts = amountStr.split('→');
+                        const firstPart = parts[0].trim();
+                        const numberMatch = firstPart.match(/^([\d.]+)/);
+                        if (numberMatch && numberMatch[1]) amount = parseFloat(numberMatch[1]);
+                        const tokenMatch = firstPart.match(/[\d.]+\s+([A-Z]+)/);
+                        if (tokenMatch && tokenMatch[1]) tokenSymbol = tokenMatch[1];
+                    } else {
                         amount = parseFloat(amountStr);
-                        tokenSymbol = 'USDC';
-                    } else if (tx.type === 'Liquidity' || tx.type === 'LP') {
-                        amount = parseFloat(amountStr);
-                        tokenSymbol = tx.token || 'USDC';
                     }
+                } else if (tx.type === 'Bridge') {
+                    amount = parseFloat(amountStr);
+                    tokenSymbol = 'USDC';
+                } else if (tx.type === 'Liquidity' || tx.type === 'LP') {
+                    amount = parseFloat(amountStr);
+                    tokenSymbol = tx.token || 'USDC';
+                } else if (tx.isGlobal) {
+                    amount = parseFloat(amountStr);
+                    tokenSymbol = 'USDC';
+                }
 
-                    // Convert to USD using TOKEN_PRICES
-                    if (!isNaN(amount) && amount > 0 && tokenSymbol) {
-                        const tokenPrice = TOKEN_PRICES[tokenSymbol];
-                        if (tokenPrice) {
-                            totalUSD += amount * tokenPrice;
-                        } else if (tokenSymbol === 'USDC') {
-                            totalUSD += amount;
-                        }
+                if (!isNaN(amount) && amount > 0) {
+                    const tokenPrice = TOKEN_PRICES[tokenSymbol];
+                    if (tokenPrice) {
+                        totalUSD += amount * tokenPrice;
+                    } else if (tokenSymbol === 'USDC' || !tokenSymbol) {
+                        totalUSD += amount;
                     }
-                });
-            }
+                }
+            });
 
-            setTotalValue(Math.round(totalUSD));
+            const finalValue = Math.round(totalUSD);
+            setTotalValue(finalValue);
+            await setItem(CACHE_KEY, { value: finalValue, timestamp: Date.now() });
             setLoading(false);
         } catch (error) {
             console.error('Error calculating total volume:', error);
-            setTotalValue(0);
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        // Initial calculation on mount
         calculateTotalValue();
 
-        // Polling interval (every 30 seconds) to ensure stats stay live
-        // and refresh when users navigate back to the home page
-        const interval = setInterval(() => {
-            calculateTotalValue();
-        }, 30000);
+        const interval = setInterval(calculateTotalValue, 30000);
 
-        // Recalculate when transactions might have changed
-        const handleTransactionSaved = () => {
+        const handleRefresh = () => {
             calculateTotalValue();
         };
 
-        window.addEventListener('transactionSaved', handleTransactionSaved);
-        window.addEventListener('bridgeTransactionSaved', handleTransactionSaved);
-        window.addEventListener('swapTransactionSaved', handleTransactionSaved);
+        window.addEventListener('transactionSaved', handleRefresh);
+        window.addEventListener('bridgeTransactionSaved', handleRefresh);
+        window.addEventListener('swapTransactionSaved', handleRefresh);
+        window.addEventListener('globalStatsUpdated', handleRefresh);
 
         return () => {
             clearInterval(interval);
-            window.removeEventListener('transactionSaved', handleTransactionSaved);
-            window.removeEventListener('bridgeTransactionSaved', handleTransactionSaved);
-            window.removeEventListener('swapTransactionSaved', handleTransactionSaved);
+            window.removeEventListener('transactionSaved', handleRefresh);
+            window.removeEventListener('bridgeTransactionSaved', handleRefresh);
+            window.removeEventListener('swapTransactionSaved', handleRefresh);
+            window.removeEventListener('globalStatsUpdated', handleRefresh);
         };
     }, []);
 

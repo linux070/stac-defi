@@ -32,7 +32,6 @@ const ARC_RPC_URLS = [
 
 const SEPOLIA_RPC_URLS = [
   'https://ethereum-sepolia-rpc.publicnode.com',
-  'https://rpc.sepolia.org',
   'https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
 ];
 
