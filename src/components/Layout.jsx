@@ -323,20 +323,8 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      {/* Main Content */}
-      <main className={`flex-grow w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12 overflow-x-hidden md:overflow-visible relative z-10 flex flex-col`}>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15, ease: "easeInOut" }}
-            className="w-full flex-grow flex flex-col"
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
+      <main className={`flex-grow w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'transactions' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12 overflow-x-hidden md:overflow-visible relative z-10 flex flex-col`}>
+        {children}
       </main>
 
       {/* Wallet Modal */}
