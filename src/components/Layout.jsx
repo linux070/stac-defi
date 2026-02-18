@@ -65,7 +65,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
           <div className="flex items-center cursor-pointer transition-all duration-300 hover:opacity-80 active:scale-95" onClick={() => setActiveTab('home')}>
             <div className="h-8 w-6 overflow-hidden flex-shrink-0 bg-transparent">
               <img
-                src="/icons/Stac.png"
+                src="/icons/stac.png"
                 alt=""
                 className="h-8 max-w-none object-cover dark:invert"
                 style={{ objectPosition: 'left' }}
@@ -73,7 +73,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             </div>
             <div className="h-8 overflow-hidden flex-shrink-0 ml-1.5 bg-transparent">
               <img
-                src="/icons/Stac.png"
+                src="/icons/stac.png"
                 alt="Stac"
                 className="h-8 max-w-none object-cover dark:invert"
                 style={{ marginLeft: '-24px' }}
@@ -106,7 +106,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             >
               <div className="h-9 w-7 overflow-hidden flex-shrink-0 bg-transparent">
                 <img
-                  src="/icons/Stac.png"
+                  src="/icons/stac.png"
                   alt=""
                   className="h-9 max-w-none object-cover dark:invert"
                   style={{ objectPosition: 'left' }}
@@ -114,7 +114,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               </div>
               <div className="h-9 overflow-hidden flex-shrink-0 ml-4 bg-transparent">
                 <img
-                  src="/icons/Stac.png"
+                  src="/icons/stac.png"
                   alt="Stac"
                   className="h-9 max-w-none object-cover dark:invert"
                   style={{ marginLeft: '-28px' }}

@@ -38,7 +38,7 @@ const getChainIcon = (chainName) => {
   if (!chainName) return null;
   const name = chainName.toLowerCase();
 
-  if (name.includes('arc')) return '/icons/Arc.png';
+  if (name.includes('arc')) return '/icons/arc.png';
   if (name.includes('base')) return '/icons/base.png';
   if (name.includes('sepolia') || name.includes('eth')) return '/icons/eth.png';
 
@@ -48,14 +48,14 @@ const getChainIcon = (chainName) => {
 // Helper to get token logo
 const getTokenLogo = (symbol) => {
   if (!symbol) return null;
-  const s = String(symbol).toLowerCase();
-  if (s.includes('usdc')) return '/icons/usdc.png';
-  if (s.includes('stc') || s.includes('stac')) return '/icons/stc.png';
-  if (s.includes('ball')) return '/icons/ball.png';
-  if (s.includes('mtb')) return '/icons/mtb.png';
-  if (s.includes('ecr')) return '/icons/ecr.png';
-  if (s.includes('eth')) return '/icons/eth.png';
-  if (s.includes('eurc')) return '/icons/eurc.png';
+  const s = String(symbol).toUpperCase();
+  if (s.includes('USDC')) return '/icons/usdc.png';
+  if (s.includes('STC') || s.includes('STAC')) return '/icons/stac.png';
+  if (s.includes('BALL')) return '/icons/ball.png';
+  if (s.includes('MTB')) return '/icons/mtb.png';
+  if (s.includes('ECR')) return '/icons/ecr.png';
+  if (s.includes('ETH')) return '/icons/eth.png';
+  if (s.includes('EURC')) return '/icons/eurc.png';
   return null;
 };
 

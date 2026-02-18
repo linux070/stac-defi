@@ -12,7 +12,7 @@ export const NETWORKS = {
     rpcUrls: [import.meta.env.VITE_ARC_RPC_URL],
     blockExplorerUrls: ['https://testnet.arcscan.app/'],
     gasToken: 'USDC', // Arc uses USDC for gas
-    iconUrl: '/icons/Arc.png',
+    iconUrl: '/icons/arc.png',
     iconBackground: '#131720',
   },
   ETHEREUM_SEPOLIA: {

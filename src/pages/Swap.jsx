@@ -21,18 +21,23 @@ import { useModal } from '../contexts/ModalContext';
 
 
 const getTokenIcon = (symbol) => {
+  if (!symbol) return null;
+  const s = String(symbol).toUpperCase();
   const iconMap = {
     'USDC': '/icons/usdc.png',
-    'STC': '/icons/stc.png',
+    'STC': '/icons/stac.png',
+    'STAC': '/icons/stac.png',
     'BALL': '/icons/ball.png',
     'MTB': '/icons/mtb.png',
     'ECR': '/icons/ecr.png',
-    'EURC': '/icons/eurc.png'
+    'EURC': '/icons/eurc.png',
+    'ETH': '/icons/eth.png'
   };
-  if (symbol && typeof symbol === 'string' && symbol.toLowerCase().includes('mtb')) {
-    return '/icons/mtb.png';
-  }
-  return iconMap[symbol] || null;
+
+  if (s.includes('MTB')) return '/icons/mtb.png';
+  if (s.includes('STC') || s.includes('STAC')) return '/icons/stac.png';
+
+  return iconMap[s] || null;
 };
 
 const TokenRow = ({ token, selectedToken, exclude, onSelect, onClose, isConnected, t }) => {

@@ -8,15 +8,19 @@ const SwapRejectedModal = ({ isOpen, onClose, fromToken, toToken }) => {
     const { t } = useTranslation();
 
     const getTokenIcon = (symbol) => {
+        if (!symbol) return null;
+        const s = String(symbol).toUpperCase();
         const iconMap = {
             'USDC': '/icons/usdc.png',
-            'STC': '/icons/stc.png',
+            'STC': '/icons/stac.png',
+            'STAC': '/icons/stac.png',
             'BALL': '/icons/ball.png',
             'MTB': '/icons/mtb.png',
             'ECR': '/icons/ecr.png',
-            'EURC': '/icons/eurc.png'
+            'EURC': '/icons/eurc.png',
+            'ETH': '/icons/eth.png'
         };
-        return iconMap[symbol] || null;
+        return iconMap[s] || null;
     };
 
     const modalContent = (

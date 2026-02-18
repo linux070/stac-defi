@@ -79,7 +79,7 @@ Stac serves as the primary interface for the Arc Network, offering users a unifi
 
 ## Design Philosophy
 
-The Stac platform is built on the principle of **Functional Minimalism**. We avoid generic templates and AI-generated cliches, focusing instead on:
+The Stac platform is built on the principle of **Functional Minimalism**, focusing instead on:
 * **Typography**: Professional slate and blue palettes with high-readability fonts (Inter, Satoshi, Outfit).
 * **Deterministic UI**: Eliminating layout shifts and ensuring instant component feedback.
 * **Native Performance**: Utilizing CSS transitions and SVG animations to keep the main thread unblocked.
@@ -87,4 +87,4 @@ The Stac platform is built on the principle of **Functional Minimalism**. We avo
 ---
 
 Created and maintained by the linux_mode and team.
-[Return to dApp](https://stac-defi.vercel.app)
+[visit site](https://stac-defi.vercel.app)

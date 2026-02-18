@@ -80,7 +80,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
   const safeToChain = typeof toChain === 'string' ? toChain : 'Arc Testnet';
 
   const getChainIcon = (name) => {
-    if (name === 'Arc Testnet') return "/icons/Arc.png";
+    if (name === 'Arc Testnet') return "/icons/arc.png";
     if (name === 'Base Sepolia') return "/icons/base.png";
     return "/icons/eth.png";
   };

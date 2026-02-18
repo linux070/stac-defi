@@ -207,7 +207,7 @@ const CustomConnectButton = () => {
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 shadow-sm
                                       ${isActive ? 'scale-110 shadow-lg shadow-blue-500/20' : ''}
                                       bg-black p-0`}>
-                                      <img src="/icons/Arc.png" alt="Arc" className="w-full h-full object-cover" />
+                                      <img src="/icons/arc.png" alt="Arc" className="w-full h-full object-cover" />
                                     </div>
                                     <div className={`flex-1 text-left ${isActive ? 'pl-0.5' : ''}`}>
                                       <div className={`text-[15px] font-bold tracking-tight transition-colors ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-900 dark:text-white'}`}>

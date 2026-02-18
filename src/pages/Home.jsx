@@ -337,8 +337,17 @@ const Home = ({ setActiveTab }) => {
               <img src="/icons/mtb.png" alt="" className="w-full h-full object-contain filter drop-shadow(0 15px 30px rgba(59,130,246,0.12))" />
             </div>
 
-            <div className="hidden md:block absolute bottom-[20%] right-[5%] w-16 h-16 md:w-24 md:h-24 rotate-[-15deg] z-0 opacity-90 blur-[2px] transition-transform duration-700 hover:scale-110">
+            <div className="hidden md:block absolute bottom-[20%] right-[3%] w-16 h-16 md:w-24 md:h-24 rotate-[-15deg] z-0 opacity-90 blur-[2px] transition-transform duration-700 hover:scale-110">
               <img src="/icons/ecr.png" alt="" className="w-full h-full object-contain filter drop-shadow(0 15px 30px rgba(59,130,246,0.12))" />
+            </div>
+
+            {/* Additional Tokens for Variety - BALL and STAC */}
+            <div className="hidden lg:block absolute top-[15%] left-[20%] w-12 h-12 rotate-[10deg] z-0 opacity-70 blur-[1px] transition-transform duration-700 hover:scale-110">
+              <img src="/icons/ball.png" alt="" className="w-full h-full object-contain filter drop-shadow(0 10px 20px rgba(59,130,246,0.1))" />
+            </div>
+
+            <div className="hidden lg:block absolute bottom-[15%] left-[25%] w-16 h-16 rotate-[-20deg] z-0 opacity-80 blur-[2px] transition-transform duration-700 hover:scale-110">
+              <img src="/icons/stac.png" alt="" className="w-full h-full object-contain filter drop-shadow(0 15px 30px rgba(59,130,246,0.12))" />
             </div>
 
 

@@ -902,7 +902,7 @@ const Bridge = () => {
                       {(() => {
                         const displayFromChain = bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain;
                         const chainKey = displayFromChain.toLowerCase();
-                        if (chainKey.includes('arc')) return <img src="/icons/Arc.png" alt="Arc" className="w-full h-full object-cover bg-black" />;
+                        if (chainKey.includes('arc')) return <img src="/icons/arc.png" alt="Arc" className="w-full h-full object-cover bg-black" />;
                         if (chainKey.includes('base')) return <img src="/icons/base.png" alt="Base" className="w-full h-full object-cover bg-white" />;
                         if (chainKey.includes('sepolia')) return <img src="/icons/eth.png" alt="ETH" className="w-full h-full object-cover bg-white" />;
                         return null;
@@ -1000,7 +1000,7 @@ const Bridge = () => {
                       {(() => {
                         const displayToChain = bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain;
                         const chainKey = displayToChain.toLowerCase();
-                        if (chainKey.includes('arc')) return <img src="/icons/Arc.png" alt="Arc" className="w-full h-full object-cover bg-black" />;
+                        if (chainKey.includes('arc')) return <img src="/icons/arc.png" alt="Arc" className="w-full h-full object-cover bg-black" />;
                         if (chainKey.includes('base')) return <img src="/icons/base.png" alt="Base" className="w-full h-full object-cover bg-white" />;
                         if (chainKey.includes('sepolia')) return <img src="/icons/eth.png" alt="ETH" className="w-full h-full object-cover bg-white" />;
                         return null;
