@@ -50,7 +50,7 @@ const getTokenLogo = (symbol) => {
   if (!symbol) return null;
   const s = String(symbol).toUpperCase();
   if (s.includes('USDC')) return '/icons/usdc.png';
-  if (s.includes('STC') || s.includes('STAC')) return '/icons/stac.png';
+  if (s.includes('STC') || s.includes('STAC')) return '/icons/stc.png';
   if (s.includes('BALL')) return '/icons/ball.png';
   if (s.includes('MTB')) return '/icons/mtb.png';
   if (s.includes('ECR')) return '/icons/ecr.png';

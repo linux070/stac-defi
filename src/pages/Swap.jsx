@@ -25,8 +25,8 @@ const getTokenIcon = (symbol) => {
   const s = String(symbol).toUpperCase();
   const iconMap = {
     'USDC': '/icons/usdc.png',
-    'STC': '/icons/stac.png',
-    'STAC': '/icons/stac.png',
+    'STC': '/icons/stc.png',
+    'STAC': '/icons/stc.png',
     'BALL': '/icons/ball.png',
     'MTB': '/icons/mtb.png',
     'ECR': '/icons/ecr.png',
@@ -35,7 +35,7 @@ const getTokenIcon = (symbol) => {
   };
 
   if (s.includes('MTB')) return '/icons/mtb.png';
-  if (s.includes('STC') || s.includes('STAC')) return '/icons/stac.png';
+  if (s.includes('STC') || s.includes('STAC')) return '/icons/stc.png';
 
   return iconMap[s] || null;
 };

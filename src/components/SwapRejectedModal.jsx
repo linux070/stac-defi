@@ -12,8 +12,8 @@ const SwapRejectedModal = ({ isOpen, onClose, fromToken, toToken }) => {
         const s = String(symbol).toUpperCase();
         const iconMap = {
             'USDC': '/icons/usdc.png',
-            'STC': '/icons/stac.png',
-            'STAC': '/icons/stac.png',
+            'STC': '/icons/stc.png',
+            'STAC': '/icons/stc.png',
             'BALL': '/icons/ball.png',
             'MTB': '/icons/mtb.png',
             'ECR': '/icons/ecr.png',

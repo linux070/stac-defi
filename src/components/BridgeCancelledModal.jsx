@@ -9,8 +9,8 @@ const BridgeCancelledModal = ({ isOpen, onClose, fromChain, toChain }) => {
 
     const getChainIcon = (name) => {
         if (!name) return "/icons/eth.png";
-        const n = name.toLowerCase();
-        if (n.includes('arc')) return "/icons/Arc.png";
+        const n = String(name).toLowerCase();
+        if (n.includes('arc')) return "/icons/arc.png";
         if (n.includes('base')) return "/icons/base.png";
         return "/icons/eth.png";
     };
