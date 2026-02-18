@@ -1,101 +1,84 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useWallet } from '../contexts/WalletContext';
-import { X, AlertCircle } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useConnect } from 'wagmi';
 
 const WalletModal = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
-  const { connectWallet, isConnecting, error: walletError } = useWallet();
-  const [error, setError] = useState('');
+  const { connectors, connect } = useConnect();
 
-  const wallets = [
-    { id: 'metamask', name: 'MetaMask', icon: '🦊', available: typeof window !== 'undefined' && window.ethereum?.isMetaMask },
-    { id: 'walletconnect', name: 'WalletConnect', icon: '🔗', available: true },
-    { id: 'coinbase', name: 'Coinbase Wallet', icon: '💼', available: typeof window !== 'undefined' && window.ethereum?.isCoinbaseWallet },
-    { id: 'rabby', name: 'Rabby', icon: '🐰', available: typeof window !== 'undefined' && window.ethereum?.isRabby },
-    { id: 'safe', name: 'Safe Wallet', icon: '🛡️', available: typeof window !== 'undefined' && (window.ethereum?.isSafe || window.parent !== window) },
-    { id: 'rainbow', name: 'Rainbow', icon: '🌈', available: typeof window !== 'undefined' && window.ethereum?.isRainbow },
-    { id: 'base', name: 'Base', icon: '🔷', available: typeof window !== 'undefined' && (window.ethereum?.isBase || window.ethereum?.isCoinbaseWallet) }
-  ];
-
-  const handleConnect = async (walletId) => {
-    setError('');
+  const handleConnect = async (connector) => {
     try {
-      await connectWallet(walletId);
+      await connect({ connector });
       onClose();
-    } catch (err) {
-      setError(err.message);
+    } catch (error) {
+      console.error('Connection error:', error);
     }
   };
 
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/40 backdrop-blur-[4px]"
+          style={{ WebkitBackdropFilter: 'blur(1px)' }}
           onClick={onClose}
         />
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="relative w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl p-6 max-h-[80dvh] overflow-y-auto rounded-xl"
+          className="relative w-full max-w-[380px] bg-white dark:bg-[#0f172a] shadow-2xl p-6 max-h-[80dvh] overflow-y-auto rounded-[28px] border border-black/10 dark:border-white/10"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">{t('Connect Wallet')}</h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-none"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
             >
               <X size={20} />
             </button>
           </div>
 
-          {(error || walletError) && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start space-x-2">
-              <AlertCircle size={20} className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-600 dark:text-red-400">{error || walletError}</p>
-            </div>
-          )}
-
           <div className="space-y-3">
-            {wallets.map((wallet) => (
+            {connectors.map((connector) => (
               <button
-                key={wallet.id}
-                onClick={() => handleConnect(wallet.id)}
-                disabled={!wallet.available || isConnecting}
-                className={`w-full p-4 rounded-none border-2 transition-all duration-200 flex items-center justify-between
-                  ${wallet.available
-                    ? 'border-gray-200 dark:border-gray-700 hover:border-primary-500 hover:shadow-lg'
-                    : 'border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed'
-                  }
-                  ${isConnecting ? 'opacity-50 cursor-wait' : ''}
-                `}
+                key={connector.id}
+                onClick={() => handleConnect(connector)}
+                className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-2xl border border-gray-100 dark:border-white/5 transition-all group"
               >
-                <div className="flex items-center space-x-3">
-                  <span className="text-3xl">{wallet.icon}</span>
-                  <span className="font-semibold">{wallet.name}</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-700 flex items-center justify-center p-2 shadow-sm">
+                    {connector.icon ? (
+                      <img src={connector.icon} alt={connector.name} className="w-full h-full object-contain" />
+                    ) : (
+                      <div className="w-full h-full bg-blue-500/10 rounded-lg" />
+                    )}
+                  </div>
+                  <span className="font-bold text-gray-900 dark:text-white capitalize">{connector.name}</span>
                 </div>
-                {!wallet.available && (
-                  <span className="text-xs text-gray-500">{t('Not installed')}</span>
-                )}
+                <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center transition-transform group-hover:translate-x-1">
+                  <span className="text-blue-500">→</span>
+                </div>
               </button>
             ))}
           </div>
 
-          <p className="mt-6 text-xs text-center text-gray-500 dark:text-gray-400">
-            {t('By connecting a wallet, you agree to our Terms of Service')}
+          <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            {t('By connecting, you agree to our Terms of Service and Privacy Policy.')}
           </p>
         </motion.div>
       </div>
     </AnimatePresence>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default WalletModal;

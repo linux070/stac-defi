@@ -1,4 +1,3 @@
-import React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,10 +10,11 @@ const SwapRejectedModal = ({ isOpen, onClose, fromToken, toToken }) => {
     const getTokenIcon = (symbol) => {
         const iconMap = {
             'USDC': '/icons/usdc.png',
-            'STC': '/icons/STC.png',
-            'BALL': '/icons/ball.jpg',
-            'MTB': '/icons/MTB.png',
-            'ECR': '/icons/ECR.png'
+            'STC': '/icons/stc.png',
+            'BALL': '/icons/ball.png',
+            'MTB': '/icons/mtb.png',
+            'ECR': '/icons/ecr.png',
+            'EURC': '/icons/eurc.png'
         };
         return iconMap[symbol] || null;
     };
@@ -23,18 +23,18 @@ const SwapRejectedModal = ({ isOpen, onClose, fromToken, toToken }) => {
         <AnimatePresence>
             {isOpen && (
                 <motion.div
-                    className="fixed inset-0 z-[1000] swap-modal-backdrop"
+                    className="swap-modal-backdrop"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={onClose}
                 >
                     <motion.div
-                        className="relative swap-modal-container max-w-[440px] w-full mx-4"
-                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                        className="swap-modal-container swap-confirm-modal"
+                        initial={{ scale: 0.95, opacity: 0, y: 12 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+                        exit={{ scale: 0.95, opacity: 0, y: 12 }}
+                        transition={{ type: 'spring', damping: 28, stiffness: 380 }}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
@@ -42,41 +42,53 @@ const SwapRejectedModal = ({ isOpen, onClose, fromToken, toToken }) => {
                             className="swap-modal-close-button-alt"
                             aria-label="Close"
                         >
-                            <X size={20} />
+                            <X size={18} />
                         </button>
 
                         <div className="swap-modal-content">
-                            <div className="swap-modal-status-card-new">
-                                <div className="swap-modal-success-icon-wrapper">
-                                    <motion.div
-                                        className="swap-modal-error-circle"
-                                        style={{ backgroundColor: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.2)' }}
-                                        initial={{ scale: 0, rotate: -45 }}
-                                        animate={{ scale: 1, rotate: 0 }}
-                                        transition={{ delay: 0.2, type: 'spring' }}
-                                    >
-                                        <AlertTriangle size={40} strokeWidth={3} />
-                                    </motion.div>
+                            <div className="flex flex-col items-center mb-6">
+                                <div className="swap-modal-warning-circle-wrapper mb-5">
+                                    <div className="swap-modal-checkmark-circle" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.15)', width: '80px', height: '80px' }}>
+                                        <AlertTriangle size={36} strokeWidth={2} />
+                                    </div>
                                 </div>
 
-                                <h4 className="swap-modal-status-title-new" style={{ color: '#f59e0b' }}>{t('Transaction Rejected')}</h4>
-                                <p className="swap-modal-success-summary-text">
+                                <h2 className="text-[22px] font-bold text-center !mb-1" style={{ color: '#f59e0b', letterSpacing: '-0.01em' }}>
+                                    {t('Transaction Rejected')}
+                                </h2>
+                                <p className="text-[14px] text-slate-500 font-semibold mb-6">
                                     {t('User Rejected Request')}
                                 </p>
 
-                                <p className="text-center text-slate-500 dark:text-slate-400 text-sm px-6 mb-4">
+                                <p className="text-[14px] text-slate-400 dark:text-slate-500 text-center leading-relaxed px-6 mb-8 font-medium">
                                     {t('The transaction was rejected in your wallet. If this was a mistake, please try again.')}
                                 </p>
 
-
-
-                                <button
-                                    onClick={onClose}
-                                    className="swap-modal-action-button-secondary-new"
-                                >
-                                    {t('Back to Swap')}
-                                </button>
+                                <div className="swap-rejected-info-box w-full mb-8">
+                                    <div className="flex items-center justify-between py-1">
+                                        <span className="text-[14px] text-slate-400 font-medium">{t('Selling')}</span>
+                                        <div className="flex items-center gap-2.5">
+                                            <img src={getTokenIcon(fromToken?.symbol)} alt="" className="w-6 h-6 rounded-full" />
+                                            <span className="text-[15px] font-bold text-slate-600 dark:text-white">{fromToken?.symbol || 'USDC'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="h-[1px] bg-slate-100 dark:bg-white/5 my-4" />
+                                    <div className="flex items-center justify-between py-1">
+                                        <span className="text-[14px] text-slate-400 font-medium">{t('Buying')}</span>
+                                        <div className="flex items-center gap-2.5">
+                                            <img src={getTokenIcon(toToken?.symbol)} alt="" className="w-6 h-6 rounded-full" />
+                                            <span className="text-[15px] font-bold text-slate-600 dark:text-white">{toToken?.symbol || 'STC'}</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+
+                            <button
+                                onClick={onClose}
+                                className="swap-rejected-back-button"
+                            >
+                                {t('Back to Swap')}
+                            </button>
                         </div>
                     </motion.div>
                 </motion.div>

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import ReactDOM from 'react-dom';
+import { useState, useEffect, useMemo, useRef, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
-import { Copy, ExternalLink, CheckCircle, CheckCircle2, Check, Clock, XCircle, X, ArrowLeftRight, RefreshCw, Layers, History, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Calendar, Loader } from 'lucide-react';
+import { Copy, ExternalLink, CheckCircle2, Check, Clock, XCircle, X, ArrowLeftRight, RefreshCw, Layers, History, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { timeAgo, formatAddress, copyToClipboard, getExplorerUrl } from '../utils/blockchain';
 import { useTransactionHistory } from '../hooks/useTransactionHistory';
@@ -51,10 +50,10 @@ const getTokenLogo = (symbol) => {
   if (!symbol) return null;
   const s = String(symbol).toLowerCase();
   if (s.includes('usdc')) return '/icons/usdc.png';
-  if (s.includes('stc') || s.includes('stac')) return '/icons/STC.png';
-  if (s.includes('ball')) return '/icons/ball.jpg';
-  if (s.includes('mtb')) return '/icons/MTB.png';
-  if (s.includes('ecr')) return '/icons/ECR.png';
+  if (s.includes('stc') || s.includes('stac')) return '/icons/stc.png';
+  if (s.includes('ball')) return '/icons/ball.png';
+  if (s.includes('mtb')) return '/icons/mtb.png';
+  if (s.includes('ecr')) return '/icons/ecr.png';
   if (s.includes('eth')) return '/icons/eth.png';
   if (s.includes('eurc')) return '/icons/eurc.png';
   return null;
@@ -65,11 +64,8 @@ const EmptyActivityState = () => {
   return (
     <div className="flex flex-col items-center justify-center py-16 md:py-24 px-6 overflow-hidden text-center">
       <div className="relative mb-14 md:mb-16 flex items-center justify-center scale-90 md:scale-100">
-        {/* Refined concentric rings */}
         <div className="absolute w-44 h-44 rounded-full border border-slate-200/60 dark:border-slate-700/40 animate-pulse" />
         <div className="absolute w-32 h-32 rounded-full border border-slate-300/40 dark:border-slate-600/25" />
-
-        {/* Central icon container */}
         <div className="relative z-10 w-20 h-20 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-200/80 dark:border-slate-700/50 shadow-lg transition-all duration-300">
           <History size={36} className="text-slate-500 dark:text-slate-400" strokeWidth={1.5} />
         </div>
@@ -83,19 +79,59 @@ const EmptyActivityState = () => {
   );
 };
 
+const SkeletonCard = () => (
+  <div className="relative overflow-hidden rounded-2xl bg-white/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 p-4 min-w-[180px]">
+    <div className="skeleton w-24 h-3 mb-3 rounded-full opacity-50" />
+    <div className="skeleton w-32 h-8 mb-2 rounded-lg" />
+    <div className="skeleton w-20 h-3 rounded-full opacity-30" />
+  </div>
+);
+
+const SkeletonRow = () => (
+  <tr className="border-b border-slate-50 dark:border-white/[0.02]">
+    <td className="p-4"><div className="skeleton w-24 h-5 rounded-lg" /></td>
+    <td className="p-4"><div className="skeleton w-32 h-5 rounded-lg" /></td>
+    <td className="p-4"><div className="skeleton w-32 h-5 rounded-lg" /></td>
+    <td className="p-4"><div className="skeleton w-20 h-5 rounded-lg" /></td>
+    <td className="p-4"><div className="skeleton w-16 h-4 rounded-lg" /></td>
+    <td className="p-4"><div className="skeleton w-16 h-5 rounded-full" /></td>
+    <td className="p-4"><div className="skeleton w-40 h-4 rounded-lg" /></td>
+  </tr>
+);
+
+const SkeletonMobileCard = () => (
+  <div className="card p-4 space-y-4 border border-slate-100 dark:border-slate-800">
+    <div className="flex justify-between">
+      <div className="skeleton w-20 h-4 rounded-lg" />
+      <div className="skeleton w-16 h-3 rounded-lg" />
+    </div>
+    <div className="flex justify-center">
+      <div className="skeleton w-24 h-7 rounded-full" />
+    </div>
+    <div className="flex gap-3 justify-between">
+      <div className="flex-1 min-w-0">
+        <div className="skeleton w-12 h-3 mb-2 rounded-full opacity-40" />
+        <div className="skeleton w-full h-8 rounded-xl" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="skeleton w-12 h-3 mb-2 rounded-full opacity-40" />
+        <div className="skeleton w-full h-8 rounded-xl" />
+      </div>
+    </div>
+  </div>
+);
+
 const Transactions = () => {
   const { t } = useTranslation();
   const { isConnected, walletAddress, chainId } = useWallet();
-  const [copiedHash, setCopiedHash] = useState('');
-  const [showCopyToast, setShowCopyToast] = useState(false);
-  const [previousWallet, setPreviousWallet] = useState(null);
+  const [copiedHash, setCopiedHash] = useState(null);
+  const prevWalletRef = useRef(null);
 
   // Fetch real-time transactions from blockchain (auto-updates every 30 seconds)
   const { transactions: blockchainTransactions, loading: transactionsLoading } = useTransactionHistory();
 
   // Activity data - stored in IndexedDB for persistence (web3-native)
   const [myTransactions, setMyTransactions] = useState([]);
-  const [loadingLocalTransactions, setLoadingLocalTransactions] = useState(true);
   const [activeActivityTab, setActiveActivityTab] = useState('my'); // 'my' or 'all'
 
   // Automatically switch to 'all' tab if wallet is disconnected
@@ -134,7 +170,7 @@ const Transactions = () => {
         const key = `stac_tx_backup_${address.toLowerCase()}`;
         sessionStorage.setItem(key, JSON.stringify(transactions));
       }
-    } catch (err) {
+    } catch {
       // Silently fail
     }
   };
@@ -147,7 +183,7 @@ const Transactions = () => {
         const data = sessionStorage.getItem(key);
         return data ? JSON.parse(data) : null;
       }
-    } catch (err) {
+    } catch {
       return null;
     }
     return null;
@@ -156,21 +192,11 @@ const Transactions = () => {
   // Load transactions from IndexedDB on mount and when wallet address changes
   useEffect(() => {
     const loadTransactions = async () => {
-      setLoadingLocalTransactions(true);
-
       try {
-        // Detect wallet change (optional log)
-        if (previousWallet && previousWallet !== walletAddress) {
-          console.log(`👛 Wallet changed: ${previousWallet.slice(0, 6)} → ${walletAddress?.slice(0, 6) || 'none'}`);
-        }
-
-        setPreviousWallet(walletAddress);
+        prevWalletRef.current = walletAddress;
 
         // Load ALL transactions from IndexedDB (shared across wallets for "All Activity")
         const allSaved = await getItem('myTransactions');
-        console.log('📦 Loading all transactions from IndexedDB:', {
-          totalInStorage: allSaved?.length || 0
-        });
 
         if (allSaved && Array.isArray(allSaved)) {
           setMyTransactions(allSaved);
@@ -185,7 +211,6 @@ const Transactions = () => {
           if (walletAddress) {
             const recovered = recoverFromSessionStorage(walletAddress);
             if (recovered && recovered.length > 0) {
-              console.log(`🔄 Recovered ${recovered.length} transactions from sessionStorage`);
               setMyTransactions(recovered);
               await setItem('myTransactions', recovered);
             } else {
@@ -198,8 +223,6 @@ const Transactions = () => {
       } catch (err) {
         console.error('Error loading transactions:', err);
         setMyTransactions([]);
-      } finally {
-        setLoadingLocalTransactions(false);
       }
     };
 
@@ -387,67 +410,12 @@ const Transactions = () => {
     const success = await copyToClipboard(hash);
     if (success) {
       setCopiedHash(hash);
-      setShowCopyToast(true);
       setTimeout(() => {
-        setCopiedHash('');
-        setShowCopyToast(false);
+        setCopiedHash(null);
       }, 2500);
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'success':
-        return (
-          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 shadow-sm">
-            <Check className="text-white" size={11} strokeWidth={4} />
-          </div>
-        );
-      case 'pending':
-        return (
-          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 shadow-sm">
-            <Clock className="text-white" size={11} strokeWidth={4} />
-          </div>
-        );
-      case 'failed':
-        return (
-          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-red-500 shadow-sm">
-            <X className="text-white" size={11} strokeWidth={4} />
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const getTypeIcon = (type) => {
-    switch (type) {
-      case 'Bridge':
-        return <ArrowLeftRight size={16} className="mr-1.5" />;
-      case 'Swap':
-        return <RefreshCw size={16} className="mr-1.5" />;
-      case 'Add LP':
-      case 'Remove LP':
-        return <Layers size={16} className="mr-1.5" />;
-      default:
-        return null;
-    }
-  };
-
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'Swap':
-        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400';
-      case 'Bridge':
-        return 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400';
-      case 'Add LP':
-        return 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400';
-      case 'Remove LP':
-        return 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400';
-      default:
-        return 'bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400';
-    }
-  };
 
   // Helper functions to format swap transaction data
   const getSwapFromToken = (tx) => {
@@ -507,10 +475,10 @@ const Transactions = () => {
 
     const amountStr = String(tx.amount).trim();
 
-    // If it's already just a number (no arrow, no letters), return it
+    // If it's already just a number (no arrow, no letters), parse and round
     const cleanNumber = parseFloat(amountStr);
     if (!isNaN(cleanNumber) && !amountStr.includes('→') && !/[a-zA-Z]/.test(amountStr)) {
-      return String(cleanNumber);
+      return cleanNumber.toFixed(2);
     }
 
     // If it contains an arrow, extract the first number before the arrow
@@ -520,7 +488,7 @@ const Transactions = () => {
       const firstPart = parts[0].trim();
       const numberMatch = firstPart.match(/^([\d.]+)/);
       if (numberMatch && numberMatch[1]) {
-        return numberMatch[1];
+        return parseFloat(numberMatch[1]).toFixed(2);
       }
     }
 
@@ -528,27 +496,12 @@ const Transactions = () => {
     // Format: "1 EURC" or "1.096700 USDC" - extract number
     const numberMatch = amountStr.match(/^([\d.]+)/);
     if (numberMatch && numberMatch[1]) {
-      return numberMatch[1];
+      return parseFloat(numberMatch[1]).toFixed(2);
     }
 
     return amountStr;
   };
 
-  // Helper to get from amount for swap transactions
-  const getSwapFromAmount = (tx) => {
-    if (tx.type !== 'Swap') return '';
-    if (!tx.from) return '';
-
-    const fromStr = String(tx.from).trim();
-    const numberMatch = fromStr.match(/^([\d.]+)/);
-    if (!numberMatch) return '';
-
-    // Maintain precision for small amounts
-    const num = parseFloat(numberMatch[1]);
-    if (num < 0.001) return num.toFixed(6);
-    if (num < 0.01) return num.toFixed(4);
-    return numberMatch[1];
-  };
 
   // Helper to get to amount for swap transactions
   const getSwapToAmount = (tx) => {
@@ -580,21 +533,19 @@ const Transactions = () => {
 
     if (!rawAmount) return '';
 
-    // Maintain precision for small amounts
+    // Round to 2 decimal places for clean display
     const num = parseFloat(rawAmount);
-    if (num < 0.001) return num.toFixed(6);
-    if (num < 0.01) return num.toFixed(4);
-    return rawAmount;
+    return num.toFixed(2);
   };
 
   return (
-    <div className="transactions-container">
+    <div className="transactions-container font-['Inter','Satoshi','General_Sans',sans-serif]">
       {/* Header Section */}
       <div className="transactions-header">
         <div className="transactions-title-section">
           <div className="flex flex-col mb-4">
             <h1 className="!mb-0 text-emerald-600 dark:text-emerald-500">{t('Transactions')}</h1>
-            <span className="text-sm font-semibold text-blue-500 dark:text-blue-400 mt-1">
+            <span className="text-sm font-medium text-blue-500 dark:text-blue-400 mt-1">
               {activeActivityTab === 'all'
                 ? (txCountLoading ? '...' : `${transactionCount?.toLocaleString() || '0'} ${t('total transactions')}`)
                 : (isConnected ? `${mergedTransactions.length.toLocaleString()} ${t('total transactions')}` : `0 ${t('total transactions')}`)
@@ -630,53 +581,53 @@ const Transactions = () => {
         {/* Stats Cards Row - Only visible on My Activity tab */}
         {activeActivityTab === 'my' && (
           <div className="stats-grid">
-            {/* Total Swap Volume Card */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-900/30 dark:via-purple-900/20 dark:to-fuchsia-900/20 border border-violet-100/50 dark:border-violet-700/30 p-4 min-w-[180px] shadow-sm hover:shadow-md transition-all duration-300">
-              {/* Mini Chart SVG - Background decoration */}
-              <svg className="absolute right-2 bottom-2 w-16 h-10 opacity-40" viewBox="0 0 60 30" fill="none">
-                <path d="M0 25 Q10 20 15 22 T30 15 T45 18 T60 8" stroke="url(#swapGradient)" strokeWidth="2" fill="none" strokeLinecap="round" />
-                <defs>
-                  <linearGradient id="swapGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#8b5cf6" />
-                    <stop offset="100%" stopColor="#06b6d4" />
-                  </linearGradient>
-                </defs>
-              </svg>
+            {swapVolumeLoading ? <SkeletonCard /> : (
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-900/30 dark:via-purple-900/20 dark:to-fuchsia-900/20 border border-violet-100/50 dark:border-violet-700/30 p-4 min-w-[180px] shadow-sm hover:shadow-md transition-all duration-300">
+                <svg className="absolute right-2 bottom-2 w-16 h-10 opacity-40" viewBox="0 0 60 30" fill="none">
+                  <path d="M0 25 Q10 20 15 22 T30 15 T45 18 T60 8" stroke="url(#swapGradient)" strokeWidth="2" fill="none" strokeLinecap="round" />
+                  <defs>
+                    <linearGradient id="swapGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#8b5cf6" />
+                      <stop offset="100%" stopColor="#06b6d4" />
+                    </linearGradient>
+                  </defs>
+                </svg>
 
-              <div className="relative z-10">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">{activeActivityTab === 'my' ? t('My Swap Volume') : t('Total Swap Volume')}</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-2xl font-extrabold text-slate-800 dark:text-white">
-                    {swapVolumeLoading ? '...' : `$${(activeActivityTab === 'my' && !isConnected) ? '0' : swapVolume.toLocaleString()}`}
-                  </span>
-                  <span className="text-emerald-500 text-lg">↑</span>
-                </div>
-                <div className="text-xs font-medium text-emerald-500 mt-0.5">
-                  {swapCount} {swapCount === 1 ? t('swap completed') : t('swaps completed')}
+                <div className="relative z-10">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-violet-600 dark:text-violet-400">{activeActivityTab === 'my' ? t('My Swap Volume') : t('Total Swap Volume')}</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-2xl font-semibold text-slate-800 dark:text-white">
+                      {`$${(activeActivityTab === 'my' && !isConnected) ? '0' : swapVolume.toLocaleString()}`}
+                    </span>
+                    <span className="text-emerald-500 text-lg">↑</span>
+                  </div>
+                  <div className="text-xs font-medium text-emerald-500 mt-0.5">
+                    {swapCount} {swapCount === 1 ? t('swap completed') : t('swaps completed')}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Total Bridge Volume Card */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-800/50 dark:via-blue-900/30 dark:to-indigo-900/20 border border-blue-100/50 dark:border-blue-700/30 p-4 min-w-[180px] shadow-sm hover:shadow-md transition-all duration-300">
-              {/* Stacked Layers Icon - Background decoration */}
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">
-                <Layers className="w-10 h-10 text-indigo-400 dark:text-indigo-500" strokeWidth={1.5} />
-              </div>
+            {bridgeVolumeLoading ? <SkeletonCard /> : (
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-800/50 dark:via-blue-900/30 dark:to-indigo-900/20 border border-blue-100/50 dark:border-blue-700/30 p-4 min-w-[180px] shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">
+                  <Layers className="w-10 h-10 text-indigo-400 dark:text-indigo-500" strokeWidth={1.5} />
+                </div>
 
-              <div className="relative z-10">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{activeActivityTab === 'my' ? t('My Bridge Volume') : t('Total Bridge Volume')}</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-2xl font-extrabold text-slate-800 dark:text-white">
-                    {bridgeVolumeLoading ? '...' : `$${(activeActivityTab === 'my' && !isConnected) ? '0' : bridgeVolume.toLocaleString()}`}
-                  </span>
-                  <Layers className="w-5 h-5 text-indigo-500" strokeWidth={2} />
-                </div>
-                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                  {t('Across 3 networks')}
+                <div className="relative z-10">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{activeActivityTab === 'my' ? t('My Bridge Volume') : t('Total Bridge Volume')}</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-2xl font-semibold text-slate-800 dark:text-white">
+                      {`$${(activeActivityTab === 'my' && !isConnected) ? '0' : bridgeVolume.toLocaleString()}`}
+                    </span>
+                    <Layers className="w-5 h-5 text-indigo-500" strokeWidth={2} />
+                  </div>
+                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                    {t('Across 3 networks')}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>
@@ -834,7 +785,26 @@ const Transactions = () => {
 
       {/* Transactions Table - Premium Desktop View */}
       <div className="hidden md:block">
-        {filteredTransactions.length > 0 ? (
+        {transactionsLoading ? (
+          <div className="transactions-table-container">
+            <table className="tx-table">
+              <thead>
+                <tr>
+                  <th>{t('Type')}</th>
+                  <th>{t('From')}</th>
+                  <th>{t('To')}</th>
+                  <th>{t('Amount')}</th>
+                  <th>{t('Time')}</th>
+                  <th>{t('Status')}</th>
+                  <th>{t('Transaction Hash')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...Array(5)].map((_, i) => <SkeletonRow key={i} />)}
+              </tbody>
+            </table>
+          </div>
+        ) : filteredTransactions.length > 0 ? (
           <div className="transactions-table-container">
             <table className="tx-table">
               <thead>
@@ -863,8 +833,10 @@ const Transactions = () => {
                           <span className="type-badge bridge">{t('Cross-Chain')}</span>
                         ) : tx.type === 'Swap' && getNetworkName(tx.chainId) ? (
                           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 w-fit">
-                            <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3 h-3 object-contain" />
-                            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">
+                            <div className={`w-3 h-3 ${getNetworkName(tx.chainId)?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
+                              <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-full h-full object-contain" />
+                            </div>
+                            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium uppercase tracking-wider">
                               {getNetworkName(tx.chainId)}
                             </span>
                           </div>
@@ -876,12 +848,14 @@ const Transactions = () => {
                       <div className="entity-cell">
                         {tx.type === 'Bridge' ? (
                           <>
-                            <img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" className="entity-icon" />
+                            <div className={`w-6 h-6 ${tx.from?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
+                              <img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" className="w-full h-full object-cover" />
+                            </div>
                             <span className="entity-name">{tx.from}</span>
                           </>
                         ) : (
                           <>
-                            <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/STC.png'} alt="" className="entity-icon" />
+                            <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/stc.png'} alt="" className="entity-icon" />
                             <span className="entity-name uppercase">{getSwapFromToken(tx)}</span>
                           </>
                         )}
@@ -891,12 +865,14 @@ const Transactions = () => {
                       <div className="entity-cell">
                         {tx.type === 'Bridge' ? (
                           <>
-                            <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" className="entity-icon" />
+                            <div className={`w-6 h-6 ${tx.to?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
+                              <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" className="w-full h-full object-cover" />
+                            </div>
                             <span className="entity-name">{tx.to}</span>
                           </>
                         ) : (
                           <>
-                            <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/STC.png'} alt="" className="entity-icon" />
+                            <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" className="entity-icon" />
                             <span className="entity-name uppercase">{getSwapToToken(tx)}</span>
                           </>
                         )}
@@ -934,11 +910,22 @@ const Transactions = () => {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleCopyHash(tx.hash)}
-                          className="hash-link"
-                          title={t('Copy Hash')}
+                          className="hash-link relative"
                         >
                           <span>{formatAddress(tx.hash)}</span>
                           <Copy size={14} className="opacity-40" />
+                          <AnimatePresence>
+                            {copiedHash === tx.hash && (
+                              <motion.span
+                                initial={{ opacity: 0, y: 5, scale: 0.9 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 5, scale: 0.9 }}
+                                className="absolute -top-11 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-bold shadow-xl border border-white/10 whitespace-nowrap z-50 capitalize"
+                              >
+                                {t('copied')}
+                              </motion.span>
+                            )}
+                          </AnimatePresence>
                         </button>
                         <a
                           href={getExplorerUrl(tx.hash, tx.chainId || chainId || 11155111)}
@@ -992,8 +979,12 @@ const Transactions = () => {
       </div>
 
       {/* Mobile Card View */}
-      <div className="md:hidden space-y-3">
-        {filteredTransactions.length > 0 ? (
+      <div className="md:hidden space-y-4">
+        {transactionsLoading ? (
+          <div className="space-y-4 px-4">
+            {[...Array(3)].map((_, i) => <SkeletonMobileCard key={i} />)}
+          </div>
+        ) : filteredTransactions.length > 0 ? (
           paginatedTransactions.map((tx, index) => (
             <motion.div
               key={tx.id || tx.hash || `tx-${index}`}
@@ -1012,7 +1003,7 @@ const Transactions = () => {
                   {tx.type === 'Swap' && getNetworkName(tx.chainId) && (
                     <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 w-fit">
                       <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3 h-3 object-contain" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">
+                      <span className="text-[10px] font-medium uppercase tracking-wider">
                         {getNetworkName(tx.chainId)}
                       </span>
                     </div>
@@ -1020,7 +1011,7 @@ const Transactions = () => {
                   {tx.type === 'Bridge' && (
                     <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 w-fit">
                       <ArrowLeftRight size={10} />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">{t('Cross-Chain')}</span>
+                      <span className="text-[10px] font-medium uppercase tracking-wider">{t('Cross-Chain')}</span>
                     </div>
                   )}
                 </div>
@@ -1050,19 +1041,19 @@ const Transactions = () => {
               {/* From/To (You Pay/You Receive) Row - Unified for Swap and Bridge */}
               <div className="flex items-center gap-3 py-1 bg-slate-50/50 dark:bg-white/5 rounded-2xl px-3 border border-slate-100/50 dark:border-white/5">
                 <div className="flex-1 min-w-0">
-                  <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider">
+                  <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider">
                     {tx.type === 'Swap' ? t('You Pay') : t('From')}
                   </div>
                   <div className="flex items-center gap-2 min-w-0">
                     {tx.type === 'Bridge' ? (
                       <>
                         <img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" className="w-5 h-5 rounded-full object-cover" />
-                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate">{tx.from}</span>
+                        <span className="text-sm font-semibold text-slate-800 dark:text-white truncate">{tx.from}</span>
                       </>
                     ) : (
                       <>
-                        <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/STC.png'} alt="" className="w-5 h-5 rounded-full object-cover" />
-                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate uppercase">{getSwapFromToken(tx)}</span>
+                        <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/stc.png'} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        <span className="text-sm font-semibold text-slate-800 dark:text-white truncate uppercase">{getSwapFromToken(tx)}</span>
                       </>
                     )}
                   </div>
@@ -1075,19 +1066,19 @@ const Transactions = () => {
                 </div>
 
                 <div className="flex-1 min-w-0 text-right">
-                  <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider">
+                  <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider">
                     {tx.type === 'Swap' ? t('You Receive') : t('To')}
                   </div>
                   <div className="flex items-center justify-end gap-2 min-w-0">
                     {tx.type === 'Bridge' ? (
                       <>
-                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate">{tx.to}</span>
                         <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        <span className="text-sm font-semibold text-slate-800 dark:text-white truncate">{tx.to}</span>
                       </>
                     ) : (
                       <>
-                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate uppercase">{getSwapToToken(tx)}</span>
-                        <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/STC.png'} alt="" className="w-5 h-5 rounded-full object-cover shadow-sm" />
+                        <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" className="w-5 h-5 rounded-full object-cover drop-shadow-[0_4px_8px_rgba(59,130,246,0.25)]" />
+                        <span className="text-sm font-semibold text-slate-800 dark:text-white truncate uppercase">{getSwapToToken(tx)}</span>
                       </>
                     )}
                   </div>
@@ -1096,9 +1087,9 @@ const Transactions = () => {
 
               {/* Amount Row - Unified */}
               <div className="flex items-center justify-between py-2.5 bg-slate-900/[0.03] dark:bg-white/[0.03] rounded-xl px-4 border border-slate-900/[0.05] dark:border-white/[0.05] shadow-inner group/amount transition-all duration-300">
-                <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">{t('Amount')}</span>
+                <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">{t('Amount')}</span>
                 <div className="flex items-center gap-2 group-hover/amount:scale-[1.02] transition-transform duration-300">
-                  <span className="text-base font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+                  <span className="text-base font-semibold text-slate-900 dark:text-white tabular-nums tracking-tight">
                     {tx.type === 'Swap' ? (getSwapToAmount(tx) || getSwapAmount(tx)) : getSwapAmount(tx)}
                   </span>
                   {tx.type === 'Swap' ? (
@@ -1107,8 +1098,8 @@ const Transactions = () => {
                   ) : (
                     <>
                       {/* Bridge dynamic token display - Default to USDC if no symbol found in amount */}
-                      <img src={getTokenLogo(tx.amount?.includes(' ') ? tx.amount.split(' ')[1] : 'USDC') || '/icons/usdc.png'} alt="" className="w-5 h-5 rounded-full shadow-sm" />
-                      <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+                      <img src={getTokenLogo(tx.amount?.includes(' ') ? tx.amount.split(' ')[1] : 'USDC') || '/icons/usdc.png'} alt="" className="w-5 h-5 rounded-full drop-shadow-[0_4px_8px_rgba(59,130,246,0.25)]" />
+                      <span className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">
                         {tx.amount?.includes(' ') ? tx.amount.split(' ')[1] : 'USDC'}
                       </span>
                     </>
@@ -1123,18 +1114,28 @@ const Transactions = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleCopyHash(tx.hash)}
-                      className="flex-1 font-mono text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center justify-between gap-2 touch-manipulation min-h-[44px] px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors"
-                      title="Copy"
+                      className="flex-1 font-mono text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center justify-between gap-2 touch-manipulation min-h-[44px] px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors relative"
                     >
                       <span className="truncate">{formatAddress(tx.hash)}</span>
                       <Copy size={16} className="flex-shrink-0 opacity-60" />
+                      <AnimatePresence>
+                        {copiedHash === tx.hash && (
+                          <motion.span
+                            initial={{ opacity: 0, y: 5, scale: 0.9 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 5, scale: 0.9 }}
+                            className="absolute -top-11 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-bold shadow-xl border border-white/10 whitespace-nowrap z-50 capitalize"
+                          >
+                            {t('copied')}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
                     </button>
                     <a
                       href={getExplorerUrl(tx.hash, tx.chainId || chainId || 11155111)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg active:bg-gray-200 dark:active:bg-gray-700 transition-colors"
-                      title="View on Explorer"
                     >
                       <ExternalLink size={18} />
                     </a>
@@ -1144,16 +1145,7 @@ const Transactions = () => {
             </motion.div>
           ))
         ) : (
-          <div className="text-center py-12 px-4">
-            {transactionsLoading ? (
-              <div className="flex flex-col items-center gap-3">
-                <RefreshCw className="animate-spin text-blue-600 dark:text-blue-400" size={28} />
-                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t('Loading transactions...')}</p>
-              </div>
-            ) : (
-              <EmptyActivityState />
-            )}
-          </div>
+          <EmptyActivityState />
         )}
       </div>
 
@@ -1182,38 +1174,8 @@ const Transactions = () => {
         )}
       </div>
 
-      {/* Floating Copy Success Toast - Rebranded to Minimalist Card Style */}
-      {
-        showCopyToast && ReactDOM.createPortal(
-          <AnimatePresence>
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="fixed bottom-24 left-4 right-4 md:left-8 md:right-auto md:w-80 z-[99999]"
-            >
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-4 flex items-center gap-4 backdrop-blur-xl">
-                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center flex-shrink-0">
-                  <Check className="text-slate-900 dark:text-white" size={20} strokeWidth={3} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[15px] font-bold text-slate-900 dark:text-white leading-tight">{t('Copied!')}</p>
-                  <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{t('Transaction hash copied')}</p>
-                </div>
-                <button
-                  onClick={() => setShowCopyToast(false)}
-                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </motion.div>
-          </AnimatePresence>,
-          document.body
-        )
-      }
     </div >
   );
 };
 
-export default React.memo(Transactions);
+export default memo(Transactions);

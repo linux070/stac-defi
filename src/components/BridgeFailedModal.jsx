@@ -1,10 +1,11 @@
-import React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, AlertCircle } from 'lucide-react';
+import { X } from 'lucide-react';
+import '../styles/bridge-styles.css';
 
-const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, errorMessage }) => {
+
+const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorMessage }) => {
   const { t } = useTranslation();
 
   // Safety checks for chain names
@@ -44,7 +45,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[1000] bridging-modal-backdrop"
+          className="fixed inset-0 z-[100000] bridging-modal-backdrop"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -98,14 +99,18 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorTitle, er
                     <div className="bridging-modal-success-info-row">
                       <span>{t('Source')}</span>
                       <div className="flex items-center gap-2">
-                        <img src={getChainIcon(safeFromChain)} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        <div className={`w-5 h-5 ${safeFromChain.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
+                          <img src={getChainIcon(safeFromChain)} alt="" className="w-full h-full object-cover" />
+                        </div>
                         <span className="value">{safeFromChain}</span>
                       </div>
                     </div>
                     <div className="bridging-modal-success-info-row">
                       <span>{t('Destination')}</span>
                       <div className="flex items-center gap-2">
-                        <img src={getChainIcon(safeToChain)} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        <div className={`w-5 h-5 ${safeToChain.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
+                          <img src={getChainIcon(safeToChain)} alt="" className="w-full h-full object-cover" />
+                        </div>
                         <span className="value">{safeToChain}</span>
                       </div>
                     </div>

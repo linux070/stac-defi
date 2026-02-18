@@ -1,35 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { getItem } from '../utils/indexedDB';
-import { TOKEN_PRICES } from '../config/networks';
 
-/**
- * Hook to calculate total bridge volume in USD from transactions stored in IndexedDB
- * @param {string|null} walletAddress - Optional wallet address to filter transactions.
- *                                       If provided, only transactions for this wallet are counted.
- *                                       If null/undefined, shows global baseline + all user transactions.
- */
 export function useTotalBridgeVolume(walletAddress = null) {
-    const [totalVolume, setTotalVolume] = useState(0);
-    const [loading, setLoading] = useState(true);
-
-    // Global bridge volume baseline to represent all users on the site ($5,200.00)
-    // Only used when showing global stats (no wallet filter)
+    const queryClient = useQueryClient();
     const GLOBAL_BRIDGE_BASELINE = 5200;
 
-    const calculateTotalVolume = async () => {
-        try {
-            setLoading(true);
-
-            // Get personal and global transactions from IndexedDB
+    const { data, isLoading } = useQuery({
+        queryKey: ['totalBridgeVolume', walletAddress],
+        queryFn: async () => {
             const [personalTxs, globalTxs] = await Promise.all([
                 getItem('myTransactions'),
                 getItem('globalTransactions')
             ]);
 
-            // Merge transactions
             const allTransactions = [...(Array.isArray(personalTxs) ? personalTxs : []), ...(Array.isArray(globalTxs) ? globalTxs : [])];
-
-            // Calculate bridge volume in USD
             let volumeUSD = 0;
             const processedHashes = new Set();
 
@@ -37,62 +22,35 @@ export function useTotalBridgeVolume(walletAddress = null) {
                 if (!tx.hash || processedHashes.has(tx.hash)) return;
                 processedHashes.add(tx.hash);
 
-                // Only count successful Bridge transactions
-                if (tx.type !== 'Bridge' || tx.status !== 'success') return;
-                if (!tx.amount) return;
+                if (tx.type !== 'Bridge' || tx.status !== 'success' || !tx.amount) return;
 
-                // If wallet address is provided, only count transactions for that wallet
                 if (walletAddress) {
                     const walletLower = walletAddress.toLowerCase();
                     if (tx.address?.toLowerCase() !== walletLower) return;
                 }
 
-                // Bridge transactions in this dApp are currently exclusively USDC
                 const amount = parseFloat(tx.amount);
-
-                if (!isNaN(amount) && amount > 0) {
-                    // USDC price is generally 1 USD
-                    volumeUSD += amount;
-                }
+                if (!isNaN(amount) && amount > 0) volumeUSD += amount;
             });
 
-            // If wallet-specific, show only that wallet's volume
-            // If global (no wallet), show baseline + calculated volume
             const finalTotal = walletAddress ? volumeUSD : (GLOBAL_BRIDGE_BASELINE + volumeUSD);
-            setTotalVolume(Math.round(finalTotal));
-            setLoading(false);
-        } catch (error) {
-            console.error('Error calculating total bridge volume:', error);
-            setTotalVolume(walletAddress ? 0 : GLOBAL_BRIDGE_BASELINE); // Fallback
-            setLoading(false);
-        }
-    };
+            return Math.round(finalTotal);
+        },
+        staleTime: 60000,
+        refetchInterval: 30000,
+    });
 
     useEffect(() => {
-        // Initial calculation on mount
-        calculateTotalVolume();
-
-        // Polling interval to keep data fresh (every 30 seconds)
-        const interval = setInterval(() => {
-            calculateTotalVolume();
-        }, 30000);
-
-        // Recalculate when transactions might have changed
-        const handleTransactionSaved = () => {
-            calculateTotalVolume();
-        };
-
-        window.addEventListener('transactionSaved', handleTransactionSaved);
-        window.addEventListener('bridgeTransactionSaved', handleTransactionSaved);
-        window.addEventListener('globalStatsUpdated', handleTransactionSaved);
-
+        const invalidate = () => queryClient.invalidateQueries({ queryKey: ['totalBridgeVolume', walletAddress] });
+        window.addEventListener('transactionSaved', invalidate);
+        window.addEventListener('bridgeTransactionSaved', invalidate);
+        window.addEventListener('globalStatsUpdated', invalidate);
         return () => {
-            clearInterval(interval);
-            window.removeEventListener('transactionSaved', handleTransactionSaved);
-            window.removeEventListener('bridgeTransactionSaved', handleTransactionSaved);
-            window.removeEventListener('globalStatsUpdated', handleTransactionSaved);
+            window.removeEventListener('transactionSaved', invalidate);
+            window.removeEventListener('bridgeTransactionSaved', invalidate);
+            window.removeEventListener('globalStatsUpdated', invalidate);
         };
-    }, [walletAddress]); // Re-run when wallet address changes
+    }, [walletAddress, queryClient]);
 
-    return { totalVolume, loading };
+    return { totalVolume: data ?? 0, loading: isLoading };
 }

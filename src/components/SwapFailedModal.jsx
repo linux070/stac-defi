@@ -1,68 +1,46 @@
-import React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertCircle } from 'lucide-react';
 import '../styles/swap-styles.css';
 
-const SwapFailedModal = ({ isOpen, onClose, error, fromToken, toToken }) => {
+const SwapFailedModal = ({ isOpen, onClose, error }) => {
     const { t } = useTranslation();
 
     const getCleanErrorMessage = (msg) => {
-        if (!msg) return t('User rejected the transaction in wallet.');
+        if (!msg) return t('The transaction was cancelled or failed on-chain.');
+        const lowerMsg = String(msg).toLowerCase();
 
-        const lowerMsg = msg.toLowerCase();
-
-        // User rejection
         if (lowerMsg.includes('user rejected') || lowerMsg.includes('user denied') || lowerMsg.includes('action_rejected')) {
             return t('Transaction cancelled: You rejected the request in your wallet.');
         }
-
-        // Insufficient funds
         if (lowerMsg.includes('insufficient funds') || lowerMsg.includes('exceeds the balance')) {
-            return t('Insufficient funds: You do not have enough native tokens to cover the gas fee.');
+            return t('Insufficient balance to cover the transaction cost.');
         }
-
-        // Slippage / Price Impact
         if (lowerMsg.includes('slippage') || lowerMsg.includes('price impact') || lowerMsg.includes('too much')) {
-            return t('Swap failed due to high price impact or slippage. Please try increasing your slippage tolerance.');
+            return t('Swap failed due to high price impact or slippage.');
         }
 
-        // fallback for short technical strings
-        if (msg.length > 150) {
-            return t('The transaction was cancelled or failed on-chain. Please verify your wallet and try again.');
-        }
-
-        return msg;
+        return msg.length > 120 ? t('The transaction failed. Please try again.') : msg;
     };
 
-    const getTokenIcon = (symbol) => {
-        const iconMap = {
-            'USDC': '/icons/usdc.png',
-            'STC': '/icons/STC.png',
-            'BALL': '/icons/ball.jpg',
-            'MTB': '/icons/MTB.png',
-            'ECR': '/icons/ECR.png'
-        };
-        return iconMap[symbol] || null;
-    };
 
     const modalContent = (
         <AnimatePresence>
             {isOpen && (
                 <motion.div
-                    className="fixed inset-0 z-[1000] swap-modal-backdrop"
+                    className="swap-modal-backdrop"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={onClose}
                 >
                     <motion.div
-                        className="relative swap-modal-container max-w-[440px] w-full mx-4"
-                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                        className="swap-modal-container swap-confirm-modal"
+                        initial={{ scale: 0.95, opacity: 0, y: 12 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+                        exit={{ scale: 0.95, opacity: 0, y: 12 }}
+                        transition={{ type: 'spring', damping: 28, stiffness: 380 }}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
@@ -70,38 +48,29 @@ const SwapFailedModal = ({ isOpen, onClose, error, fromToken, toToken }) => {
                             className="swap-modal-close-button-alt"
                             aria-label="Close"
                         >
-                            <X size={20} />
+                            <X size={18} />
                         </button>
 
                         <div className="swap-modal-content">
-                            <div className="swap-modal-status-card-new">
-                                <div className="swap-modal-success-icon-wrapper">
-                                    <motion.div
-                                        className="swap-modal-failed-circle"
-                                        initial={{ scale: 0, rotate: -45 }}
-                                        animate={{ scale: 1, rotate: 0 }}
-                                        transition={{ delay: 0.2, type: 'spring' }}
-                                    >
-                                        <X size={40} strokeWidth={4} />
-                                    </motion.div>
+                            <div className="flex flex-col items-center mb-8">
+                                <div className="swap-modal-error-circle-wrapper mb-4">
+                                    <div className="swap-modal-error-circle">
+                                        <AlertCircle size={32} strokeWidth={2.5} className="text-red-500" />
+                                    </div>
                                 </div>
-
-                                <h4 className="swap-modal-status-title-new title-failed">
-                                    {t('Swap Failed')}
-                                </h4>
-
-                                <p className="text-center text-slate-500 dark:text-slate-400 text-sm px-6 mb-4">
+                                <h2 className="swap-confirm-title text-center !mb-2" style={{ color: '#ef4444' }}>{t('Swap Failed')}</h2>
+                                <p className="text-[14px] text-slate-500 dark:text-slate-400 text-center leading-relaxed px-4">
                                     {getCleanErrorMessage(error?.message || error)}
                                 </p>
-
-
-                                <button
-                                    onClick={onClose}
-                                    className="swap-modal-action-button-secondary-new"
-                                >
-                                    {t('Try Again')}
-                                </button>
                             </div>
+
+
+                            <button
+                                onClick={onClose}
+                                className="swap-modal-action-button"
+                            >
+                                {t('Try Again')}
+                            </button>
                         </div>
                     </motion.div>
                 </motion.div>

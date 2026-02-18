@@ -1,38 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useAccount, useBalance, useSwitchChain, useDisconnect } from 'wagmi';
+import { useAccount, useSwitchChain, useDisconnect } from 'wagmi';
+import { useTranslation } from 'react-i18next';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
-import { Loader, X, Copy, LogOut, Check } from 'lucide-react';
-import useTokenBalance from '../hooks/useTokenBalance';
+import { Loader, Copy, LogOut } from 'lucide-react';
 import useMultiChainBalances from '../hooks/useMultiChainBalances';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 const CustomConnectButton = () => {
-  const { address, isConnected, chain } = useAccount();
-  const { data: ethBalance } = useBalance({ address });
-  const { balance: usdcBalance, loading: usdcLoading } = useTokenBalance('USDC');
+  const { t } = useTranslation();
+  const { address, isConnected } = useAccount();
   const { chains, switchChain } = useSwitchChain();
   const { disconnect } = useDisconnect();
 
   // Use the new multi-chain balance hook
   const { balances } = useMultiChainBalances(address, isConnected);
 
-  const [showBalance, setShowBalance] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showAccountModal, setShowAccountModal] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  // Show balance after a short delay to allow for initial load
-  useEffect(() => {
-    if (isConnected) {
-      const timer = setTimeout(() => {
-        setShowBalance(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    } else {
-      setShowBalance(false);
-    }
-  }, [isConnected]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -74,26 +59,12 @@ const CustomConnectButton = () => {
     }
   };
 
-  // Get current chain USDC balance
-  const getCurrentChainBalance = () => {
-    if (chain?.name?.includes('Arc')) {
-      return {
-        balance: balances.arcTestnet.usdc || '0.00',
-        loading: balances.arcTestnet.loading,
-      };
-    } else if (chain?.name?.includes('Sepolia')) {
-      return {
-        balance: balances.sepolia.usdc || '0.00',
-        loading: balances.sepolia.loading,
-      };
-    }
-    return { balance: '0.00', loading: false };
-  };
+
 
   return (
     <div className="relative">
       <ConnectButton.Custom>
-        {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
+        {({ account, chain, openChainModal, openConnectModal, mounted }) => {
           return (
             <div
               {...(!mounted && {
@@ -110,9 +81,9 @@ const CustomConnectButton = () => {
                   return (
                     <button
                       onClick={openConnectModal}
-                      className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                      className="h-[44px] px-6 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/25 active:scale-95 font-bold text-[13px] whitespace-nowrap flex items-center justify-center tracking-tight"
                     >
-                      Connect Wallet
+                      {t('Connect Wallet')}
                     </button>
                   );
                 }
@@ -121,272 +92,248 @@ const CustomConnectButton = () => {
                   return (
                     <button
                       onClick={openChainModal}
-                      className="px-4 py-2 bg-red-500 text-white rounded-full font-medium hover:bg-red-600 transition-all duration-200"
+                      className="h-[44px] px-6 rounded-2xl bg-red-500 text-white hover:bg-red-600 transition-all duration-300 shadow-lg shadow-red-500/25 active:scale-95 font-bold text-[13px] whitespace-nowrap flex items-center justify-center tracking-tight"
                     >
-                      Wrong network
+                      {t('Wrong network')}
                     </button>
                   );
                 }
 
-                const currentBalance = getCurrentChainBalance();
+
 
                 return (
                   <>
                     <div className="wallet-container">
-                      {/* Main wallet button with current chain balance */}
+                      {/* Main wallet button with current chain balance - PREMIUM REDESIGN */}
                       <button
                         onClick={() => setShowDropdown(!showDropdown)}
-                        className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        className="h-[44px] flex items-center space-x-3 pl-2.5 pr-4 rounded-2xl border border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl hover:bg-white dark:hover:bg-white/10 hover:border-blue-500/30 dark:hover:border-blue-400/30 transition-all duration-300 shadow-sm active:scale-95 group relative overflow-hidden"
                       >
-                        <div className="flex flex-col items-end">
-                          {showBalance && (
-                            <div className="flex items-center space-x-1">
-                              {currentBalance.loading ? (
-                                <Loader className="animate-spin" size={12} />
-                              ) : (
-                                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                  {currentBalance.balance} USDC
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          <div className="flex items-center space-x-1">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {/* Subtle background glow effect on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+
+                        {/* Jazzicon with cleaner look - MOVED TO START */}
+                        <div className="relative flex items-center justify-center transition-transform duration-500 group-hover:scale-105">
+                          <Jazzicon diameter={30} seed={jsNumberForAddress(account.address)} />
+                          <div className="absolute inset-0 rounded-full border border-black/5 dark:border-white/5 pointer-events-none"></div>
+                        </div>
+
+                        <div className="flex flex-col justify-center items-start relative z-10 pl-1">
+                          <div className="flex items-center">
+                            <span className="text-[14px] text-slate-700 dark:text-slate-200 font-bold tracking-tight transition-colors group-hover:text-slate-900 dark:group-hover:text-white">
                               {shortenAddress(account.address)}
                             </span>
                           </div>
                         </div>
-                        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-900 shadow-inner">
-                          <Jazzicon diameter={32} seed={jsNumberForAddress(account.address)} />
-                        </div>
                       </button>
 
-                      {/* Dropdown menu with both chain balances */}
-                      {showDropdown && (
-                        <div className="wallet-dropdown-menu absolute top-full right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
-                          {/* Arc Testnet Option */}
-                          {(() => {
-                            const arcChain = chains.find(c => c.name.includes('Arc'));
-                            if (!arcChain) return null;
-                            return (
-                              <div
-                                className="chain-option flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                                onClick={() => handleSwitchChain(arcChain.id)}
-                              >
-                                <div
-                                  className="w-6 h-6 rounded-full flex items-center justify-center overflow-hidden"
-                                  style={{ background: arcChain.name.includes('Arc') ? '#131720' : (arcChain.iconBackground || '#000') }}
-                                >
-                                  {arcChain.iconUrl ? (
-                                    <img
-                                      src={arcChain.iconUrl}
-                                      alt="Arc Testnet"
-                                      className="w-full h-full object-contain"
-                                    />
-                                  ) : (
-                                    <span className="text-[10px] font-bold">A</span>
-                                  )}
-                                </div>
-                                <div className="flex-1 text-left">
-                                  <div className="text-sm font-medium text-gray-900 dark:text-white">Arc Testnet</div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                                    {balances.arcTestnet.loading ? (
-                                      <span className="flex items-center">
-                                        <Loader className="animate-spin mr-1" size={10} />
-                                        Loading...
-                                      </span>
-                                    ) : (
-                                      `${balances.arcTestnet.usdc || '0.00'} USDC`
-                                    )}
-                                  </div>
-                                </div>
-                                {chain.name.includes('Arc') && (
-                                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                )}
-                              </div>
-                            );
-                          })()}
-
-                          {/* Sepolia Option */}
-                          {(() => {
-                            const sepoliaChain = chains.find(c => c.name.includes('Sepolia') && !c.name.includes('Base'));
-                            if (!sepoliaChain) return null;
-                            return (
-                              <div
-                                className="chain-option flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                                onClick={() => handleSwitchChain(sepoliaChain.id)}
-                              >
-                                <div
-                                  className="w-6 h-6 rounded-full flex items-center justify-center overflow-hidden"
-                                  style={{ background: sepoliaChain.iconBackground || '#484c50' }}
-                                >
-                                  {sepoliaChain.iconUrl ? (
-                                    <img
-                                      src={sepoliaChain.iconUrl}
-                                      alt="Sepolia"
-                                      className="w-full h-full object-contain"
-                                    />
-                                  ) : (
-                                    <span className="text-[10px] font-bold">S</span>
-                                  )}
-                                </div>
-                                <div className="flex-1 text-left">
-                                  <div className="text-sm font-medium text-gray-900 dark:text-white">Sepolia</div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                                    {balances.sepolia.loading ? (
-                                      <span className="flex items-center">
-                                        <Loader className="animate-spin mr-1" size={10} />
-                                        Loading...
-                                      </span>
-                                    ) : (
-                                      `${balances.sepolia.usdc || '0.00'} USDC`
-                                    )}
-                                  </div>
-                                </div>
-                                {chain.name.includes('Sepolia') && (
-                                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                )}
-                              </div>
-                            );
-                          })()}
-
-                          <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
-
-                          {/* Account info with USDC balance */}
-                          <div className="px-4 py-3 space-y-1">
-                            <div className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                              {shortenAddress(account.address)}
-                            </div>
-                            {/* USDC Balance for current chain */}
-                            <div className="text-xs text-gray-600 dark:text-gray-400">
-                              {currentBalance.loading ? (
-                                <span className="flex items-center">
-                                  <Loader className="animate-spin mr-1" size={10} />
-                                  Loading...
+                      {/* Consolidated Wallet Dropdown */}
+                      <AnimatePresence>
+                        {showDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                            className="absolute top-full right-0 mt-8 w-80 bg-white dark:bg-slate-950 rounded-3xl shadow-2xl border border-gray-200 dark:border-white/10 p-0 z-[60] overflow-hidden backdrop-blur-xl dark:bg-slate-950/90"
+                          >
+                            {/* USER-FOCUSED CONSOLIDATED HEADER */}
+                            <div className="p-5 border-b border-gray-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+                              <div className="flex items-center justify-between mb-4">
+                                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                  {t('Account details')}
                                 </span>
-                              ) : (
-                                `${currentBalance.balance} USDC`
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
-
-                          {/* Faucet link for Sepolia USDC */}
-                          {chain.name.includes('Sepolia') && (
-                            <>
-                              <a
-                                href="https://faucet.circle.com/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full text-left px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
-                              >
-                                <span>Get Testnet USDC</span>
-                              </a>
-                              <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
-                            </>
-                          )}
-
-                          {/* Account details button */}
-                          <button
-                            onClick={() => {
-                              setShowAccountModal(true);
-                              setShowDropdown(false);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
-                          >
-                            <span>Account Details</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Custom Account Modal */}
-                    <AnimatePresence>
-                      {showAccountModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                            onClick={() => setShowAccountModal(false)}
-                          />
-                          <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
-                            className="relative w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 z-10"
-                          >
-                            {/* Close button */}
-                            <button
-                              onClick={() => setShowAccountModal(false)}
-                              className="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                            >
-                              <X size={20} className="text-gray-500 dark:text-gray-400" />
-                            </button>
-
-                            {/* Wallet Avatar */}
-                            <div className="flex flex-col items-center mb-6">
-                              <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-900 shadow-xl mb-4 border-2 border-white dark:border-gray-700">
-                                <Jazzicon diameter={80} seed={jsNumberForAddress(account.address)} />
                               </div>
 
-                              {/* Wallet Address */}
-                              <div className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                                {shortenAddress(account.address)}
-                              </div>
+                              {/* Wallet Identity Card */}
+                              <div className="flex items-center space-x-3 p-3 bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm group transition-all duration-300">
+                                <div className="relative">
+                                  <Jazzicon diameter={34} seed={jsNumberForAddress(account.address)} />
+                                </div>
+                                <div className="flex-1 overflow-hidden">
+                                  <div className="text-[14px] font-bold text-slate-900 dark:text-white truncate font-['Satoshi','Inter',sans-serif] tracking-tight">
+                                    {shortenAddress(account.address)}
+                                  </div>
+                                  <div className="text-[10px] text-slate-900 dark:text-white font-medium uppercase tracking-widest">
+                                    {t('Connected')}
+                                  </div>
+                                </div>
 
-                              {/* USDC Balance */}
-                              <div className="text-sm text-gray-600 dark:text-gray-400">
-                                {currentBalance.loading ? (
-                                  <span className="flex items-center">
-                                    <Loader className="animate-spin mr-2" size={14} />
-                                    Loading balance...
-                                  </span>
-                                ) : (
-                                  `${currentBalance.balance} USDC`
-                                )}
+                                <div className="flex items-center space-x-1.5">
+                                  <button
+                                    onClick={handleCopyAddress}
+                                    className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 relative group/copy border border-transparent hover:border-blue-200 dark:hover:border-blue-500/20"
+                                  >
+                                    <Copy size={14} />
+                                    <AnimatePresence>
+                                      {copied && (
+                                        <motion.span
+                                          initial={{ opacity: 0, y: 5, scale: 0.9 }}
+                                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                                          exit={{ opacity: 0, y: 5, scale: 0.9 }}
+                                          className="absolute -top-11 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-bold shadow-xl border border-white/10 whitespace-nowrap z-50 capitalize"
+                                        >
+                                          {t('copied')}
+                                        </motion.span>
+                                      )}
+                                    </AnimatePresence>
+                                  </button>
+                                  <button
+                                    onClick={() => { disconnect(); setShowDropdown(false); }}
+                                    className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-red-500 border border-transparent hover:border-red-200 dark:hover:border-red-500/20"
+                                  >
+                                    <LogOut size={14} />
+                                  </button>
+                                </div>
                               </div>
                             </div>
 
-                            {/* Action Buttons */}
-                            <div className="space-y-2">
-                              {/* Copy Address Button */}
-                              <button
-                                onClick={handleCopyAddress}
-                                className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"
-                              >
-                                {copied ? (
-                                  <>
-                                    <Check size={18} className="text-green-500" />
-                                    <span className="font-medium text-green-500">Copied!</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy size={18} className="text-gray-600 dark:text-gray-400" />
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">Copy Address</span>
-                                  </>
-                                )}
-                              </button>
+                            {/* Network Selection Section */}
+                            <div className="p-2 space-y-0.5 bg-white dark:bg-slate-950 border-b border-gray-100 dark:border-white/10">
+                              {/* Arc Testnet Option */}
+                              {(() => {
+                                const ARC_CHAIN_ID = 5042002;
+                                const arcChain = chains.find(c => c.id === ARC_CHAIN_ID);
+                                if (!arcChain) return null;
+                                const isActive = chain.id === ARC_CHAIN_ID;
+                                return (
+                                  <div
+                                    className={`flex items-center space-x-3 px-3 py-3 rounded-2xl cursor-pointer transition-all duration-300 group
+                                      ${isActive
+                                        ? 'cursor-default transition-none'
+                                        : 'hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent'
+                                      }`}
+                                    onClick={() => !isActive && handleSwitchChain(arcChain.id)}
+                                  >
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 shadow-sm
+                                      ${isActive ? 'scale-110 shadow-lg shadow-blue-500/20' : ''}
+                                      bg-black p-0`}>
+                                      <img src="/icons/Arc.png" alt="Arc" className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className={`flex-1 text-left ${isActive ? 'pl-0.5' : ''}`}>
+                                      <div className={`text-[15px] font-bold tracking-tight transition-colors ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-900 dark:text-white'}`}>
+                                        Arc Testnet
+                                      </div>
+                                      <div className={`text-[12px] font-medium font-['Satoshi','Inter',sans-serif] ${isActive ? 'text-slate-500 dark:text-slate-400' : 'text-slate-500 dark:text-slate-500'}`}>
+                                        {balances.arcTestnet.loading ? (
+                                          <Loader className="animate-spin" size={12} />
+                                        ) : (
+                                          <span>{balances.arcTestnet.usdc} <span className="text-[9px] opacity-70">USDC</span></span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {isActive && (
+                                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 dark:bg-emerald-600 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-slate-900 transition-all duration-500 animate-in zoom-in">
+                                        <motion.svg
+                                          initial={{ pathLength: 0, opacity: 0 }}
+                                          animate={{ pathLength: 1, opacity: 1 }}
+                                          width="10" height="8" viewBox="0 0 10 8" fill="none"
+                                        >
+                                          <motion.path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        </motion.svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
 
-                              {/* Disconnect Button */}
-                              <button
-                                onClick={() => {
-                                  disconnect();
-                                  setShowAccountModal(false);
-                                  setShowDropdown(false);
-                                }}
-                                className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-xl border-2 border-red-200 dark:border-red-800 hover:border-red-500 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
-                              >
-                                <LogOut size={18} className="text-red-600 dark:text-red-400" />
-                                <span className="font-medium text-red-600 dark:text-red-400">Disconnect</span>
-                              </button>
+                              {/* Sepolia Option */}
+                              {(() => {
+                                const SEPOLIA_CHAIN_ID = 11155111;
+                                const sepoliaChain = chains.find(c => c.id === SEPOLIA_CHAIN_ID);
+                                if (!sepoliaChain) return null;
+                                const isActive = chain.id === SEPOLIA_CHAIN_ID;
+                                return (
+                                  <div
+                                    className={`flex items-center space-x-3 px-3 py-3 rounded-2xl cursor-pointer transition-all duration-300 group
+                                      ${isActive
+                                        ? 'cursor-default transition-none'
+                                        : 'hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent'
+                                      }`}
+                                    onClick={() => !isActive && handleSwitchChain(sepoliaChain.id)}
+                                  >
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 shadow-sm
+                                      ${isActive ? 'scale-110 shadow-lg shadow-blue-500/20' : ''}
+                                      bg-white p-0`}>
+                                      <img src="/icons/eth.png" alt="Sepolia" className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="flex-1 text-left pl-0.5">
+                                      <div className={`text-[15px] font-bold tracking-tight transition-colors ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-900 dark:text-white'}`}>
+                                        Sepolia
+                                      </div>
+                                      <div className={`text-[12px] font-medium font-['Satoshi','Inter',sans-serif] ${isActive ? 'text-slate-500 dark:text-slate-400' : 'text-slate-500 dark:text-slate-500'}`}>
+                                        {balances.sepolia.loading ? (
+                                          <Loader className="animate-spin" size={12} />
+                                        ) : (
+                                          <span>{balances.sepolia.usdc} <span className="text-[9px] opacity-70">USDC</span></span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {isActive && (
+                                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 dark:bg-emerald-600 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-slate-900 transition-all duration-500 animate-in zoom-in">
+                                        <motion.svg
+                                          initial={{ pathLength: 0, opacity: 0 }}
+                                          animate={{ pathLength: 1, opacity: 1 }}
+                                          width="10" height="8" viewBox="0 0 10 8" fill="none"
+                                        >
+                                          <motion.path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        </motion.svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+
+                              {/* Base Sepolia Option */}
+                              {(() => {
+                                const BASE_SEPOLIA_CHAIN_ID = 84532;
+                                const baseSepoliaChain = chains.find(c => c.id === BASE_SEPOLIA_CHAIN_ID);
+                                if (!baseSepoliaChain) return null;
+                                const isActive = chain.id === BASE_SEPOLIA_CHAIN_ID;
+                                return (
+                                  <div
+                                    className={`flex items-center space-x-3 px-3 py-3 rounded-2xl cursor-pointer transition-all duration-300 group
+                                      ${isActive
+                                        ? 'cursor-default transition-none'
+                                        : 'hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent'
+                                      }`}
+                                    onClick={() => !isActive && handleSwitchChain(baseSepoliaChain.id)}
+                                  >
+                                    <div className={`w-8 h-8 ${isActive ? 'scale-110 shadow-lg shadow-blue-500/20' : ''} base-sepolia-icon-representation transition-all duration-300`}>
+                                      <img src="/icons/base.png" alt="Base Sepolia" className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="flex-1 text-left pl-0.5">
+                                      <div className={`text-[15px] font-bold tracking-tight transition-colors ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-900 dark:text-white'}`}>
+                                        Base Sepolia
+                                      </div>
+                                      <div className={`text-[12px] font-medium font-['Satoshi','Inter',sans-serif] ${isActive ? 'text-slate-500 dark:text-slate-400' : 'text-slate-500 dark:text-slate-500'}`}>
+                                        {balances.baseSepolia.loading ? (
+                                          <Loader className="animate-spin" size={12} />
+                                        ) : (
+                                          <span>{balances.baseSepolia.usdc} <span className="text-[9px] opacity-70">USDC</span></span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {isActive && (
+                                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 dark:bg-emerald-600 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-slate-900 transition-all duration-500 animate-in zoom-in">
+                                        <motion.svg
+                                          initial={{ pathLength: 0, opacity: 0 }}
+                                          animate={{ pathLength: 1, opacity: 1 }}
+                                          width="10" height="8" viewBox="0 0 10 8" fill="none"
+                                        >
+                                          <motion.path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        </motion.svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
+
+                            {/* RESOURCES & UPDATES SECTION - ISOLATED INTERACTION */}
                           </motion.div>
-                        </div>
-                      )}
-                    </AnimatePresence>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </>
                 );
               })()}

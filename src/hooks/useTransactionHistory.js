@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAccount } from 'wagmi';
-import { createPublicClient, http, formatUnits } from 'viem';
+import { createPublicClient, http } from 'viem';
 import { sepolia } from 'viem/chains';
 import { SEPOLIA_CHAIN_ID, ARC_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID } from './useBridge';
 import { getItem, setItem } from '../utils/indexedDB';
@@ -26,32 +26,24 @@ const USDC_CONTRACTS = {
   [BASE_SEPOLIA_CHAIN_ID]: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
 };
 
-// Chain name mapping for display
-const CHAIN_NAMES = {
-  [SEPOLIA_CHAIN_ID]: 'Sepolia',
-  [ARC_CHAIN_ID]: 'Arc Testnet',
-  [BASE_SEPOLIA_CHAIN_ID]: 'Base Sepolia',
-};
-
 // ERC20 Transfer event signature
 const TRANSFER_EVENT_SIGNATURE = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
 // Storage key for all transactions (shared across wallets)
 const TRANSACTIONS_STORAGE_KEY = 'myTransactions';
-const GLOBAL_STATS_KEY = 'globalStats'; // Key for global dashboard metrics
 const GLOBAL_TX_KEY = 'globalTransactions'; // Cache for global transactions
+
 const backupToSessionStorage = (walletAddress, transactions) => {
   try {
     if (typeof sessionStorage !== 'undefined') {
       const key = `stac_tx_backup_${walletAddress.toLowerCase()}`;
       sessionStorage.setItem(key, JSON.stringify(transactions));
     }
-  } catch (err) {
-    // Silently fail - sessionStorage might be unavailable
+  } catch {
+    // Silently fail
   }
 };
 
-// Recover from sessionStorage if IndexedDB was cleared
 const recoverFromSessionStorage = (walletAddress) => {
   try {
     if (typeof sessionStorage !== 'undefined') {
@@ -59,13 +51,12 @@ const recoverFromSessionStorage = (walletAddress) => {
       const data = sessionStorage.getItem(key);
       return data ? JSON.parse(data) : null;
     }
-  } catch (err) {
+  } catch {
     return null;
   }
   return null;
 };
 
-// Custom fetch handler to intercept malformed/truncated JSON responses
 const safeRpcFetch = async (url, options) => {
   const response = await fetch(url, options);
   const clone = response.clone();
@@ -75,230 +66,86 @@ const safeRpcFetch = async (url, options) => {
     return response;
   } catch (err) {
     if (err instanceof SyntaxError) {
-      console.warn(`[SuperBridge] Truncated JSON detected from ${url}. Switching providers...`);
+      console.warn(`[SuperBridge] Truncated JSON detected. Switching providers...`);
       throw new Error(`Malformed JSON response from RPC: ${err.message}`);
     }
     return response;
   }
 };
 
-// Create public clients for all chains
-const createArcClient = () => {
-  for (const rpcUrl of ARC_RPC_URLS) {
-    try {
-      return createPublicClient({
-        chain: {
-          id: ARC_CHAIN_ID,
-          name: 'Arc Testnet',
-          network: 'arc-testnet',
-          nativeCurrency: {
-            decimals: 18,
-            name: 'USDC',
-            symbol: 'USDC',
+// Persistent clients to avoid re-creation
+const clients = {};
+
+const getClient = (chainId, rpcUrls, chain) => {
+  if (!clients[chainId]) {
+    // Try the first working URL from the list
+    for (const rpcUrl of rpcUrls) {
+      try {
+        clients[chainId] = createPublicClient({
+          chain: chain || {
+            id: chainId,
+            name: chainId === ARC_CHAIN_ID ? 'Arc Testnet' : 'Base Sepolia',
+            network: chainId === ARC_CHAIN_ID ? 'arc-testnet' : 'base-sepolia',
+            nativeCurrency: chainId === ARC_CHAIN_ID ? { decimals: 18, name: 'USDC', symbol: 'USDC' } : { decimals: 18, name: 'ETH', symbol: 'ETH' },
+            rpcUrls: { default: { http: [rpcUrl] }, public: { http: [rpcUrl] } },
+            testnet: true,
           },
-          rpcUrls: {
-            default: { http: [rpcUrl] },
-            public: { http: [rpcUrl] },
-          },
-          blockExplorers: {
-            default: { name: 'Arc Explorer', url: 'https://testnet.arcscan.app' },
-          },
-          testnet: true,
-        },
-        transport: http(rpcUrl, {
-          retryCount: 5,
-          timeout: 30000,
-          fetch: safeRpcFetch,
-        }),
-        batch: { multicall: true },
-      });
-    } catch (err) {
-      continue;
+          transport: http(rpcUrl, { retryCount: 3, timeout: 20000, fetch: safeRpcFetch }),
+          batch: { multicall: true },
+        });
+        if (clients[chainId]) break;
+      } catch {
+        console.warn(`Failed to create client for ${chainId} with ${rpcUrl}`);
+      }
     }
   }
-  return null;
+  return clients[chainId];
 };
 
-const createSepoliaClient = () => {
-  for (const rpcUrl of SEPOLIA_RPC_URLS) {
-    try {
-      return createPublicClient({
-        chain: sepolia,
-        transport: http(rpcUrl, {
-          retryCount: 5,
-          timeout: 30000,
-          fetch: safeRpcFetch,
-        }),
-        batch: { multicall: true },
-      });
-    } catch (err) {
-      continue;
-    }
-  }
-  return null;
-};
+const createArcClient = () => getClient(ARC_CHAIN_ID, ARC_RPC_URLS);
+const createSepoliaClient = () => getClient(SEPOLIA_CHAIN_ID, SEPOLIA_RPC_URLS, sepolia);
+const createBaseSepoliaClient = () => getClient(BASE_SEPOLIA_CHAIN_ID, BASE_SEPOLIA_RPC_URLS);
 
-const createBaseSepoliaClient = () => {
-  for (const rpcUrl of BASE_SEPOLIA_RPC_URLS) {
-    try {
-      return createPublicClient({
-        chain: {
-          id: BASE_SEPOLIA_CHAIN_ID,
-          name: 'Base Sepolia',
-          network: 'base-sepolia',
-          nativeCurrency: {
-            decimals: 18,
-            name: 'ETH',
-            symbol: 'ETH',
-          },
-          rpcUrls: {
-            default: { http: [rpcUrl] },
-            public: { http: [rpcUrl] },
-          },
-          blockExplorers: {
-            default: { name: 'BaseScan', url: 'https://sepolia.basescan.org' },
-          },
-          testnet: true,
-        },
-        transport: http(rpcUrl, {
-          retryCount: 5,
-          timeout: 30000,
-          fetch: safeRpcFetch,
-        }),
-        batch: { multicall: true },
-      });
-    } catch (err) {
-      continue;
-    }
-  }
-  return null;
-};
-
-// Determine transaction type based on contract addresses and logs
 const determineTransactionType = (tx, logs, chainId) => {
-  // Check if it's a bridge transaction by looking for USDC transfers
   const usdcAddress = USDC_CONTRACTS[chainId];
-  if (!usdcAddress) return 'Unknown';
-
-  // Check for USDC transfer events
-  const hasUSDCTransfer = logs?.some(log =>
-    log.address?.toLowerCase() === usdcAddress.toLowerCase()
-  );
-
-  // For USDC transfers that aren't explicitly identified as swaps or other types,
-  // we'll label them as 'Transfer' instead of 'Bridge'.
-  // Our dApp's bridge transactions are explicitly saved as 'Bridge' in IndexedDB.
-  if (hasUSDCTransfer) {
-    return 'Transfer';
-  }
-
-  // Default type
-  return 'Transaction';
+  if (!usdcAddress) return 'Transaction';
+  const hasUSDCTransfer = logs?.some(log => log.address?.toLowerCase() === usdcAddress.toLowerCase());
+  return hasUSDCTransfer ? 'Transfer' : 'Transaction';
 };
 
-// Format transaction data
 const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
-  // Use actual block timestamp if available, otherwise use current time
-  const timestamp = block?.timestamp
-    ? Number(block.timestamp) * 1000 // Convert from Unix timestamp (seconds) to milliseconds
-    : Date.now();
-
-  // Get transaction type
+  const timestamp = block?.timestamp ? Number(block.timestamp) * 1000 : Date.now();
   const type = determineTransactionType(tx, receipt?.logs, chainId);
-
-  // Extract amount and direction from logs
   let amount = '0.00';
-  let isOutgoing = true; // Default to outgoing (Source)
-
+  let isOutgoing = true;
   const usdcAddress = USDC_CONTRACTS[chainId];
   if (receipt?.logs && usdcAddress) {
     const transferLogs = receipt.logs.filter(log =>
       log.address?.toLowerCase() === usdcAddress.toLowerCase() &&
       log.topics?.[0] === TRANSFER_EVENT_SIGNATURE
     );
-
     if (transferLogs.length > 0) {
       const log = transferLogs[0];
-
-      // Check direction: From User = Outgoing, To User = Incoming
       const userLower = address.toLowerCase().replace('0x', '');
-      const fromTopic = log.topics?.[1]?.toLowerCase() || '';
       const toTopic = log.topics?.[2]?.toLowerCase() || '';
-
-      if (toTopic.includes(userLower)) {
-        isOutgoing = false; // Incoming (Destination/Mint)
-      } else {
-        isOutgoing = true; // Outgoing (Source/Burn)
-      }
-
-      // Decode the amount from the log data
+      isOutgoing = !toTopic.includes(userLower);
       try {
         if (log.data && log.data !== '0x') {
           const hexAmount = log.data.startsWith('0x') ? log.data.slice(2) : log.data;
-          const amountInSmallestUnit = BigInt('0x' + hexAmount);
-          const amountInUSDC = Number(amountInSmallestUnit) / 1000000;
-          amount = amountInUSDC.toFixed(2);
+          amount = (Number(BigInt('0x' + hexAmount)) / 1000000).toFixed(2);
         }
-      } catch (err) {
-        console.error('Error decoding transfer amount:', err);
-        amount = 'N/A';
-      }
+      } catch { amount = 'N/A'; }
     }
   }
-
-  // Determine from/to chains for bridge transactions
-  let fromChain = chainName;
-  let toChain = chainName;
-
-  if (type === 'Bridge') {
-    if (isOutgoing) {
-      fromChain = chainName;
-      // Heuristic destination guessing (fallback when local data is missing)
-      if (chainId === SEPOLIA_CHAIN_ID) {
-        toChain = 'Arc Testnet';
-      } else if (chainId === ARC_CHAIN_ID) {
-        toChain = 'Sepolia';
-      } else if (chainId === BASE_SEPOLIA_CHAIN_ID) {
-        // Base Sepolia could go to Sepolia or Arc Testnet
-        // Priority is given to user-saved transactions in activity page
-        toChain = 'Sepolia';
-      }
-    } else {
-      toChain = chainName;
-      // Heuristic source guessing
-      if (chainId === SEPOLIA_CHAIN_ID) {
-        fromChain = 'Arc Testnet';
-      } else if (chainId === ARC_CHAIN_ID) {
-        fromChain = 'Sepolia';
-      } else if (chainId === BASE_SEPOLIA_CHAIN_ID) {
-        fromChain = 'Sepolia';
-      }
-    }
-  }
-
   return {
-    id: tx.hash,
-    type,
-    from: fromChain,
-    to: toChain,
-    amount,
-    timestamp,
-    status: receipt?.status === 'success' ? 'success' : receipt?.status === 'reverted' ? 'failed' : 'pending',
-    hash: tx.hash,
-    chainId,
-    chainName, // Store chain name for display
-    address: address?.toLowerCase(),
-    isOutgoing,
+    id: tx.hash, type, from: chainName, to: chainName, amount, timestamp,
+    status: receipt?.status === 'success' ? 'success' : 'failed',
+    hash: tx.hash, chainId, chainName, address: address?.toLowerCase(), isOutgoing,
   };
 };
 
-/**
- * Enhanced format for Global Transactions (Anonymous)
- */
 const formatGlobalTransaction = (log, chainId, chainName) => {
-  const timestamp = Date.now(); // We don't fetch blocks for global for speed
   let amount = '0.00';
-
   try {
     if (log.args && log.args.value) {
       amount = (Number(log.args.value) / 1000000).toFixed(2);
@@ -306,447 +153,205 @@ const formatGlobalTransaction = (log, chainId, chainName) => {
       const hexAmount = log.data.startsWith('0x') ? log.data.slice(2) : log.data;
       amount = (Number(BigInt('0x' + hexAmount)) / 1000000).toFixed(2);
     }
-  } catch (err) {
-    amount = '0.00';
-  }
-
+  } catch { amount = '0.00'; }
   return {
-    id: log.transactionHash,
-    hash: log.transactionHash,
-    type: 'Swap', // Heuristic for global dashboard
-    amount,
-    timestamp,
-    status: 'success',
-    chainId,
-    chainName,
-    isGlobal: true
+    id: log.transactionHash, hash: log.transactionHash, type: 'Swap',
+    amount, timestamp: Date.now(), status: 'success', chainId, chainName, isGlobal: true
   };
 };
 
-// Deduplicate bridge transactions
 const deduplicateBridgeTransactions = (transactions) => {
-  console.log(`🔍 Deduplicating ${transactions.length} transactions...`);
-
   const bridgeTxs = transactions.filter(tx => tx.type === 'Bridge');
   const otherTxs = transactions.filter(tx => tx.type !== 'Bridge');
-
-  // Group bridge transactions by amount and timestamp (within 5 minute window)
   const bridgeGroups = new Map();
-
   bridgeTxs.forEach(tx => {
     const timeWindow = Math.floor(tx.timestamp / (5 * 60 * 1000));
     const key = `${tx.amount}_${timeWindow}`;
-
-    if (!bridgeGroups.has(key)) {
-      bridgeGroups.set(key, []);
-    }
+    if (!bridgeGroups.has(key)) bridgeGroups.set(key, []);
     bridgeGroups.get(key).push(tx);
   });
-
-  // For each group, prefer the IndexedDB transaction
   const uniqueBridgeTxs = [];
   bridgeGroups.forEach((group) => {
     if (group.length === 1) {
       uniqueBridgeTxs.push(group[0]);
     } else {
       const indexedDBTx = group.find(tx => tx.isOutgoing === undefined);
-      if (indexedDBTx) {
-        uniqueBridgeTxs.push(indexedDBTx);
-      } else {
-        const outgoingTx = group.find(tx => tx.isOutgoing === true);
-        uniqueBridgeTxs.push(outgoingTx || group[0]);
-      }
+      uniqueBridgeTxs.push(indexedDBTx || group[0]);
     }
   });
-
-  console.log(`✨ Deduplicated ${bridgeTxs.length} bridge txs to ${uniqueBridgeTxs.length} unique`);
-
   return [...uniqueBridgeTxs, ...otherTxs];
 };
+
+let globalIsFetchingHistory = false;
+let globalIsFetchingStats = false;
+let lastStatsFetchTime = 0;
 
 export function useTransactionHistory() {
   const { address, isConnected } = useAccount();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const pollingIntervalRef = useRef(null);
   const lastFetchRef = useRef(0);
   const fetchedHashesRef = useRef(new Set());
   const previousAddressRef = useRef(null);
+  const transactionsRef = useRef([]);
 
-  // Load transactions for a specific wallet address
+  useEffect(() => {
+    transactionsRef.current = transactions;
+  }, [transactions]);
+
   const loadWalletTransactions = useCallback(async (walletAddress) => {
     if (!walletAddress) return [];
-
     try {
       const walletAddressLower = walletAddress.toLowerCase();
-
-      // Try to load from IndexedDB first
       let allTransactions = await getItem(TRANSACTIONS_STORAGE_KEY) || [];
-
-      // Filter for this wallet
-      let walletTransactions = allTransactions.filter(tx =>
-        tx.address && tx.address.toLowerCase() === walletAddressLower
-      );
-
-      // If no transactions found, try sessionStorage backup
+      let walletTransactions = allTransactions.filter(tx => tx.address && tx.address.toLowerCase() === walletAddressLower);
       if (walletTransactions.length === 0) {
         const recovered = recoverFromSessionStorage(walletAddress);
         if (recovered && recovered.length > 0) {
-          console.log(`🔄 Recovered ${recovered.length} transactions from sessionStorage backup`);
           walletTransactions = recovered;
-
-          // Save recovered transactions back to IndexedDB
-          const merged = [...allTransactions, ...recovered];
-          await setItem(TRANSACTIONS_STORAGE_KEY, merged);
+          await setItem(TRANSACTIONS_STORAGE_KEY, [...allTransactions, ...recovered]);
         }
       }
-
-      return walletTransactions;
-    } catch (err) {
-      console.error('Error loading wallet transactions:', err);
-      return [];
-    }
-  }, []);
-
-  // Save transactions ensuring wallet address is properly tagged
-  const saveTransactions = useCallback(async (walletAddress, newTransactions) => {
-    if (!walletAddress || !newTransactions || newTransactions.length === 0) return;
-
-    try {
-      const walletAddressLower = walletAddress.toLowerCase();
-
-      // Get all existing transactions
-      const allTransactions = await getItem(TRANSACTIONS_STORAGE_KEY) || [];
-
-      // Get existing hashes for this wallet
-      const existingHashes = new Set(
-        allTransactions
-          .filter(tx => tx.address?.toLowerCase() === walletAddressLower)
-          .map(tx => tx.hash)
-      );
-
-      // Filter new transactions that don't exist yet
-      const trulyNew = newTransactions.filter(tx => !existingHashes.has(tx.hash));
-
-      if (trulyNew.length > 0) {
-        // Tag all transactions with the wallet address
-        const taggedNew = trulyNew.map(tx => ({
-          ...tx,
-          address: walletAddressLower,
-        }));
-
-        // Merge and save
-        const merged = [...taggedNew, ...allTransactions].slice(0, 500); // Keep last 500
-        await setItem(TRANSACTIONS_STORAGE_KEY, merged);
-
-        // Backup to sessionStorage for this wallet
-        const walletTxs = merged.filter(tx =>
-          tx.address?.toLowerCase() === walletAddressLower
-        );
-        backupToSessionStorage(walletAddress, walletTxs);
-
-        console.log(`💾 Saved ${trulyNew.length} new transactions for ${walletAddress.slice(0, 6)}...`);
+      if (walletTransactions.length > 0) {
+        backupToSessionStorage(walletAddress, walletTransactions);
       }
-    } catch (err) {
-      console.error('Error saving transactions:', err);
-    }
+      return walletTransactions;
+    } catch { return []; }
   }, []);
 
-  // Fetch transactions from a specific chain
   const fetchChainTransactions = useCallback(async (chainId, chainName, client, targetAddress = null) => {
     if (!client) return [];
     const searchAddress = targetAddress || address;
-    if (!searchAddress && !targetAddress) {
-      // Global fetch mode
+    if (!searchAddress) {
       try {
         const currentBlock = await client.getBlockNumber();
         const logs = await client.getLogs({
           address: USDC_CONTRACTS[chainId],
           event: {
-            type: 'event',
-            name: 'Transfer',
-            inputs: [
-              { type: 'address', indexed: true, name: 'from' },
-              { type: 'address', indexed: true, name: 'to' },
-              { type: 'uint256', indexed: false, name: 'value' },
-            ],
+            type: 'event', name: 'Transfer',
+            inputs: [{ type: 'address', indexed: true, name: 'from' }, { type: 'address', indexed: true, name: 'to' }, { type: 'uint256', indexed: false, name: 'value' }],
           },
           fromBlock: currentBlock - 50n > 0n ? currentBlock - 50n : 0n,
           toBlock: currentBlock,
         });
         return logs.map(log => formatGlobalTransaction(log, chainId, chainName));
-      } catch (e) { return []; }
+      } catch { return []; }
     }
 
     try {
       const currentBlock = await client.getBlockNumber();
       const fromBlock = currentBlock - 100n > 0n ? currentBlock - 100n : 0n;
-
       const usdcAddress = USDC_CONTRACTS[chainId];
       if (!usdcAddress) return [];
-
-      // Fetch logs where user is sender or receiver
       const [logsFrom, logsTo] = await Promise.all([
-        client.getLogs({
-          address: usdcAddress,
-          event: {
-            type: 'event',
-            name: 'Transfer',
-            inputs: [
-              { type: 'address', indexed: true, name: 'from' },
-              { type: 'address', indexed: true, name: 'to' },
-              { type: 'uint256', indexed: false, name: 'value' },
-            ],
-          },
-          args: { from: address },
-          fromBlock,
-          toBlock: currentBlock,
-        }),
-        client.getLogs({
-          address: usdcAddress,
-          event: {
-            type: 'event',
-            name: 'Transfer',
-            inputs: [
-              { type: 'address', indexed: true, name: 'from' },
-              { type: 'address', indexed: true, name: 'to' },
-              { type: 'uint256', indexed: false, name: 'value' },
-            ],
-          },
-          args: { to: address },
-          fromBlock,
-          toBlock: currentBlock,
-        }),
+        client.getLogs({ address: usdcAddress, event: { type: 'event', name: 'Transfer', inputs: [{ type: 'address', indexed: true, name: 'from' }, { type: 'address', indexed: true, name: 'to' }, { type: 'uint256', indexed: false, name: 'value' }] }, args: { from: address }, fromBlock, toBlock: currentBlock }),
+        client.getLogs({ address: usdcAddress, event: { type: 'event', name: 'Transfer', inputs: [{ type: 'address', indexed: true, name: 'from' }, { type: 'address', indexed: true, name: 'to' }, { type: 'uint256', indexed: false, name: 'value' }] }, args: { to: address }, fromBlock, toBlock: currentBlock }),
       ]);
-
-      const logs = [...logsFrom, ...logsTo];
-      const txHashes = [...new Set(logs.map(log => log.transactionHash))];
-
-      // Get hashes we already have in state to avoid redundant RPC calls
-      const existingHashes = new Set(transactions.map(tx => tx.hash));
-
-      const txPromises = txHashes
-        .filter(hash => !fetchedHashesRef.current.has(hash) && !existingHashes.has(hash))
-        .slice(0, 15) // Limit concurrent fetches
-        .map(async (hash) => {
-          try {
-            const [tx, receipt] = await Promise.all([
-              client.getTransaction({ hash }),
-              client.getTransactionReceipt({ hash }),
-            ]);
-
-            let block = null;
-            if (receipt?.blockNumber) {
-              try {
-                const blockPromise = client.getBlock({ blockNumber: receipt.blockNumber });
-                const timeoutPromise = new Promise((_, reject) =>
-                  setTimeout(() => reject(new Error('Block fetch timeout')), 5000)
-                );
-                block = await Promise.race([blockPromise, timeoutPromise]);
-              } catch (err) {
-                block = null;
-              }
-            }
-
-            if (tx.from?.toLowerCase() === address.toLowerCase() ||
-              receipt?.logs?.some(log =>
-                log.topics?.[2]?.toLowerCase().includes(address.toLowerCase().slice(2)) ||
-                log.topics?.[1]?.toLowerCase().includes(address.toLowerCase().slice(2))
-              )) {
-              fetchedHashesRef.current.add(hash);
-              return formatTransaction(tx, receipt, block, chainId, chainName, address);
-            }
-            return null;
-          } catch (err) {
-            console.error(`Error fetching transaction ${hash}:`, err);
-            return null;
+      const txHashes = [...new Set([...logsFrom, ...logsTo].map(log => log.transactionHash))];
+      const existingHashes = new Set(transactionsRef.current.map(tx => tx.hash));
+      const txPromises = txHashes.filter(hash => !fetchedHashesRef.current.has(hash) && !existingHashes.has(hash)).slice(0, 15).map(async (hash) => {
+        try {
+          const [tx, receipt] = await Promise.all([client.getTransaction({ hash }), client.getTransactionReceipt({ hash })]);
+          let block = null;
+          if (receipt?.blockNumber) {
+            try { block = await Promise.race([client.getBlock({ blockNumber: receipt.blockNumber }), new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))]); } catch { block = null; }
           }
-        });
-
+          if (tx.from?.toLowerCase() === address.toLowerCase() || receipt?.logs?.some(l => l.topics?.[1]?.toLowerCase().includes(address.toLowerCase().slice(2)) || l.topics?.[2]?.toLowerCase().includes(address.toLowerCase().slice(2)))) {
+            fetchedHashesRef.current.add(hash);
+            return formatTransaction(tx, receipt, block, chainId, chainName, address);
+          }
+        } catch { return null; }
+        return null;
+      });
       const results = await Promise.all(txPromises);
       return results.filter(Boolean);
-    } catch (err) {
-      console.error(`Error fetching transactions from ${chainName}:`, err);
-      return [];
-    }
-  }, [address, transactions]);
+    } catch { return []; }
+  }, [address]);
 
-  // Fetch all transactions from all chains
   const fetchTransactions = useCallback(async () => {
-    if (!isConnected || !address) {
-      setTransactions([]);
-      return;
-    }
-
+    if (!isConnected || !address || globalIsFetchingHistory) return;
     const now = Date.now();
-    if (now - lastFetchRef.current < 20000) {
-      return;
-    }
+    if (now - lastFetchRef.current < 20000) return;
 
-    setLoading(true);
-    setError(null);
-    lastFetchRef.current = now;
-
+    globalIsFetchingHistory = true;
+    setLoading(true); lastFetchRef.current = now;
     try {
-      const arcClient = createArcClient();
-      const sepoliaClient = createSepoliaClient();
-      const baseSepoliaClient = createBaseSepoliaClient();
-
+      const arcClient = createArcClient(); const sepoliaClient = createSepoliaClient(); const baseSepoliaClient = createBaseSepoliaClient();
       const [arcTxs, sepoliaTxs, baseSepoliaTxs] = await Promise.all([
         arcClient ? fetchChainTransactions(ARC_CHAIN_ID, 'Arc Testnet', arcClient) : [],
         sepoliaClient ? fetchChainTransactions(SEPOLIA_CHAIN_ID, 'Sepolia', sepoliaClient) : [],
         baseSepoliaClient ? fetchChainTransactions(BASE_SEPOLIA_CHAIN_ID, 'Base Sepolia', baseSepoliaClient) : [],
       ]);
-
-      const combinedTxs = [...arcTxs, ...sepoliaTxs, ...baseSepoliaTxs];
-
-      if (combinedTxs.length > 0) {
-        const deduplicatedTxs = deduplicateBridgeTransactions(combinedTxs);
-        const sorted = deduplicatedTxs.sort((a, b) => b.timestamp - a.timestamp);
-
-        // Update state with new transactions
+      const combined = [...arcTxs, ...sepoliaTxs, ...baseSepoliaTxs];
+      if (combined.length > 0) {
+        const deduped = deduplicateBridgeTransactions(combined);
         setTransactions(prev => {
-          const existingHashes = new Set(prev.map(tx => tx.hash));
-          const newTxs = sorted.filter(tx => !existingHashes.has(tx.hash));
-          if (newTxs.length === 0) return prev;
-          const merged = [...newTxs, ...prev].slice(0, 100);
+          const hashes = new Set(prev.map(t => t.hash));
+          const newTxs = deduped.filter(t => !hashes.has(t.hash)).sort((a, b) => b.timestamp - a.timestamp);
+          const merged = newTxs.length === 0 ? prev : [...newTxs, ...prev].slice(0, 100);
+          if (newTxs.length > 0) {
+            backupToSessionStorage(address, merged);
+          }
           return merged;
         });
       }
-    } catch (err) {
-      console.error('Error fetching transaction history:', err);
-      setError(err.message);
-    } finally {
+    } catch { setError('Fetch failed'); } finally {
       setLoading(false);
+      globalIsFetchingHistory = false;
     }
   }, [isConnected, address, fetchChainTransactions]);
 
-  // Global Stat Updater (Doesn't require connection)
   const fetchGlobalStats = useCallback(async () => {
-    try {
-      const arcClient = createArcClient();
-      const sepoliaClient = createSepoliaClient();
-      const baseSepoliaClient = createBaseSepoliaClient();
+    const now = Date.now();
+    if (globalIsFetchingStats || (now - lastStatsFetchTime < 20000)) return;
 
+    globalIsFetchingStats = true;
+    lastStatsFetchTime = now;
+    try {
+      const arcClient = createArcClient(); const sepoliaClient = createSepoliaClient(); const baseSepoliaClient = createBaseSepoliaClient();
       const [arcTxs, sepoliaTxs, baseSepoliaTxs] = await Promise.all([
         arcClient ? fetchChainTransactions(ARC_CHAIN_ID, 'Arc Testnet', arcClient, null) : [],
         sepoliaClient ? fetchChainTransactions(SEPOLIA_CHAIN_ID, 'Sepolia', sepoliaClient, null) : [],
         baseSepoliaClient ? fetchChainTransactions(BASE_SEPOLIA_CHAIN_ID, 'Base Sepolia', baseSepoliaClient, null) : [],
       ]);
-
       const globalTxs = [...arcTxs, ...sepoliaTxs, ...baseSepoliaTxs];
-      const existingGlobal = await getItem(GLOBAL_TX_KEY) || [];
-      const merged = [...globalTxs, ...existingGlobal].slice(0, 200);
-      await setItem(GLOBAL_TX_KEY, merged);
-
-      // Trigger event for other hooks even if 0 found (to stop loading states)
+      const existing = await getItem(GLOBAL_TX_KEY) || [];
+      await setItem(GLOBAL_TX_KEY, [...globalTxs, ...existing].slice(0, 200));
       window.dispatchEvent(new CustomEvent('globalStatsUpdated'));
-    } catch (err) {
-      console.error('Error fetching global stats:', err);
+    } catch { /* ignore */ } finally {
+      globalIsFetchingStats = false;
     }
   }, [fetchChainTransactions]);
 
-  // Effect: Handle wallet connection/disconnection and address changes
   useEffect(() => {
-    const handleWalletChange = async () => {
-      // Reset fetched hashes when wallet changes
+    const init = async () => {
       if (previousAddressRef.current !== address) {
-        fetchedHashesRef.current.clear();
-        lastFetchRef.current = 0;
+        fetchedHashesRef.current.clear(); lastFetchRef.current = 0;
       }
-
       if (!isConnected || !address) {
-        // Wallet disconnected - clear transactions but data is already saved
-        setTransactions([]);
-        previousAddressRef.current = null;
-        // Even when disconnected, trigger global fetch to ensure empty state has baseline data
-        fetchGlobalStats();
-        return;
+        setTransactions([]); previousAddressRef.current = null;
+        fetchGlobalStats(); return;
       }
-
-      // New wallet connected or address changed
       if (previousAddressRef.current !== address) {
-        console.log(`👛 Wallet changed: ${previousAddressRef.current?.slice(0, 6) || 'none'} → ${address.slice(0, 6)}`);
         previousAddressRef.current = address;
-
-        // Load transactions for the new wallet
         setLoading(true);
-        try {
-          const savedTxs = await loadWalletTransactions(address);
-
-          if (savedTxs.length > 0) {
-            const deduplicatedTxs = deduplicateBridgeTransactions(savedTxs);
-            const sorted = deduplicatedTxs.sort((a, b) => b.timestamp - a.timestamp);
-            setTransactions(sorted);
-            console.log(`📂 Loaded ${sorted.length} transactions for ${address.slice(0, 6)}...`);
-          } else {
-            setTransactions([]);
-            console.log(`📭 No saved transactions for ${address.slice(0, 6)}...`);
-          }
-
-          // Trigger global fetch as well
-          fetchGlobalStats();
-        } catch (err) {
-          console.error('Error loading wallet transactions:', err);
-          setTransactions([]);
-        } finally {
-          setLoading(false);
-        }
+        const saved = await loadWalletTransactions(address);
+        setTransactions(deduplicateBridgeTransactions(saved).sort((a, b) => b.timestamp - a.timestamp));
+        setLoading(false);
+        fetchGlobalStats();
       }
     };
-
-    handleWalletChange();
+    init();
   }, [isConnected, address, loadWalletTransactions, fetchGlobalStats]);
 
-  // Effect: Set up polling when wallet is connected
   useEffect(() => {
-    // Initial global fetch regardless of connection
     fetchGlobalStats();
-
-    if (!isConnected || !address) {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-        pollingIntervalRef.current = null;
-      }
-      return;
-    }
-
-    // Initial fetch (delayed to allow IndexedDB load first)
-    const initialFetchTimeout = setTimeout(() => {
-      fetchTransactions();
-    }, 1000);
-
-    // Poll every 30 seconds
-    pollingIntervalRef.current = setInterval(() => {
-      fetchTransactions();
-      fetchGlobalStats();
-    }, 30000);
-
-    return () => {
-      clearTimeout(initialFetchTimeout);
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-        pollingIntervalRef.current = null;
-      }
-    };
+    if (!isConnected || !address) return;
+    const t = setTimeout(fetchTransactions, 1000);
+    const i = setInterval(() => { fetchTransactions(); fetchGlobalStats(); }, 30000);
+    return () => { clearTimeout(t); clearInterval(i); };
   }, [isConnected, address, fetchTransactions, fetchGlobalStats]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
-  }, []);
-
-  return {
-    transactions,
-    loading,
-    error,
-    refetch: fetchTransactions,
-    fetchGlobalStats,
-  };
+  return { transactions, loading, error, refetch: fetchTransactions, fetchGlobalStats };
 }
-

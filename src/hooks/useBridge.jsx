@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
 import { BridgeKit } from '@circle-fin/bridge-kit';
 import { createPublicClient, http, fallback, formatUnits, defineChain } from 'viem';
 import { sepolia as sepoliaChain } from 'viem/chains';
-import { NETWORKS, TOKENS } from '../config/networks'; // Import the same config
 
 // Explicitly define ARC Testnet and Sepolia for high reliability
 export const arcTestnet = defineChain({
@@ -51,18 +51,48 @@ const safeRpcFetch = async (url, options) => {
 };
 
 // --- Configuration & Constants ---
+
+// RPC URLs for all chains including partner providers
+const SEPOLIA_RPC_URLS = [
+  import.meta.env.VITE_ALCHEMY_SEPOLIA_URL, // Partner Provider
+  import.meta.env.VITE_SEPOLIA_RPC_URL,
+  import.meta.env.VITE_SEPOLIA_RPC_URL_ALT,
+  'https://ethereum-sepolia-rpc.publicnode.com',
+  'https://rpc2.sepolia.org',
+].filter(Boolean);
+
+const ARC_RPC_URLS = [
+  import.meta.env.VITE_QUICKNODE_ARC_URL, // Partner Provider
+  import.meta.env.VITE_ARC_RPC_URL,
+  'https://rpc.testnet.arc.network',
+  'https://rpc-testnet.arc.network',
+].filter(Boolean);
+
+const BASE_SEPOLIA_RPC_URLS = [
+  import.meta.env.VITE_QUICKNODE_BASE_URL, // Partner Provider
+  import.meta.env.VITE_BASE_SEPOLIA_RPC_URL,
+  import.meta.env.VITE_BASE_SEPOLIA_RPC_URL_ALT,
+  'https://sepolia.base.org',
+].filter(Boolean);
+
+// Shared transport configuration for all chains
+const createFallbackTransport = (urls, timeout = 15000, retryCount = 5) => {
+  return fallback(
+    urls.map(url => http(url, {
+      fetch: safeRpcFetch,
+      timeout
+    })),
+    {
+      rank: true,
+      retryCount,
+      retryDelay: 1000,
+    }
+  );
+};
+
 export const publicClient = createPublicClient({
   chain: sepolia,
-  transport: fallback([
-    // Dedicated High-Limit Providers
-    http(import.meta.env.VITE_SEPOLIA_RPC_URL, { fetch: safeRpcFetch }),
-    http(import.meta.env.VITE_SEPOLIA_RPC_URL_ALT, { fetch: safeRpcFetch }),
-    http('https://rpc2.sepolia.org', { fetch: safeRpcFetch }),
-  ], {
-    rank: true,
-    retryCount: 5,
-    retryDelay: 500,
-  }),
+  transport: createFallbackTransport(SEPOLIA_RPC_URLS),
   batch: { multicall: true },
   pollingInterval: 12_000,
 })
@@ -102,21 +132,26 @@ export const SEPOLIA_CHAIN_ID = 11155111;
 export const ARC_CHAIN_ID = 5042002;
 export const BASE_SEPOLIA_CHAIN_ID = 84532;
 
-// RPC URLs for balance fetching
-const ARC_RPC_URLS = [
-  import.meta.env.VITE_ARC_RPC_URL,
-];
-
-const BASE_SEPOLIA_RPC_URLS = [
-  import.meta.env.VITE_BASE_SEPOLIA_RPC_URL,
-  import.meta.env.VITE_BASE_SEPOLIA_RPC_URL_ALT,
-];
-
 // --- Main Hook ---
+
+// Persistent clients to avoid re-creation
+const clients = {};
+const getClient = (chainId, rpcUrls, chain) => {
+  if (!clients[chainId]) {
+    clients[chainId] = createPublicClient({
+      chain,
+      transport: createFallbackTransport(rpcUrls),
+      batch: { multicall: true }
+    });
+  }
+  return clients[chainId];
+};
 
 export function useBridge() {
   const { address, isConnected, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
+  const queryClient = useQueryClient();
+
 
   const [state, setState] = useState({
     step: 'idle',
@@ -128,200 +163,78 @@ export function useBridge() {
     direction: undefined,
   });
 
-  const [tokenBalance, setTokenBalance] = useState('0');
-  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
-  const [balanceError, setBalanceError] = useState('');
+  const [selectedTokenKey, setSelectedTokenKey] = useState('USDC');
+  const [selectedChainId, setSelectedChainId] = useState(chainId || SEPOLIA_CHAIN_ID);
 
-  // Fetch token balance on a specific chain
-  const fetchTokenBalance = useCallback(async (token, sourceChainId) => {
-    try {
-      if (!address) return;
+  // Sync selected chain with wagmi chainId
+  useEffect(() => {
+    if (chainId) setSelectedChainId(chainId);
+  }, [chainId]);
 
-      setIsLoadingBalance(true);
-      setBalanceError('');
+  const balanceQuery = useQuery({
+    queryKey: ['balance', address, selectedChainId, selectedTokenKey],
+    queryFn: async () => {
+      const chainTokens = CHAIN_TOKENS[selectedChainId];
+      const tokenInfo = chainTokens[selectedTokenKey];
 
-      const chainTokens = CHAIN_TOKENS[sourceChainId];
-      if (!chainTokens) {
-        throw new Error(`Chain ${sourceChainId} not supported for token balance fetching`);
-      }
+      let client;
+      if (selectedChainId === SEPOLIA_CHAIN_ID) client = getClient(SEPOLIA_CHAIN_ID, SEPOLIA_RPC_URLS, sepolia);
+      else if (selectedChainId === ARC_CHAIN_ID) client = getClient(ARC_CHAIN_ID, ARC_RPC_URLS, arcTestnet);
+      else if (selectedChainId === BASE_SEPOLIA_CHAIN_ID) client = getClient(BASE_SEPOLIA_CHAIN_ID, BASE_SEPOLIA_RPC_URLS, {
+        id: BASE_SEPOLIA_CHAIN_ID,
+        rpcUrls: { default: { http: BASE_SEPOLIA_RPC_URLS } },
+      });
 
-      const tokenInfo = chainTokens[token];
-
-      // ERC20 ABI for balanceOf and decimals
-      const erc20Abi = [
-        {
-          constant: true,
-          inputs: [{ name: '_owner', type: 'address' }],
-          name: 'balanceOf',
-          outputs: [{ name: 'balance', type: 'uint256' }],
-          type: 'function',
-        },
-        {
-          constant: true,
-          inputs: [],
-          name: 'decimals',
-          outputs: [{ name: '', type: 'uint8' }],
-          type: 'function',
-        },
-      ];
-
-      let publicClient;
-      let lastError;
-
-      if (sourceChainId === SEPOLIA_CHAIN_ID) {
-        // Try multiple Sepolia RPC endpoints for reliability
-        const sepoliaRpcUrls = [
-          import.meta.env.VITE_SEPOLIA_RPC_URL,
-          import.meta.env.VITE_SEPOLIA_RPC_URL_ALT,
-        ];
-
-        for (const rpcUrl of sepoliaRpcUrls) {
-          try {
-            publicClient = createPublicClient({
-              chain: sepolia,
-              transport: http(rpcUrl, {
-                retryCount: 5,
-                timeout: 30000,
-                fetch: safeRpcFetch
-              }),
-              batch: { multicall: true }
-            });
-
-            await publicClient.getBlockNumber();
-            console.log(`✅ Connected to Sepolia via: ${rpcUrl}`);
-            break;
-          } catch (err) {
-            lastError = err;
-            continue;
-          }
-        }
-      } else if (sourceChainId === ARC_CHAIN_ID) {
-        // Try Arc Testnet RPC endpoints
-        for (const rpcUrl of ARC_RPC_URLS) {
-          try {
-            publicClient = createPublicClient({
-              chain: {
-                id: ARC_CHAIN_ID,
-                name: 'Arc Testnet',
-                network: 'arc-testnet',
-                nativeCurrency: {
-                  decimals: 18,
-                  name: 'USDC',
-                  symbol: 'USDC',
-                },
-                rpcUrls: {
-                  default: { http: [rpcUrl] },
-                  public: { http: [rpcUrl] },
-                },
-                blockExplorers: {
-                  default: { name: 'Arc Explorer', url: 'https://testnet.arcscan.app' },
-                },
-                testnet: true,
-              },
-              transport: http(rpcUrl, {
-                retryCount: 2,
-                timeout: 8000,
-              }),
-            });
-
-            await publicClient.getBlockNumber();
-            console.log(`✅ Connected to Arc Testnet via: ${rpcUrl}`);
-            break;
-          } catch (err) {
-            lastError = err;
-            continue;
-          }
-        }
-      } else if (sourceChainId === BASE_SEPOLIA_CHAIN_ID) {
-        // Try Base Sepolia RPC endpoints
-        for (const rpcUrl of BASE_SEPOLIA_RPC_URLS) {
-          try {
-            publicClient = createPublicClient({
-              chain: {
-                id: BASE_SEPOLIA_CHAIN_ID,
-                name: 'Base Sepolia',
-                network: 'base-sepolia',
-                nativeCurrency: {
-                  decimals: 18,
-                  name: 'ETH',
-                  symbol: 'ETH',
-                },
-                rpcUrls: {
-                  default: { http: [rpcUrl] },
-                  public: { http: [rpcUrl] },
-                },
-                blockExplorers: {
-                  default: { name: 'BaseScan', url: 'https://sepolia.basescan.org' },
-                },
-                testnet: true,
-              },
-              transport: http(rpcUrl, {
-                retryCount: 2,
-                timeout: 8000,
-              }),
-            });
-
-            await publicClient.getBlockNumber();
-            console.log(`✅ Connected to Base Sepolia via: ${rpcUrl}`);
-            break;
-          } catch (err) {
-            lastError = err;
-            continue;
-          }
-        }
-      }
-
-      if (!publicClient) {
-        throw new Error(`Failed to connect to RPC for chain ${sourceChainId}: ${lastError?.message || ''}`);
-      }
+      if (!client) throw new Error('Client not found');
 
       let balance;
-      let decimalsToUse;
+      let decimals = tokenInfo.decimals;
 
-      // For Arc Testnet, USDC is the native currency, not an ERC20 token
-      if (sourceChainId === ARC_CHAIN_ID) {
-        // Use getBalance for native currency instead of ERC20 balanceOf
-        balance = await publicClient.getBalance({
-          address: address,
-        });
-        // Arc Testnet native currency uses 18 decimals (wei), not 6 decimals
-        decimalsToUse = 18;
+      if (selectedChainId === ARC_CHAIN_ID) {
+        balance = await client.getBalance({ address });
+        decimals = 18;
       } else {
-        // For other chains, use ERC20 balanceOf
-        balance = await publicClient.readContract({
+        balance = await client.readContract({
           address: tokenInfo.contractAddress,
-          abi: erc20Abi,
+          abi: [{ constant: true, inputs: [{ name: '_owner', type: 'address' }], name: 'balanceOf', outputs: [{ name: 'balance', type: 'uint256' }], type: 'function' }],
           functionName: 'balanceOf',
           args: [address],
         });
-        // Use token decimals for ERC20 tokens
-        decimalsToUse = tokenInfo.decimals;
       }
 
-      const formattedBalance = formatUnits(balance, decimalsToUse);
-      // Round to 2 decimal places
-      const roundedBalance = parseFloat(formattedBalance).toFixed(2);
-      setTokenBalance(roundedBalance);
-      setBalanceError(''); // Clear error on successful fetch
-    } catch (err) {
-      console.error(`❌ Error fetching balance for chain ${sourceChainId}:`, err);
-      // Don't reset balance to '0' on error - keep previous value to avoid showing zero
-      // Only set to '0' if we don't have a previous balance value
-      setTokenBalance(prevBalance => prevBalance || '0');
+      return parseFloat(formatUnits(balance, decimals)).toFixed(2);
+    },
+    enabled: !!address && isConnected && !!CHAIN_TOKENS[selectedChainId],
+    staleTime: 15000,
+    refetchInterval: 30000,
+  });
 
-      if (err.message && (err.message.includes('timeout') || err.message.includes('took too long'))) {
-        setBalanceError('RPC timeout - balance may not be accurate.');
-      } else {
-        setBalanceError('Unable to fetch balance.');
-      }
-    } finally {
-      setIsLoadingBalance(false);
-    }
-  }, [address]);  // Execute bridge transaction (bidirectional)
+  // Listener to invalidate balance on transaction save/faucet claim
+  useEffect(() => {
+    const invalidate = () => queryClient.invalidateQueries({ queryKey: ['balance', address] });
+    window.addEventListener('faucetClaimed', invalidate);
+    window.addEventListener('swapTransactionSaved', invalidate);
+    return () => {
+      window.removeEventListener('faucetClaimed', invalidate);
+      window.removeEventListener('swapTransactionSaved', invalidate);
+    };
+  }, [address, queryClient]);
+
+  const tokenBalance = balanceQuery.data || '0';
+  const isLoadingBalance = balanceQuery.isLoading || balanceQuery.isFetching;
+  const balanceError = balanceQuery.error?.message || '';
+
+  const fetchTokenBalance = useCallback(async (token, sourceChainId) => {
+    setSelectedTokenKey(token);
+    setSelectedChainId(sourceChainId);
+    // useQuery will automatically refetch if the key changes
+  }, []);
+  // Execute bridge transaction (bidirectional)
   const bridge = useCallback(async (token, amount, direction) => {
     // Declare variables at function scope for error handling
     let destinationChain = null;
     let destinationChainId = null;
+    let currentStep = 'idle';
 
     try {
       if (!isConnected || !address) {
@@ -504,9 +417,6 @@ export function useBridge() {
         throw new Error('Adapter is not properly configured');
       }
 
-      // Store destinationChain name for error handling
-      const destinationChainName = destinationChain.name;
-
       // Verify source chain ID
       const actualSourceChainId = sourceChain.chainId;
       if (actualSourceChainId !== sourceChainId) {
@@ -530,6 +440,7 @@ export function useBridge() {
       // Switch to source chain if not already on it
       const isOnSourceChain = chainId === sourceChainId;
       if (!isOnSourceChain) {
+        currentStep = 'switching-network';
         setState(prev => ({ ...prev, step: 'switching-network' }));
         await switchChain({ chainId: sourceChainId });
         // Wait for chain switch
@@ -537,6 +448,7 @@ export function useBridge() {
       }
 
       // Set up step tracking
+      currentStep = 'approving';
       setState(prev => ({ ...prev, step: 'approving' }));
 
       // Execute the bridge - Bridge Kit will handle all three steps and chain switching automatically:
@@ -550,6 +462,7 @@ export function useBridge() {
       const burnStepTimeout = setTimeout(() => {
         setState(prev => {
           if (prev.step === 'approving') {
+            currentStep = 'burning';
             return { ...prev, step: 'burning' };
           }
           return prev;
@@ -561,6 +474,7 @@ export function useBridge() {
       const mintStepTimeout = setTimeout(() => {
         setState(prev => {
           if (prev.step === 'burning') {
+            currentStep = 'minting';
             return { ...prev, step: 'minting' };
           }
           return prev;
@@ -593,7 +507,7 @@ export function useBridge() {
         clearTimeout(mintStepTimeout);
 
         // Global try-catch for "mint" step diagnostics
-        if (state.step === 'minting' || err.message?.toLowerCase().includes('mint')) {
+        if (currentStep === 'minting' || err.message?.toLowerCase().includes('mint')) {
           console.error('CRITICAL: Failure during Bridge Mint step');
           if (err.message?.includes('Unterminated string') || err.message?.includes('JSON')) {
             console.error('RPC Error detected (JSON Truncation). Partial data:', err.data || 'unavailable');
@@ -619,7 +533,7 @@ export function useBridge() {
       console.log('Bridge result:', result);
       try {
         console.log('Bridge result (stringified):', safeStringify(result));
-      } catch (err) {
+      } catch {
         console.log('Could not stringify result (contains non-serializable values)');
       }
 
@@ -667,29 +581,17 @@ export function useBridge() {
             if (step.name === 'approve' && step.txHash) {
               sourceTxHash = step.txHash;
               console.log('✅ Found approval transaction hash:', sourceTxHash);
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'useBridge.jsx:702', message: 'Approval tx hash extracted', data: { txHash: sourceTxHash }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
-              // #endregion
+
             }
             // Second transaction: Burn on source chain
             else if (step.name === 'burn' && step.txHash) {
               sourceTxHash = step.txHash;
               console.log('✅ Found burn transaction hash:', sourceTxHash);
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'useBridge.jsx:709', message: 'Burn tx hash extracted', data: { txHash: sourceTxHash }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
-              // #endregion
             }
             // Third transaction: Mint on destination chain
             else if (step.name === 'mint' && step.txHash) {
               receiveTxHash = step.txHash;
               console.log('✅ Found mint transaction hash:', receiveTxHash);
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'useBridge.jsx:716', message: 'Mint tx hash extracted', data: { txHash: receiveTxHash }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) }).catch(() => { });
-              // #endregion
-            } else if (step.name === 'mint' && !step.txHash) {
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/95889d98-976f-4fbf-8a15-0ac51541a353', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'useBridge.jsx:720', message: 'Mint step found but no tx hash', data: { stepState: step.state, hasError: !!step.error }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D,E' }) }).catch(() => { });
-              // #endregion
             }
             // Handle errors in any step
             else if (step.state === 'error') {
@@ -739,6 +641,9 @@ export function useBridge() {
       }
 
       console.log('Final extracted transaction hashes:', { sourceTxHash, receiveTxHash });
+
+      // Background toasts removed (modal handles feedback)
+
 
       // Simple transaction hash validation
       if (sourceTxHash && typeof sourceTxHash === 'string' && sourceTxHash.startsWith('0x') && sourceTxHash.length === 66) {
@@ -854,18 +759,15 @@ export function useBridge() {
     // Don't clear balance - refresh it instead if we have address and chainId
     if (address && chainId) {
       const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
-      fetchTokenBalance('USDC', chainIdDecimal).catch(err => {
-        console.error('Error refreshing balance after reset:', err);
-      });
+      fetchTokenBalance('USDC', chainIdDecimal);
     }
-    setBalanceError('');
   }, [address, chainId, fetchTokenBalance]);
 
   // Clear only balance (for disconnect scenarios)
   const clearBalance = useCallback(() => {
-    setTokenBalance('0');
-    setBalanceError('');
-  }, []);
+    // With TanStack Query, we just wait for the next fetch or cache invalidation
+    queryClient.invalidateQueries({ queryKey: ['balance', address] });
+  }, [address, queryClient]);
 
   return {
     state,

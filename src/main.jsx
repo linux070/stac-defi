@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import './polyfills.js'
 import './index.css'
@@ -8,7 +9,6 @@ import '@rainbow-me/rainbowkit/styles.css';
 import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import { defineChain } from 'viem';
 import { sepolia as sepoliaChain } from 'viem/chains';
 
 // Import wallets
@@ -21,21 +21,7 @@ import {
   rainbowWallet,
   baseAccount,
 } from '@rainbow-me/rainbowkit/wallets';
-import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
-
-// Define Custom Avatar component for project-wide consistency
-const CustomAvatar = ({ address, ensImage, size }) => {
-  return ensImage ? (
-    <img
-      src={ensImage}
-      width={size}
-      height={size}
-      style={{ borderRadius: 999 }}
-    />
-  ) : (
-    <Jazzicon diameter={size} seed={jsNumberForAddress(address)} />
-  );
-};
+import CustomAvatar from './components/CustomAvatar';
 
 // Define Arc Testnet chain
 const arcTestnet = {
@@ -95,6 +81,7 @@ const baseSepolia = {
 };
 
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
+import { TransactionProvider } from './contexts/TransactionContext';
 
 const config = getDefaultConfig({
   appName: 'Stac',
@@ -126,9 +113,13 @@ if (rootElement) {
       <GlobalErrorBoundary>
         <WagmiProvider config={config}>
           <QueryClientProvider client={queryClient}>
-            <RainbowKitProvider avatar={CustomAvatar}>
-              <App />
-            </RainbowKitProvider>
+            <TransactionProvider>
+              <RainbowKitProvider avatar={CustomAvatar}>
+                <BrowserRouter>
+                  <App />
+                </BrowserRouter>
+              </RainbowKitProvider>
+            </TransactionProvider>
           </QueryClientProvider>
         </WagmiProvider>
       </GlobalErrorBoundary>

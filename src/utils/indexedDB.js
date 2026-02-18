@@ -12,8 +12,8 @@ let migrationDone = false;
 // Initialize IndexedDB
 const initDB = () => {
   if (initPromise) return initPromise;
-  
-  initPromise = new Promise((resolve, reject) => {
+
+  initPromise = new Promise((resolve) => {
     if (typeof window === 'undefined' || !window.indexedDB) {
       console.warn('IndexedDB not available, falling back to localStorage');
       resolve(null);
@@ -29,34 +29,34 @@ const initDB = () => {
 
     request.onsuccess = () => {
       dbInstance = request.result;
-      
+
       // Handle database close/error events
       dbInstance.onerror = (event) => {
         console.error('IndexedDB database error:', event);
       };
-      
+
       dbInstance.onclose = () => {
         console.warn('IndexedDB database closed, will reinitialize on next access');
         dbInstance = null;
         initPromise = null; // Reset so it can be reinitialized
       };
-      
+
       resolve(dbInstance);
     };
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
-      
+
       // Delete old object stores if they exist (for clean migration)
       if (db.objectStoreNames.contains(STORE_NAME)) {
         db.deleteObjectStore(STORE_NAME);
       }
-      
+
       // Create object store
       const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'key' });
       objectStore.createIndex('key', 'key', { unique: true });
     };
-    
+
     request.onblocked = () => {
       console.warn('IndexedDB upgrade blocked - another tab may have the database open');
     };
@@ -68,7 +68,7 @@ const initDB = () => {
 // Migrate localStorage data to IndexedDB on first use
 const migrateFromLocalStorage = async () => {
   if (migrationDone) return;
-  
+
   try {
     const localStorageData = localStorage.getItem('myTransactions');
     if (!localStorageData) {
@@ -87,7 +87,7 @@ const migrateFromLocalStorage = async () => {
     if (existing && Array.isArray(existing) && existing.length > 0) {
       // Merge if needed - keep unique transactions by hash
       const existingHashes = new Set(existing.map(tx => tx.hash));
-      const newTransactions = transactions.filter(tx => 
+      const newTransactions = transactions.filter(tx =>
         tx.hash && !existingHashes.has(tx.hash)
       );
       if (newTransactions.length > 0) {
@@ -109,14 +109,14 @@ export const getItem = async (key) => {
   try {
     // Ensure DB is initialized
     const db = await initDB();
-    
+
     if (!db) {
       // Fallback to localStorage
       const value = localStorage.getItem(key);
       return value ? JSON.parse(value) : null;
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       try {
         const transaction = db.transaction([STORE_NAME], 'readonly');
         const store = transaction.objectStore(STORE_NAME);
@@ -139,7 +139,7 @@ export const getItem = async (key) => {
           const value = localStorage.getItem(key);
           resolve(value ? JSON.parse(value) : null);
         };
-        
+
         transaction.onerror = () => {
           console.error('Transaction error:', transaction.error);
           // Fallback to localStorage
@@ -170,7 +170,7 @@ export const setItem = async (key, value) => {
   try {
     // Ensure DB is initialized
     const db = await initDB();
-    
+
     if (!db) {
       // Fallback to localStorage
       try {
@@ -181,7 +181,7 @@ export const setItem = async (key, value) => {
       return;
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       try {
         const transaction = db.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
@@ -208,7 +208,7 @@ export const setItem = async (key, value) => {
           }
           resolve();
         };
-        
+
         transaction.onerror = () => {
           console.error('Transaction error:', transaction.error);
           // Fallback to localStorage
@@ -245,13 +245,13 @@ export const setItem = async (key, value) => {
 export const removeItem = async (key) => {
   try {
     const db = await initDB();
-    
+
     if (!db) {
       localStorage.removeItem(key);
       return;
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       try {
         const transaction = db.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);

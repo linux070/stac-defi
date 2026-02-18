@@ -4,6 +4,8 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem 1rem;
+    font-family: 'Inter', 'Satoshi', 'General Sans', -apple-system, BlinkMacMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
 }
 
 html.dark .transactions-container {
@@ -270,7 +272,6 @@ html.dark .transactions-table-container,
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
 }
 
 /* Ensure entity icon images fill the container properly */
@@ -279,6 +280,7 @@ html.dark .transactions-table-container,
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
+    filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.2));
 }
 
 /* Seamless dark mode entity icons - no white backgrounds */

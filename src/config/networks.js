@@ -25,6 +25,7 @@ export const NETWORKS = {
     },
     rpcUrls: [import.meta.env.VITE_SEPOLIA_RPC_URL],
     blockExplorerUrls: ['https://sepolia.etherscan.io/'],
+    iconUrl: '/icons/eth.png',
   },
   BASE_SEPOLIA: {
     chainId: '0x14a34', // 84532 in decimal - Base Sepolia
@@ -36,6 +37,7 @@ export const NETWORKS = {
     },
     rpcUrls: [import.meta.env.VITE_BASE_SEPOLIA_RPC_URL],
     blockExplorerUrls: ['https://sepolia.basescan.org/'],
+    iconUrl: '/icons/base.png',
   },
 }; export const SUPPORTED_CHAINS = [
   NETWORKS.ARC_TESTNET.chainId,

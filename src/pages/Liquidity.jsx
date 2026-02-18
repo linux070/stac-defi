@@ -1,6 +1,5 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { LucideClock, Sparkles, Droplets } from 'lucide-react';
+import { LucideClock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Liquidity = () => {
@@ -18,7 +17,7 @@ const Liquidity = () => {
         <div className="absolute -top-12 -left-12 w-48 h-48 md:w-72 md:h-72 bg-blue-600/20 blur-[60px] md:blur-[100px] rounded-full group-hover:opacity-60 transition-opacity"></div>
         <div className="absolute -bottom-12 -right-12 w-48 h-48 md:w-72 md:h-72 bg-indigo-600/20 blur-[60px] md:blur-[100px] rounded-full group-hover:opacity-60 transition-opacity"></div>
 
-        <div className="relative z-10 bg-white/70 dark:bg-slate-900/40 backdrop-blur-3xl border border-slate-200/60 dark:border-white/10 rounded-[32px] md:rounded-[48px] p-8 md:p-16 text-center shadow-2xl overflow-hidden">
+        <div className="relative z-10 bg-white/70 dark:bg-slate-900/40 backdrop-blur-3xl border border-slate-200/60 dark:border-white/10 rounded-[32px] md:rounded-[48px] p-8 md:p-16 text-center shadow-2xl overflow-hidden font-['Inter','Satoshi','General_Sans',sans-serif]">
           {/* Top light sweep decoration - Arc Blue */}
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
 
@@ -51,13 +50,13 @@ const Liquidity = () => {
             >
               <div className="flex items-center justify-center gap-3 md:gap-6">
                 <div className="h-px w-8 md:w-16 bg-gradient-to-r from-transparent to-blue-500/40 dark:to-blue-400"></div>
-                <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-blue-600 dark:text-blue-300">
+                <span className="text-[10px] md:text-xs font-medium uppercase tracking-[0.4em] text-blue-600 dark:text-blue-300">
                   {t('Coming Soon')}
                 </span>
                 <div className="h-px w-8 md:w-16 bg-gradient-to-l from-transparent to-blue-500/40 dark:to-blue-400"></div>
               </div>
 
-              <p className="text-sm md:text-xl text-slate-700 dark:text-slate-200 max-w-lg mx-auto leading-relaxed font-bold tracking-tight">
+              <p className="text-sm md:text-xl text-slate-700 dark:text-slate-200 max-w-lg mx-auto leading-relaxed font-medium tracking-tight">
                 {t('liquidity.poolsLaunchingSoon')}
               </p>
             </motion.div>
@@ -72,7 +71,7 @@ const Liquidity = () => {
               ].map((item, i) => (
                 <div key={i} className="flex flex-col items-center gap-3 opacity-60 dark:opacity-40 group-hover:opacity-100 dark:group-hover:opacity-80 transition-all duration-500">
                   <div className="w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.4)]"></div>
-                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 dark:text-slate-300">
+                  <span className="text-[9px] md:text-[10px] font-medium uppercase tracking-[0.2em] text-slate-600 dark:text-slate-300">
                     {item.label}
                   </span>
                 </div>
@@ -84,9 +83,5 @@ const Liquidity = () => {
     </div>
   );
 };
-
-// Simple icon fallbacks for the grid items to avoid complex imports if not needed
-const TrendingUp = () => <div className="w-4 h-4 rounded-full border-2 border-slate-500"></div>;
-const Shield = () => <div className="w-4 h-4 rounded-full border-2 border-slate-500"></div>;
 
 export default Liquidity;

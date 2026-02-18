@@ -1,30 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { getItem, setItem } from '../utils/indexedDB';
 import { TOKEN_PRICES } from '../config/networks';
 
-// Cache key for IndexedDB
 const CACHE_KEY = 'dapp_total_value_processed';
 
-/**
- * Hook to calculate total value processed across all dApp activities
- * Includes: Swaps, Bridges, and future Liquidity operations
- */
 export function useTotalValueProcessed() {
-    const [totalValue, setTotalValue] = useState(0);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
 
-    const calculateTotalValue = async () => {
-        try {
-            setLoading(true);
-
-            // Get personal and global transactions
+    const { data, isLoading } = useQuery({
+        queryKey: ['totalValueProcessed'],
+        queryFn: async () => {
             const [personalTxs, globalTxs] = await Promise.all([
                 getItem('myTransactions'),
                 getItem('globalTransactions')
             ]);
 
             const allTransactions = [...(Array.isArray(personalTxs) ? personalTxs : []), ...(Array.isArray(globalTxs) ? globalTxs : [])];
-
             let totalUSD = 0;
             const processedHashes = new Set();
 
@@ -34,7 +26,6 @@ export function useTotalValueProcessed() {
 
                 let amount = 0;
                 let tokenSymbol = 'USDC';
-
                 const amountStr = String(tx.amount);
 
                 if (tx.type === 'Swap') {
@@ -61,47 +52,32 @@ export function useTotalValueProcessed() {
 
                 if (!isNaN(amount) && amount > 0) {
                     const tokenPrice = TOKEN_PRICES[tokenSymbol];
-                    if (tokenPrice) {
-                        totalUSD += amount * tokenPrice;
-                    } else if (tokenSymbol === 'USDC' || !tokenSymbol) {
-                        totalUSD += amount;
-                    }
+                    if (tokenPrice) totalUSD += amount * tokenPrice;
+                    else if (tokenSymbol === 'USDC' || !tokenSymbol) totalUSD += amount;
                 }
             });
 
-            // Final calculated value
             const finalValue = Math.round(totalUSD);
-            setTotalValue(finalValue);
             await setItem(CACHE_KEY, { value: finalValue, timestamp: Date.now() });
-            setLoading(false);
-        } catch (error) {
-            console.error('Error calculating total volume:', error);
-            setLoading(false);
-        }
-    };
+            return finalValue;
+        },
+        staleTime: 60000,
+        refetchInterval: 30000,
+    });
 
     useEffect(() => {
-        calculateTotalValue();
-
-        const interval = setInterval(calculateTotalValue, 30000);
-
-        const handleRefresh = () => {
-            calculateTotalValue();
-        };
-
-        window.addEventListener('transactionSaved', handleRefresh);
-        window.addEventListener('bridgeTransactionSaved', handleRefresh);
-        window.addEventListener('swapTransactionSaved', handleRefresh);
-        window.addEventListener('globalStatsUpdated', handleRefresh);
-
+        const invalidate = () => queryClient.invalidateQueries({ queryKey: ['totalValueProcessed'] });
+        window.addEventListener('transactionSaved', invalidate);
+        window.addEventListener('bridgeTransactionSaved', invalidate);
+        window.addEventListener('swapTransactionSaved', invalidate);
+        window.addEventListener('globalStatsUpdated', invalidate);
         return () => {
-            clearInterval(interval);
-            window.removeEventListener('transactionSaved', handleRefresh);
-            window.removeEventListener('bridgeTransactionSaved', handleRefresh);
-            window.removeEventListener('swapTransactionSaved', handleRefresh);
-            window.removeEventListener('globalStatsUpdated', handleRefresh);
+            window.removeEventListener('transactionSaved', invalidate);
+            window.removeEventListener('bridgeTransactionSaved', invalidate);
+            window.removeEventListener('swapTransactionSaved', invalidate);
+            window.removeEventListener('globalStatsUpdated', invalidate);
         };
-    }, []);
+    }, [queryClient]);
 
-    return { totalValue, loading };
+    return { totalValue: data ?? 0, loading: isLoading };
 }

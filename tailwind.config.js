@@ -58,6 +58,7 @@ export default {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-arc': 'linear-gradient(135deg, #1e40af 0%, #60a5fa 100%)',
+        'gradient-error': 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
       },
       animation: {
         'pulse-slow': 'pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite',

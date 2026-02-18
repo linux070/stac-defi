@@ -1,23 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader, CheckCircle, X, AlertCircle, Clock, Info, ArrowRight, Check, ArrowDown } from 'lucide-react';
+import { Loader, X, ArrowDown, Check } from 'lucide-react';
 import '../styles/bridge-styles.css';
 
-const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime, state, stopTimer }) => {
+const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, stopTimer }) => {
   const { t } = useTranslation();
   const [elapsedTime, setElapsedTime] = useState(0);
   const [finalTime, setFinalTime] = useState(null);
 
   // Close modal immediately when error is detected - BridgeFailedModal will handle errors
-  // Don't call onClose here - let the parent component handle the error state via useEffect
-  // This prevents double-handling and ensures BridgeFailedModal is shown properly
   useEffect(() => {
     if (isOpen && state?.step === 'error') {
       console.log('🚨 BridgingModal detected error state - will close to show BridgeFailedModal');
-      // The parent component's useEffect will handle closing this and showing BridgeFailedModal
-      // We just need to ensure this modal doesn't render when there's an error
     }
   }, [isOpen, state?.step]);
 
@@ -55,13 +51,6 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
     }
   }, [state?.step, elapsedTime, finalTime]);
 
-  // Close modal logic on error
-  useEffect(() => {
-    if (isOpen && state?.step === 'error') {
-      console.log('🚨 BridgingModal detected error state - will close to show BridgeFailedModal');
-    }
-  }, [isOpen, state?.step]);
-
   // Use finalTime if available (transaction completed), otherwise use live elapsedTime
   const displayTime = finalTime !== null ? finalTime : elapsedTime;
 
@@ -69,7 +58,8 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     if (mins > 0) {
-      return `${mins}m ${secs}s`;
+      // Pad seconds with leading zero for consistent width
+      return `${mins}m ${secs.toString().padStart(2, '0')}s`;
     }
     return `${secs}s`;
   };
@@ -90,8 +80,8 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
   const safeToChain = typeof toChain === 'string' ? toChain : 'Arc Testnet';
 
   const getChainIcon = (name) => {
-    if (name.includes('Arc')) return "/icons/Arc.png";
-    if (name.includes('Base')) return "/icons/base.png";
+    if (name === 'Arc Testnet') return "/icons/Arc.png";
+    if (name === 'Base Sepolia') return "/icons/base.png";
     return "/icons/eth.png";
   };
 
@@ -104,14 +94,14 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[999] bridging-modal-backdrop"
+          className="fixed inset-0 z-[100000] bridging-modal-backdrop"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="relative bridging-modal-container"
+            className="relative bridging-modal-container font-['Inter','Satoshi','General_Sans',sans-serif]"
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -132,22 +122,21 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
               {/* Unified In-Progress Content Row */}
               {modalState === 'inProgress' && (
                 <div className="space-y-4">
-                  <div className="bridging-modal-heading-container">
-                    <h2 className="bridging-modal-youre-bridging">{t("You're bridging")}</h2>
-                  </div>
+                  {/* Modal Header - aligned with close button */}
+                  <h2 className="text-[20px] font-bold text-black dark:text-white mb-4">{t("Confirm Bridge")}</h2>
 
                   {/* Bridge Details Card (Swap Style) */}
                   <div className="bridging-modal-details-new">
                     {/* From Row */}
                     <div className="bridging-modal-amount-row">
                       <div className="bridging-modal-token-badge">
-                        <div className="bridging-modal-token-icon-small">
+                        <div className={`bridging-modal-token-icon-small ${safeFromChain === 'Base Sepolia' ? 'base-sepolia-icon-representation' : ''}`}>
                           <img src={getChainIcon(safeFromChain)} alt={safeFromChain} />
                         </div>
                       </div>
                       <div className="bridging-modal-amount-content">
-                        <div className="bridging-modal-amount-label">{t('From Network')}</div>
-                        <div className="bridging-modal-amount-value">{safeFromChain}</div>
+                        <div className="bridging-modal-amount-label font-medium">{t('From Network')}</div>
+                        <div className="bridging-modal-amount-value font-medium">{safeFromChain}</div>
                       </div>
                     </div>
 
@@ -159,30 +148,28 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
                     {/* To Row */}
                     <div className="bridging-modal-amount-row">
                       <div className="bridging-modal-token-badge">
-                        <div className="bridging-modal-token-icon-small">
+                        <div className={`bridging-modal-token-icon-small ${safeToChain === 'Base Sepolia' ? 'base-sepolia-icon-representation' : ''}`}>
                           <img src={getChainIcon(safeToChain)} alt={safeToChain} />
                         </div>
                       </div>
                       <div className="bridging-modal-amount-content">
-                        <div className="bridging-modal-amount-label">{t('To Network')}</div>
-                        <div className="bridging-modal-amount-value">{safeToChain}</div>
+                        <div className="bridging-modal-amount-label font-medium">{t('To Network')}</div>
+                        <div className="bridging-modal-amount-value font-medium">{safeToChain}</div>
                       </div>
                     </div>
                   </div>
 
                   <div className="bridging-modal-progress-section-new">
                     <div className="bridging-modal-progress-header-new">
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex flex-col items-start gap-1">
-                          <span className="bridging-modal-progress-label-new">{t('Elapsed Time')}</span>
-                          <span className="bridging-modal-progress-time-new">{formatTime(displayTime)}</span>
-                        </div>
-                        <div className="bridging-modal-loader-wrapper">
-                          <Loader className="animate-spin text-blue-400" size={24} />
-                        </div>
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="bridging-modal-progress-label-new">{t('Elapsed Time')}</span>
+                        <span className="bridging-modal-progress-time-new">{formatTime(displayTime)}</span>
+                      </div>
+                      <div className="bridging-modal-loader-wrapper-shrunked">
+                        <Loader className="animate-spin text-indigo-500 dark:text-indigo-400" size={20} />
                       </div>
                     </div>
-                    <div className="bridging-modal-progress-bar-container">
+                    <div className="bridging-modal-progress-bar-container-shrunked">
                       <motion.div
                         className="bridging-modal-progress-bar"
                         initial={{ width: 0 }}
@@ -191,26 +178,19 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
                       />
                     </div>
                     <div className="bridging-modal-progress-footer-new">
-                      <div className="flex items-center gap-2">
-                        <span className="bridging-modal-progress-estimate-new">
-                          {t('Estimated completion time: 1-3 minutes')}
-                        </span>
-                      </div>
+                      <span className="bridging-modal-progress-estimate-new">
+                        {t('Estimated completion time: 1-3 minutes')}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Concise Summary Notice */}
-                  <div className="bridging-modal-notice-premium">
-                    <div className="flex items-start gap-3">
-                      <div className="bridging-modal-notice-icon-wrapper">
-                        <Info size={18} />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <span className="bridging-modal-notice-title-premium">{t('Bridge in Progress')}</span>
-                        <p className="bridging-modal-notice-text-premium">
-                          {t('Please keep this window open while your assets are being securely transferred. Closing this modal will interrupt the bridging process.')}
-                        </p>
-                      </div>
+                  {/* Minimal Note with accent bar - matching Network Selector with light/dark mode */}
+                  <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-0.5 h-5 rounded-full flex-shrink-0" style={{ background: '#f97316' }}></div>
+                      <p className="text-[12px] text-gray-700 dark:text-gray-400 font-medium">
+                        <span className="font-medium text-gray-800 dark:text-gray-300">Note:</span> Keep window open for secure transfer. Closing will interrupt the process.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -234,8 +214,8 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
                         <Check size={40} strokeWidth={4} />
                       </motion.div>
                     </div>
-                    <h4 className="bridging-modal-status-title-new">{t('Transaction Confirmed!')}</h4>
-                    <p className="bridging-modal-success-summary-text">
+                    <h4 className="bridging-modal-status-title-new font-medium">{t('Transaction Confirmed!')}</h4>
+                    <p className="bridging-modal-success-summary-text font-medium">
                       {t('Bridge Successful!')}
                     </p>
 
@@ -247,14 +227,18 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
                       <div className="bridging-modal-success-info-row">
                         <span>{t('Source')}</span>
                         <div className="flex items-center gap-2">
-                          <img src={getChainIcon(safeFromChain)} alt="" className="w-5 h-5 rounded-full object-cover" />
+                          <div className={`w-5 h-5 rounded-full overflow-hidden ${safeFromChain === 'Base Sepolia' ? 'bg-white p-[2px]' : ''}`}>
+                            <img src={getChainIcon(safeFromChain)} alt="" className="w-full h-full object-cover" />
+                          </div>
                           <span className="value">{safeFromChain}</span>
                         </div>
                       </div>
                       <div className="bridging-modal-success-info-row">
                         <span>{t('Destination')}</span>
                         <div className="flex items-center gap-2">
-                          <img src={getChainIcon(safeToChain)} alt="" className="w-5 h-5 rounded-full object-cover" />
+                          <div className={`w-5 h-5 rounded-full overflow-hidden ${safeToChain === 'Base Sepolia' ? 'bg-white p-[2px]' : ''}`}>
+                            <img src={getChainIcon(safeToChain)} alt="" className="w-full h-full object-cover" />
+                          </div>
                           <span className="value">{safeToChain}</span>
                         </div>
                       </div>
@@ -273,6 +257,10 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
                   </div>
                 </motion.div>
               )}
+              {/* Powered by Circle CCTP Badge */}
+              <div className="powered-by-badge-bottom">
+                <span>{t('Powered by Circle CCTP')}</span>
+              </div>
             </div>
           </motion.div>
         </motion.div>

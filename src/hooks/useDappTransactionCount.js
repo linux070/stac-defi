@@ -1,94 +1,77 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { getItem, setItem } from '../utils/indexedDB';
+
 const CACHE_KEY = 'dapp_transaction_count';
 
-// Calculate percentage change
 const calculatePercentageChange = (current, previous) => {
     if (!previous || previous === 0) return null;
     const change = ((current - previous) / previous) * 100;
     return parseFloat(change.toFixed(1));
 };
 
-// Lightweight hook to track dapp-specific total transaction count
 export function useDappTransactionCount() {
-    const [transactionCount, setTransactionCount] = useState(null);
-    const [change, setChange] = useState(null);
-    const [trend, setTrend] = useState('stable');
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
 
-    const updateTransactionCount = async () => {
-        try {
-            // Get personal and global transactions
+    const { data, isLoading } = useQuery({
+        queryKey: ['dappTransactionCount'],
+        queryFn: async () => {
             const [personalTxs, globalTxs] = await Promise.all([
                 getItem('myTransactions'),
                 getItem('globalTransactions')
             ]);
 
             const allTxs = [...(Array.isArray(personalTxs) ? personalTxs : []), ...(Array.isArray(globalTxs) ? globalTxs : [])];
-
-            // Unique hashes only
             const uniqueHashes = new Set();
+
             allTxs.forEach(tx => {
                 if (tx.hash && tx.status === 'success') {
                     uniqueHashes.add(tx.hash);
                 }
             });
 
-            // Live count only
             const currentCount = uniqueHashes.size;
+            const cached = await getItem(CACHE_KEY);
+            const previousCount = (cached && cached.value !== undefined) ? cached.value : 0;
 
-            // Get previous count from cache
-            let previousCount = null;
-            try {
-                const cached = await getItem(CACHE_KEY);
-                if (cached && cached.value !== undefined) {
-                    previousCount = cached.value;
-                }
-            } catch (err) { /* ignore */ }
+            let change = null;
+            let trend = 'stable';
 
-            setTransactionCount(currentCount);
-
-            if (previousCount !== null && previousCount !== currentCount && currentCount > 0) {
+            if (previousCount !== currentCount && currentCount > 0 && previousCount > 0) {
                 const percentageChange = calculatePercentageChange(currentCount, previousCount);
                 if (percentageChange !== null) {
-                    setChange(Math.abs(percentageChange));
-                    setTrend(percentageChange > 0 ? 'up' : 'down');
+                    change = Math.abs(percentageChange);
+                    trend = percentageChange > 0 ? 'up' : 'down';
                 }
-            } else {
-                setChange(null);
-                setTrend('stable');
             }
 
             await setItem(CACHE_KEY, { value: currentCount, timestamp: Date.now() });
-            setLoading(false);
-        } catch (err) {
-            console.error('Error updating transaction count:', err);
-            setLoading(false);
-        }
-    };
+
+            return { transactionCount: currentCount, change, trend };
+        },
+        staleTime: 60000,
+        refetchInterval: 30000,
+    });
 
     useEffect(() => {
-        updateTransactionCount();
-
-        const interval = setInterval(updateTransactionCount, 30000);
-
-        const handleRefresh = () => {
-            updateTransactionCount();
-        };
-
-        window.addEventListener('transactionSaved', handleRefresh);
-        window.addEventListener('bridgeTransactionSaved', handleRefresh);
-        window.addEventListener('swapTransactionSaved', handleRefresh);
-        window.addEventListener('globalStatsUpdated', handleRefresh);
+        const invalidate = () => queryClient.invalidateQueries({ queryKey: ['dappTransactionCount'] });
+        window.addEventListener('transactionSaved', invalidate);
+        window.addEventListener('bridgeTransactionSaved', invalidate);
+        window.addEventListener('swapTransactionSaved', invalidate);
+        window.addEventListener('globalStatsUpdated', invalidate);
 
         return () => {
-            clearInterval(interval);
-            window.removeEventListener('transactionSaved', handleRefresh);
-            window.removeEventListener('bridgeTransactionSaved', handleRefresh);
-            window.removeEventListener('swapTransactionSaved', handleRefresh);
-            window.removeEventListener('globalStatsUpdated', handleRefresh);
+            window.removeEventListener('transactionSaved', invalidate);
+            window.removeEventListener('bridgeTransactionSaved', invalidate);
+            window.removeEventListener('swapTransactionSaved', invalidate);
+            window.removeEventListener('globalStatsUpdated', invalidate);
         };
-    }, []);
+    }, [queryClient]);
 
-    return { transactionCount, change, trend, loading };
+    return {
+        transactionCount: data?.transactionCount ?? 0,
+        change: data?.change ?? null,
+        trend: data?.trend ?? 'stable',
+        loading: isLoading
+    };
 }

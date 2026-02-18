@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { ethers } from 'ethers';
-import { NETWORKS, isNetworkSupported, switchNetwork } from '../config/networks';
+import { isNetworkSupported } from '../config/networks';
 import { useAccount, useDisconnect, useBalance, useSwitchChain, usePublicClient, useWalletClient } from 'wagmi';
 
 const WalletContext = createContext();
@@ -21,34 +21,10 @@ export const WalletProvider = ({ children }) => {
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
 
-  const [walletAddress, setWalletAddress] = useState('');
-  const [chainId, setChainId] = useState(null);
-  const [provider, setProvider] = useState(null);
-  const [signer, setSigner] = useState(null);
-  const [balance, setBalance] = useState('0');
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState('');
 
-  // Sync with wagmi state
-  useEffect(() => {
-    setWalletAddress(address || '');
-    setChainId(wagmiChainId ? '0x' + wagmiChainId.toString(16) : null);
-
-    if (balanceData) {
-      setBalance(ethers.formatEther(balanceData.value));
-    }
-
-    // Set provider and signer
-    if (publicClient) {
-      setProvider(publicClient);
-    }
-
-    if (walletClient) {
-      setSigner(walletClient);
-    }
-  }, [address, wagmiChainId, balanceData, publicClient, walletClient]);
-
-  const connectWallet = async (walletType) => {
+  const connectWallet = async () => {
     // With RainbowKit, connection is handled by the ConnectButton
     // This function is kept for backward compatibility
     setIsConnecting(true);
@@ -70,11 +46,6 @@ export const WalletProvider = ({ children }) => {
 
   const disconnect = () => {
     wagmiDisconnect();
-    setWalletAddress('');
-    setChainId(null);
-    setProvider(null);
-    setSigner(null);
-    setBalance('0');
     localStorage.removeItem('walletConnected');
     localStorage.removeItem('walletType');
   };
@@ -94,7 +65,7 @@ export const WalletProvider = ({ children }) => {
     }
   };
 
-  const sendTransaction = async (tx) => {
+  const sendTransaction = async () => {
     // Transaction sending would be handled by wagmi hooks
     // This function is kept for backward compatibility
     console.warn('Use wagmi hooks for transaction sending in RainbowKit integration');

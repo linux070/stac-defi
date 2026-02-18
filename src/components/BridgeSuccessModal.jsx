@@ -1,4 +1,3 @@
-import React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,7 +24,7 @@ const BridgeSuccessModal = ({ isOpen, onClose, fromChain, toChain, amount, timeT
         <AnimatePresence>
             {isOpen && (
                 <motion.div
-                    className="fixed inset-0 z-[1000] bridging-modal-backdrop"
+                    className="fixed inset-0 z-[100000] bridging-modal-backdrop"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -77,14 +76,18 @@ const BridgeSuccessModal = ({ isOpen, onClose, fromChain, toChain, amount, timeT
                                     <div className="bridging-modal-success-info-row">
                                         <span>{t('From')}</span>
                                         <div className="flex items-center gap-2">
-                                            <img src={getChainIcon(fromChain)} alt="" className="w-5 h-5 rounded-full object-cover" />
+                                            <div className={`w-5 h-5 ${fromChain?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
+                                                <img src={getChainIcon(fromChain)} alt="" className="w-full h-full object-cover" />
+                                            </div>
                                             <span className="value">{fromChain}</span>
                                         </div>
                                     </div>
                                     <div className="bridging-modal-success-info-row">
                                         <span>{t('To')}</span>
                                         <div className="flex items-center gap-2">
-                                            <img src={getChainIcon(toChain)} alt="" className="w-5 h-5 rounded-full object-cover" />
+                                            <div className={`w-5 h-5 ${toChain?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
+                                                <img src={getChainIcon(toChain)} alt="" className="w-full h-full object-cover" />
+                                            </div>
                                             <span className="value">{toChain}</span>
                                         </div>
                                     </div>

@@ -1,17 +1,15 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../contexts/WalletContext';
 import { useAccount } from 'wagmi';
-import { ethers } from 'ethers';
-import { ArrowDownUp, Settings, Info, Loader, Wallet, AlertTriangle, X, ChevronDown } from 'lucide-react';
+import { ArrowDownUp, Loader, Wallet, X, ChevronDown, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TOKENS, TOKEN_PRICES, NETWORKS } from '../config/networks';
-import { sanitizeInput, calculateSwapQuote, validateAmount, validateSlippage, getFilteredTokens } from '../utils/blockchain';
+import { TOKENS } from '../config/networks';
+import { sanitizeInput, getFilteredTokens } from '../utils/blockchain';
 import useTokenBalance from '../hooks/useTokenBalance';
 import useMultiChainBalances from '../hooks/useMultiChainBalances';
 import Toast from '../components/Toast';
-import { DEX_ADDRESS, USDC_ADDRESS as CONSTANT_USDC_ADDRESS } from '../config/constants';
 import { useSwap } from '../hooks/useSwap';
 import { getItem, setItem } from '../utils/indexedDB';
 import SwapModal from '../components/SwapModal';
@@ -19,41 +17,279 @@ import SwapSuccessModal from '../components/SwapSuccessModal';
 import SwapFailedModal from '../components/SwapFailedModal';
 import SwapRejectedModal from '../components/SwapRejectedModal';
 import '../styles/swap-styles.css';
+import { useModal } from '../contexts/ModalContext';
 
-const USDC_ADDRESS = CONSTANT_USDC_ADDRESS;
 
 const getTokenIcon = (symbol) => {
   const iconMap = {
     'USDC': '/icons/usdc.png',
-    'STC': '/icons/STC.png',
-    'BALL': '/icons/ball.jpg',
-    'MTB': '/icons/MTB.png',
-    'ECR': '/icons/ECR.png'
+    'STC': '/icons/stc.png',
+    'BALL': '/icons/ball.png',
+    'MTB': '/icons/mtb.png',
+    'ECR': '/icons/ecr.png',
+    'EURC': '/icons/eurc.png'
   };
+  if (symbol && typeof symbol === 'string' && symbol.toLowerCase().includes('mtb')) {
+    return '/icons/mtb.png';
+  }
   return iconMap[symbol] || null;
 };
 
+const TokenRow = ({ token, selectedToken, exclude, onSelect, onClose, isConnected, t }) => {
+  const { balance: tokenBalance, loading: tokenLoading } = useTokenBalance(token.symbol);
+  const isSelected = token.symbol === selectedToken;
+  const isExcluded = token.symbol === exclude;
+
+  return (
+    <button
+      disabled={isExcluded}
+      onClick={() => {
+        onSelect(token.symbol);
+        onClose();
+      }}
+      className={`swap-token-selector-list-item ${isSelected ? 'selected' : ''} ${isExcluded ? 'disabled' : ''}`}
+    >
+      <div className="swap-token-selector-list-item-content">
+        <div className="swap-token-selector-list-icon">
+          {getTokenIcon(token.symbol) ? (
+            <img src={getTokenIcon(token.symbol)} alt={token.symbol} className="w-full h-full object-cover" />
+          ) : (
+            <span className="flex items-center justify-center w-full h-full text-sm font-medium uppercase">
+              {token.symbol?.charAt(0)}
+            </span>
+          )}
+        </div>
+        <div className="swap-token-selector-list-info">
+          <p className="swap-token-selector-list-symbol">
+            {token.symbol || 'Unknown'}
+          </p>
+          <p className="swap-token-selector-list-name">
+            {token.name || 'Token'}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        {isConnected && (
+          <div className="swap-token-selector-list-balance">
+            <p className="swap-token-selector-list-balance-amount">
+              {tokenLoading ? (
+                <div className="skeleton w-12 h-4 rounded-md mb-1" />
+              ) : (
+                tokenBalance || '0.00'
+              )}
+            </p>
+            <p className="swap-token-selector-list-balance-label">{t('balance')}</p>
+          </div>
+        )}
+      </div>
+    </button>
+  );
+};
+
+const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, tokenList, t, isConnected }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const selectorRef = useRef(null);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Filter tokens based on search query
+  const filteredTokens = useMemo(() => {
+    if (!debouncedSearch) return tokenList;
+
+    const query = debouncedSearch.toLowerCase();
+    return tokenList.filter(token =>
+      token &&
+      token.symbol &&
+      typeof token.symbol === 'string' &&
+      (token.symbol.toLowerCase().includes(query) ||
+        (token.name && typeof token.name === 'string' && token.name.toLowerCase().includes(query)) ||
+        (token.address && typeof token.address === 'string' && token.address.toLowerCase().includes(query)) ||
+        (token.address && typeof token.address === 'object' &&
+          Object.values(token.address).some(addr => typeof addr === 'string' && addr.toLowerCase().includes(query))))
+    );
+  }, [debouncedSearch, tokenList]);
+
+  // Popular tokens for quick selection.
+  const popularTokens = useMemo(() => {
+    return tokenList.filter(token =>
+      token &&
+      token.symbol &&
+      typeof token.symbol === 'string' &&
+      ['USDC', 'STC', 'BALL', 'MTB', 'ECR'].includes(token.symbol)
+    );
+  }, [tokenList]);
+
+  // Handle ESC key press to close modal
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.keyCode === 27) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEsc);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, [isOpen, onClose]);
+
+  return createPortal(
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="swap-token-selector-modal-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={onClose}
+          style={{
+            alignItems: 'flex-start',
+            paddingTop: '110px', // Extra padding to avoid header clash
+            zIndex: 100000
+          }}
+        >
+          <motion.div
+            ref={selectorRef}
+            className="swap-token-selector-modal"
+            initial={{ scale: 0.9, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 10 }}
+            transition={{ type: "spring", damping: 25, stiffness: 400 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="swap-token-selector-header">
+              <h3 className="swap-token-selector-title">{t('Select Token')}</h3>
+              <button
+                onClick={onClose}
+                className="swap-token-selector-close-button"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Premium Search Bar - Token Selector */}
+            <div className="px-5 py-4">
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors duration-200">
+                  <Search size={16} />
+                </div>
+                <input
+                  type="text"
+                  placeholder={t('Search name or paste address')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-2xl pl-11 pr-4 py-3 text-[14px] outline-none group-hover:bg-white dark:group-hover:bg-white/[0.06] focus:bg-white dark:focus:bg-white/[0.08] focus:border-blue-500/40 focus:ring-4 focus:ring-blue-500/5 transition-all duration-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
+                />
+              </div>
+            </div>
+
+            {/* Popular Tokens */}
+            <div className="swap-token-selector-popular-section">
+              <h4 className="swap-token-selector-popular-label">{t('Your Tokens')}</h4>
+              <div className="swap-token-selector-popular-tokens">
+                {popularTokens.map((token) => {
+                  // Safety check: skip invalid tokens
+                  if (!token || !token.symbol || typeof token.symbol !== 'string') {
+                    return null;
+                  }
+
+                  const isExcluded = token.symbol === exclude;
+                  const isSelected = token.symbol === selectedToken;
+
+                  return (
+                    <button
+                      key={`popular-${token.symbol}`}
+                      onClick={() => {
+                        onSelect(token.symbol);
+                        onClose();
+                      }}
+                      className={`swap-token-selector-popular-button ${isSelected ? 'active' : ''} ${isExcluded ? 'disabled' : ''}`}
+                    >
+                      {getTokenIcon(token.symbol) ? (
+                        <img
+                          src={getTokenIcon(token.symbol)}
+                          alt={token.symbol}
+                          className="swap-token-selector-popular-icon"
+                        />
+                      ) : (
+                        <div className="swap-token-selector-popular-icon" style={{ background: 'var(--swap-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 500 }}>
+                            {token.symbol && token.symbol.length > 0 ? token.symbol.charAt(0) : '?'}
+                          </span>
+                        </div>
+                      )}
+                      <span className="swap-token-selector-popular-symbol">{token.symbol}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Token List */}
+            <div className="swap-token-selector-list">
+              {filteredTokens.map((token) => (
+                <TokenRow
+                  key={token.symbol}
+                  token={token}
+                  selectedToken={selectedToken}
+                  exclude={exclude}
+                  onSelect={onSelect}
+                  onClose={onClose}
+                  isConnected={isConnected}
+                  t={t}
+                />
+              ))}
+
+              {filteredTokens.length === 0 && searchQuery && (
+                <div className="swap-token-selector-empty">
+                  <p>{t('noTokensFound')}</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+};
+
+
 const Swap = () => {
   const { t } = useTranslation();
-  const { isConnected, balance, chainId } = useWallet();
+  const { isConnected, chainId } = useWallet();
+  const { setIsFocusedModalOpen } = useModal();
   const { address } = useAccount();
   const [fromToken, setFromToken] = useState('USDC');
   const [toToken, setToToken] = useState('STC');
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
   const [slippage, setSlippage] = useState(0.5);
-  const [customSlippage, setCustomSlippage] = useState('');
   const [showFromSelector, setShowFromSelector] = useState(false);
   const [showToSelector, setShowToSelector] = useState(false);
-  const [showSwapDetails, setShowSwapDetails] = useState(false);
-  const [swapQuote, setSwapQuote] = useState(null);
-  const [swapLoading, setSwapLoading] = useState(false);
-  const [validationError, setValidationError] = useState('');
-  const [slippageWarning, setSlippageWarning] = useState('');
   const [toast, setToast] = useState({ visible: false, type: 'info', message: '' });
-  const [quoteLoading, setQuoteLoading] = useState(false);
-  const [liquidityWarning, setLiquidityWarning] = useState('');
   const [lastEditedField, setLastEditedField] = useState('from'); // 'from' or 'to'
+  const [debouncedFromAmount, setDebouncedFromAmount] = useState('');
+
+  // Debounce fromAmount change to avoid rapid-fire calculations/RPC
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFromAmount(fromAmount);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [fromAmount]);
 
   // Modal states
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
@@ -64,102 +300,40 @@ const Swap = () => {
   const [swapError, setSwapError] = useState(null);
   const [frozenSwapData, setFrozenSwapData] = useState(null);
 
+  // Sync focused modal state with layout
+  useEffect(() => {
+    const isAnyFocusedModalOpen =
+      isSwapModalOpen ||
+      showFromSelector ||
+      showToSelector ||
+      showSwapSuccessModal ||
+      showSwapFailedModal ||
+      showSwapRejectedModal;
+
+    setIsFocusedModalOpen(isAnyFocusedModalOpen);
+
+    // Reset focused state on unmount
+    return () => setIsFocusedModalOpen(false);
+  }, [
+    isSwapModalOpen,
+    showFromSelector,
+    showToSelector,
+    showSwapSuccessModal,
+    showSwapFailedModal,
+    showSwapRejectedModal,
+    setIsFocusedModalOpen
+  ]);
+
   // Token objects based on current selection
   const fromTokenObj = useMemo(() => TOKENS[fromToken], [fromToken]);
   const toTokenObj = useMemo(() => TOKENS[toToken], [toToken]);
 
 
-  // Wagmi-based Swap Hook
-  const swapState = useSwap(fromToken, toToken, fromAmount, slippage);
+  // Wagmi-based Swap Hook - now using debounced amount
+  const swapState = useSwap(fromToken, toToken, debouncedFromAmount, slippage);
 
-  // Helper function to normalize chain ID for comparison
-  const normalizeChainId = (chainId) => {
-    if (!chainId) return null;
-
-    // If it's a number, convert to lowercase hex string
-    if (typeof chainId === 'number') {
-      return '0x' + chainId.toString(16).toLowerCase();
-    }
-
-    // If it's already a string, ensure it's lowercase
-    if (typeof chainId === 'string') {
-      // If it's a decimal string, convert to number first
-      if (!chainId.startsWith('0x')) {
-        const num = parseInt(chainId, 10);
-        if (!isNaN(num)) {
-          return '0x' + num.toString(16).toLowerCase();
-        }
-      }
-      // If it's a hex string, just lowercase it
-      return chainId.toLowerCase();
-    }
-
-    return null;
-  };
 
   // Helper function to get token address for current chain
-  const getTokenAddress = (tokenSymbol) => {
-    if (tokenSymbol === 'USDC') return USDC_ADDRESS;
-    if (!chainId || !tokenSymbol) return null;
-
-    // Normalize the current chain ID for comparison
-    const normalizedChainId = normalizeChainId(chainId);
-    const normalizedArcChainId = normalizeChainId(NETWORKS.ARC_TESTNET.chainId);
-    const normalizedSepoliaChainId = normalizeChainId(NETWORKS.ETHEREUM_SEPOLIA.chainId);
-
-    // Strategy 1: Try structured format first (TOKENS.ARC_TESTNET.USDC)
-    if (normalizedChainId === normalizedArcChainId) {
-      const arcToken = TOKENS.ARC_TESTNET?.[tokenSymbol];
-      if (arcToken?.address) {
-        const addr = arcToken.address;
-        if (addr && addr !== '0x' && addr !== '0x0000000000000000000000000000000000000000') {
-          return addr;
-        }
-      }
-    } else if (normalizedChainId === normalizedSepoliaChainId) {
-      const sepoliaToken = TOKENS.ETHEREUM_SEPOLIA?.[tokenSymbol];
-      if (sepoliaToken?.address) {
-        const addr = sepoliaToken.address;
-        if (addr && addr !== '0x' && addr !== '0x0000000000000000000000000000000000000000') {
-          return addr;
-        }
-      }
-    }
-
-    // Strategy 2: Try generic format (TOKENS.USDC.address[chainId])
-    const token = TOKENS[tokenSymbol];
-    if (!token) return null;
-
-    // If token has an address object (multi-chain format)
-    if (token.address && typeof token.address === 'object') {
-      // Try to find address using normalized chain ID
-      for (const [key, value] of Object.entries(token.address)) {
-        const normalizedKey = normalizeChainId(key);
-        if (normalizedKey === normalizedChainId) {
-          if (value && value !== '0x' && value !== '0x0000000000000000000000000000000000000000') {
-            return value;
-          }
-        }
-      }
-      return null;
-    }
-
-    // Strategy 3: Direct address (single-chain token)
-    if (token.address && typeof token.address === 'string') {
-      const addr = token.address;
-      if (addr && addr !== '0x' && addr !== '0x0000000000000000000000000000000000000000') {
-        return addr;
-      }
-    }
-
-    return null;
-  };
-
-  // Helper function to get token decimals
-  const getTokenDecimals = (tokenSymbol) => {
-    if (!TOKENS[tokenSymbol]) return 18;
-    return TOKENS[tokenSymbol].decimals || 18;
-  };
 
   // Refs for trigger buttons
   const fromTokenTriggerRef = useRef(null);
@@ -170,8 +344,8 @@ const Swap = () => {
 
 
   // For USDC, use multi-chain balances; for other tokens, use regular balance hook
-  const { balance: fromBalanceRegular, loading: fromLoadingRegular, refetch: refetchFrom } = useTokenBalance((fromToken === 'USDC') ? null : fromToken);
-  const { balance: toBalanceRegular, loading: toLoadingRegular, refetch: refetchTo } = useTokenBalance((toToken === 'USDC') ? null : toToken);
+  const { balance: fromBalanceRegular, loading: fromLoadingRegular } = useTokenBalance((fromToken === 'USDC') ? null : fromToken);
+  const { balance: toBalanceRegular, loading: toLoadingRegular } = useTokenBalance((toToken === 'USDC') ? null : toToken);
 
   const getFromBalance = () => {
     if (fromToken === 'USDC') {
@@ -262,7 +436,7 @@ const Swap = () => {
       console.error('Error building token list:', error);
       return [];
     }
-  }, [chainId]);
+  }, [chainId]); // Removed tokenList dependency
 
   // Reset selected tokens when network changes to ARC or Sepolia and ETH was selected
   useEffect(() => {
@@ -286,38 +460,21 @@ const Swap = () => {
 
   // Validate slippage when it changes
   useEffect(() => {
-    try {
-      const result = validateSlippage(slippage);
-      setSlippageWarning(result.warning || '');
-    } catch (err) {
-      setSlippageWarning(err.message);
-    }
+    // Slippage validation is now handled inside the SwapModal
   }, [slippage]);
 
-  // Calculate swap quote using the useSwap hook
+  // Sync ToAmount when FromAmount changes (and it was the one edited)
   useEffect(() => {
-    // Sync ToAmount when FromAmount changes (and it was the one edited)
     if (fromAmount && parseFloat(fromAmount) > 0) {
       if (swapState.expectedOut && swapState.expectedOut !== "0" && lastEditedField === 'from') {
         // Round to 2 decimal places for display
         const roundedAmount = parseFloat(swapState.expectedOut).toFixed(2);
         setToAmount(roundedAmount);
       }
-
-      // Update details for the quote card
-      setSwapQuote({
-        expectedOutput: swapState.expectedOut,
-        price: swapState.price,
-        minReceived: (parseFloat(swapState.expectedOut || 0) * 0.995).toFixed(2),
-        priceImpact: '0.01',
-        networkFee: '0.00'
-      });
-      setShowSwapDetails(true);
     } else if (!fromAmount && !toAmount) {
-      setSwapQuote(null);
-      setShowSwapDetails(false);
+      // Clear amounts if both are empty
     }
-  }, [fromAmount, swapState.expectedOut, swapState.price, lastEditedField]);
+  }, [fromAmount, toAmount, swapState.expectedOut, swapState.price, lastEditedField]);
 
   // Handle bidirectional input
   const handleFromAmountChange = (val) => {
@@ -349,73 +506,6 @@ const Swap = () => {
       setFromAmount('');
     }
   };
-
-  // Effect to handle swap success/error and show specialized modals
-  useEffect(() => {
-    if (swapState.isSuccess && swapState.txHash) {
-      setLastSwapTxHash(swapState.txHash);
-      const frozen = {
-        fromToken: fromTokenObj,
-        toToken: toTokenObj,
-        fromAmount,
-        toAmount: swapState.expectedOut || toAmount
-      };
-      setFrozenSwapData(frozen);
-      setIsSwapModalOpen(false);
-      setShowSwapSuccessModal(true);
-
-      // Log transaction to history
-      if (swapState.txHash && address) {
-        const logTransaction = async () => {
-          try {
-            const history = await getItem('myTransactions') || [];
-            const exists = history.some(tx => tx.hash === swapState.txHash);
-            if (!exists) {
-              const newTx = {
-                id: swapState.txHash,
-                hash: swapState.txHash,
-                type: 'Swap',
-                from: `${frozen.fromAmount} ${frozen.fromToken?.symbol}`,
-                to: `${frozen.toAmount} ${frozen.toToken?.symbol}`,
-                amount: `${frozen.fromAmount} ${frozen.fromToken?.symbol} → ${frozen.toAmount} ${frozen.toToken?.symbol}`,
-                timestamp: Date.now(),
-                status: 'success',
-                address: address.toLowerCase(),
-                chainId: chainId
-              };
-              await setItem('myTransactions', [newTx, ...history].slice(0, 100));
-              window.dispatchEvent(new CustomEvent('swapTransactionSaved'));
-            }
-          } catch (err) {
-            console.error('Failed to log swap transaction:', err);
-          }
-        };
-        logTransaction();
-      }
-
-      // Reset swap state after showing success to avoid re-triggering
-      if (swapState.reset) swapState.reset();
-    } else if (swapState.error && isSwapModalOpen) {
-      const errorMsg = swapState.error?.message || swapState.error || "";
-      const isRejection =
-        errorMsg.toLowerCase().includes('user rejected') ||
-        errorMsg.toLowerCase().includes('user denied') ||
-        errorMsg.toLowerCase().includes('action_rejected') ||
-        swapState.error?.code === 4001;
-
-      setSwapError(swapState.error);
-      setIsSwapModalOpen(false);
-
-      if (isRejection) {
-        setShowSwapRejectedModal(true);
-      } else {
-        setShowSwapFailedModal(true);
-      }
-
-      // Reset swap state after showing error to avoid re-triggering
-      if (swapState.reset) swapState.reset();
-    }
-  }, [swapState.isSuccess, swapState.txHash, swapState.error, isSwapModalOpen, fromAmount, toAmount, fromTokenObj, toTokenObj, swapState, address, chainId]);
 
   const handleSwitch = () => {
     // Add animation class for smooth transition
@@ -470,195 +560,6 @@ const Swap = () => {
 
 
 
-  const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, triggerRef, fromToken, toToken, fromBalance, toBalance }) => {
-    const [searchQuery, setSearchQuery] = useState('');
-    const selectorRef = useRef(null);
-
-    // Filter tokens based on search query
-    const filteredTokens = useMemo(() => {
-      if (!searchQuery) return tokenList;
-
-      const query = searchQuery.toLowerCase();
-      return tokenList.filter(token =>
-        token &&
-        token.symbol &&
-        typeof token.symbol === 'string' &&
-        (token.symbol.toLowerCase().includes(query) ||
-          (token.name && typeof token.name === 'string' && token.name.toLowerCase().includes(query)) ||
-          (token.address && typeof token.address === 'string' && token.address.toLowerCase().includes(query)) ||
-          (token.address && typeof token.address === 'object' &&
-            Object.values(token.address).some(addr => typeof addr === 'string' && addr.toLowerCase().includes(query))))
-      );
-    }, [searchQuery, tokenList]);
-
-    // Popular tokens for quick selection.
-    const popularTokens = useMemo(() => {
-      return tokenList.filter(token =>
-        token &&
-        token.symbol &&
-        typeof token.symbol === 'string' &&
-        ['USDC', 'STC', 'BALL', 'MTB', 'ECR'].includes(token.symbol)
-      );
-    }, [tokenList]);
-
-    // Handle ESC key press to close modal
-    useEffect(() => {
-      const handleEsc = (event) => {
-        if (event.keyCode === 27) {
-          onClose();
-        }
-      };
-
-      if (isOpen) {
-        document.addEventListener('keydown', handleEsc);
-      }
-
-      return () => {
-        document.removeEventListener('keydown', handleEsc);
-      };
-    }, [isOpen, onClose]);
-
-    const TokenRow = ({ token, selectedToken, exclude, onSelect, onClose, t }) => {
-      const { balance: tokenBalance, loading: tokenLoading } = useTokenBalance(token.symbol);
-      const isSelected = token.symbol === selectedToken;
-      const isExcluded = token.symbol === exclude;
-
-      return (
-        <button
-          key={token.symbol}
-          onClick={() => {
-            onSelect(token.symbol);
-            onClose();
-          }}
-          disabled={isExcluded}
-          className={`swap-token-selector-list-item ${isSelected ? 'selected' : ''} ${isExcluded ? 'disabled' : ''}`}
-        >
-          <div className="swap-token-selector-list-item-content">
-            <div className="swap-token-selector-list-icon">
-              {getTokenIcon(token.symbol) ? (
-                <img src={getTokenIcon(token.symbol)} alt={token.symbol} />
-              ) : (
-                <span className="flex items-center justify-center w-full h-full text-lg font-bold">
-                  {token.symbol?.charAt(0)}
-                </span>
-              )}
-            </div>
-            <div className="swap-token-selector-list-info">
-              <p className="swap-token-selector-list-symbol">{token.symbol || 'Unknown'}</p>
-              <p className="swap-token-selector-list-name">{token.name || 'Token'}</p>
-            </div>
-          </div>
-          {isConnected && (
-            <div className="swap-token-selector-list-balance">
-              <p className="swap-token-selector-list-balance-amount">
-                {tokenLoading ? <Loader size={12} className="animate-spin" /> : tokenBalance || '0.00'}
-              </p>
-              <p className="swap-token-selector-list-balance-label">{t('balance')}</p>
-            </div>
-          )}
-        </button>
-      );
-    };
-
-    if (!isOpen) return null;
-    return createPortal(
-      <div
-        className="swap-token-selector-modal-backdrop"
-        onClick={onClose}
-      >
-        <div
-          ref={selectorRef}
-          className="swap-token-selector-modal"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="swap-token-selector-header">
-            <h3 className="swap-token-selector-title">{t('Select Token')}</h3>
-            <button
-              onClick={onClose}
-              className="swap-token-selector-close-button"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          {/* Search Bar */}
-          <div className="swap-token-selector-search">
-            <input
-              type="text"
-              placeholder={t('Search Tokens')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="swap-token-selector-search-input"
-            />
-          </div>
-
-          {/* Popular Tokens */}
-          <div className="swap-token-selector-popular-section">
-            <h4 className="swap-token-selector-popular-label">{t('Your Tokens')}</h4>
-            <div className="swap-token-selector-popular-tokens">
-              {popularTokens.map((token) => {
-                // Safety check: skip invalid tokens
-                if (!token || !token.symbol || typeof token.symbol !== 'string') {
-                  return null;
-                }
-
-                const isExcluded = token.symbol === exclude;
-                const isSelected = token.symbol === selectedToken;
-
-                return (
-                  <button
-                    key={`popular-${token.symbol}`}
-                    onClick={() => {
-                      onSelect(token.symbol);
-                      onClose();
-                    }}
-                    className={`swap-token-selector-popular-button ${isSelected ? 'active' : ''} ${isExcluded ? 'disabled' : ''}`}
-                  >
-                    {getTokenIcon(token.symbol) ? (
-                      <img
-                        src={getTokenIcon(token.symbol)}
-                        alt={token.symbol}
-                        className="swap-token-selector-popular-icon"
-                      />
-                    ) : (
-                      <div className="swap-token-selector-popular-icon" style={{ background: 'var(--swap-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 600 }}>
-                          {token.symbol && token.symbol.length > 0 ? token.symbol.charAt(0) : '?'}
-                        </span>
-                      </div>
-                    )}
-                    <span className="swap-token-selector-popular-symbol">{token.symbol}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Token List */}
-          <div className="swap-token-selector-list">
-            {filteredTokens.map((token) => (
-              <TokenRow
-                key={token.symbol}
-                token={token}
-                selectedToken={selectedToken}
-                exclude={exclude}
-                onSelect={onSelect}
-                onClose={onClose}
-                t={t}
-              />
-            ))}
-
-            {filteredTokens.length === 0 && searchQuery && (
-              <div className="swap-token-selector-empty">
-                <p>{t('noTokensFound')}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>,
-      document.body
-    );
-  };
 
   return (
     <div className="max-w-2xl mx-auto w-full">
@@ -676,10 +577,7 @@ const Swap = () => {
         <div className="relative z-10">
           {/* Header */}
           <div className="swap-header">
-            <div>
-              <h2 className="swap-header-title">{t('Swap Tokens')}</h2>
-              <p className="swap-header-subtitle">{t('swap.tradeTokensTitle')}</p>
-            </div>
+            <h2 className="swap-header-title">{t('Swap Tokens')}</h2>
             <div className="swap-header-actions">
               <button
                 onClick={handleFaucetClick}
@@ -691,53 +589,19 @@ const Swap = () => {
             </div>
           </div>
 
-
-
-
-
-          {/* Validation Error */}
-          {validationError && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="swap-validation-error"
-            >
-              <AlertTriangle size={16} className="swap-validation-error-icon" />
-              <p className="swap-validation-error-text">{validationError}</p>
-            </motion.div>
-          )}
-
-          {/* Liquidity Warning */}
-          {liquidityWarning && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
-            >
-              <div className="flex items-start gap-3">
-                <AlertTriangle size={18} className="text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200 whitespace-pre-line">
-                    {liquidityWarning}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
           {/* From Token */}
           <div className="swap-input-group">
             <div className="swap-input-header">
               <div className="swap-input-label">{t('From')}</div>
               {isConnected && (
                 <div className="swap-balance-text">
-                  Balance: <span>
-                    {fromLoading ? (
-                      <Loader className="animate-spin" size={12} />
-                    ) : (
-                      fromBalance || '0.00'
-                    )}
-                  </span>
+                  {fromLoading ? (
+                    <div className="skeleton w-16 h-4 rounded-md" />
+                  ) : (
+                    <span>
+                      <span className="font-medium">{fromBalance || '0.00'}</span>
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -789,7 +653,6 @@ const Swap = () => {
             <button
               onClick={handleSwitch}
               className="swap-direction-button"
-              title={t('Switch Tokens')}
             >
               <ArrowDownUp size={18} />
             </button>
@@ -801,13 +664,13 @@ const Swap = () => {
               <div className="swap-input-label">{t('To')}</div>
               {isConnected && (
                 <div className="swap-balance-text">
-                  Balance: <span>
-                    {toLoading ? (
-                      <Loader className="animate-spin" size={12} />
-                    ) : (
-                      toBalance || '0.00'
-                    )}
-                  </span>
+                  {toLoading ? (
+                    <div className="skeleton w-16 h-4 rounded-md" />
+                  ) : (
+                    <span>
+                      <span className="font-medium">{toBalance || '0.00'}</span>
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -847,21 +710,24 @@ const Swap = () => {
                 <button
                   onClick={() => {
                     if (!toBalance || parseFloat(toBalance) === 0) {
-                      setToast({ visible: true, type: 'warning', message: 'No balance available' });
+                      setToast({ visible: true, type: 'warning', message: t('No balance available') });
                       setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
                       return;
                     }
                     // Set the "To" amount to maximum balance
                     // Note: This will trigger the swap calculation in reverse
                     setToAmount(toBalance);
+
                     // Calculate the required "From" amount based on the "To" amount
-                    try {
-                      const reverseQuote = calculateSwapQuote(toToken, fromToken, toBalance, slippage);
-                      if (reverseQuote) {
-                        setFromAmount(reverseQuote.expectedOutput);
-                      }
-                    } catch (err) {
-                      console.error('Error calculating reverse quote:', err);
+                    if (swapState.price && parseFloat(swapState.price) > 0) {
+                      const price = parseFloat(swapState.price);
+                      const isBuying = fromToken === 'USDC';
+
+                      const calculatedFrom = isBuying
+                        ? (parseFloat(toBalance) * price).toFixed(6)
+                        : (parseFloat(toBalance) / price).toFixed(6);
+
+                      setFromAmount(calculatedFrom);
                     }
                   }}
                   className="max-button"
@@ -872,82 +738,17 @@ const Swap = () => {
             )}
           </div>
 
-          {/* Price Details - Actual Token Prices */}
-          {fromAmount && toAmount && (
-            <div className="mt-3 px-1 flex items-center gap-1 text-[11px] font-medium text-gray-500 dark:text-gray-400">
-              <Info size={12} className="opacity-60" />
-              <span>
-                1 {fromToken} = {TOKEN_PRICES[toToken] && TOKEN_PRICES[fromToken]
-                  ? (TOKEN_PRICES[toToken] / TOKEN_PRICES[fromToken]).toFixed(2)
-                  : swapState.price ? parseFloat(swapState.price).toFixed(2) : '0.00'} {toToken}
-              </span>
-            </div>
-          )}
 
 
 
-          {/* Direct Slippage Toolbar - One-Tap Control */}
-          <div className="flex items-center justify-between mb-3 px-1">
-            <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]">
-              Slippage
-            </div>
-            <div className="flex items-center gap-0.5 sm:gap-1 p-1 bg-blue-50/50 dark:bg-[#131720]/40 border border-blue-100/50 dark:border-white/5 rounded-2xl shadow-sm backdrop-blur-sm transform-gpu">
-              {[0.1, 0.5, 1.0].map((value) => (
-                <button
-                  key={value}
-                  onClick={() => {
-                    setSlippage(value);
-                    setCustomSlippage('');
-                  }}
-                  className={`px-2 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-[12px] font-bold transition-all duration-300 active:scale-95 ${slippage === value && !customSlippage
-                    ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-md ring-1 ring-blue-100/50 dark:ring-blue-500/50'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-blue-500'
-                    }`}
-                >
-                  {value}%
-                </button>
-              ))}
-              {/* Direct Editable Input */}
-              <div className="relative flex items-center ml-1">
-                <input
-                  type="text"
-                  placeholder="Custom"
-                  value={customSlippage}
-                  onChange={(e) => {
-                    const val = sanitizeInput(e.target.value);
-                    setCustomSlippage(val);
-                    if (val && !isNaN(parseFloat(val))) {
-                      setSlippage(parseFloat(val));
-                    }
-                  }}
-                  className={`w-[70px] sm:w-[94px] pl-1.5 sm:pl-2 pr-6 sm:pr-7 py-1.5 rounded-xl text-[11px] sm:text-[12px] font-bold text-center transition-all duration-300 focus:outline-none ${customSlippage
-                    ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-md ring-1 ring-blue-100 dark:ring-blue-500'
-                    : 'bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500'
-                    }`}
-                />
-                <span className={`absolute right-3 text-[11px] font-bold pointer-events-none ${customSlippage ? 'text-blue-300 dark:text-blue-200' : 'text-gray-400/80'
-                  }`}>%</span>
-              </div>
-            </div>
-          </div>
 
-          {slippageWarning && (
-            <motion.div
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-4 p-2.5 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200/50 dark:border-yellow-700/30 rounded-xl flex items-center gap-2"
-            >
-              <AlertTriangle size={14} className="text-yellow-600 dark:text-yellow-400 shrink-0" />
-              <p className="text-[11px] font-medium text-yellow-800 dark:text-yellow-200 leading-tight">
-                {slippageWarning}
-              </p>
-            </motion.div>
-          )}
+
+
 
           {/* Swap Button */}
           <button
             onClick={handleSwapClick}
-            className={`swap-button ${(parseFloat(fromAmount) > parseFloat(fromBalance)) ? 'swap-button-failed' : ''}`}
+            className={`swap-button ${(isConnected && parseFloat(fromAmount) > parseFloat(fromBalance)) ? 'swap-button-failed' : ''}`}
             disabled={!isConnected || !fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance) || swapState.isLoading}
           >
             {!isConnected ? (
@@ -979,11 +780,85 @@ const Swap = () => {
                 setToAmount('');
               }
             }}
+            onError={(error) => {
+              const errorMsg = error?.message || error?.toString() || "";
+              const isRejection =
+                errorMsg.toLowerCase().includes('user rejected') ||
+                errorMsg.toLowerCase().includes('user denied') ||
+                errorMsg.toLowerCase().includes('action_rejected') ||
+                errorMsg.toLowerCase().includes('request rejected') ||
+                errorMsg.toLowerCase().includes('rejected by user') ||
+                error?.name === 'UserRejectedRequestError' ||
+                error?.code === 4001;
+
+              setSwapError(error);
+              setIsSwapModalOpen(false);
+
+              if (isRejection) {
+                setShowSwapRejectedModal(true);
+              } else {
+                setShowSwapFailedModal(true);
+              }
+
+              // Reset swap state after handling error
+              if (swapState.reset) swapState.reset();
+            }}
+            onSuccess={(txHash) => {
+              // Close swap modal and show success modal
+              setLastSwapTxHash(txHash);
+              const frozen = {
+                fromToken: fromTokenObj,
+                toToken: toTokenObj,
+                fromAmount,
+                toAmount: swapState.expectedOut || toAmount
+              };
+              setFrozenSwapData(frozen);
+              setIsSwapModalOpen(false);
+              setShowSwapSuccessModal(true);
+
+              // Clear amounts
+              setFromAmount('');
+              setToAmount('');
+
+              // Log transaction to history
+              if (txHash && address) {
+                const logTransaction = async () => {
+                  try {
+                    const history = await getItem('myTransactions') || [];
+                    const exists = history.some(tx => tx.hash === txHash);
+                    if (!exists) {
+                      const newTx = {
+                        id: txHash,
+                        hash: txHash,
+                        type: 'Swap',
+                        from: `${frozen.fromAmount} ${frozen.fromToken?.symbol}`,
+                        to: `${frozen.toAmount} ${frozen.toToken?.symbol}`,
+                        amount: `${frozen.fromAmount} ${frozen.fromToken?.symbol} → ${frozen.toAmount} ${frozen.toToken?.symbol}`,
+                        timestamp: Date.now(),
+                        status: 'success',
+                        address: address.toLowerCase(),
+                        chainId: chainId
+                      };
+                      await setItem('myTransactions', [newTx, ...history].slice(0, 100));
+                      window.dispatchEvent(new CustomEvent('swapTransactionSaved'));
+                    }
+                  } catch (err) {
+                    console.error('Failed to log swap transaction:', err);
+                  }
+                };
+                logTransaction();
+              }
+
+              // Reset swap state
+              if (swapState.reset) swapState.reset();
+            }}
             fromToken={TOKENS[fromToken]}
             toToken={TOKENS[toToken]}
             fromAmount={fromAmount}
             toAmount={toAmount}
             swapState={swapState}
+            slippage={slippage}
+            setSlippage={setSlippage}
           />
 
           {/* Swap Success Modal */}
@@ -1021,11 +896,9 @@ const Swap = () => {
           }
         }}
         exclude={toToken}
-        triggerRef={fromTokenTriggerRef}
-        fromToken={fromToken}
-        toToken={toToken}
-        fromBalance={fromBalance}
-        toBalance={toBalance}
+        tokenList={tokenList}
+        t={t}
+        isConnected={isConnected}
       />
       <TokenSelector
         isOpen={showToSelector}
@@ -1039,11 +912,9 @@ const Swap = () => {
           }
         }}
         exclude={fromToken}
-        triggerRef={toTokenTriggerRef}
-        fromToken={fromToken}
-        toToken={toToken}
-        fromBalance={fromBalance}
-        toBalance={toBalance}
+        tokenList={tokenList}
+        t={t}
+        isConnected={isConnected}
       />
 
       {/* Toast Notifications */}

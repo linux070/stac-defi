@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -66,7 +66,7 @@ const LanguageSelector = ({ placement = 'header' }) => {
     if (placement === 'mobile-menu') {
       return 'flex items-center gap-2 w-full justify-between';
     }
-    return 'p-2 rounded-full hover:bg-white/10 dark:hover:bg-white/5 mx-1 flex items-center';
+    return 'h-[44px] px-3.5 rounded-2xl border border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10 hover:border-blue-500/30 dark:hover:border-blue-400/30 transition-all duration-300 flex items-center gap-2.5 shadow-sm active:scale-95 group font-medium';
   };
 
   const getDropdownPosition = () => {
@@ -86,7 +86,6 @@ const LanguageSelector = ({ placement = 'header' }) => {
         className={getButtonClasses()}
         aria-haspopup="true"
         aria-expanded={isOpen}
-        title={t('changeLanguage')}
       >
         {placement === 'mobile-menu' ? (
           <>
@@ -94,7 +93,7 @@ const LanguageSelector = ({ placement = 'header' }) => {
               <span className="text-[15px] font-semibold text-slate-900 dark:text-white">{t('Language')}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[13px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+              <span className="text-[13px] font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">
                 {i18n.language === 'en' ? 'EN-US' : i18n.language.toUpperCase()}
               </span>
               {!isOpen && <ChevronRight size={16} className="text-slate-300 dark:text-slate-600" />}
@@ -119,23 +118,23 @@ const LanguageSelector = ({ placement = 'header' }) => {
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className={`${getDropdownPosition()} z-[2000] w-48 bg-white dark:bg-[#1a1c23] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden backdrop-blur-xl`}
+            className={`${getDropdownPosition()} z-[2000] w-40 bg-white dark:bg-[#1a1c23] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden backdrop-blur-xl`}
           >
             <div className="p-2 space-y-1">
               {languages.map((lang) => (
                 <button
                   key={lang.code}
                   onClick={() => changeLanguage(lang.code)}
-                  className={`w-full px-4 py-3 rounded-xl text-left text-sm flex items-center justify-between transition-all ${i18n.language === lang.code
-                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-500/10 font-bold'
+                  className={`w-full px-3 py-2 rounded-xl text-left text-sm flex items-center justify-between transition-all ${i18n.language === lang.code
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-500/10 font-medium'
                     : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
                     }`}
                 >
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
                     <img
                       src={lang.flag}
                       alt={lang.name}
-                      className="w-5 h-4 object-cover rounded shadow-sm"
+                      className="w-4 h-3 object-cover rounded shadow-sm"
                     />
                     <span className="font-medium">{lang.name}</span>
                   </div>

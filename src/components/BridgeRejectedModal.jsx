@@ -1,4 +1,3 @@
-import React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,7 +19,7 @@ const BridgeRejectedModal = ({ isOpen, onClose, fromChain, toChain }) => {
         <AnimatePresence>
             {isOpen && (
                 <motion.div
-                    className="fixed inset-0 z-[1000] bridging-modal-backdrop"
+                    className="fixed inset-0 z-[100000] bridging-modal-backdrop"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -64,6 +63,27 @@ const BridgeRejectedModal = ({ isOpen, onClose, fromChain, toChain }) => {
                                 <p className="text-center text-slate-500 dark:text-slate-400 text-sm px-6 mb-4">
                                     {t('The transaction was rejected in your wallet. If this was a mistake, please try again.')}
                                 </p>
+
+                                <div className="bridging-modal-success-details mb-8 w-full px-6">
+                                    <div className="bridging-modal-success-info-row flex justify-between items-center w-full mb-2">
+                                        <span className="text-sm text-slate-500">{t('Source')}</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-5 h-5 ${fromChain?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
+                                                <img src={getChainIcon(fromChain)} alt="" className="w-full h-full object-cover" />
+                                            </div>
+                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{fromChain}</span>
+                                        </div>
+                                    </div>
+                                    <div className="bridging-modal-success-info-row flex justify-between items-center w-full">
+                                        <span className="text-sm text-slate-500">{t('Destination')}</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-5 h-5 ${toChain?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
+                                                <img src={getChainIcon(toChain)} alt="" className="w-full h-full object-cover" />
+                                            </div>
+                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{toChain}</span>
+                                        </div>
+                                    </div>
+                                </div>
 
 
 

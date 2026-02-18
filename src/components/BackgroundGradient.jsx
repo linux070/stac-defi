@@ -1,12 +1,9 @@
-import React from 'react';
-
 const BackgroundGradient = () => {
     return (
         // Fixed container behind everything
         <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-gray-50 dark:bg-gray-900">
 
             {/* --- TOP LEFT BLOBS (Cool Tones) --- */}
-            {/* Blob 1: Arc Blue (Deep & Soft) */}
             <div className="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] bg-blue-500/30 dark:bg-blue-600/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[120px] opacity-60 animate-blob" style={{ willChange: 'transform' }}></div>
 
             {/* Blob 2: Cyan Accent (Bright & Energetic) */}

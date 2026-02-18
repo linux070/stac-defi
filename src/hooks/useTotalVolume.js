@@ -1,31 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { getItem } from '../utils/indexedDB';
 import { TOKEN_PRICES } from '../config/networks';
 
-/**
- * Hook to calculate total swap volume in USD from transactions stored in IndexedDB
- * @param {string|null} walletAddress - Optional wallet address to filter transactions.
- *                                       If provided, only transactions for this wallet are counted.
- *                                       If null/undefined, all transactions are counted.
- */
 export function useTotalVolume(walletAddress = null) {
-    const [totalVolume, setTotalVolume] = useState(0);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
 
-    const calculateTotalVolume = async () => {
-        try {
-            setLoading(true);
-
-            // Get personal and global transactions from IndexedDB
+    const { data, isLoading } = useQuery({
+        queryKey: ['totalVolume', walletAddress],
+        queryFn: async () => {
             const [personalTxs, globalTxs] = await Promise.all([
                 getItem('myTransactions'),
                 getItem('globalTransactions')
             ]);
 
-            // Merge transactions (prefer personal if duplicates occur, though global format differs)
             const allTransactions = [...(Array.isArray(personalTxs) ? personalTxs : []), ...(Array.isArray(globalTxs) ? globalTxs : [])];
-
-            // Calculate swap volume in USD
             let volumeUSD = 0;
             const processedHashes = new Set();
 
@@ -33,19 +22,15 @@ export function useTotalVolume(walletAddress = null) {
                 if (!tx.hash || processedHashes.has(tx.hash)) return;
                 processedHashes.add(tx.hash);
 
-                // Only count Swap transactions
-                if (tx.type !== 'Swap' || tx.status !== 'success') return;
-                if (!tx.amount) return;
+                if (tx.type !== 'Swap' || tx.status !== 'success' || !tx.amount) return;
 
-                // If wallet address is provided, only count transactions for that wallet
                 if (walletAddress) {
                     const walletLower = walletAddress.toLowerCase();
                     if (tx.address?.toLowerCase() !== walletLower) return;
                 }
 
                 let amount = 0;
-                let tokenSymbol = 'USDC'; // Default for global
-
+                let tokenSymbol = 'USDC';
                 const amountStr = String(tx.amount);
 
                 if (amountStr.includes('→')) {
@@ -59,53 +44,30 @@ export function useTotalVolume(walletAddress = null) {
                     amount = parseFloat(amountStr);
                 }
 
-                // Convert to USD using TOKEN_PRICES
                 if (!isNaN(amount) && amount > 0) {
                     const tokenPrice = TOKEN_PRICES[tokenSymbol];
-                    if (tokenPrice) {
-                        volumeUSD += amount * tokenPrice;
-                    } else if (tokenSymbol === 'USDC' || !tokenSymbol) {
-                        volumeUSD += amount;
-                    }
+                    if (tokenPrice) volumeUSD += amount * tokenPrice;
+                    else if (tokenSymbol === 'USDC' || !tokenSymbol) volumeUSD += amount;
                 }
             });
 
-            // Final calculated volume
-            const finalVolume = Math.round(volumeUSD);
-            setTotalVolume(finalVolume);
-            setLoading(false);
-        } catch (error) {
-            console.error('Error calculating swap volume:', error);
-            setTotalVolume(0);
-            setLoading(false);
-        }
-    };
+            return Math.round(volumeUSD);
+        },
+        staleTime: 60000,
+        refetchInterval: 30000,
+    });
 
     useEffect(() => {
-        // Initial calculation on mount
-        calculateTotalVolume();
-
-        // Polling interval to keep data fresh (every 30 seconds)
-        const interval = setInterval(() => {
-            calculateTotalVolume();
-        }, 30000);
-
-        // Recalculate when transactions might have changed
-        const handleRefresh = () => {
-            calculateTotalVolume();
-        };
-
-        window.addEventListener('transactionSaved', handleRefresh);
-        window.addEventListener('swapTransactionSaved', handleRefresh);
-        window.addEventListener('globalStatsUpdated', handleRefresh);
-
+        const invalidate = () => queryClient.invalidateQueries({ queryKey: ['totalVolume', walletAddress] });
+        window.addEventListener('transactionSaved', invalidate);
+        window.addEventListener('swapTransactionSaved', invalidate);
+        window.addEventListener('globalStatsUpdated', invalidate);
         return () => {
-            clearInterval(interval);
-            window.removeEventListener('transactionSaved', handleRefresh);
-            window.removeEventListener('swapTransactionSaved', handleRefresh);
-            window.removeEventListener('globalStatsUpdated', handleRefresh);
+            window.removeEventListener('transactionSaved', invalidate);
+            window.removeEventListener('swapTransactionSaved', invalidate);
+            window.removeEventListener('globalStatsUpdated', invalidate);
         };
-    }, [walletAddress]); // Re-run when wallet address changes
+    }, [walletAddress, queryClient]);
 
-    return { totalVolume, loading };
+    return { totalVolume: data ?? 0, loading: isLoading };
 }

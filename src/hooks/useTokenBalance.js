@@ -1,25 +1,12 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useAccount, useBalance, useChainId } from 'wagmi';
-import { NETWORKS, TOKENS } from '../config/networks';
-
-// Official Circle USDC Contract on Sepolia Testnet - using the same addresses from config
-// Safety check: ensure TOKENS structure exists before accessing
-const USDC_SEPOLIA_ADDRESS = TOKENS?.ETHEREUM_SEPOLIA?.USDC?.address || '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238';
-const USDC_ARC_ADDRESS = TOKENS?.ARC_TESTNET?.USDC?.address || '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d';
-
-// Parse Chain IDs from config (which are in Hex strings) to Numbers - do this once outside the hook
-const ARC_CHAIN_ID = NETWORKS?.ARC_TESTNET ? parseInt(NETWORKS.ARC_TESTNET.chainId, 16) : 5042002;
-const SEPOLIA_CHAIN_ID = NETWORKS?.ETHEREUM_SEPOLIA ? parseInt(NETWORKS.ETHEREUM_SEPOLIA.chainId, 16) : 11155111;
-
-// Timeout duration in milliseconds (10 seconds)
-const BALANCE_FETCH_TIMEOUT = 10000;
+import { useQueryClient } from '@tanstack/react-query';
+import { TOKENS } from '../config/networks';
 
 const useTokenBalance = (tokenSymbol) => {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
-
-  const [loadingTimeout, setLoadingTimeout] = useState(false);
-  const timeoutRef = useRef(null);
+  const queryClient = useQueryClient();
 
   const chainIdNumber = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
 
@@ -29,9 +16,7 @@ const useTokenBalance = (tokenSymbol) => {
 
     const tokenConfig = TOKENS[tokenSymbol];
     if (tokenConfig.address && typeof tokenConfig.address === 'object') {
-      // Try both hex string (e.g., '0xCF4B1') and decimal number (e.g., 5042002)
       const chainIdHex = typeof chainId === 'string' ? chainId : '0x' + chainId.toString(16).toLowerCase();
-
       const addr = tokenConfig.address[chainIdHex] ||
         tokenConfig.address[chainIdNumber] ||
         tokenConfig.address[chainId];
@@ -41,7 +26,6 @@ const useTokenBalance = (tokenSymbol) => {
       }
     }
 
-    // Direct string address (legacy or single-chain)
     if (typeof tokenConfig.address === 'string' && tokenConfig.address !== '0x0000000000000000000000000000000000000000') {
       return tokenConfig.address;
     }
@@ -49,86 +33,38 @@ const useTokenBalance = (tokenSymbol) => {
     return undefined;
   }, [tokenSymbol, chainIdNumber, chainId]);
 
-  const shouldFetch = isConnected && !!address && !!tokenSymbol && !!tokenAddress;
+  const shouldFetch = isConnected && !!address && !!tokenSymbol;
 
-  const fetchConfig = {
+  // Wagmi hook with TanStack Query integration
+  const { data, isLoading, isFetching, refetch, error } = useBalance({
     address: address || undefined,
     token: tokenAddress,
-    enabled: shouldFetch,
-  };
-
-  // Wagmi hook - MUST be called unconditionally (no early returns before this)
-  const { data, isLoading, refetch, error } = useBalance(fetchConfig);
-
-  // Timeout mechanism to prevent infinite loading
-  useEffect(() => {
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+    query: {
+      enabled: shouldFetch,
+      staleTime: 30000,
+      gcTime: 1000 * 60 * 60, // 1 hour garbage collection
+      refetchInterval: 60000,
+      // Automatic background sync on focus and reconnect is handled by TanStack Query defaults
     }
+  });
 
-    // Set timeout if loading starts
-    if (isLoading && shouldFetch && isConnected && address) {
-      setLoadingTimeout(false);
-      timeoutRef.current = setTimeout(() => {
-        console.warn(`Balance fetch timeout for ${tokenSymbol} on chain ${chainIdNumber}`);
-        setLoadingTimeout(true);
-      }, BALANCE_FETCH_TIMEOUT);
-    } else {
-      setLoadingTimeout(false);
-    }
-
-    // Cleanup timeout on unmount or when loading completes
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    };
-  }, [isLoading, shouldFetch, isConnected, address, tokenSymbol, chainIdNumber]);
-
-  // Global event listener for balance refresh
+  // Global event listener for balance refresh (e.g., after faucet claim)
   useEffect(() => {
-    const handleRefresh = () => {
-      if (typeof refetch === 'function') {
-        console.log(`[Balance] Refreshing ${tokenSymbol} balance after faucet claim`);
-        refetch();
-      }
+    const invalidate = () => {
+      // Invalidate all balance queries for this address
+      queryClient.invalidateQueries({ queryKey: ['balance', address] });
+      // Also invalidate this specific wagmi balance query
+      refetch();
     };
 
-    window.addEventListener('faucetClaimed', handleRefresh);
-    window.addEventListener('swapTransactionSaved', handleRefresh);
+    window.addEventListener('faucetClaimed', invalidate);
+    window.addEventListener('swapTransactionSaved', invalidate);
 
     return () => {
-      window.removeEventListener('faucetClaimed', handleRefresh);
-      window.removeEventListener('swapTransactionSaved', handleRefresh);
+      window.removeEventListener('faucetClaimed', invalidate);
+      window.removeEventListener('swapTransactionSaved', invalidate);
     };
-  }, [refetch, tokenSymbol]);
-
-  // Now we can return based on conditions
-  if (!isConnected || !address) {
-    return {
-      balance: '0.00',
-      symbol: tokenSymbol,
-      loading: false,
-      refetch: refetch || (() => { }),
-      error: null
-    };
-  }
-
-  if (!shouldFetch) {
-    return {
-      balance: '0.00',
-      symbol: tokenSymbol,
-      loading: false,
-      refetch: refetch || (() => { }),
-      error: null
-    };
-  }
-
-  // Stop loading if timeout occurred or if there's an error
-  const isActuallyLoading = isLoading && !loadingTimeout && !error;
+  }, [address, queryClient, refetch]);
 
   // Format balance to 2 decimal places
   const formatBalance = (balanceStr) => {
@@ -141,9 +77,9 @@ const useTokenBalance = (tokenSymbol) => {
   return {
     balance: formatBalance(data?.formatted) || '0.00',
     symbol: data?.symbol || tokenSymbol,
-    loading: isActuallyLoading,
-    refetch: refetch || (() => { }),
-    error: error?.message || (loadingTimeout ? 'Balance fetch timeout' : null)
+    loading: isLoading && isFetching,
+    refetch,
+    error: error?.message || null
   };
 };
 

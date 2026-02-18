@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { MessageSquare, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const FeedbackButton = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -28,10 +27,9 @@ const FeedbackButton = () => {
                     <button
                         onClick={() => setIsOpen(true)}
                         className="feedback-button"
-                        title="Send Feedback"
                     >
-                        <span className="desktop-only">Feedback</span>
                         <MessageSquare size={20} className="mobile-only" />
+                        <span className="desktop-only text-sm font-bold">Feedback</span>
                     </button>
                 </div>,
                 document.body
@@ -82,7 +80,6 @@ const FeedbackButton = () => {
                                 frameBorder="0"
                                 marginHeight="0"
                                 marginWidth="0"
-                                title="Send Feedback"
                                 style={{ background: 'transparent' }}
                             ></iframe>
                         </div>

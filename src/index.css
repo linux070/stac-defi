@@ -8,42 +8,49 @@
 
   /* CSS Variables for theme tokens  */
   :root {
-    /* Font */
-    --theme-font: Inter, system-ui, sans-serif;
+    /* Professional Typography */
+    --theme-font: 'Outfit', 'Inter', system-ui, sans-serif;
 
-    /* Colors - Light mode defaults */
-    --theme-primary: #3b82f6;
-    --theme-focus: #2563eb;
+    /* Light Mode - Premium Slate & Blue Palette */
+    --theme-bg-page: #f8fafc;
+    --theme-bg-card: rgba(255, 255, 255, 0.8);
+    --theme-bg-surface: #ffffff;
 
-    /* Text colors */
-    --theme-text-default: #111827;
-    --theme-text-subtle: #6b7280;
-    --theme-text-muted: #9ca3af;
+    --theme-text-primary: #0f172a;
+    --theme-text-secondary: #475569;
+    --theme-text-muted: #94a3b8;
 
-    /* Background colors */
-    --theme-bg-default: #ffffff;
-    --theme-bg-secondary: #f9fafb;
-    --theme-bg-tertiary: #f3f4f6;
+    --theme-border-soft: rgba(226, 232, 240, 0.6);
+    --theme-border-medium: #e2e8f0;
 
-    /* Border colors */
-    --theme-border-default: #e5e7eb;
-    --theme-border-subtle: #f3f4f6;
+    --theme-accent-primary: #3b82f6;
+    --theme-accent-secondary: #6366f1;
 
-    /* Button colors */
-    --theme-btn-primary-color: #ffffff;
-    --theme-btn-primary-bg: #3b82f6;
-    --theme-btn-primary-hover-color: #ffffff;
-    --theme-btn-primary-hover-bg: #2563eb;
+    --theme-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --theme-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --theme-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+    --gradient-error: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  }
 
-    --theme-btn-secondary-color: #3b82f6;
-    --theme-btn-secondary-bg: #ffffff;
-    --theme-btn-secondary-hover-color: #2563eb;
-    --theme-btn-secondary-hover-bg: #f9fafb;
+  .dark {
+    /* Dark Mode - Deep Midnight & Azure Palette */
+    --theme-bg-page: #020617;
+    --theme-bg-card: rgba(15, 23, 42, 0.6);
+    --theme-bg-surface: #0f172a;
 
-    /* Card colors */
-    --theme-card-bg: #ffffff;
-    --theme-card-border: #e5e7eb;
-    --theme-card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --theme-text-primary: #f8fafc;
+    --theme-text-secondary: #94a3b8;
+    --theme-text-muted: #475569;
+
+    --theme-border-soft: rgba(30, 41, 59, 0.6);
+    --theme-border-medium: #1e2b44;
+
+    --theme-accent-primary: #60a5fa;
+    --theme-accent-secondary: #818cf8;
+
+    --theme-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --theme-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --theme-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
   }
 
   /* Instant theme changes for html and body - no transition delay */
@@ -59,14 +66,15 @@
   }
 
   body {
-    @apply bg-white dark:bg-black text-gray-900 dark:text-white;
+    background-color: var(--theme-bg-page);
+    color: var(--theme-text-primary);
     font-family: var(--theme-font);
-    background-color: var(--theme-bg-default);
-    color: var(--theme-text-default);
-    /* Disable transitions for theme-related properties */
-    transition: none !important;
+    /* Smooth but fast theme transition */
+    transition: background-color 0.3s ease, color 0.3s ease;
     margin: 0;
     padding: 0;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -108,27 +116,27 @@
     transition-property: opacity, transform;
   }
 
-  /* Card styles with light/dark mode support */
-  .card {
-    /* Base styles */
-    border-radius: 16px;
-    padding: 1.5rem;
-    /* Instant theme changes, smooth transitions for other properties */
-    transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    transition-property: opacity, transform, box-shadow;
-
-    /* Light mode styles (Crisp Paper) */
-    background-color: #fff;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-
-    /* Dark mode styles */
-    @apply dark:bg-black dark:border-gray-800;
+  .btn-danger {
+    background: var(--gradient-error);
+    @apply text-white font-semibold py-2 px-6 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/20 active:scale-95;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition-property: opacity, transform;
   }
 
-  /* Hover effect for cards */
+  /* Card styles with light/dark mode support */
+  .card {
+    @apply rounded-3xl p-6 md:p-8;
+    background-color: var(--theme-bg-card);
+    border: 1px solid var(--theme-border-soft);
+    box-shadow: var(--theme-shadow-md);
+    backdrop-filter: blur(12px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
   .card:hover {
-    @apply shadow-md dark:shadow-lg;
+    box-shadow: var(--theme-shadow-lg);
+    border-color: var(--theme-accent-primary);
+    transform: translateY(-2px);
   }
 
   .input-field {
@@ -212,6 +220,16 @@
   .touch-target {
     min-height: 44px;
     min-width: 44px;
+  }
+
+  /* Custom scrollbar utility for code blocks */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-slate-700 rounded-full;
   }
 }
 
@@ -331,6 +349,18 @@
   animation-fill-mode: both;
 }
 
+/* Force white background for Base Sepolia icon in all modes for consistency */
+.base-sepolia-icon-representation {
+  background: #ffffff !important;
+  padding: 0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 .fade-in {
   animation-name: fadeIn;
 }
@@ -402,7 +432,7 @@
   display: flex !important;
   align-items: center;
   justify-content: center;
-  background: #131720;
+  background: #000000;
   color: white;
   text-decoration: none;
   font-weight: 600;
@@ -448,25 +478,44 @@ html.dark .feedback-button {
 }
 
 /* Pulse animation for mobile FAB */
+/* Responsive display utilities */
+.desktop-only {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .desktop-only {
+    display: inline-block !important;
+  }
+}
+
+.mobile-only {
+  display: inline-block !important;
+}
+
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* Feedback Button Mobile Style - Premium Icon-Only Circle */
 @media (max-width: 767px) {
   .feedback-button {
-    background: #3b82f6 !important;
-    border: none !important;
-    width: 60px !important;
-    height: 60px !important;
-    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.4) !important;
+    background: #000000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    width: 52px !important;
+    height: 52px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .feedback-button::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: #3b82f6;
-    opacity: 0.4;
-    z-index: -1;
-    animation: fab-pulse 2s infinite;
+    display: none !important;
   }
 }
 
@@ -499,4 +548,42 @@ button[aria-haspopup="dialog"] {
 /* Ensure the header content never wraps */
 .md\:fixed .rounded-full {
   flex-wrap: nowrap !important;
+}
+
+/* Skeleton Loading System */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.03) 25%,
+      rgba(255, 255, 255, 0.08) 37%,
+      rgba(255, 255, 255, 0.03) 63%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2s infinite ease-in-out;
+  border-radius: 4px;
+}
+
+:root:not(.dark) .skeleton {
+  background: linear-gradient(90deg,
+      rgba(0, 0, 0, 0.03) 25%,
+      rgba(0, 0, 0, 0.06) 37%,
+      rgba(0, 0, 0, 0.03) 63%);
+  background-size: 200% 100%;
+}
+
+.skeleton-text {
+  height: 1em;
+  width: 100%;
+}
+
+.skeleton-circle {
+  border-radius: 50%;
 }

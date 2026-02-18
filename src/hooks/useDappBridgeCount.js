@@ -1,92 +1,75 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { getItem, setItem } from '../utils/indexedDB';
+
 const CACHE_KEY = 'dapp_bridge_count';
 
-// Calculate percentage change
 const calculatePercentageChange = (current, previous) => {
     if (!previous || previous === 0) return null;
     const change = ((current - previous) / previous) * 100;
     return parseFloat(change.toFixed(1));
 };
 
-// Lightweight hook to track dapp-specific bridge transaction count
 export function useDappBridgeCount() {
-    const [bridgeCount, setBridgeCount] = useState(null);
-    const [change, setChange] = useState(null);
-    const [trend, setTrend] = useState('stable');
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
 
-    const updateBridgeCount = async () => {
-        try {
-            // Get personal and global transactions
+    const { data, isLoading } = useQuery({
+        queryKey: ['dappBridgeCount'],
+        queryFn: async () => {
             const [personalTxs, globalTxs] = await Promise.all([
                 getItem('myTransactions'),
                 getItem('globalTransactions')
             ]);
 
             const allTxs = [...(Array.isArray(personalTxs) ? personalTxs : []), ...(Array.isArray(globalTxs) ? globalTxs : [])];
-
-            // Unique bridge hashes only
             const uniqueHashes = new Set();
+
             allTxs.forEach(tx => {
                 if (tx.type === 'Bridge' && tx.hash && tx.status === 'success') {
                     uniqueHashes.add(tx.hash);
                 }
             });
 
-            // Live count only
             const currentCount = uniqueHashes.size;
+            const cached = await getItem(CACHE_KEY);
+            const previousCount = (cached && cached.value !== undefined) ? cached.value : 0;
 
-            // Get previous count from cache
-            let previousCount = null;
-            try {
-                const cached = await getItem(CACHE_KEY);
-                if (cached && cached.value !== undefined) {
-                    previousCount = cached.value;
-                }
-            } catch (err) { /* ignore */ }
+            let change = null;
+            let trend = 'stable';
 
-            setBridgeCount(currentCount);
-
-            if (previousCount !== null && previousCount !== currentCount && currentCount > 0) {
+            if (previousCount !== currentCount && currentCount > 0 && previousCount > 0) {
                 const percentageChange = calculatePercentageChange(currentCount, previousCount);
                 if (percentageChange !== null) {
-                    setChange(Math.abs(percentageChange));
-                    setTrend(percentageChange > 0 ? 'up' : 'down');
+                    change = Math.abs(percentageChange);
+                    trend = percentageChange > 0 ? 'up' : 'down';
                 }
-            } else {
-                setChange(null);
-                setTrend('stable');
             }
 
             await setItem(CACHE_KEY, { value: currentCount, timestamp: Date.now() });
-            setLoading(false);
-        } catch (err) {
-            console.error('Error updating bridge count:', err);
-            setLoading(false);
-        }
-    };
+
+            return { bridgeCount: currentCount, change, trend };
+        },
+        staleTime: 60000,
+        refetchInterval: 30000,
+    });
 
     useEffect(() => {
-        updateBridgeCount();
-
-        const interval = setInterval(updateBridgeCount, 30000);
-
-        const handleRefresh = () => {
-            updateBridgeCount();
-        };
-
-        window.addEventListener('transactionSaved', handleRefresh);
-        window.addEventListener('bridgeTransactionSaved', handleRefresh);
-        window.addEventListener('globalStatsUpdated', handleRefresh);
+        const invalidate = () => queryClient.invalidateQueries({ queryKey: ['dappBridgeCount'] });
+        window.addEventListener('transactionSaved', invalidate);
+        window.addEventListener('bridgeTransactionSaved', invalidate);
+        window.addEventListener('globalStatsUpdated', invalidate);
 
         return () => {
-            clearInterval(interval);
-            window.removeEventListener('transactionSaved', handleRefresh);
-            window.removeEventListener('bridgeTransactionSaved', handleRefresh);
-            window.removeEventListener('globalStatsUpdated', handleRefresh);
+            window.removeEventListener('transactionSaved', invalidate);
+            window.removeEventListener('bridgeTransactionSaved', invalidate);
+            window.removeEventListener('globalStatsUpdated', invalidate);
         };
-    }, []);
+    }, [queryClient]);
 
-    return { bridgeCount, change, trend, loading };
+    return {
+        bridgeCount: data?.bridgeCount ?? 0,
+        change: data?.change ?? null,
+        trend: data?.trend ?? 'stable',
+        loading: isLoading
+    };
 }
