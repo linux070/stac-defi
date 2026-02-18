@@ -1,16 +1,28 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { WalletProvider } from './contexts/WalletContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout';
-import Home from './pages/Home';
-import Swap from './pages/Swap';
-import Bridge from './pages/Bridge';
-import Liquidity from './pages/Liquidity';
-import Transactions from './pages/Transactions';
 import { Analytics } from '@vercel/analytics/react';
 import { ModalProvider } from './contexts/ModalProvider';
 import ErrorBoundary from './components/ErrorBoundary';
+
+// Lazy load pages for production performance
+const Home = lazy(() => import('./pages/Home'));
+const Swap = lazy(() => import('./pages/Swap'));
+const Bridge = lazy(() => import('./pages/Bridge'));
+const Liquidity = lazy(() => import('./pages/Liquidity'));
+const Transactions = lazy(() => import('./pages/Transactions'));
+
+// Production loading state
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[60dvh] w-full">
+    <div className="relative">
+      <div className="w-12 h-12 rounded-full border-2 border-slate-200 dark:border-white/10"></div>
+      <div className="absolute top-0 left-0 w-12 h-12 rounded-full border-t-2 border-blue-500 animate-spin"></div>
+    </div>
+  </div>
+);
 
 function App() {
   const location = useLocation();
@@ -44,16 +56,18 @@ function App() {
         <WalletProvider>
           <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
             <ErrorBoundary key={activeTab}>
-              <Routes>
-                <Route path="/" element={<Home setActiveTab={setActiveTab} />} />
-                <Route path="/home" element={<Home setActiveTab={setActiveTab} />} />
-                <Route path="/swap" element={<Swap />} />
-                <Route path="/bridge" element={<Bridge />} />
-                <Route path="/liquidity" element={<Liquidity />} />
-                <Route path="/transactions" element={<Transactions />} />
-                {/* Catch-all for undefined routes defaults to home */}
-                <Route path="*" element={<Home setActiveTab={setActiveTab} />} />
-              </Routes>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Home setActiveTab={setActiveTab} />} />
+                  <Route path="/home" element={<Home setActiveTab={setActiveTab} />} />
+                  <Route path="/swap" element={<Swap />} />
+                  <Route path="/bridge" element={<Bridge />} />
+                  <Route path="/liquidity" element={<Liquidity />} />
+                  <Route path="/transactions" element={<Transactions />} />
+                  {/* Catch-all for undefined routes defaults to home */}
+                  <Route path="*" element={<Home setActiveTab={setActiveTab} />} />
+                </Routes>
+              </Suspense>
             </ErrorBoundary>
           </Layout>
           <Analytics />

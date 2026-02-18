@@ -226,6 +226,8 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
                         <img
                           src={getTokenIcon(token.symbol)}
                           alt={token.symbol}
+                          loading="lazy"
+                          decoding="async"
                           className="swap-token-selector-popular-icon"
                         />
                       ) : (
@@ -573,12 +575,6 @@ const Swap = () => {
         animate={{ opacity: 1, y: 0 }}
         className="swap-container group"
       >
-        {/* 4-Corner Splitted Glow System */}
-        <div className={`absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
-        <div className={`absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
-        <div className={`absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
-        <div className={`absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-blue-500 to-blue-600 opacity-[0.04] dark:opacity-[0.1] group-hover:opacity-20 blur-[60px] transition-all duration-700 rounded-full`}></div>
-
         <div className="relative z-10">
           {/* Header */}
           <div className="swap-header">

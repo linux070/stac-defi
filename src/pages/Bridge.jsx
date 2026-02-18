@@ -1000,9 +1000,9 @@ const Bridge = () => {
                       {(() => {
                         const displayToChain = bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain;
                         const chainKey = displayToChain.toLowerCase();
-                        if (chainKey.includes('arc')) return <img src="/icons/arc.png" alt="Arc" className="w-full h-full object-cover bg-black" />;
-                        if (chainKey.includes('base')) return <img src="/icons/base.png" alt="Base" className="w-full h-full object-cover bg-white" />;
-                        if (chainKey.includes('sepolia')) return <img src="/icons/eth.png" alt="ETH" className="w-full h-full object-cover bg-white" />;
+                        if (chainKey.includes('arc')) return <img src="/icons/arc.png" alt="Arc" loading="lazy" decoding="async" className="w-full h-full object-cover bg-black" />;
+                        if (chainKey.includes('base')) return <img src="/icons/base.png" alt="Base" loading="lazy" decoding="async" className="w-full h-full object-cover bg-white" />;
+                        if (chainKey.includes('sepolia')) return <img src="/icons/eth.png" alt="ETH" loading="lazy" decoding="async" className="w-full h-full object-cover bg-white" />;
                         return null;
                       })()}
                     </div>
@@ -1048,7 +1048,7 @@ const Bridge = () => {
             {/* Token Pill - Static, no dropdown */}
             <div className="token-selector">
               <div className="token-icon">
-                <img src="/icons/usdc.png" alt="USDC" className="w-full h-full object-contain" />
+                <img src="/icons/usdc.png" alt="USDC" loading="lazy" decoding="async" className="w-full h-full object-contain" />
               </div>
               <span className="token-symbol">USDC</span>
             </div>

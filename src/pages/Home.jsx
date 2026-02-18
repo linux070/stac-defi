@@ -323,22 +323,22 @@ const Home = ({ setActiveTab }) => {
             {/* Top Right: EURC - Moved to Right for symmetry with USDC */}
             {/* Token Constellation - Icons Only */}
             {/* Top Right: EURC - Moved to Right for symmetry with USDC */}
-            <div className="absolute top-[2%] -right-4 w-20 h-20 md:top-[3%] md:right-0 md:w-36 md:h-36 rotate-[12deg] z-10 transition-transform duration-700 hover:scale-110 opacity-80 md:opacity-100">
-              <img src="/icons/eurc.png" alt="" className="w-full h-full object-contain filter drop-shadow(0 20px 40px rgba(59,130,246,0.18))" />
+            <div className="absolute top-[2%] right-2 w-20 h-20 md:top-[3%] md:right-0 md:w-36 md:h-36 rotate-[12deg] z-10 transition-transform duration-700 hover:scale-110 opacity-80 md:opacity-100">
+              <img src="/icons/eurc.png" alt="" loading="eager" fetchPriority="high" className="w-full h-full object-contain filter drop-shadow(0 20px 40px rgba(59,130,246,0.18))" />
             </div>
 
             {/* Bottom Left: USDC - Primary anchor, Size Adjusted to match EURC */}
-            <div className="absolute bottom-[2%] -left-4 w-20 h-20 md:bottom-[5%] md:left-[4%] md:w-36 md:h-36 -rotate-[12deg] z-10 transition-transform duration-700 hover:scale-105 opacity-80 md:opacity-100">
-              <img src="/icons/usdc.png" alt="" className="w-full h-full object-contain filter drop-shadow(0 20px 40px rgba(59,130,246,0.18))" />
+            <div className="absolute bottom-[2%] left-2 w-20 h-20 md:bottom-[5%] md:left-[4%] md:w-36 md:h-36 -rotate-[12deg] z-10 transition-transform duration-700 hover:scale-105 opacity-80 md:opacity-100">
+              <img src="/icons/usdc.png" alt="" loading="eager" fetchPriority="high" className="w-full h-full object-contain filter drop-shadow(0 20px 40px rgba(59,130,246,0.18))" />
             </div>
 
             {/* Accents for Depth - Hidden on mobile to reduce clutter, visible on tablet+ */}
             <div className="hidden md:block absolute top-[5%] left-[5%] w-14 h-14 md:w-20 md:h-20 rotate-[25deg] z-0 opacity-90 blur-[2px] transition-transform duration-700 hover:scale-110">
-              <img src="/icons/mtb.png" alt="" className="w-full h-full object-contain filter drop-shadow(0 15px 30px rgba(59,130,246,0.12))" />
+              <img src="/icons/mtb.png" alt="" loading="lazy" decoding="async" className="w-full h-full object-contain filter drop-shadow(0 15px 30px rgba(59,130,246,0.12))" />
             </div>
 
             <div className="hidden md:block absolute bottom-[20%] right-[5%] w-16 h-16 md:w-24 md:h-24 rotate-[-15deg] z-0 opacity-90 blur-[2px] transition-transform duration-700 hover:scale-110">
-              <img src="/icons/ecr.png" alt="" className="w-full h-full object-contain filter drop-shadow(0 15px 30px rgba(59,130,246,0.12))" />
+              <img src="/icons/ecr.png" alt="" loading="lazy" decoding="async" className="w-full h-full object-contain filter drop-shadow(0 15px 30px rgba(59,130,246,0.12))" />
             </div>
           </div>
 

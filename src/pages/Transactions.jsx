@@ -834,7 +834,7 @@ const Transactions = () => {
                         ) : tx.type === 'Swap' && getNetworkName(tx.chainId) ? (
                           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 w-fit">
                             <div className={`w-3 h-3 ${getNetworkName(tx.chainId)?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
-                              <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-full h-full object-contain" />
+                              <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" loading="lazy" decoding="async" className="w-full h-full object-contain" />
                             </div>
                             <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium uppercase tracking-wider">
                               {getNetworkName(tx.chainId)}
@@ -849,13 +849,13 @@ const Transactions = () => {
                         {tx.type === 'Bridge' ? (
                           <>
                             <div className={`w-6 h-6 ${tx.from?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
-                              <img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" className="w-full h-full object-cover" />
+                              <img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                             </div>
                             <span className="entity-name">{tx.from}</span>
                           </>
                         ) : (
                           <>
-                            <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/stc.png'} alt="" className="entity-icon" />
+                            <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="entity-icon" />
                             <span className="entity-name uppercase">{getSwapFromToken(tx)}</span>
                           </>
                         )}
@@ -866,13 +866,13 @@ const Transactions = () => {
                         {tx.type === 'Bridge' ? (
                           <>
                             <div className={`w-6 h-6 ${tx.to?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
-                              <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" className="w-full h-full object-cover" />
+                              <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                             </div>
                             <span className="entity-name">{tx.to}</span>
                           </>
                         ) : (
                           <>
-                            <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" className="entity-icon" />
+                            <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="entity-icon" />
                             <span className="entity-name uppercase">{getSwapToToken(tx)}</span>
                           </>
                         )}
@@ -1047,12 +1047,18 @@ const Transactions = () => {
                   <div className="flex items-center gap-2 min-w-0">
                     {tx.type === 'Bridge' ? (
                       <>
-                        <img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        {(() => {
+                          const chainKey = tx.from?.toLowerCase() || '';
+                          if (chainKey.includes('arc')) return <img src="/icons/arc.png" alt="Arc" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover bg-black" />;
+                          if (chainKey.includes('base')) return <img src="/icons/base.png" alt="Base" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover bg-white" />;
+                          if (chainKey.includes('sepolia')) return <img src="/icons/eth.png" alt="ETH" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover bg-white" />;
+                          return <img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover" />;
+                        })()}
                         <span className="text-sm font-semibold text-slate-800 dark:text-white truncate">{tx.from}</span>
                       </>
                     ) : (
                       <>
-                        <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/stc.png'} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover" />
                         <span className="text-sm font-semibold text-slate-800 dark:text-white truncate uppercase">{getSwapFromToken(tx)}</span>
                       </>
                     )}
@@ -1072,12 +1078,12 @@ const Transactions = () => {
                   <div className="flex items-center justify-end gap-2 min-w-0">
                     {tx.type === 'Bridge' ? (
                       <>
-                        <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover" />
                         <span className="text-sm font-semibold text-slate-800 dark:text-white truncate">{tx.to}</span>
                       </>
                     ) : (
                       <>
-                        <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" className="w-5 h-5 rounded-full object-cover drop-shadow-[0_4px_8px_rgba(59,130,246,0.25)]" />
+                        <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover drop-shadow-[0_4px_8px_rgba(59,130,246,0.25)]" />
                         <span className="text-sm font-semibold text-slate-800 dark:text-white truncate uppercase">{getSwapToToken(tx)}</span>
                       </>
                     )}
@@ -1098,7 +1104,7 @@ const Transactions = () => {
                   ) : (
                     <>
                       {/* Bridge dynamic token display - Default to USDC if no symbol found in amount */}
-                      <img src={getTokenLogo(tx.amount?.includes(' ') ? tx.amount.split(' ')[1] : 'USDC') || '/icons/usdc.png'} alt="" className="w-5 h-5 rounded-full drop-shadow-[0_4px_8px_rgba(59,130,246,0.25)]" />
+                      <img src={getTokenLogo(tx.amount?.includes(' ') ? tx.amount.split(' ')[1] : 'USDC') || '/icons/usdc.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full drop-shadow-[0_4px_8px_rgba(59,130,246,0.25)]" />
                       <span className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">
                         {tx.amount?.includes(' ') ? tx.amount.split(' ')[1] : 'USDC'}
                       </span>
