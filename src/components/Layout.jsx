@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../contexts/ThemeContext';
+import { useAccount } from 'wagmi';
+import { useTheme } from '../hooks/useTheme';
 import {
-  Menu, X, Moon, Sun, Globe, MessageSquare, FileText, Github, ChevronRight, LogOut
+  X, Moon, ChevronRight, ArrowLeft, Check, ChevronDown, Bell, Globe, MessageCircle
 } from 'lucide-react';
 import UpdatesModal from './UpdatesModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,16 +11,71 @@ import LanguageSelector from './LanguageSelector';
 import BackgroundGradient from './BackgroundGradient';
 import FeedbackButton from './FeedbackButton';
 import CustomConnectButton from './CustomConnectButton';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
-import NotificationBell from './NotificationBell';
 
+const SunIcon = ({ size = 18, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <circle cx="12" cy="12" r="4" />
+    <line x1="12" y1="2" x2="12" y2="4" />
+    <line x1="12" y1="20" x2="12" y2="22" />
+    <line x1="4.93" y1="4.93" x2="6.34" y2="6.34" />
+    <line x1="17.66" y1="17.66" x2="19.07" y2="19.07" />
+    <line x1="2" y1="12" x2="4" y2="12" />
+    <line x1="20" y1="12" x2="22" y2="12" />
+    <line x1="4.93" y1="19.07" x2="6.34" y2="17.66" />
+    <line x1="17.66" y1="6.34" x2="19.07" y2="4.93" />
+  </svg>
+);
 const Layout = ({ children, activeTab, setActiveTab }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { darkMode, toggleDarkMode } = useTheme();
+
+  const { isConnected } = useAccount();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showUpdates, setShowUpdates] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [moreMenuPage, setMoreMenuPage] = useState('main'); // 'main' or 'language'
+  const moreRef = useRef(null);
+
+  const languages = [
+    { code: 'en', name: 'English', flag: 'https://flagcdn.com/w80/us.png' },
+    { code: 'es', name: 'Español', flag: 'https://flagcdn.com/w80/es.png' },
+    { code: 'fr', name: 'Français', flag: 'https://flagcdn.com/w80/fr.png' },
+    { code: 'de', name: 'Deutsch', flag: 'https://flagcdn.com/w80/de.png' },
+    { code: 'zh', name: '中文', flag: 'https://flagcdn.com/w80/cn.png' }
+  ];
+
+  const currentLang = languages.find(l => i18n.language.startsWith(l.code)) || languages[0];
+
+  // Reset more menu page when closed
+  useEffect(() => {
+    if (!isMoreOpen) {
+      setTimeout(() => setMoreMenuPage('main'), 200);
+    }
+  }, [isMoreOpen]);
+
+  // Click outside for More dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (moreRef.current && !moreRef.current.contains(event.target)) {
+        setIsMoreOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Body scroll lock effect - Simplified and robust
   useEffect(() => {
@@ -38,6 +94,13 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
     setIsMenuOpen(false);
     document.body.style.overflow = '';
   }, [activeTab]);
+
+  // Global listener for updates modal
+  useEffect(() => {
+    const handleOpenUpdates = () => setShowUpdates(true);
+    window.addEventListener('open-updates', handleOpenUpdates);
+    return () => window.removeEventListener('open-updates', handleOpenUpdates);
+  }, []);
   const navItems = [
     { id: 'swap', label: t('Swap') },
     { id: 'bridge', label: t('Bridge') },
@@ -47,64 +110,90 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
   const landingNavItems = [
     { label: t('Docs'), href: '#', comingSoon: true },
+    { label: t('Twitter'), href: 'https://x.com/stac_defi' },
     { label: t('Discord'), href: '#' },
     { label: t('GitHub'), href: 'https://github.com/linux070/stac-defi' },
-    { label: t('Twitter'), href: 'https://x.com/stac_defi' },
   ];
 
   return (
-    <div className={`min-h-[100dvh] flex flex-col ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'transactions' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'}`}>
+    <div className={`min-h-[100dvh] flex flex-col bg-white dark:bg-black ${['home', 'swap', 'bridge'].includes(activeTab) ? 'bg-transparent' : ''}`}>
       {/* Animated Background Gradient - Only for Swap and Bridge pages */}
       {(activeTab === 'swap' || activeTab === 'bridge') && <BackgroundGradient />}
 
       {/* Header - Immersive full-width design */}
-      <div className="fixed top-0 left-0 right-0 z-[100] transition-all duration-300">
+      <div className="fixed top-0 left-0 right-0 z-[100]">
         {/* Mobile Header (Relay Style) - Always visible */}
-        <div className="lg:hidden w-full h-16 bg-white dark:bg-black border-b border-slate-200 dark:border-white/10 px-4 flex items-center justify-between relative z-[100]">
+        <div className="lg:hidden w-full h-16 backdrop-blur-2xl bg-transparent border-b border-white/10 dark:border-white/5 px-5 flex items-center justify-between relative z-[100] transition-colors duration-300">
           {/* Logo Section */}
-          <div className="flex items-center cursor-pointer transition-all duration-300 hover:opacity-80 active:scale-95" onClick={() => setActiveTab('home')}>
-            <div className="h-8 w-6 overflow-hidden flex-shrink-0 bg-transparent">
+          <div className="flex items-center cursor-pointer transition-all active:scale-95 group" onClick={() => setActiveTab('home')}>
+            <div className="h-7 w-5 overflow-hidden flex-shrink-0 bg-transparent transition-transform group-hover:scale-110">
               <img
                 src="/icons/stac.png"
                 alt=""
-                className="h-8 max-w-none object-cover dark:invert"
+                className="h-7 max-w-none object-cover dark:invert"
                 style={{ objectPosition: 'left' }}
               />
             </div>
-            <div className="h-8 overflow-hidden flex-shrink-0 ml-1.5 bg-transparent">
+            <div className="h-7 overflow-hidden flex-shrink-0 ml-1.5 bg-transparent">
               <img
                 src="/icons/stac.png"
                 alt="Stac"
-                className="h-8 max-w-none object-cover dark:invert"
-                style={{ marginLeft: '-24px' }}
+                className="h-7 max-w-none object-cover dark:invert"
+                style={{ marginLeft: '-20px' }}
               />
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <NotificationBell placement="mobile" onExplore={() => setShowUpdates(true)} />
+            <div className="flex items-center">
+              {activeTab === 'home' && !isConnected ? (
+                <button
+                  onClick={() => setActiveTab('swap')}
+                  className="h-[38px] px-4 rounded-lg bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition-all duration-300 font-bold text-[12px] whitespace-nowrap shadow-md shadow-blue-500/20 flex items-center justify-center group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  <span className="relative z-10">{t('Launch App')}</span>
+                </button>
+              ) : (
+                <div className="flex items-center scale-90 origin-right translate-y-[1px]">
+                  <CustomConnectButton connectText={t('Connect')} isMobile={true} />
+                </div>
+              )}
+            </div>
             {/* Menu Button - Always accessible */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsMenuOpen(prev => !prev);
               }}
-              className="p-2 -mr-2 text-slate-900 dark:text-white transition-all active:scale-90 touch-manipulation relative z-[99999]"
-              aria-label={isMenuOpen ? "Close Menu" : "Open Menu"}
+              className="p-2 -mr-1 text-slate-900 dark:text-white transition-all active:scale-75 touch-manipulation relative z-[99999]"
+              aria-label={isMenuOpen ? t("Close Menu") : t("Open Menu")}
             >
-              {isMenuOpen ? <X size={26} strokeWidth={2.5} /> : <Menu size={26} strokeWidth={2.5} />}
+              <div className="w-6 h-6 flex flex-col items-end justify-center gap-1.5">
+                <motion.span
+                  animate={isMenuOpen ? { rotate: 45, y: 4, width: '100%' } : { rotate: 0, y: 0, width: '100%' }}
+                  className="block h-0.5 bg-current rounded-full"
+                />
+                <motion.span
+                  animate={isMenuOpen ? { opacity: 0, x: 10 } : { opacity: 1, x: 0, width: '70%' }}
+                  className="block h-0.5 bg-current rounded-full"
+                />
+                <motion.span
+                  animate={isMenuOpen ? { rotate: -45, y: -4, width: '100%' } : { rotate: 0, y: 0, width: '100%' }}
+                  className="block h-0.5 bg-current rounded-full"
+                />
+              </div>
             </button>
           </div>
         </div>
 
-        {/* Desktop Header - Sleek Rectangular Top Bar */}
-        <div className="hidden lg:flex fixed top-0 left-0 right-0 h-20 items-center justify-between px-10 bg-white dark:bg-black border-b border-slate-200 dark:border-white/5 shadow-sm">
-          <div className="flex items-center gap-12">
-            {/* Logo Section */}
+        <div className="hidden lg:grid grid-cols-3 fixed top-0 left-0 right-0 h-20 items-center px-10 backdrop-blur-2xl bg-transparent border-b border-white/10 dark:border-white/5 transition-all duration-300">
+          {/* Left Section: Logo */}
+          <div className="flex items-center">
             <div
-              className="flex items-center cursor-pointer transition-all duration-300 hover:opacity-80 active:scale-95 flex-shrink-0"
+              className="flex items-center cursor-pointer transition-all hover:opacity-80 active:scale-95 flex-shrink-0 group"
               onClick={() => setActiveTab('home')}
             >
-              <div className="h-9 w-7 overflow-hidden flex-shrink-0 bg-transparent">
+              <div className="h-9 w-7 overflow-hidden flex-shrink-0 bg-transparent transition-transform group-hover:scale-110">
                 <img
                   src="/icons/stac.png"
                   alt=""
@@ -112,7 +201,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                   style={{ objectPosition: 'left' }}
                 />
               </div>
-              <div className="h-9 overflow-hidden flex-shrink-0 ml-4 bg-transparent">
+              <div className="h-9 overflow-hidden flex-shrink-0 ml-3 bg-transparent">
                 <img
                   src="/icons/stac.png"
                   alt="Stac"
@@ -121,83 +210,221 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                 />
               </div>
             </div>
+          </div>
 
-            {/* Desktop Navigation */}
-            <div className="flex items-center">
+          {/* Center Section: Navigation */}
+          <div className="flex justify-center items-center">
+            <div className="flex items-center gap-1">
               {activeTab === 'home' ? (
-                <div className="flex items-center">
-                  {landingNavItems.map((item, idx) => (
-                    <div key={idx} className="flex items-center">
-                      <a
-                        href={item.href}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-2
-                            ${item.comingSoon
-                            ? 'text-slate-400 cursor-not-allowed opacity-60'
-                            : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5'}`}
-                      >
-                        {item.label}
-                        {item.comingSoon && (
-                          <span className="text-[9px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded-md uppercase tracking-wider">Soon</span>
-                        )}
-                      </a>
-                      {idx < landingNavItems.length - 1 && (
-                        <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
-                      )}
-                    </div>
-                  ))}
-                </div>
+                // Landing Page Navigation - Underline style
+                landingNavItems.map((item, idx) => (
+                  <a
+                    key={idx}
+                    href={item.href}
+                    target={item.href.startsWith('http') ? '_blank' : undefined}
+                    rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    className="relative px-6 py-2 text-[14px] font-semibold transition-all duration-300 flex items-center whitespace-nowrap gap-2 group"
+                  >
+                    <span className={`transition-colors duration-300 ${item.comingSoon ? 'text-slate-400 cursor-not-allowed opacity-60' : 'text-slate-600 dark:text-slate-400'}`}>
+                      {item.label}
+                    </span>
+                    {item.comingSoon && (
+                      <span className="text-[8px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded-md uppercase tracking-wider font-bold text-slate-400">{t('Soon')}</span>
+                    )}
+                    {/* Hover underline for links */}
+                    {!item.comingSoon && (
+                      <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-blue-600 dark:bg-blue-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-full" />
+                    )}
+                  </a>
+                ))
               ) : (
-                <div className="flex items-center">
-                  {navItems.map((item, idx) => (
-                    <div key={item.id} className="flex items-center">
-                      <div
-                        onClick={() => setActiveTab(item.id)}
-                        className={`px-6 py-2.5 rounded-xl text-[14px] font-bold transition-all duration-300 flex items-center nav-link whitespace-nowrap cursor-pointer
-                            ${activeTab === item.id
-                            ? 'bg-blue-600/10 text-blue-600 dark:bg-blue-400/10 dark:text-blue-400'
-                            : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5'
-                          }`}
-                      >
-                        <span className="whitespace-nowrap">{item.label}</span>
-                      </div>
-                      {idx < navItems.length - 1 && (
-                        <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
-                      )}
-                    </div>
-                  ))}
-                </div>
+                // App Navigation - Underline style
+                navItems.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className="relative px-6 py-2 flex flex-col items-center cursor-pointer group"
+                  >
+                    <span className="text-[14px] font-semibold transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                      {item.label}
+                    </span>
+                    {/* Hover Underline (Desktop Only) */}
+                    {activeTab !== item.id && (
+                      <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-blue-600 dark:bg-blue-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-full" />
+                    )}
+                    {activeTab === item.id && (
+                      <motion.div
+                        layoutId="activeTabUnderline"
+                        className="absolute bottom-0 left-6 right-6 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full"
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </div>
+                ))
               )}
+
+
+
+              {/* Premium More Dropdown */}
+              <div className="relative" ref={moreRef}>
+                <button
+                  onClick={() => setIsMoreOpen(!isMoreOpen)}
+                  className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-[13px] font-semibold transition-colors duration-200"
+                >
+                  <span>{t('More')}</span>
+                  <ChevronDown size={14} strokeWidth={2.5} className={`transition-transform duration-200 ${isMoreOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {isMoreOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                      className="absolute top-full left-0 mt-4 w-[300px] z-[200] bg-white/95 dark:bg-[#0c0c0c]/95 backdrop-blur-2xl rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.4)] border border-slate-200/60 dark:border-white/10 overflow-hidden origin-top-left"
+                    >
+                      <AnimatePresence mode="wait">
+                        {moreMenuPage === 'main' ? (
+                          <motion.div
+                            key="main"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            <div className="px-6 pt-6 pb-2 border-b border-gray-100/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                              <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                                {t('App Settings')}
+                              </span>
+                            </div>
+                            <div className="p-3">
+                              <button
+                                onClick={() => {
+                                  setShowUpdates(true);
+                                  setIsMoreOpen(false);
+                                }}
+                                className="w-full px-3 py-3 text-left flex items-center rounded-2xl group/item transition-all duration-200 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-[0.98]"
+                              >
+                                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white">
+                                  <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center transition-colors group-hover/item:bg-blue-500/10 dark:group-hover/item:bg-blue-500/20">
+                                    <Bell size={18} strokeWidth={2.2} className="group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400" />
+                                  </div>
+                                  <span className="text-[14px] font-bold tracking-tight">{t("What's New")}</span>
+                                </div>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setIsFeedbackOpen(true);
+                                  setIsMoreOpen(false);
+                                }}
+                                className="w-full px-3 py-3 text-left flex items-center rounded-2xl group/item transition-all duration-200 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-[0.98]"
+                              >
+                                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white">
+                                  <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center transition-colors group-hover/item:bg-blue-500/10 dark:group-hover/item:bg-blue-500/20">
+                                    <MessageCircle size={18} strokeWidth={2.2} className="group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400" />
+                                  </div>
+                                  <span className="text-[14px] font-bold tracking-tight">{t("Feedback")}</span>
+                                </div>
+                              </button>
+
+                              <button
+                                onClick={() => setMoreMenuPage('language')}
+                                className="w-full px-3 py-3 text-left flex items-center justify-between rounded-2xl group/item transition-all duration-200 hover:bg-slate-50 dark:hover:bg-white/5"
+                              >
+                                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white">
+                                  <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center transition-colors group-hover/item:bg-blue-500/10 dark:group-hover/item:bg-blue-500/20">
+                                    <Globe size={18} strokeWidth={2.2} className="group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400" />
+                                  </div>
+                                  <span className="text-[14px] font-bold tracking-tight">{t("Language")}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-600/10 dark:bg-blue-500/10 px-2.5 py-1 rounded-lg uppercase tracking-wider">{currentLang.code}</span>
+                                  <ChevronRight size={14} className="text-slate-400 opacity-60 group-hover/item:opacity-100 group-hover/item:translate-x-0.5 transition-all text-slate-400" />
+                                </div>
+                              </button>
+                            </div>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="language"
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 10 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            <div className="px-6 pt-6 pb-2 border-b border-gray-100/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                              <button
+                                onClick={() => setMoreMenuPage('main')}
+                                className="flex items-center gap-2 group/back text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                              >
+                                <ArrowLeft size={16} className="group-hover/back:-translate-x-0.5 transition-transform" />
+                                <span className="text-[10px] font-extrabold uppercase tracking-[0.2em]">{t('Back')}</span>
+                              </button>
+                            </div>
+                            <div className="p-3">
+                              {languages.map((lang) => {
+                                const isActive = i18n.language.startsWith(lang.code);
+                                return (
+                                  <button
+                                    key={lang.code}
+                                    onClick={() => {
+                                      i18n.changeLanguage(lang.code);
+                                    }}
+                                    className={`w-full px-3 py-3 text-left flex items-center justify-between rounded-2xl group/item transition-all duration-200 active:scale-[0.98] ${isActive ? 'bg-blue-600/5 dark:bg-blue-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm transition-transform group-hover/item:scale-110">
+                                        <img src={lang.flag} alt="" className="w-full h-full object-cover scale-[1.2]" />
+                                      </div>
+                                      <span className={`text-[14px] font-bold tracking-tight ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-800 dark:text-slate-200 group-hover/item:text-slate-900 dark:group-hover/item:text-white transition-colors'}`}>{lang.name}</span>
+                                    </div>
+                                    {isActive && <Check size={16} className="text-blue-600 dark:text-blue-400" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Language Selector */}
-            <div className="flex items-center">
-              <LanguageSelector placement="header" />
-            </div>
-
-            {/* What's New Toggle */}
-            <NotificationBell onExplore={() => setShowUpdates(true)} />
-
+          {/* Right Section: Actions */}
+          <div className="flex items-center justify-end gap-3">
             {/* Theme Toggle */}
             <button
               onClick={toggleDarkMode}
-              className="h-[44px] w-[44px] flex items-center justify-center rounded-2xl border border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10 hover:border-blue-500/30 dark:hover:border-blue-400/30 transition-all duration-300 active:scale-95 shadow-sm"
+              className="h-[40px] w-[40px] flex items-center justify-center rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-200 active:scale-90 group"
+              aria-label={t("Toggle Theme")}
             >
-              {darkMode ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} className="text-slate-600 dark:text-slate-400" />}
+              {darkMode ? (
+                <Moon size={18} strokeWidth={2.5} className="group-hover:text-blue-400 transition-colors" />
+              ) : (
+                <SunIcon size={20} className="group-hover:text-blue-600 transition-colors" />
+              )}
             </button>
 
-            {/* Wallet Button */}
+            {/* Wallet Button / Launch App */}
             <div className="flex items-center">
-              {activeTab === 'home' ? (
+              {activeTab === 'home' && !isConnected ? (
                 <button
                   onClick={() => setActiveTab('swap')}
-                  className="h-[44px] px-6 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/25 active:scale-95 font-bold text-[13px] whitespace-nowrap flex items-center justify-center tracking-tight"
+                  className="h-[44px] px-8 rounded-xl bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition-all duration-300 font-bold text-[13px] whitespace-nowrap shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 flex items-center justify-center group relative overflow-hidden"
                 >
-                  {t('Launch App')}
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  <span className="relative z-10">{t('Launch App')}</span>
                 </button>
               ) : (
-                <CustomConnectButton />
+                <div className="scale-95 origin-right">
+                  <CustomConnectButton />
+                </div>
               )}
             </div>
           </div>
@@ -211,23 +438,21 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[7000] bg-white dark:bg-black flex flex-col lg:hidden pt-16"
+            className="fixed inset-0 z-[7000] bg-white dark:bg-black flex flex-col lg:hidden"
           >
+            {/* Absolute Close Button */}
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              className="absolute top-6 right-6 p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all bg-transparent border-none z-[7001] active:scale-75"
+              aria-label={t("Close Menu")}
+            >
+              <X size={28} strokeWidth={2} />
+            </button>
+
             {/* Scrollable Content Area */}
             <div className="flex-grow overflow-y-auto flex flex-col">
-              {/* Close Button Row */}
-              <div className="flex justify-end px-6 pt-4 pb-2">
-                <button
-                  onClick={() => setIsMenuOpen(false)}
-                  className="p-2.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors bg-slate-100 dark:bg-white/10 rounded-xl"
-                  aria-label="Close Menu"
-                >
-                  <X size={22} strokeWidth={2} />
-                </button>
-              </div>
-
               {/* Navigation Links - Always visible */}
-              <nav className="flex flex-col items-start px-8 pt-2 pb-8 gap-1">
+              <nav className="flex flex-col items-start px-8 pt-20 pb-8 gap-1">
                 {navItems.map((item) => (
                   <div
                     key={item.id}
@@ -235,137 +460,74 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                       setActiveTab(item.id);
                       setIsMenuOpen(false);
                     }}
-                    className={`text-[18px] font-semibold tracking-tight py-3 transition-all duration-300 relative cursor-pointer
-                      ${activeTab === item.id
-                        ? 'text-blue-600 dark:text-blue-400'
-                        : 'text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                      }`}
+                    className="text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all duration-300 relative cursor-pointer w-full"
                   >
                     {activeTab === item.id && (
                       <motion.div
                         layoutId="mobile-active-indicator"
-                        className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-5 bg-blue-600 dark:bg-blue-400 rounded-lg"
+                        className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-6 bg-blue-600 dark:bg-blue-400 rounded-full shadow-[0_0_12px_rgba(37,99,235,0.4)]"
                       />
                     )}
                     {item.label}
                   </div>
                 ))}
+
+                <div
+                  onClick={() => setIsThemeModalOpen(true)}
+                  className="flex items-center justify-between text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all duration-300 cursor-pointer w-full border-t border-slate-100 dark:border-white/5 mt-2 pt-5 group"
+                >
+                  <span>{t('Theme')}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[11px] font-bold tracking-tight shadow-sm border border-blue-100/50 dark:border-blue-800/20 group-hover:scale-105 transition-transform">
+                      {darkMode ? t('Dark') : t('Light')}
+                    </span>
+                    <ChevronRight size={20} className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-colors" />
+                  </div>
+                </div>
+                <LanguageSelector
+                  placement="mobile-menu"
+                />
+
+                {/* Feedback as a Tab */}
+                <div
+                  onClick={() => setIsFeedbackOpen(true)}
+                  className="text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all duration-300 cursor-pointer w-full"
+                >
+                  {t('Feedback')}
+                </div>
+
+                {/* What's New as a Tab */}
+                <div
+                  onClick={() => {
+                    setShowUpdates(true);
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center justify-between text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all duration-300 cursor-pointer w-full border-t border-slate-100 dark:border-white/5 mt-2 pt-5 group"
+                >
+                  <span>{t("What's New")}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[11px] font-bold tracking-tight shadow-sm border border-blue-100/50 dark:border-blue-800/20 group-hover:scale-105 transition-transform">
+                      {t('Latest')}
+                    </span>
+                  </div>
+                </div>
               </nav>
 
               {/* Bottom Controls Area - Pushed to bottom with mt-auto */}
-              <div className="mt-auto w-full flex flex-col bg-white dark:bg-black border-t border-slate-100 dark:border-white/5 pb-8">
-                <ConnectButton.Custom>
-                  {({
-                    account,
-                    chain,
-                    openAccountModal,
-                    openChainModal,
-                    openConnectModal,
-                    mounted,
-                  }) => {
-                    const ready = mounted;
-                    const connected = ready && account && chain;
-
-                    if (!connected) {
-                      return (
-                        <div className="px-6 pt-6 pb-2">
-                          <button
-                            onClick={openConnectModal}
-                            className="w-full h-16 bg-blue-600 text-white rounded-2xl font-bold text-lg shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
-                          >
-                            {t('Connect Wallet')}
-                          </button>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div className="flex flex-col w-full">
-                        {/* Row 1: Network */}
-                        <button
-                          onClick={openChainModal}
-                          className="w-full h-16 px-8 flex items-center justify-between border-b border-slate-100 dark:border-white/5 active:bg-slate-50 dark:active:bg-white/5 transition-colors"
-                        >
-                          <div className="flex items-center gap-4">
-                            {chain.hasIcon && chain.iconUrl ? (
-                              <div className={`w-8 h-8 ${chain.name.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-lg overflow-hidden bg-slate-100 dark:bg-white/10'} flex items-center justify-center`}>
-                                <img
-                                  alt={chain.name ?? 'Chain icon'}
-                                  src={chain.iconUrl}
-                                  className={chain.name.toLowerCase().includes('base') ? "w-full h-full object-cover" : "w-5 h-5 dark:invert-0"}
-                                />
-                              </div>
-                            ) : (
-                              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-                                <Globe size={18} className="text-slate-400" />
-                              </div>
-                            )}
-                            <span className="text-[17px] font-semibold text-slate-900 dark:text-white">{chain.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-slate-400">{t('Switch')}</span>
-                            <ChevronRight size={20} className="text-slate-300 dark:text-slate-600" />
-                          </div>
-                        </button>
-
-                        {/* Row 2: Wallet */}
-                        <button
-                          onClick={openAccountModal}
-                          className="w-full h-16 px-8 flex items-center justify-between border-b border-slate-100 dark:border-white/5 active:bg-slate-50 dark:active:bg-white/5 transition-colors"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center bg-slate-100 dark:bg-white/5 shadow-inner">
-                              <Jazzicon diameter={32} seed={jsNumberForAddress(account.address)} />
-                            </div>
-                            <span className="text-[17px] font-semibold text-slate-900 dark:text-white">{account.displayName}</span>
-                          </div>
-                          <LogOut size={20} className="text-slate-400" />
-                        </button>
-                      </div>
-                    );
-                  }}
-                </ConnectButton.Custom>
-
-                {/* Row 3: Language */}
-                <div className="w-full h-16 px-8 flex items-center border-b border-slate-100 dark:border-white/5 active:bg-slate-50 dark:active:bg-white/5 transition-colors">
-                  <LanguageSelector placement="mobile-menu" />
-                </div>
-
-                {/* Row 4: Theme */}
-                <div className="w-full h-16 px-8 flex items-center justify-between border-b border-slate-100 dark:border-white/5 transition-colors">
-                  <span className="text-[17px] font-semibold text-slate-900 dark:text-white">{t('Theme')}</span>
-                  <div className="flex items-center p-1 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
-                    <button
-                      onClick={() => !darkMode && toggleDarkMode()}
-                      className={`p-1.5 rounded-lg transition-all duration-200 ${!darkMode ? 'bg-white shadow-sm text-amber-500' : 'text-slate-400 hover:text-slate-300'}`}
+              <div className="mt-auto w-full flex flex-col px-8 pb-6">
+                <div className="flex flex-col items-center gap-1.5 text-slate-400 dark:text-slate-600 text-[10px] font-semibold uppercase tracking-[0.2em]">
+                  <div className="flex items-center gap-2">
+                    <span>Built by :</span>
+                    <a
+                      href="https://x.com/linux_mode"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-semibold uppercase tracking-[0.15em]"
                     >
-                      <Sun size={18} />
-                    </button>
-                    <button
-                      onClick={() => darkMode && toggleDarkMode()}
-                      className={`p-1.5 rounded-lg transition-all duration-200 ${darkMode ? 'bg-blue-600 shadow-sm text-white' : 'text-slate-500 hover:text-slate-600'}`}
-                    >
-                      <Moon size={18} />
-                    </button>
+                      Linux
+                    </a>
                   </div>
-                </div>
-
-                {/* Socials */}
-                <div className="w-full px-8 pt-8 flex items-center justify-center gap-10">
-                  <a href="#" className="p-2 text-slate-400 hover:text-blue-500 transition-colors">
-                    <FileText size={24} />
-                  </a>
-                  <a href="https://x.com/stac_defi" target="_blank" rel="noopener noreferrer" className="p-2 text-slate-400 hover:text-blue-500 transition-colors">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                  </a>
-                  <a href="https://github.com/linux070/stac-defi" target="_blank" rel="noopener noreferrer" className="p-2 text-slate-400 hover:text-blue-500 transition-colors">
-                    <Github size={24} />
-                  </a>
-                  <a href="#" className="p-2 text-slate-400 hover:text-blue-500 transition-colors">
-                    <MessageSquare size={24} />
-                  </a>
+                  <span className="opacity-50 text-[8px] font-semibold tracking-[0.3em]">© 2026 Stac</span>
                 </div>
               </div>
             </div>
@@ -373,84 +535,73 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {isThemeModalOpen && (
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-[20000] bg-white dark:bg-black flex flex-col p-6 overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <button onClick={() => setIsThemeModalOpen(false)} className="p-2 -ml-2 text-slate-600 dark:text-slate-300 active:scale-90 transition-all">
+                <ArrowLeft size={24} />
+              </button>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('Theme')}</h2>
+              <div className="w-10" /> {/* Spacer */}
+            </div>
+
+            <div className="space-y-1">
+              {[
+                {
+                  id: 'light',
+                  label: t('Light'),
+                  active: !darkMode,
+                  icon: <SunIcon size={20} />
+                },
+                {
+                  id: 'dark',
+                  label: t('Dark'),
+                  active: darkMode,
+                  icon: <Moon size={18} strokeWidth={2.5} />
+                }
+              ].map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => {
+                    if (option.id === 'light' && darkMode) toggleDarkMode();
+                    if (option.id === 'dark' && !darkMode) toggleDarkMode();
+                  }}
+                  className={`w-full py-4 px-2 flex items-center justify-between group transition-all
+                    ${option.active ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`${option.active ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                      {option.icon}
+                    </div>
+                    <span className="text-[17px] font-semibold">{option.label}</span>
+                  </div>
+                  {option.active && <Check size={20} className="text-blue-600 dark:text-blue-400" />}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main Content */}
-      <main className={`flex-grow w-full ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-transparent' : activeTab === 'transactions' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-black'} text-slate-900 dark:text-white max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-12 overflow-x-hidden md:overflow-visible relative z-10 flex flex-col`}>
+      <main className={`flex-grow w-full ${activeTab === 'home' ? 'bg-transparent pt-0 lg:pt-0 pb-0' : ['swap', 'bridge'].includes(activeTab) ? 'bg-transparent pt-20 lg:pt-28 pb-0' : 'bg-white dark:bg-black pt-20 lg:pt-20 pb-12'} text-slate-900 dark:text-white overflow-x-hidden relative z-10 flex flex-col`}>
         {children}
       </main>
 
+      {/* Footer moved to Home.jsx for better reload synchronization */}
 
-      {/* Footer - Only shown on Homepage */}
-      {
-        activeTab === 'home' && (
-          <footer
-            className={`mt-auto border-t border-gray-200 dark:border-gray-700 ${activeTab === 'swap' || activeTab === 'bridge' ? 'bg-white/80 dark:bg-black/80 backdrop-blur-sm' : 'bg-white dark:bg-black'} relative z-20 py-4 lg:py-8`}
-            style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
-          >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              {/* Flex container that stacks on mobile and aligns horizontally on desktop */}
-              <div className="flex flex-col lg:flex-row items-center justify-between min-h-[60px] gap-6 lg:gap-0">
-                {/* Left Section - Language Selector (hidden on mobile) */}
-                <div className="hidden lg:flex flex-shrink-0 lg:mr-4 w-full lg:w-auto justify-center lg:justify-start">
-                </div>
 
-                {/* Center Section - Copyright and Attribution */}
-                <div className="text-center w-full lg:w-auto">
-                  <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                    <span className="block lg:inline">© {new Date().getFullYear()} Stac. All rights reserved.</span>
-                    <span className="hidden lg:inline"> · </span>
-                    <span className="block lg:inline mt-1 lg:mt-0">
-                      Built by : <a
-                        href="https://x.com/linux_mode"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold no-underline cursor-pointer"
-                      >
-                        Linux🏅🃏
-                      </a>
-                    </span>
-                  </p>
-                </div>
-
-                {/* Right Section - Footer Links - Modernized with Icons */}
-                <div className="flex items-center gap-6 md:gap-8 w-full lg:w-auto justify-center lg:justify-end">
-                  <a
-                    href="#"
-                    className="hidden lg:flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 hover:scale-110"
-                  >
-                    <FileText size={20} />
-                  </a>
-                  <a
-                    href="https://github.com/linux070/stac-defi"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hidden lg:flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 hover:scale-110"
-                  >
-                    <Github size={20} />
-                  </a>
-                  <a
-                    href="https://x.com/stac_defi"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hidden lg:flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 hover:scale-110"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                  </a>
-                  <a
-                    href="#"
-                    className="hidden lg:flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 hover:scale-110"
-                  >
-                    <MessageSquare size={20} />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </footer>
-        )
-      }
-
-      <FeedbackButton />
+      <FeedbackButton
+        isOpen={isFeedbackOpen}
+        setIsOpen={setIsFeedbackOpen}
+      />
 
       {/* Global Updates Modal */}
       <UpdatesModal

@@ -16,17 +16,20 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorMessage }
   const getCleanErrorMessage = (msg) => {
     if (!msg) return t('User rejected the transaction in wallet.');
 
-    // Check for common technical/RPC error patterns
     const isTechnicalError =
       msg.toLowerCase().includes('http request failed') ||
       msg.toLowerCase().includes('unterminated string') ||
       msg.toLowerCase().includes('json') ||
       msg.toLowerCase().includes('viem') ||
+      msg.toLowerCase().includes('failed to fetch') ||
+      msg.toLowerCase().includes('maximum retry attempts') ||
       msg.toLowerCase().includes('mint step failed') ||
-      msg.toLowerCase().includes('drpc.org');
+      msg.toLowerCase().includes('drpc.org') ||
+      msg.toLowerCase().includes('execution reverted') ||
+      msg.toLowerCase().includes('estimategas');
 
     if (isTechnicalError) {
-      return t('Network error on destination chain. Please ensure you are connected to the correct network and try again.');
+      return t('A temporary network error occurred. Please click Retry to try again.');
     }
 
     // fallback to original if it's already user-friendly (like rejection)
@@ -59,71 +62,58 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorMessage }
             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={onClose}
-              className="bridging-modal-close-button-alt"
-              aria-label="Close"
-            >
+            {/* Close Button (Absolute) */}
+            <button onClick={onClose} className="bridging-modal-close-button-alt" aria-label="Close">
               <X size={20} />
             </button>
 
-            <div className="bridging-modal-content">
-              <motion.div
-                className="space-y-6"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-              >
-                <div className="bridging-modal-status-card-new">
-                  <div className="bridging-modal-success-icon-wrapper">
-                    <motion.div
-                      className="bridging-modal-failed-circle"
-                      initial={{ scale: 0, rotate: -45 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ delay: 0.2, type: 'spring' }}
-                    >
-                      <X size={40} strokeWidth={4} />
-                    </motion.div>
+            <div className="bridging-modal-content p-6 sm:p-8">
+              <div className="bridging-modal-status-card-new text-center">
+                <div className="flex justify-center mb-6">
+                  <div className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center border-2 border-red-500/20">
+                    <X size={40} className="text-red-500" strokeWidth={3} />
                   </div>
-
-                  <div className="text-center mb-6">
-                    <h4 className="bridging-modal-status-title-new title-failed">
-                      {t('Transaction Failed')}
-                    </h4>
-                    <p className="bridging-modal-success-message">
-                      {getCleanErrorMessage(errorMessage)}
-                    </p>
-                  </div>
-
-                  <div className="bridging-modal-success-details mb-8">
-                    <div className="bridging-modal-success-info-row">
-                      <span>{t('Source')}</span>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-5 h-5 ${safeFromChain.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
-                          <img src={getChainIcon(safeFromChain)} alt="" className="w-full h-full object-cover" />
-                        </div>
-                        <span className="value">{safeFromChain}</span>
-                      </div>
-                    </div>
-                    <div className="bridging-modal-success-info-row">
-                      <span>{t('Destination')}</span>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-5 h-5 ${safeToChain.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
-                          <img src={getChainIcon(safeToChain)} alt="" className="w-full h-full object-cover" />
-                        </div>
-                        <span className="value">{safeToChain}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={onClose}
-                    className="bridging-modal-action-button-secondary-new"
-                  >
-                    {t('Retry')}
-                  </button>
                 </div>
-              </motion.div>
+
+                <div className="mb-6">
+                  <h4 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                    {t('Transaction Failed')}
+                  </h4>
+                  <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed max-w-[280px] mx-auto">
+                    {getCleanErrorMessage(errorMessage)}
+                  </p>
+                </div>
+
+                <div className="bridging-modal-success-details mb-8 text-left bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-200/50 dark:border-white/10">
+                  {/* Source Row */}
+                  <div className="flex justify-between items-center py-2 border-b border-slate-200/50 dark:border-white/10">
+                    <span className="text-sm font-medium text-slate-500">{t('Source')}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full overflow-hidden">
+                        <img src={getChainIcon(safeFromChain)} alt="" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{safeFromChain}</span>
+                    </div>
+                  </div>
+                  {/* Destination Row */}
+                  <div className="flex justify-between items-center py-2 mt-1">
+                    <span className="text-sm font-medium text-slate-500">{t('Destination')}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full overflow-hidden">
+                        <img src={getChainIcon(safeToChain)} alt="" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{safeToChain}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={onClose}
+                  className="w-full py-4 rounded-2xl bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-bold transition-all active:scale-[0.98] hover:bg-slate-200 dark:hover:bg-white/20"
+                >
+                  {t('Retry')}
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

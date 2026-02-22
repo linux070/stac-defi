@@ -95,7 +95,7 @@ export const formatTokenAmount = (amount, decimals = 6) => {
 
 
 // Get filtered token list based on network
-export const getFilteredTokens = (tokenList, chainId) => {
+export const getFilteredTokens = (tokenList) => {
   // Since ETH is no longer in the TOKENS list, we don't need to filter it out
   // Return all tokens as they are already filtered
   return tokenList;

@@ -17,7 +17,7 @@ export const NETWORKS = {
   },
   ETHEREUM_SEPOLIA: {
     chainId: '0xaa36a7', // 11155111 in hex
-    chainName: 'Sepolia Testnet',
+    chainName: 'Ethereum Sepolia',
     nativeCurrency: {
       name: 'SepoliaETH',
       symbol: 'ETH',

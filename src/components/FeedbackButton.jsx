@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import { MessageSquare, X } from 'lucide-react';
 
-const FeedbackButton = () => {
-    const [isOpen, setIsOpen] = useState(false);
-
+const FeedbackButton = ({ isOpen, setIsOpen }) => {
     // Smart Auto-Close: Listen for Tally submission events
     React.useEffect(() => {
         const handleMessage = (e) => {
@@ -18,18 +16,17 @@ const FeedbackButton = () => {
 
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, []);
+    }, [setIsOpen]);
 
     return (
         <>
             {createPortal(
-                <div className="feedback-widget">
+                <div className="feedback-widget hidden md:block">
                     <button
                         onClick={() => setIsOpen(true)}
                         className="feedback-button"
                     >
-                        <MessageSquare size={20} className="mobile-only" />
-                        <span className="desktop-only text-sm font-bold">Feedback</span>
+                        <span className="text-sm font-bold">Feedback</span>
                     </button>
                 </div>,
                 document.body

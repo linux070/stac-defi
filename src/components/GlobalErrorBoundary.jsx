@@ -62,7 +62,7 @@ class GlobalErrorBoundary extends Component {
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <button
                                 onClick={this.handleRestart}
-                                className="flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/25 active:scale-95 group"
+                                className="flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 dark:hover:bg-blue-400/20 rounded-xl font-bold transition-all active:scale-95 group shadow-sm"
                             >
                                 <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
                                 Refresh Application

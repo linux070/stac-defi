@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useWallet } from '../hooks/useWallet';
+import { useWallet } from '../contexts/WalletContext';
 import { useSwitchChain, useChains } from 'wagmi';
 import { ArrowRight, Loader, Wallet, X, ChevronDown, Search, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -123,10 +123,9 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
                   const isSelected = chainName === selectedChain;
 
                   const chainObj = chains.find(c => {
-                    const name = (c.name || '').toLowerCase();
-                    if (chainName === 'Arc Testnet') return c.id === 5042002 || name.includes('arc');
-                    if (chainName === 'Sepolia') return c.id === 11155111 || (name.includes('sepolia') && !name.includes('base'));
-                    if (chainName === 'Base Sepolia') return c.id === 84532 || (name.includes('base') && name.includes('sepolia'));
+                    if (chainName === 'Arc Testnet') return c.id === 5042002;
+                    if (chainName === 'Sepolia') return c.id === 11155111;
+                    if (chainName === 'Base Sepolia') return c.id === 84532;
                     return false;
                   });
 
@@ -200,7 +199,7 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
 
 const Bridge = () => {
   const { t } = useTranslation();
-  const { isConnected, walletAddress, chainId, status } = useWallet();
+  const { isConnected, walletAddress, chainId } = useWallet();
   const { setIsFocusedModalOpen } = useModal();
   const { switchChainAsync } = useSwitchChain();
   const [fromChain, setFromChain] = useState('Sepolia');
@@ -750,16 +749,13 @@ const Bridge = () => {
     setBridgeButtonText('Bridging...');
 
     timeoutIdRef.current = setTimeout(() => {
-      // Forwarding Service may take a few minutes (approve + burn + Circle auto-mint)
-      // Only timeout if user hasn't progressed past the initial steps
-      const currentStep = state.step;
-      if (currentStep !== 'success' && currentStep !== 'error' && currentStep !== 'idle') {
+      if (state.step === 'approving') {
         setStopTimer(true); setShowBridgingModal(false);
-        setBridgeError({ title: 'Error Details', message: 'Bridge transaction timeout. The burn may still have succeeded — Circle will auto-mint when ready.' });
+        setBridgeError({ title: 'Error Details', message: 'Transaction timeout.' });
         setShowBridgeFailedModal(true); setBridgeButtonText('Bridge Failed');
         setBridgeLoading(false); reset();
       }
-    }, 360000); // 6 minutes to cover full forwarding flow
+    }, 120000);
 
     try {
       let direction;
@@ -826,18 +822,18 @@ const Bridge = () => {
         message: state.error
       });
       setShowBridgeFailedModal(true);
-      setBridgeButtonText('Bridge Failed'); // Reset to default
+      setBridgeButtonText('Bridge'); // Reset to default
       setBridgeLoading(false);
 
       console.log('Bridge Failed modal should now be visible');
     }
-  }, [state, saveBridgeTransaction, t]);
+  }, [state, saveBridgeTransaction]);
 
 
 
 
   return (
-    <div className="max-w-2xl mx-auto w-full">
+    <div className="max-w-[540px] mx-auto w-full">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -857,27 +853,24 @@ const Bridge = () => {
           <button
             onClick={addArcNetwork}
             className="add-arc-button group relative flex items-center gap-2"
-            aria-label={t('Add Arc Testnet to Wallet')}
+            aria-label="Add Arc Testnet to Wallet"
           >
-            <Wallet size={14} className="text-blue-500 group-hover:text-blue-600 transition-colors" />
+            <Wallet size={14} className="text-indigo-500 group-hover:text-blue-500 transition-colors" />
             <span>{t('Add Arc')}</span>
             <AnimatePresence>
               {showNetworkSuccess && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute bottom-[calc(100%+14px)] right-0 bg-blue-50 dark:bg-blue-900 px-3.5 py-2.5 rounded-xl shadow-[0_12px_28px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_28px_rgba(0,0,0,0.4)] flex items-center gap-2.5 z-50 border border-blue-200 dark:border-blue-500/30 min-w-max backdrop-blur-md"
+                  initial={{ opacity: 0, scale: 0.9, x: 10 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, x: 10 }}
+                  className="absolute top-1/2 -translate-y-1/2 right-[calc(100%+12px)] sm:top-[-8px] sm:translate-y-0 sm:left-[calc(100%+12px)] sm:right-auto bg-indigo-600 dark:bg-indigo-500 px-3 py-2 rounded-xl shadow-[0_8px_20px_rgba(79,70,229,0.4)] flex items-center gap-2.5 z-50 border border-white/10 min-w-max"
                 >
-                  <div className="flex-shrink-0 w-5 h-5 rounded-lg bg-blue-500 flex items-center justify-center shadow-sm">
-                    <Check size={13} className="text-white stroke-[4]" />
+                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-400 flex items-center justify-center shadow-sm">
+                    <Check size={12} className="text-indigo-900 stroke-[3.5]" />
                   </div>
-                  <span className="text-[12px] font-bold text-blue-800 dark:text-blue-50 tracking-tight leading-none whitespace-nowrap">
+                  <span className="text-[12px] font-bold text-white tracking-tight leading-none whitespace-nowrap">
                     {t('Network added successfully')}
                   </span>
-                  {/* Tooltip Arrow Layered for Border Effect - Positioned Right */}
-                  <div className="absolute top-full right-4 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[7px] border-t-blue-200 dark:border-t-blue-500/30"></div>
-                  <div className="absolute top-[calc(100%-1.5px)] right-4 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[7px] border-t-blue-50 dark:border-t-blue-900"></div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -909,9 +902,9 @@ const Bridge = () => {
                       {(() => {
                         const displayFromChain = bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain;
                         const chainKey = displayFromChain.toLowerCase();
-                        if (chainKey.includes('arc')) return <img src="/icons/arc.png" alt={t('Arc')} className="w-full h-full object-cover bg-black" />;
-                        if (chainKey.includes('base')) return <img src="/icons/base.png" alt={t('Base')} className="w-full h-full object-cover bg-white" />;
-                        if (chainKey.includes('sepolia')) return <img src="/icons/eth.png" alt={t('ETH')} className="w-full h-full object-cover bg-white" />;
+                        if (chainKey.includes('arc')) return <img src="/icons/arc.png" alt="Arc" className="w-full h-full object-cover bg-black" />;
+                        if (chainKey.includes('base')) return <img src="/icons/base.png" alt="Base" className="w-full h-full object-cover bg-white" />;
+                        if (chainKey.includes('sepolia')) return <img src="/icons/eth.png" alt="ETH" className="w-full h-full object-cover bg-white" />;
                         return null;
                       })()}
                     </div>
@@ -919,9 +912,9 @@ const Bridge = () => {
                       <span className="sm:hidden">
                         {(() => {
                           const name = bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain;
-                          if (name === 'Ethereum Sepolia') return t('Sepolia');
-                          if (name === 'Base Sepolia') return t('Base Sep..');
-                          if (name === 'Arc Testnet') return t('Arc Testnet');
+                          if (name === 'Ethereum Sepolia') return 'Sepolia';
+                          if (name === 'Base Sepolia') return 'Base Sep..';
+                          if (name === 'Arc Testnet') return 'Arc Testnet';
                           return name;
                         })()}
                       </span>
@@ -969,7 +962,7 @@ const Bridge = () => {
                     }
                   }}
                   disabled={bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error')}
-                  aria-label={t('Switch Networks')}
+                  aria-label="Switch Networks"
                   className="
                     h-9 w-9 sm:h-10 sm:w-10
                     flex-shrink-0
@@ -1007,9 +1000,9 @@ const Bridge = () => {
                       {(() => {
                         const displayToChain = bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain;
                         const chainKey = displayToChain.toLowerCase();
-                        if (chainKey.includes('arc')) return <img src="/icons/arc.png" alt={t('Arc')} className="w-full h-full object-cover bg-black" />;
-                        if (chainKey.includes('base')) return <img src="/icons/base.png" alt={t('Base')} className="w-full h-full object-cover bg-white" />;
-                        if (chainKey.includes('sepolia')) return <img src="/icons/eth.png" alt={t('ETH')} className="w-full h-full object-cover bg-white" />;
+                        if (chainKey.includes('arc')) return <img src="/icons/arc.png" alt="Arc" className="w-full h-full object-cover bg-black" />;
+                        if (chainKey.includes('base')) return <img src="/icons/base.png" alt="Base" className="w-full h-full object-cover bg-white" />;
+                        if (chainKey.includes('sepolia')) return <img src="/icons/eth.png" alt="ETH" className="w-full h-full object-cover bg-white" />;
                         return null;
                       })()}
                     </div>
@@ -1017,9 +1010,9 @@ const Bridge = () => {
                       <span className="sm:hidden">
                         {(() => {
                           const name = bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain;
-                          if (name === 'Ethereum Sepolia') return t('Sepolia');
-                          if (name === 'Base Sepolia') return t('Base Sep..');
-                          if (name === 'Arc Testnet') return t('Arc Testnet');
+                          if (name === 'Ethereum Sepolia') return 'Sepolia';
+                          if (name === 'Base Sepolia') return 'Base Sep..';
+                          if (name === 'Arc Testnet') return 'Arc Testnet';
                           return name;
                         })()}
                       </span>
@@ -1039,20 +1032,9 @@ const Bridge = () => {
         <div className="input-group">
           <div className="input-header">
             <p className="input-label">{t('You send')}</p>
-            <div className="flex items-center text-[12px] font-medium text-slate-500 dark:text-slate-400">
-              <span className="mr-1 opacity-60">Bal:</span>
-              <span className="text-slate-700 dark:text-slate-200 font-medium tabular-nums">
-                {isLoadingBalance ? (
-                  <div className="skeleton w-16 h-4 rounded-md ml-1" />
-                ) : balanceError ? (
-                  <span className="text-red-400">{t('Error')}</span>
-                ) : (
-                  formatBalance(tokenBalance || 0)
-                )}
-              </span>
-            </div>
           </div>
-
+          {/* Mobile Spacer */}
+          <div className="block sm:hidden h-2"></div>
           <div className="input-row">
             <input
               type="text"
@@ -1061,7 +1043,7 @@ const Bridge = () => {
               onChange={(e) => setAmount(sanitizeInput(e.target.value))}
               placeholder="0.0"
               className="amount-input"
-              style={{ WebkitAppearance: 'none', touchAction: 'manipulation' }}
+              style={{ WebkitAppearance: 'none', touchAction: 'manipulation', minWidth: 0 }}
             />
             {/* Token Pill - Static, no dropdown */}
             <div className="token-selector">
@@ -1071,20 +1053,32 @@ const Bridge = () => {
               <span className="token-symbol">USDC</span>
             </div>
           </div>
-
-          <div className="input-footer">
-            <div></div>
-            <button
-              onClick={() => {
-                if (tokenBalance && parseFloat(tokenBalance) > 0) {
-                  setAmount(tokenBalance);
-                }
-              }}
-              className="max-button"
-            >
-              {t('Max')}
-            </button>
-          </div>
+          {isConnected && (
+            <div className="input-footer">
+              <div className="flex items-center text-[12px] font-medium text-slate-500 dark:text-slate-400">
+                <span className="mr-1 opacity-60">Bal:</span>
+                <span className="text-slate-700 dark:text-slate-200 font-medium tabular-nums">
+                  {isLoadingBalance ? (
+                    <div className="skeleton w-16 h-4 rounded-md ml-1" />
+                  ) : balanceError ? (
+                    <span className="text-red-400">{t('Error')}</span>
+                  ) : (
+                    formatBalance(tokenBalance || 0)
+                  )}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  if (tokenBalance && parseFloat(tokenBalance) > 0) {
+                    setAmount(tokenBalance);
+                  }
+                }}
+                className="max-button"
+              >
+                {t('Max')}
+              </button>
+            </div>
+          )}
         </div>
 
 
@@ -1103,9 +1097,9 @@ const Bridge = () => {
 
         <div className="mt-4 mb-4 pt-4 border-t border-slate-200 dark:border-white/[0.06]">
           <div className="flex items-center gap-3">
-            <div className="w-0.5 h-6 rounded-full bg-orange-500 flex-shrink-0 opacity-80 shadow-[0_0_8px_rgba(249,115,22,0.3)]"></div>
+            <div className="w-0.5 h-6 rounded-full bg-amber-500 flex-shrink-0 opacity-80 shadow-[0_0_8px_rgba(245,158,11,0.3)]"></div>
             <p className="text-[12px] text-slate-600 dark:text-gray-400 font-medium leading-tight">
-              <span className="font-bold text-slate-800 dark:text-slate-200">{t('Note')}:</span> {t('Note: Cross chain transfers are irreversible. Please verify all details before confirming the transaction.')}
+              <span className="font-medium text-slate-800 dark:text-gray-200">{t('Note')}:</span> {t('Cross chain transfers are irreversible. Please verify all details before confirming the transaction.')}
             </p>
           </div>
         </div>
@@ -1113,7 +1107,7 @@ const Bridge = () => {
         {/* Bridge Button - Premium Call to Action */}
         <button
           onClick={handleBridge}
-          disabled={!amount || bridgeLoading || status === 'disconnected' || state.isLoading || bridgeButtonText === 'Bridge Failed' || (isConnected && amount && parseFloat(amount) > parseFloat(tokenBalance || '0')) || status === 'reconnecting' || status === 'connecting'}
+          disabled={!amount || bridgeLoading || !isConnected || state.isLoading || bridgeButtonText === 'Bridge Failed' || (isConnected && amount && parseFloat(amount) > parseFloat(tokenBalance || '0'))}
           className={`
             bridge-button
             ${(bridgeButtonText === 'Bridge Failed' || (isConnected && amount && parseFloat(amount) > parseFloat(tokenBalance || '0'))) ? 'bridge-button-failed' : ''}
@@ -1125,9 +1119,7 @@ const Bridge = () => {
               <Loader className="animate-spin" size={20} />
               <span>{t('Bridging')}...</span>
             </>
-          ) : (status === 'reconnecting' || status === 'connecting') ? (
-            <span>{t('Bridge')}</span>
-          ) : status === 'disconnected' ? (
+          ) : !isConnected ? (
             <>
               <Wallet size={20} />
               <span>{t('Connect Wallet')}</span>
@@ -1141,14 +1133,16 @@ const Bridge = () => {
         <div className="powered-by-badge-bottom">
           <span>{t('Powered by Circle CCTP')}</span>
         </div>
-      </motion.div >
+      </motion.div>
 
+      {/* Chain Selectors */}
       <ChainSelector
         isOpen={showChainSelector === 'from'}
         onClose={() => setShowChainSelector(null)}
         selectedChain={fromChain}
         onSelect={handleNetworkChange}
         exclude={toChain}
+        triggerRef={showChainSelector === 'from' ? fromChainTriggerRef : toChainTriggerRef}
       />
       <ChainSelector
         isOpen={showChainSelector === 'to'}
@@ -1156,8 +1150,10 @@ const Bridge = () => {
         selectedChain={toChain}
         onSelect={handleToNetworkChange}
         exclude={fromChain}
+        triggerRef={showChainSelector === 'to' ? toChainTriggerRef : fromChainTriggerRef}
       />
 
+      {/* Bridging Modal */}
       <BridgingModal
         isOpen={showBridgingModal}
         onClose={closeBridgingModal}
@@ -1183,7 +1179,7 @@ const Bridge = () => {
         onClose={() => setShowBridgeSuccessModal(false)}
         fromChain={fromChain}
         toChain={toChain}
-        amount={state.result?.amount || amount}
+        amount={amount}
         timeTaken={bridgeFinalTime}
         txHash={sourceTxHash}
       />

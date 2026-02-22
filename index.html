@@ -36,28 +36,35 @@
       try {
         const saved = localStorage.getItem('darkMode');
         const isDark = saved !== null ? JSON.parse(saved) : false;
+        const root = document.documentElement;
 
         if (isDark) {
-          document.documentElement.classList.add('dark');
-          document.documentElement.style.backgroundColor = '#020617';
-          document.body.style.backgroundColor = '#020617';
-          document.body.style.color = '#f8fafc';
+          root.classList.add('dark');
+          root.style.backgroundColor = '#020617';
+          root.style.setProperty('--theme-bg-page', '#020617');
+          root.style.setProperty('--theme-text-primary', '#f8fafc');
         } else {
-          document.documentElement.classList.remove('dark');
-          document.documentElement.style.backgroundColor = '#f8fafc';
-          document.body.style.backgroundColor = '#f8fafc';
-          document.body.style.color = '#0f172a';
+          root.classList.remove('dark');
+          root.style.backgroundColor = '#f8fafc';
+          root.style.setProperty('--theme-bg-page', '#f8fafc');
+          root.style.setProperty('--theme-text-primary', '#0f172a');
         }
       } catch (e) {
-        // Fallback to light mode if error
         document.documentElement.classList.remove('dark');
       }
     })();
   </script>
+  <style>
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      transition: none !important;
+    }
+  </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Outfit:wght@100..900&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap"
     rel="stylesheet">
   <link href="/src/index.css" rel="stylesheet">
   <script async src="https://tally.so/widgets/embed.js"></script>

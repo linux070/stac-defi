@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useWallet } from '../contexts/WalletContext';
+import { useWallet } from '../hooks/useWallet';
 import { useAccount } from 'wagmi';
 import { ArrowDownUp, Loader, Wallet, X, ChevronDown, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,22 @@ import SwapFailedModal from '../components/SwapFailedModal';
 import SwapRejectedModal from '../components/SwapRejectedModal';
 import '../styles/swap-styles.css';
 import { useModal } from '../contexts/ModalContext';
+const FaucetIcon = ({ size = 16, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    {/* Water Droplet — universal faucet/tap symbol */}
+    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+  </svg>
+);
 
 
 const getTokenIcon = (symbol) => {
@@ -66,10 +82,10 @@ const TokenRow = ({ token, selectedToken, exclude, onSelect, onClose, isConnecte
         </div>
         <div className="swap-token-selector-list-info">
           <p className="swap-token-selector-list-symbol">
-            {token.symbol || 'Unknown'}
+            {token.symbol || t('Unknown')}
           </p>
           <p className="swap-token-selector-list-name">
-            {token.name || 'Token'}
+            {token.name || t('Token')}
           </p>
         </div>
       </div>
@@ -84,7 +100,7 @@ const TokenRow = ({ token, selectedToken, exclude, onSelect, onClose, isConnecte
                 tokenBalance || '0.00'
               )}
             </p>
-            <p className="swap-token-selector-list-balance-label">{t('balance')}</p>
+            <p className="swap-token-selector-list-balance-label">{t('Balance')}</p>
           </div>
         )}
       </div>
@@ -159,11 +175,7 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           onClick={onClose}
-          style={{
-            alignItems: 'flex-start',
-            paddingTop: '110px', // Extra padding to avoid header clash
-            zIndex: 100000
-          }}
+          style={{ zIndex: 100000 }}
         >
           <motion.div
             ref={selectorRef}
@@ -276,7 +288,7 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
 
 const Swap = () => {
   const { t } = useTranslation();
-  const { isConnected, chainId } = useWallet();
+  const { isConnected, chainId, status } = useWallet();
   const { setIsFocusedModalOpen } = useModal();
   const { address } = useAccount();
   const [fromToken, setFromToken] = useState('USDC');
@@ -535,7 +547,7 @@ const Swap = () => {
 
   const handleMaxClick = () => {
     if (!fromBalance || parseFloat(fromBalance) === 0) {
-      setToast({ visible: true, type: 'warning', message: 'No balance available' });
+      setToast({ visible: true, type: 'warning', message: t('No balance available') });
       setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
       return;
     }
@@ -575,6 +587,11 @@ const Swap = () => {
         animate={{ opacity: 1, y: 0 }}
         className="swap-container group"
       >
+        {/* 4-Corner Grey Glow System - Desktop Only */}
+        <div className="hidden md:block absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-slate-300 to-slate-400 opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-slate-300 to-slate-400 opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-slate-300 to-slate-400 opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-slate-300 to-slate-400 opacity-[0.1] blur-[60px] rounded-full"></div>
         <div className="relative z-10">
           {/* Header */}
           <div className="swap-header">
@@ -582,9 +599,10 @@ const Swap = () => {
             <div className="swap-header-actions">
               <button
                 onClick={handleFaucetClick}
-                className="swap-faucet-button-compact"
+                className="swap-faucet-button-premium group/faucet"
               >
-                <span>Faucet</span>
+                <FaucetIcon size={14} className="text-blue-500 group-hover/faucet:text-blue-600 transition-colors" />
+                <span>{t('Faucet')}</span>
               </button>
 
             </div>
@@ -750,9 +768,13 @@ const Swap = () => {
           <button
             onClick={handleSwapClick}
             className={`swap-button ${(isConnected && parseFloat(fromAmount) > parseFloat(fromBalance)) ? 'swap-button-failed' : ''}`}
-            disabled={!isConnected || !fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance) || swapState.isLoading}
+            disabled={status === 'disconnected' || !fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance) || swapState.isLoading || status === 'reconnecting' || status === 'connecting'}
           >
-            {!isConnected ? (
+            {(status === 'reconnecting' || status === 'connecting') ? (
+              <div className="flex items-center justify-center">
+                <span>{t('Swap')}</span>
+              </div>
+            ) : status === 'disconnected' ? (
               <>
                 <Wallet size={18} className="inline mr-2" />
                 <span>{t('Connect Wallet')}</span>
@@ -762,12 +784,12 @@ const Swap = () => {
             ) : swapState.isLoading ? (
               <div className="flex items-center justify-center gap-2">
                 <Loader className="animate-spin" size={18} />
-                <span>{swapState.isApproving ? 'Approving...' : 'Swapping...'}</span>
+                <span>{swapState.isApproving ? t('Approving...') : t('Swapping...')}</span>
               </div>
             ) : swapState.needsApproval ? (
-              <span>Approve {fromToken}</span>
+              <span>{t('Approve')} {fromToken}</span>
             ) : (
-              <span>Swap</span>
+              <span>{t('Swap')}</span>
             )}
           </button>
 

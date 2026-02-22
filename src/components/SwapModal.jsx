@@ -412,7 +412,7 @@ const SwapModal = ({
                                     </div>
                                     <div className="swap-confirm-detail-right">
                                         <div className="swap-confirm-fee-display">
-                                            <span className="swap-confirm-fee-badge">Avg</span>
+                                            <span className="swap-confirm-fee-badge">{t('Avg')}</span>
                                             <span className="swap-confirm-fee-value">~$0.0001</span>
                                         </div>
                                     </div>
@@ -441,14 +441,14 @@ const SwapModal = ({
                                 ) : isSwapping || (buttonLoading && (!needsApproval || approveSuccess)) ? (
                                     <div className="flex items-center justify-center">
                                         <Loader className="animate-spin mr-2" size={20} />
-                                        <span>{isTokenToToken ? (swapStep === 1 ? 'Step 1: Selling...' : 'Finalizing Swap...') : t('Swapping')}</span>
+                                        <span>{isTokenToToken ? (swapStep === 1 ? t('Step 1: Selling...') : t('Finalizing Swap...')) : t('Swapping')}</span>
                                         <DotProgress />
                                     </div>
                                 ) : needsApproval && !approveSuccess ? (
                                     `${t('Approve')} ${(isTokenToToken && swapStep === 2) ? 'USDC' : displayFromSymbol}`
                                 ) : (
                                     <span className="font-semibold">
-                                        {isTokenToToken && swapStep === 2 ? 'Complete Swap' : t('Confirm Swap')}
+                                        {isTokenToToken && swapStep === 2 ? t('Complete Swap') : t('Confirm Swap')}
                                     </span>
                                 )}
                             </button>

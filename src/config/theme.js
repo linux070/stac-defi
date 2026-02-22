@@ -88,39 +88,56 @@ export const darkTheme = {
 // Helper function to apply theme CSS variables
 export const applyThemeVariables = (theme) => {
   const root = document.documentElement;
-  
+
   // Font
   root.style.setProperty('--theme-font', theme.font);
-  
-  // Colors
+
+  // Colors (Main)
   root.style.setProperty('--theme-primary', theme.primaryColor);
   root.style.setProperty('--theme-focus', theme.focusColor);
-  
+
+  // Compatibility with index.css variables
+  root.style.setProperty('--theme-accent-primary', theme.primaryColor);
+  root.style.setProperty('--theme-accent-secondary', theme.primaryColor); // Fallback
+
   // Text colors
   root.style.setProperty('--theme-text-default', theme.text.default);
   root.style.setProperty('--theme-text-subtle', theme.text.subtle);
   root.style.setProperty('--theme-text-muted', theme.text.muted);
-  
+
+  // Compatibility with index.css text variables
+  root.style.setProperty('--theme-text-primary', theme.text.default);
+  root.style.setProperty('--theme-text-secondary', theme.text.subtle);
+
   // Background colors
   root.style.setProperty('--theme-bg-default', theme.background.default);
   root.style.setProperty('--theme-bg-secondary', theme.background.secondary);
   root.style.setProperty('--theme-bg-tertiary', theme.background.tertiary);
-  
+
+  // Compatibility with index.css background variables
+  root.style.setProperty('--theme-bg-page', theme.background.default);
+  root.style.setProperty('--theme-bg-surface', theme.background.default);
+  root.style.setProperty('--theme-bg-card', theme.card.background);
+
   // Border colors
   root.style.setProperty('--theme-border-default', theme.border.default);
   root.style.setProperty('--theme-border-subtle', theme.border.subtle);
-  
+
+  // Compatibility with index.css border variables
+  root.style.setProperty('--theme-border-medium', theme.border.default);
+  root.style.setProperty('--theme-border-soft', theme.border.subtle);
+
   // Button colors
   root.style.setProperty('--theme-btn-primary-color', theme.buttons.primary.color);
   root.style.setProperty('--theme-btn-primary-bg', theme.buttons.primary.background);
   root.style.setProperty('--theme-btn-primary-hover-color', theme.buttons.primary.hover.color);
   root.style.setProperty('--theme-btn-primary-hover-bg', theme.buttons.primary.hover.background);
-  
+
   root.style.setProperty('--theme-btn-secondary-color', theme.buttons.secondary.color);
   root.style.setProperty('--theme-btn-secondary-bg', theme.buttons.secondary.background);
   root.style.setProperty('--theme-btn-secondary-hover-color', theme.buttons.secondary.hover.color);
   root.style.setProperty('--theme-btn-secondary-hover-bg', theme.buttons.secondary.hover.background);
-  
+
   // Card colors
   root.style.setProperty('--theme-card-bg', theme.card.background);
   root.style.setProperty('--theme-card-border', theme.card.border);

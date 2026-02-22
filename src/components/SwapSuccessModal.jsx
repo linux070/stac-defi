@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, ExternalLink } from 'lucide-react';
 import { getExplorerUrl } from '../utils/blockchain';
-import { useWallet } from '../contexts/WalletContext';
+import { useWallet } from '../hooks/useWallet';
 import '../styles/swap-styles.css';
 
 const SwapSuccessModal = ({ isOpen, onClose, fromToken, toToken, fromAmount, toAmount, txHash }) => {

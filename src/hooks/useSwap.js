@@ -102,7 +102,7 @@ export function useSwap(
 
     let expectedOutFormatted = null;
     let expectedOutRaw = 0n;
-    let priceImpact = "0.01";
+    let priceImpact = "0.00";
 
     if (amountInBigInt > 0n) {
         const decimalsOut = isUSDCOut ? DECIMALS.USDC : DECIMALS.OTHERS;

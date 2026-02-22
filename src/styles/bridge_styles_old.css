@@ -12,13 +12,13 @@
     --bridge-surface-hover: rgba(0, 0, 0, 0.04);
     --bridge-border-light: rgba(0, 0, 0, 0.06);
     --bridge-border-medium: rgba(0, 0, 0, 0.08);
-    --bridge-border-focus: rgba(59, 130, 246, 0.3);
+    --bridge-border-focus: rgba(99, 102, 241, 0.3);
     --bridge-text-primary: #0f172a;
     --bridge-text-secondary: #64748b;
     --bridge-text-tertiary: #94a3b8;
-    --bridge-accent-primary: #3b82f6;
-    --bridge-accent-secondary: #60a5fa;
-    --bridge-accent-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+    --bridge-accent-primary: #6366f1;
+    --bridge-accent-secondary: #818cf8;
+    --bridge-accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
     --bridge-success-color: #10b981;
     --bridge-warning-color: #f59e0b;
     --bridge-danger-color: #ef4444;
@@ -33,59 +33,64 @@ html.dark,
     --bridge-surface-hover: rgba(255, 255, 255, 0.05);
     --bridge-border-light: rgba(255, 255, 255, 0.06);
     --bridge-border-medium: rgba(255, 255, 255, 0.08);
-    --bridge-border-focus: rgba(59, 130, 246, 0.4);
+    --bridge-border-focus: rgba(99, 102, 241, 0.4);
     --bridge-text-primary: #ffffff;
     --bridge-text-secondary: #94a3b8;
     --bridge-text-tertiary: #64748b;
-    --bridge-accent-primary: #60a5fa;
-    --bridge-accent-secondary: #93c5fd;
+    --bridge-accent-primary: #818cf8;
+    --bridge-accent-secondary: #a5b4fc;
 }
 
 /* ===================================
    Main Bridge Container
    =================================== */
 .bridge-container {
-    max-width: 480px;
+    max-width: 420px;
     width: 100%;
     margin: 0 auto;
     background: var(--bridge-bg-primary);
     border: 1px solid var(--bridge-border-light);
-    border-radius: 32px;
-    padding: 24px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
     position: relative;
     font-family: 'Inter', 'Satoshi', 'General Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    color: var(--bridge-text-primary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: visible;
     /* Elegant number formatting */
     font-variant-numeric: tabular-nums;
-    min-height: fit-content;
 }
 
 html.dark .bridge-container,
 .dark .bridge-container {
-    background: rgba(10, 10, 12, 0.8);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(10, 10, 12, 0.98);
     border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
-/* Responsive adjustments */
+/* Mobile: Compact sizing */
 @media (max-width: 480px) {
     .bridge-container {
-        max-width: calc(100vw - 32px);
-        border-radius: 28px;
-        padding: 20px;
-        margin: 8px auto;
+        max-width: 100%;
+        border-radius: 20px;
+        padding: 16px;
     }
 }
 
+/* Tablet */
+@media (min-width: 481px) and (max-width: 767px) {
+    .bridge-container {
+        max-width: 440px;
+        padding: 24px;
+    }
+}
+
+/* Desktop */
 @media (min-width: 768px) {
     .bridge-container {
         max-width: 480px;
-        padding: 32px;
-        border-radius: 32px;
+        padding: 28px;
+        border-radius: 28px;
     }
 }
 
@@ -108,13 +113,6 @@ html.dark .bridge-container,
     margin-bottom: 4px;
     letter-spacing: -0.01em;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-@media (max-width: 480px) {
-    .bridge-title,
-    .bridge-header {
-        font-size: 16px;
-    }
 }
 
 .bridge-subtitle {
@@ -142,13 +140,6 @@ html.dark .bridge-container,
     flex-shrink: 0;
 }
 
-@media (max-width: 480px) {
-    .add-arc-button {
-        padding: 8px 12px;
-        font-size: 11px;
-    }
-}
-
 .add-arc-button:hover {
     background: var(--bridge-surface-hover);
     border-color: rgba(59, 130, 246, 0.3);
@@ -169,14 +160,8 @@ html.dark .bridge-container,
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
     width: 100%;
-}
-
-@media (max-width: 480px) {
-    .network-selector {
-        gap: 8px;
-    }
 }
 
 /* Stacking removed to maintain horizontal layout on mobile */
@@ -205,10 +190,10 @@ html.dark .bridge-container,
 /* Full width removed to maintain horizontal layout on mobile */
 
 .network-card:hover:not(:disabled) {
-    border-color: rgba(59, 130, 246, 0.35);
-    background: rgba(59, 130, 246, 0.04);
+    border-color: rgba(99, 102, 241, 0.35);
+    background: rgba(99, 102, 241, 0.04);
     transform: scale(1.02);
-    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.1);
 }
 
 .network-card:active:not(:disabled) {
@@ -223,9 +208,9 @@ html.dark .network-card,
 
 html.dark .network-card:hover:not(:disabled),
 .dark .network-card:hover:not(:disabled) {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: rgba(59, 130, 246, 0.4);
-    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(129, 140, 248, 0.4);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
 }
 
 .network-icon {
@@ -261,19 +246,13 @@ html.dark .network-card:hover:not(:disabled),
 
 .network-name {
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--bridge-text-primary);
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
-}
-
-@media (max-width: 480px) {
-    .network-name {
-        font-size: 13px;
-    }
 }
 
 /* Arrow Divider Button */
@@ -297,8 +276,8 @@ html.dark .network-card:hover:not(:disabled),
 
 .arrow-divider-button:hover:not(:disabled) {
     background: var(--bridge-surface-hover);
-    border-color: #3b82f6;
-    color: #3b82f6;
+    border-color: #6366f1;
+    color: #6366f1;
     transform: scale(1.05);
 }
 
@@ -317,8 +296,8 @@ html.dark .arrow-divider-button,
 html.dark .arrow-divider-button:hover:not(:disabled),
 .dark .arrow-divider-button:hover:not(:disabled) {
     background: #222;
-    border-color: #60a5fa;
-    color: #93c5fd;
+    border-color: #818cf8;
+    color: #a5b4fc;
 }
 
 /* ===================================
@@ -328,14 +307,14 @@ html.dark .arrow-divider-button:hover:not(:disabled),
     background: var(--bridge-surface-card);
     border: 1px solid var(--bridge-border-light);
     border-radius: 20px;
-    padding: 24px;
-    margin-bottom: 20px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 20px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .input-group:focus-within {
     border-color: rgba(59, 130, 246, 0.4);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 8px 32px rgba(59, 130, 246, 0.08);
+    /* Soft blue glow when focused */
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 4px 20px rgba(59, 130, 246, 0.08);
 }
 
 html.dark .input-group,
@@ -347,7 +326,7 @@ html.dark .input-group,
 html.dark .input-group:focus-within,
 .dark .input-group:focus-within {
     border-color: rgba(59, 130, 246, 0.5);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 8px 32px rgba(59, 130, 246, 0.12);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 20px rgba(59, 130, 246, 0.1);
 }
 
 .input-header {
@@ -495,39 +474,33 @@ html.dark .input-footer,
 }
 
 /* ===================================
-   Bridge Button - Elite Blue Gradient (Swap Matched)
+   Bridge Button - Exact Swap Style
    =================================== */
 .bridge-button {
     width: 100%;
-    background: var(--bridge-accent-gradient);
-    border: 1px solid transparent;
-    border-radius: 16px;
-    padding: 16px;
-    font-size: 16px;
-    font-weight: 700;
-    color: #ffffff;
+    background: linear-gradient(135deg, var(--swap-accent-primary), var(--swap-accent-secondary));
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--swap-text-primary);
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    font-family: 'Inter', 'Satoshi', sans-serif;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Desktop: Larger button padding */
 @media (min-width: 768px) {
     .bridge-button {
         padding: 16px;
-        font-size: 16px;
+        font-size: 15px;
     }
 }
 
 .bridge-button:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
-    filter: brightness(1.05);
+    transform: scale(1.02);
+    filter: brightness(1.1);
 }
 
 .bridge-button:disabled {
@@ -537,21 +510,19 @@ html.dark .input-footer,
 }
 
 .bridge-button:active:not(:disabled) {
-    transform: translateY(0) scale(0.98);
+    transform: scale(0.98);
 }
 
 .bridge-button-failed {
-    background: #f1f5f9 !important;
-    border: 1px solid #e2e8f0 !important;
-    color: #94a3b8 !important;
-    box-shadow: none !important;
+    background: var(--bridge-surface-card);
+    border: 1px solid var(--bridge-border-medium);
+    color: var(--bridge-text-tertiary);
+    opacity: 0.85;
 }
 
-html.dark .bridge-button-failed,
-.dark .bridge-button-failed {
-    background: rgba(255, 255, 255, 0.03) !important;
-    border-color: rgba(255, 255, 255, 0.06) !important;
-    color: #64748b !important;
+.bridge-button-failed:hover:not(:disabled) {
+    background: var(--bridge-surface-hover);
+    filter: none;
 }
 
 /* ===================================
@@ -704,17 +675,12 @@ html.dark .bridge-selector-header,
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
-    border: none;
-    border-radius: 50%;
+    background: var(--bridge-surface-hover);
+    border: 1px solid var(--bridge-border-light);
+    border-radius: 8px;
     color: var(--bridge-text-secondary);
     cursor: pointer;
-    transition: none !important;
-}
-
-.bridge-selector-close-button:hover {
-    background: var(--bridge-surface-hover);
-    color: var(--bridge-text-primary);
+    transition: all 0.2s ease;
 }
 
 .bridge-selector-list {
@@ -817,12 +783,12 @@ html.dark .bridge-selector-item.selected,
     width: 32px;
     height: 32px;
     padding: 0;
-    border-radius: 50%;
-    background: transparent;
-    border: none;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.06);
     color: #64748b;
     cursor: pointer;
-    transition: none !important;
+    transition: all 0.2s ease;
     z-index: 10;
     display: flex;
     align-items: center;
@@ -831,24 +797,24 @@ html.dark .bridge-selector-item.selected,
 }
 
 .bridging-modal-close-button-alt:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.08);
     color: #0f172a;
 }
 
 .bridging-modal-close-button-alt:active {
-    transform: scale(0.9);
+    transform: scale(0.95);
 }
 
 html.dark .bridging-modal-close-button-alt,
 .dark .bridging-modal-close-button-alt {
-    background: transparent;
-    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
     color: #94a3b8;
 }
 
 html.dark .bridging-modal-close-button-alt:hover,
 .dark .bridging-modal-close-button-alt:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
 }
 

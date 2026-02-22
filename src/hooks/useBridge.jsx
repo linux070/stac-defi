@@ -1,9 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
-import { BridgeKit } from '@circle-fin/bridge-kit';
-import { createPublicClient, http, fallback, formatUnits, defineChain } from 'viem';
+import { createPublicClient, createWalletClient, custom, http, fallback, formatUnits, parseUnits, defineChain, encodeFunctionData, pad } from 'viem';
 import { sepolia as sepoliaChain } from 'viem/chains';
 
 // Explicitly define ARC Testnet and Sepolia for high reliability
@@ -32,47 +30,73 @@ export const sepolia = defineChain({
  * Forces viem fallback to switch providers when a SyntaxError is detected.
  */
 const safeRpcFetch = async (url, options) => {
-  const response = await fetch(url, options);
-
-  // Clone the response to read it as text first
-  const clone = response.clone();
   try {
-    const text = await clone.text();
-    JSON.parse(text); // Validate JSON
-    return response;
-  } catch (err) {
-    if (err instanceof SyntaxError) {
-      console.warn(`[SuperBridge] Truncated JSON detected from ${url}. Switching providers...`);
-      // Throwing here forces viem's fallback transport to try the next URL
-      throw new Error(`Malformed JSON response from RPC: ${err.message}`);
+    const response = await fetch(url, options);
+
+    // Clone the response to read it as text first
+    const clone = response.clone();
+    try {
+      const text = await clone.text();
+      JSON.parse(text); // Validate JSON
+      return response;
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        console.warn(`[SuperBridge] Truncated JSON detected from ${url}. Switching providers...`);
+        throw new Error(`Malformed JSON response from RPC: ${err.message}`);
+      }
+      return response;
     }
-    return response;
+  } catch (err) {
+    console.error(`[SuperBridge] Network error on RPC ${url}:`, err.message);
+    throw err;
   }
 };
 
 // --- Configuration & Constants ---
 
+// CCTP v2 Iris API base URL (Sandbox for testnets)
+const IRIS_API_BASE = 'https://iris-api-sandbox.circle.com';
+
+// CCTP Domain identifiers (from Circle docs)
+const CCTP_DOMAINS = {
+  11155111: 0,  // Ethereum Sepolia
+  84532: 6,     // Base Sepolia
+  5042002: 26,  // Arc Testnet
+};
+
+// TokenMessengerV2 contract address (same on all testnets)
+const TOKEN_MESSENGER_V2 = '0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA';
+
+// Forwarding Service hook data: magic bytes ("cctp-forward") + version (0) + empty data length (0)
+const FORWARDING_SERVICE_HOOK_DATA = '0x636374702d666f72776172640000000000000000000000000000000000000000';
+
 // RPC URLs for all chains including partner providers
 const SEPOLIA_RPC_URLS = [
-  import.meta.env.VITE_ALCHEMY_SEPOLIA_URL, // Partner Provider
+  import.meta.env.VITE_ALCHEMY_SEPOLIA_URL,
   import.meta.env.VITE_SEPOLIA_RPC_URL,
   import.meta.env.VITE_SEPOLIA_RPC_URL_ALT,
   'https://ethereum-sepolia-rpc.publicnode.com',
   'https://rpc2.sepolia.org',
+  'https://1rpc.io/sepolia',
+  'https://eth-sepolia.public.blastapi.io',
 ].filter(Boolean);
 
 const ARC_RPC_URLS = [
-  import.meta.env.VITE_QUICKNODE_ARC_URL, // Partner Provider
+  import.meta.env.VITE_ALCHEMY_ARC_URL,
+  import.meta.env.VITE_QUICKNODE_ARC_URL,
   import.meta.env.VITE_ARC_RPC_URL,
   'https://rpc.testnet.arc.network',
   'https://rpc-testnet.arc.network',
 ].filter(Boolean);
 
 const BASE_SEPOLIA_RPC_URLS = [
-  import.meta.env.VITE_QUICKNODE_BASE_URL, // Partner Provider
+  import.meta.env.VITE_QUICKNODE_BASE_URL,
   import.meta.env.VITE_BASE_SEPOLIA_RPC_URL,
   import.meta.env.VITE_BASE_SEPOLIA_RPC_URL_ALT,
   'https://sepolia.base.org',
+  'https://base-sepolia-rpc.publicnode.com',
+  'https://1rpc.io/base-sepolia',
+  'https://base-sepolia.gateway.tenderly.co',
 ].filter(Boolean);
 
 // Shared transport configuration for all chains
@@ -95,7 +119,8 @@ export const publicClient = createPublicClient({
   transport: createFallbackTransport(SEPOLIA_RPC_URLS),
   batch: { multicall: true },
   pollingInterval: 12_000,
-})
+});
+
 // Token configurations for all supported chains
 export const CHAIN_TOKENS = {
   [11155111]: { // Sepolia
@@ -103,15 +128,15 @@ export const CHAIN_TOKENS = {
       symbol: 'USDC',
       name: 'USD Coin',
       decimals: 6,
-      contractAddress: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Official Circle USDC on Sepolia
+      contractAddress: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
     },
   },
   [5042002]: { // Arc Testnet
     USDC: {
       symbol: 'USDC',
       name: 'USD Coin',
-      decimals: 6,
-      contractAddress: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d', // Official Circle USDC on Arc Testnet
+      decimals: 18,
+      contractAddress: '0x3600000000000000000000000000000000000000',
     },
   },
   [84532]: { // Base Sepolia
@@ -119,7 +144,7 @@ export const CHAIN_TOKENS = {
       symbol: 'USDC',
       name: 'USD Coin',
       decimals: 6,
-      contractAddress: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // Official Circle USDC on Base Sepolia
+      contractAddress: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
     },
   },
 };
@@ -132,9 +157,59 @@ export const SEPOLIA_CHAIN_ID = 11155111;
 export const ARC_CHAIN_ID = 5042002;
 export const BASE_SEPOLIA_CHAIN_ID = 84532;
 
-// --- Main Hook ---
+// --- Chain Definitions for viem ---
+const CHAIN_DEFINITIONS = {
+  [SEPOLIA_CHAIN_ID]: sepolia,
+  [ARC_CHAIN_ID]: arcTestnet,
+  [BASE_SEPOLIA_CHAIN_ID]: defineChain({
+    id: BASE_SEPOLIA_CHAIN_ID,
+    name: 'Base Sepolia',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: { default: { http: BASE_SEPOLIA_RPC_URLS } },
+    blockExplorers: { default: { name: 'BaseScan', url: 'https://sepolia.basescan.org' } },
+  }),
+};
 
-// Persistent clients to avoid re-creation
+const RPC_URLS_BY_CHAIN = {
+  [SEPOLIA_CHAIN_ID]: SEPOLIA_RPC_URLS,
+  [ARC_CHAIN_ID]: ARC_RPC_URLS,
+  [BASE_SEPOLIA_CHAIN_ID]: BASE_SEPOLIA_RPC_URLS,
+};
+
+// --- ABIs ---
+const ERC20_APPROVE_ABI = [
+  {
+    type: 'function',
+    name: 'approve',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'spender', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'bool' }],
+  },
+];
+
+const DEPOSIT_FOR_BURN_WITH_HOOK_ABI = [
+  {
+    type: 'function',
+    name: 'depositForBurnWithHook',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'amount', type: 'uint256' },
+      { name: 'destinationDomain', type: 'uint32' },
+      { name: 'mintRecipient', type: 'bytes32' },
+      { name: 'burnToken', type: 'address' },
+      { name: 'destinationCaller', type: 'bytes32' },
+      { name: 'maxFee', type: 'uint256' },
+      { name: 'minFinalityThreshold', type: 'uint32' },
+      { name: 'hookData', type: 'bytes' },
+    ],
+    outputs: [],
+  },
+];
+
+// --- Persistent Clients ---
 const clients = {};
 const getClient = (chainId, rpcUrls, chain) => {
   if (!clients[chainId]) {
@@ -147,11 +222,11 @@ const getClient = (chainId, rpcUrls, chain) => {
   return clients[chainId];
 };
 
+// --- Main Hook ---
 export function useBridge() {
   const { address, isConnected, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
   const queryClient = useQueryClient();
-
 
   const [state, setState] = useState({
     step: 'idle',
@@ -180,10 +255,7 @@ export function useBridge() {
       let client;
       if (selectedChainId === SEPOLIA_CHAIN_ID) client = getClient(SEPOLIA_CHAIN_ID, SEPOLIA_RPC_URLS, sepolia);
       else if (selectedChainId === ARC_CHAIN_ID) client = getClient(ARC_CHAIN_ID, ARC_RPC_URLS, arcTestnet);
-      else if (selectedChainId === BASE_SEPOLIA_CHAIN_ID) client = getClient(BASE_SEPOLIA_CHAIN_ID, BASE_SEPOLIA_RPC_URLS, {
-        id: BASE_SEPOLIA_CHAIN_ID,
-        rpcUrls: { default: { http: BASE_SEPOLIA_RPC_URLS } },
-      });
+      else if (selectedChainId === BASE_SEPOLIA_CHAIN_ID) client = getClient(BASE_SEPOLIA_CHAIN_ID, BASE_SEPOLIA_RPC_URLS, CHAIN_DEFINITIONS[BASE_SEPOLIA_CHAIN_ID]);
 
       if (!client) throw new Error('Client not found');
 
@@ -227,14 +299,99 @@ export function useBridge() {
   const fetchTokenBalance = useCallback(async (token, sourceChainId) => {
     setSelectedTokenKey(token);
     setSelectedChainId(sourceChainId);
-    // useQuery will automatically refetch if the key changes
   }, []);
-  // Execute bridge transaction (bidirectional)
+
+  // --- Forwarding Service: Fetch fees from Iris API (with browser fallback) ---
+  const fetchForwardingFees = useCallback(async (sourceChainId, destChainId) => {
+    const sourceDomain = CCTP_DOMAINS[sourceChainId];
+    const destDomain = CCTP_DOMAINS[destChainId];
+
+    if (sourceDomain === undefined || destDomain === undefined) {
+      throw new Error(`Unsupported chain for CCTP. Source: ${sourceChainId}, Dest: ${destChainId}`);
+    }
+
+    const url = `${IRIS_API_BASE}/v2/burn/USDC/fees/${sourceDomain}/${destDomain}?forward=true`;
+    console.log('[Forwarding] Fetching fees from:', url);
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const fees = await response.json();
+      console.log('[Forwarding] Fee data from API:', fees);
+      return fees;
+    } catch (err) {
+      // The Iris API does not support browser CORS — falls back to safe defaults.
+      // Circle's Forwarding Service refunds unused fee, so a generous default is safe.
+      console.warn('[Forwarding] Iris API unreachable from browser (likely CORS):', err.message);
+      console.log('[Forwarding] Using safe fallback fee defaults');
+
+      const decimals = CHAIN_TOKENS[sourceChainId]?.USDC?.decimals ?? 6;
+
+      // Conservative fallback: 0.10 USDC forward fee + 0 bps protocol fee
+      // Circle refunds any unused portion of maxFee to the recipient
+      const fallbackForwardFee = decimals === 18
+        ? '100000000000000000'   // 0.1 USDC (18 decimals)
+        : '100000';              // 0.1 USDC (6 decimals)
+
+      return [{
+        finalityThreshold: 2000,
+        forwardFee: {
+          low: fallbackForwardFee,
+          med: fallbackForwardFee,
+          high: fallbackForwardFee,
+        },
+        minimumFee: 0,
+        _fallback: true,
+      }];
+    }
+  }, []);
+
+  // --- Forwarding Service: Poll for mint confirmation ---
+  const pollForMint = useCallback(async (sourceDomain, burnTxHash, maxAttempts = 120) => {
+    console.log(`[Forwarding] Polling for mint confirmation. Domain: ${sourceDomain}, TxHash: ${burnTxHash}`);
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const url = `${IRIS_API_BASE}/v2/messages/${sourceDomain}?transactionHash=${burnTxHash}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.messages?.[0]?.forwardTxHash) {
+          const mintTxHash = data.messages[0].forwardTxHash;
+          console.log('[Forwarding] ✅ Mint confirmed:', mintTxHash);
+          return mintTxHash;
+        }
+
+        // Check attestation status for progress updates
+        if (data.messages?.[0]?.status) {
+          console.log(`[Forwarding] Attestation status: ${data.messages[0].status} (attempt ${attempt + 1})`);
+        }
+      } catch (err) {
+        console.warn(`[Forwarding] Poll attempt ${attempt + 1} failed:`, err.message);
+      }
+
+      // Wait 3 seconds between polls
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+
+    // If we reach here, we exceeded max attempts but the burn was successful
+    // The mint will still happen via Circle's infrastructure
+    console.warn('[Forwarding] Max poll attempts reached. Mint may still be processing.');
+    return null;
+  }, []);
+
+  // --- Execute bridge transaction using Forwarding Service ---
   const bridge = useCallback(async (token, amount, direction) => {
-    // Declare variables at function scope for error handling
-    let destinationChain = null;
+    let sourceChainId = null;
     let destinationChainId = null;
-    let currentStep = 'idle';
+    let currentBridgeStep = 'init'; // Track which step fails for debugging
 
     try {
       if (!isConnected || !address) {
@@ -259,35 +416,17 @@ export function useBridge() {
 
       setState(prev => ({ ...prev, step: 'idle', error: null, isLoading: true }));
 
-      // Get the provider from window.ethereum (MetaMask)
-      if (!window || !window.ethereum) {
+      // Get the provider from wallet
+      if (!window?.ethereum) {
         throw new Error('Browser wallet not found. Please install a browser wallet like MetaMask.');
       }
 
-      // Create adapter from browser wallet provider
       const provider = window.ethereum;
-
-      if (!provider || !provider.request) {
+      if (!provider?.request) {
         throw new Error('Wallet provider is not properly configured. Please ensure your wallet is connected.');
       }
 
-      const adapter = await createAdapterFromProvider({
-        provider: provider,
-      });
-
-      if (!adapter) {
-        throw new Error('Failed to create adapter from provider');
-      }
-
-      console.log('Adapter created successfully:', adapter);
-
-      // Initialize Bridge Kit
-      const kit = new BridgeKit();
-      const supportedChains = kit.getSupportedChains();
-
-      // Determine source and destination chains based on direction
-      let sourceChainId, destinationChainId;
-
+      // Determine source and destination chains
       switch (direction) {
         case 'sepolia-to-arc':
           sourceChainId = SEPOLIA_CHAIN_ID;
@@ -317,357 +456,178 @@ export function useBridge() {
           throw new Error(`Invalid bridge direction: ${direction}`);
       }
 
-      // Find source chain
-      let sourceChain = supportedChains.find(c => {
-        const isEVM = 'chainId' in c;
-        if (!isEVM) return false;
-        return c.chainId === sourceChainId;
-      });
+      const sourceDomain = CCTP_DOMAINS[sourceChainId];
+      const destDomain = CCTP_DOMAINS[destinationChainId];
+      const sourceToken = CHAIN_TOKENS[sourceChainId]?.USDC;
 
-      if (!sourceChain && sourceChainId === SEPOLIA_CHAIN_ID) {
-        // Try alternative search for Sepolia
-        sourceChain = supportedChains.find(c => {
-          const isEVM = 'chainId' in c;
-          if (!isEVM) return false;
-          const chainId = c.chainId;
-          if (chainId === 84532 || chainId === 421614) return false; // Exclude Base/Arbitrum Sepolia
-          const name = c.name.toLowerCase();
-          return (name.includes('ethereum') && name.includes('sepolia')) ||
-            (name.includes('sepolia') && !name.includes('base') && !name.includes('arbitrum'));
-        });
+      if (!sourceToken) {
+        throw new Error(`USDC not configured for chain ${sourceChainId}`);
       }
 
-      if (!sourceChain && sourceChainId === ARC_CHAIN_ID) {
-        // Try alternative search for Arc
-        sourceChain = supportedChains.find(c => {
-          const isEVM = 'chainId' in c;
-          if (!isEVM) return false;
-          return c.name.toLowerCase().includes('arc');
-        });
-      }
-
-      if (!sourceChain && sourceChainId === BASE_SEPOLIA_CHAIN_ID) {
-        // Try alternative search for Base Sepolia
-        sourceChain = supportedChains.find(c => {
-          const isEVM = 'chainId' in c;
-          if (!isEVM) return false;
-          const name = c.name.toLowerCase();
-          return name.includes('base') && name.includes('sepolia');
-        });
-      }
-
-      // Find destination chain
-      destinationChain = supportedChains.find(c => {
-        const isEVM = 'chainId' in c;
-        if (!isEVM) return false;
-        return c.chainId === destinationChainId;
-      });
-
-      if (!destinationChain && destinationChainId === SEPOLIA_CHAIN_ID) {
-        destinationChain = supportedChains.find(c => {
-          const isEVM = 'chainId' in c;
-          if (!isEVM) return false;
-          const chainId = c.chainId;
-          if (chainId === 84532 || chainId === 421614) return false;
-          const name = c.name.toLowerCase();
-          return (name.includes('ethereum') && name.includes('sepolia')) ||
-            (name.includes('sepolia') && !name.includes('base') && !name.includes('arbitrum'));
-        });
-      }
-
-      if (!destinationChain && destinationChainId === ARC_CHAIN_ID) {
-        destinationChain = supportedChains.find(c => {
-          const isEVM = 'chainId' in c;
-          if (!isEVM) return false;
-          return c.name.toLowerCase().includes('arc');
-        });
-      }
-
-      if (!destinationChain && destinationChainId === BASE_SEPOLIA_CHAIN_ID) {
-        // Try alternative search for Base Sepolia
-        destinationChain = supportedChains.find(c => {
-          const isEVM = 'chainId' in c;
-          if (!isEVM) return false;
-          const name = c.name.toLowerCase();
-          return name.includes('base') && name.includes('sepolia');
-        });
-      }
-
-      if (!sourceChain) {
-        const chainName = sourceChainId === SEPOLIA_CHAIN_ID ? 'Ethereum Sepolia' :
-          sourceChainId === ARC_CHAIN_ID ? 'Arc Testnet' :
-            sourceChainId === BASE_SEPOLIA_CHAIN_ID ? 'Base Sepolia' : 'Unknown';
-        throw new Error(`${chainName} (chain ID ${sourceChainId}) is not supported by Bridge Kit. Available chains: ${JSON.stringify(supportedChains.map(c => ({ name: c.name, chainId: c.chainId })))}`);
-      }
-
-      if (!destinationChain) {
-        const chainName = destinationChainId === SEPOLIA_CHAIN_ID ? 'Ethereum Sepolia' :
-          destinationChainId === ARC_CHAIN_ID ? 'Arc Testnet' :
-            destinationChainId === BASE_SEPOLIA_CHAIN_ID ? 'Base Sepolia' : 'Unknown';
-        throw new Error(`${chainName} (chain ID ${destinationChainId}) is not supported by Bridge Kit. Available chains: ${JSON.stringify(supportedChains.map(c => ({ name: c.name, chainId: c.chainId })))}`);
-      }
-
-      // Validate chain objects have the required properties
-      if (!sourceChain.chain || !destinationChain.chain) {
-        throw new Error('Chain objects are missing required properties. Source chain valid: ' + !!sourceChain.chain + ', Destination chain valid: ' + !!destinationChain.chain);
-      }
-
-      // Validate adapter
-      if (!adapter) {
-        throw new Error('Adapter is not properly configured');
-      }
-
-      // Verify source chain ID
-      const actualSourceChainId = sourceChain.chainId;
-      if (actualSourceChainId !== sourceChainId) {
-        throw new Error(`Incorrect source chain selected! Expected chain ID ${sourceChainId}, but got ${sourceChain.name} (${actualSourceChainId}).`);
-      }
-
-      console.log('Selected chains:', {
-        from: sourceChain.name,
-        fromChainId: actualSourceChainId,
-        to: destinationChain.name,
-        toChainId: destinationChain.chainId,
-        token,
-        amount,
-        direction,
-      });
-
-      // Log chain objects for debugging
-      console.log('Source chain object:', sourceChain);
-      console.log('Destination chain object:', destinationChain);
-
-      // Switch to source chain if not already on it
-      const isOnSourceChain = chainId === sourceChainId;
-      if (!isOnSourceChain) {
-        currentStep = 'switching-network';
+      // Switch to source chain if needed
+      if (chainId !== sourceChainId) {
+        currentBridgeStep = 'switch-network';
         setState(prev => ({ ...prev, step: 'switching-network' }));
         await switchChain({ chainId: sourceChainId });
-        // Wait for chain switch
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
 
-      // Set up step tracking
-      currentStep = 'approving';
+      // --- Step 1: Fetch forwarding fees ---
+      currentBridgeStep = 'fetch-fees';
+      setState(prev => ({ ...prev, step: 'fetching-fees' }));
+      console.log('--- FORWARDING BRIDGE INITIATED ---');
+      console.log('Direction:', direction);
+      console.log('Amount:', amount, 'USDC');
+
+      const fees = await fetchForwardingFees(sourceChainId, destinationChainId);
+
+      // Use standard transfer fees (finalityThreshold: 2000) — no protocol fee
+      const feeData = fees.find(f => f.finalityThreshold === 2000) || fees[fees.length - 1];
+      const forwardFee = BigInt(feeData.forwardFee.high); // Use high to ensure enough gas coverage
+      const minimumFeeBps = feeData.minimumFee || 0;
+
+      // Calculate amounts in source chain decimals
+      const decimals = sourceToken.decimals;
+      const transferAmount = parseUnits(String(amount).trim(), decimals);
+      const protocolFee = minimumFeeBps > 0
+        ? (transferAmount * BigInt(Math.round(minimumFeeBps * 100))) / 1_000_000n
+        : 0n;
+      const maxFee = forwardFee + protocolFee;
+      let totalAmount = transferAmount + maxFee;
+
+      // --- Pre-flight balance check ---
+      // Read actual on-chain balance to prevent "transfer amount exceeds balance" revert
+      const sourceChainDef = CHAIN_DEFINITIONS[sourceChainId];
+      const sourcePublicClient = getClient(sourceChainId, RPC_URLS_BY_CHAIN[sourceChainId], sourceChainDef);
+
+      let onChainBalance;
+      if (sourceChainId === ARC_CHAIN_ID) {
+        // Arc Testnet: USDC is the native gas token
+        onChainBalance = await sourcePublicClient.getBalance({ address });
+      } else {
+        onChainBalance = await sourcePublicClient.readContract({
+          address: sourceToken.contractAddress,
+          abi: [{ constant: true, inputs: [{ name: '_owner', type: 'address' }], name: 'balanceOf', outputs: [{ name: 'balance', type: 'uint256' }], type: 'function' }],
+          functionName: 'balanceOf',
+          args: [address],
+        });
+      }
+
+      console.log('[Forwarding] On-chain balance:', formatUnits(onChainBalance, decimals), 'USDC');
+
+      // If totalAmount exceeds balance, auto-adjust transferAmount down
+      if (totalAmount > onChainBalance) {
+        const adjustedTransfer = onChainBalance - maxFee;
+        const minTransfer = parseUnits('0.01', decimals); // Minimum 0.01 USDC
+
+        if (adjustedTransfer < minTransfer) {
+          throw new Error(
+            `Insufficient balance. You need at least ${formatUnits(maxFee + minTransfer, decimals)} USDC ` +
+            `(${formatUnits(minTransfer, decimals)} transfer + ${formatUnits(maxFee, decimals)} fee) ` +
+            `but only have ${formatUnits(onChainBalance, decimals)} USDC.`
+          );
+        }
+
+        console.log(`[Forwarding] Adjusted transfer: ${formatUnits(transferAmount, decimals)} → ${formatUnits(adjustedTransfer, decimals)} USDC (fee deducted)`);
+        totalAmount = onChainBalance; // Use full balance
+      }
+
+      console.log('[Forwarding] Fee breakdown:', {
+        transferAmount: formatUnits(totalAmount - maxFee, decimals),
+        forwardFee: formatUnits(forwardFee, decimals),
+        protocolFee: formatUnits(protocolFee, decimals),
+        maxFee: formatUnits(maxFee, decimals),
+        totalToBurn: formatUnits(totalAmount, decimals),
+        onChainBalance: formatUnits(onChainBalance, decimals),
+        finalityThreshold: feeData.finalityThreshold,
+        usingFallback: !!feeData._fallback,
+      });
+
+      // Create wallet client from browser provider
+      const walletClient = createWalletClient({
+        account: address,
+        chain: sourceChainDef,
+        transport: custom(provider),
+      });
+
+      // --- Step 2: Approve USDC spend on TokenMessengerV2 ---
+      currentBridgeStep = 'approve';
       setState(prev => ({ ...prev, step: 'approving' }));
+      console.log('[Forwarding] Approving USDC spend...');
 
-      // Execute the bridge - Bridge Kit will handle all three steps and chain switching automatically:
-      // 1. Approval transaction on source chain
-      // 2. Burn transaction on source chain
-      // 3. Mint transaction on destination chain (Bridge Kit will switch chains automatically)
-      console.log('Starting bridge execution - Bridge Kit will handle all three transactions and chain switching');
+      const approveData = encodeFunctionData({
+        abi: ERC20_APPROVE_ABI,
+        functionName: 'approve',
+        args: [TOKEN_MESSENGER_V2, totalAmount],
+      });
 
-      // Update step to burning after a short delay (approval should be quick)
-      // Set this up BEFORE starting the bridge so it fires during execution
-      const burnStepTimeout = setTimeout(() => {
-        setState(prev => {
-          if (prev.step === 'approving') {
-            currentStep = 'burning';
-            return { ...prev, step: 'burning' };
-          }
-          return prev;
-        });
-      }, 5000);
+      const approveTxHash = await walletClient.sendTransaction({
+        to: sourceToken.contractAddress,
+        data: approveData,
+      });
 
-      // Update step to minting after burn completes (estimated)
-      // Set this up BEFORE starting the bridge so it fires during execution
-      const mintStepTimeout = setTimeout(() => {
-        setState(prev => {
-          if (prev.step === 'burning') {
-            currentStep = 'minting';
-            return { ...prev, step: 'minting' };
-          }
-          return prev;
-        });
-      }, 15000);
+      console.log('[Forwarding] ✅ Approval tx:', approveTxHash);
 
-      // Start the bridge promise
-      // Bridge Kit handles chain switching internally, so we don't need to manually switch
-      let result;
-      try {
-        result = await kit.bridge({
-          from: {
-            adapter: adapter,
-            chain: sourceChain.chain,
-          },
-          to: {
-            adapter: adapter,
-            chain: destinationChain.chain,
-          },
-          amount: amount,
-          token: 'USDC',
-        });
+      // Wait for approval confirmation
+      await sourcePublicClient.waitForTransactionReceipt({ hash: approveTxHash, confirmations: 1 });
+      console.log('[Forwarding] ✅ Approval confirmed');
 
-        // Clear step timeouts on success
-        clearTimeout(burnStepTimeout);
-        clearTimeout(mintStepTimeout);
-      } catch (err) {
-        // Clear step timeouts on error
-        clearTimeout(burnStepTimeout);
-        clearTimeout(mintStepTimeout);
+      // --- Step 3: depositForBurnWithHook (Burn + Forwarding Hook) ---
+      currentBridgeStep = 'burn';
+      setState(prev => ({ ...prev, step: 'burning' }));
+      console.log('[Forwarding] Executing depositForBurnWithHook...');
 
-        // Global try-catch for "mint" step diagnostics
-        if (currentStep === 'minting' || err.message?.toLowerCase().includes('mint')) {
-          console.error('CRITICAL: Failure during Bridge Mint step');
-          if (err.message?.includes('Unterminated string') || err.message?.includes('JSON')) {
-            console.error('RPC Error detected (JSON Truncation). Partial data:', err.data || 'unavailable');
-            // Log full error for deeper inspection
-            console.dir(err);
-          }
-        }
-        throw err;
-      }
+      const mintRecipientBytes32 = pad(address, { size: 32 });
+      const destinationCallerEmpty = pad('0x', { size: 32 });
 
-      console.log('Bridge execution completed');
+      const burnData = encodeFunctionData({
+        abi: DEPOSIT_FOR_BURN_WITH_HOOK_ABI,
+        functionName: 'depositForBurnWithHook',
+        args: [
+          totalAmount,                    // amount: total to burn (recipient gets transferAmount after fees)
+          destDomain,                     // destinationDomain
+          mintRecipientBytes32,           // mintRecipient (user's own address)
+          sourceToken.contractAddress,    // burnToken (USDC on source chain)
+          destinationCallerEmpty,         // destinationCaller (empty = any relay can execute)
+          maxFee,                         // maxFee (forwarding gas + protocol fee)
+          2000,                           // minFinalityThreshold (Standard = 2000)
+          FORWARDING_SERVICE_HOOK_DATA,   // hookData (magic "cctp-forward" bytes)
+        ],
+      });
 
-      // Helper function to safely stringify BigInt values
-      const safeStringify = (obj) => {
-        return JSON.stringify(obj, (key, value) => {
-          if (typeof value === 'bigint') {
-            return value.toString();
-          }
-          return value;
-        }, 2);
-      };
+      const burnTxHash = await walletClient.sendTransaction({
+        to: TOKEN_MESSENGER_V2,
+        data: burnData,
+      });
 
-      console.log('Bridge result:', result);
-      try {
-        console.log('Bridge result (stringified):', safeStringify(result));
-      } catch {
-        console.log('Could not stringify result (contains non-serializable values)');
-      }
+      console.log('[Forwarding] ✅ Burn tx submitted:', burnTxHash);
 
-      // Log steps for debugging mint transaction issues
-      if (result && result.steps && Array.isArray(result.steps)) {
-        console.log('Bridge steps count:', result.steps.length);
+      // Wait for burn confirmation
+      await sourcePublicClient.waitForTransactionReceipt({ hash: burnTxHash, confirmations: 1 });
+      console.log('[Forwarding] ✅ Burn confirmed on source chain');
 
-        result.steps.forEach((step, index) => {
-          console.log(`Step ${index}: ${step.name} (${step.state})`, step);
-          if (step.error) {
-            console.error(`Step ${index} error:`, step.error);
-          }
-        });
-      }
+      // --- Step 4: Poll for automatic mint (Circle's relayer handles this) ---
+      currentBridgeStep = 'forwarding';
+      setState(prev => ({ ...prev, step: 'forwarding', sourceTxHash: burnTxHash }));
+      console.log('[Forwarding] Waiting for Circle to auto-mint on destination chain...');
 
-      // Check if bridge completed successfully by verifying all steps
-      const hasErrorStep = result?.steps?.some(step => step.state === 'error');
-      if (hasErrorStep) {
-        const errorStep = result.steps.find(step => step.state === 'error');
-        const errorMessage = errorStep?.error?.message || errorStep?.error || 'Bridge step failed';
-        throw new Error(`Bridge step '${errorStep?.name || 'unknown'}' failed: ${errorMessage}`);
-      }
+      const mintTxHash = await pollForMint(sourceDomain, burnTxHash);
 
-      // Extract transaction hashes from result
-      let sourceTxHash;
-      let receiveTxHash;
+      // --- Success ---
+      const receivedAmount = formatUnits(totalAmount - maxFee, decimals);
+      console.log('[Forwarding] Bridge completed!', {
+        sourceTxHash: burnTxHash,
+        receiveTxHash: mintTxHash,
+        receivedAmount,
+      });
 
-      // Log the entire result for debugging
-      console.log('Bridge Kit result:', result);
-
-      if (result && typeof result === 'object') {
-        // Try to extract from steps array first
-        if (result.steps && Array.isArray(result.steps)) {
-          console.log('Found steps array with', result.steps.length, 'steps');
-
-          // Process the three main bridge transactions:
-          // 1. Approval transaction on source chain
-          // 2. Burn transaction on source chain
-          // 3. Mint transaction on destination chain
-
-          result.steps.forEach((step, index) => {
-            console.log(`Step ${index}: ${step.name} (${step.state})`, step);
-
-            // First transaction: Approval on source chain
-            if (step.name === 'approve' && step.txHash) {
-              sourceTxHash = step.txHash;
-              console.log('✅ Found approval transaction hash:', sourceTxHash);
-
-            }
-            // Second transaction: Burn on source chain
-            else if (step.name === 'burn' && step.txHash) {
-              sourceTxHash = step.txHash;
-              console.log('✅ Found burn transaction hash:', sourceTxHash);
-            }
-            // Third transaction: Mint on destination chain
-            else if (step.name === 'mint' && step.txHash) {
-              receiveTxHash = step.txHash;
-              console.log('✅ Found mint transaction hash:', receiveTxHash);
-            }
-            // Handle errors in any step
-            else if (step.state === 'error') {
-              console.error(`❌ Step ${index} (${step.name}) failed:`, step.error);
-              throw new Error(`Bridge step '${step.name}' failed: ${step.error || 'Unknown error'}`);
-            }
-          });
-
-          // Simple validation - just check if we have the required transaction hashes
-          if (!sourceTxHash || !receiveTxHash) {
-            console.warn('Missing transaction hashes - Source:', sourceTxHash, 'Destination:', receiveTxHash);
-          }
-        }
-
-        // Try to extract directly from result object
-        if (!sourceTxHash && (result.txHash || result.sourceTxHash || result.sourceTransactionHash || result.fromTxHash)) {
-          sourceTxHash = result.txHash || result.sourceTxHash || result.sourceTransactionHash || result.fromTxHash;
-          console.log('Found sourceTxHash from result object:', sourceTxHash);
-        }
-
-        if (!receiveTxHash && (result.receiveTxHash || result.receiveTransactionHash || result.toTxHash || result.destinationTxHash)) {
-          receiveTxHash = result.receiveTxHash || result.receiveTransactionHash || result.toTxHash || result.destinationTxHash;
-          console.log('Found receiveTxHash from result object:', receiveTxHash);
-        }
-
-        // Try to extract from receipt if available
-        if (!sourceTxHash && result.receipt && result.receipt.transactionHash) {
-          sourceTxHash = result.receipt.transactionHash;
-          console.log('Found sourceTxHash from receipt:', sourceTxHash);
-        }
-
-        if (!receiveTxHash && result.destinationReceipt && result.destinationReceipt.transactionHash) {
-          receiveTxHash = result.destinationReceipt.transactionHash;
-          console.log('Found receiveTxHash from destinationReceipt:', receiveTxHash);
-        }
-
-        // Additional extraction attempts for nested structures
-        if (!sourceTxHash && result.source && result.source.transactionHash) {
-          sourceTxHash = result.source.transactionHash;
-          console.log('Found sourceTxHash from source.transactionHash:', sourceTxHash);
-        }
-
-        if (!receiveTxHash && result.destination && result.destination.transactionHash) {
-          receiveTxHash = result.destination.transactionHash;
-          console.log('Found receiveTxHash from destination.transactionHash:', receiveTxHash);
-        }
-      }
-
-      console.log('Final extracted transaction hashes:', { sourceTxHash, receiveTxHash });
-
-      // Background toasts removed (modal handles feedback)
-
-
-      // Simple transaction hash validation
-      if (sourceTxHash && typeof sourceTxHash === 'string' && sourceTxHash.startsWith('0x') && sourceTxHash.length === 66) {
-        console.log('✅ Valid source transaction hash:', sourceTxHash);
-      } else {
-        console.warn('⚠️ Invalid or missing source transaction hash:', sourceTxHash);
-        sourceTxHash = undefined;
-      }
-
-      if (receiveTxHash && typeof receiveTxHash === 'string' && receiveTxHash.startsWith('0x') && receiveTxHash.length === 66) {
-        console.log('✅ Valid destination (mint) transaction hash:', receiveTxHash);
-      } else {
-        console.warn('⚠️ Invalid or missing destination (mint) transaction hash:', receiveTxHash);
-        receiveTxHash = undefined;
-      }
-
-      // Bridge Kit's bridge() method only resolves after ALL transactions complete
       const finalState = {
         step: 'success',
         error: null,
-        result,
+        result: { burnTxHash, mintTxHash, amount: receivedAmount, direction },
         isLoading: false,
-        sourceTxHash,
-        receiveTxHash,
+        sourceTxHash: burnTxHash,
+        receiveTxHash: mintTxHash,
         direction,
       };
 
@@ -675,35 +635,10 @@ export function useBridge() {
       return finalState;
 
     } catch (err) {
-      console.error('🔴 Bridge error caught:', err);
-
-      // Enhanced error logging for debugging
-      const errorDetails = {
-        code: err.code,
-        message: err.message,
-        name: err.name,
-        reason: err.reason,
-        data: err.data,
-        error: err.error,
-        cause: err.cause,
-        shortMessage: err.shortMessage,
-        stack: err.stack?.substring(0, 200)
-      };
-      console.log('📋 Bridge error details:', errorDetails);
+      console.error(`🔴 Bridge error at step [${currentBridgeStep}]:`, err);
+      console.error('🔴 Raw error:', { code: err.code, message: err.message, name: err.name, cause: err.cause });
 
       let errorMessage = err.message || 'Bridge transaction failed';
-
-      // Simplified error handling for the three main functions
-      if (errorMessage.toLowerCase().includes('mint')) {
-        const destChainName = destinationChain?.name || (destinationChainId === ARC_CHAIN_ID ? 'Arc Testnet' : destinationChainId === SEPOLIA_CHAIN_ID ? 'Sepolia' : 'destination chain');
-        errorMessage = `Mint transaction failed on destination chain: ${errorMessage}. Please ensure you approve the network switch to ${destChainName} when prompted in your wallet.`;
-      } else if (errorMessage.toLowerCase().includes('burn')) {
-        errorMessage = `Burn transaction failed on source chain: ${errorMessage}`;
-      } else if (errorMessage.toLowerCase().includes('approve')) {
-        errorMessage = `Approval transaction failed on source chain: ${errorMessage}`;
-      }
-
-      // Handle common error types
       const errorMsg = (err.message || '').toLowerCase();
       const errorCode = err.code;
 
@@ -716,13 +651,17 @@ export function useBridge() {
       else if (errorMsg.includes('insufficient funds') || errorCode === 'INSUFFICIENT_FUNDS') {
         errorMessage = 'Insufficient funds: Not enough balance to complete the bridge.';
       }
-      // Network errors
-      else if (errorMsg.includes('network') || errorMsg.includes('connection')) {
-        errorMessage = 'Network error: Unable to connect to blockchain. Please check your connection.';
+      // Network / RPC errors
+      else if (errorMsg.includes('failed to fetch') || errorMsg.includes('network') || errorMsg.includes('connection')) {
+        errorMessage = `Network error during ${currentBridgeStep} step: Unable to reach the blockchain RPC. Please check your internet connection and try again.`;
       }
       // Timeout errors
       else if (errorMsg.includes('timeout') || errorMsg.includes('timed out')) {
-        errorMessage = 'Bridge transaction timeout. Please try again.';
+        errorMessage = `Timeout during ${currentBridgeStep} step. Please try again.`;
+      }
+      // Gas estimation / revert errors
+      else if (errorMsg.includes('gas') || errorMsg.includes('execution reverted')) {
+        errorMessage = `Transaction reverted during ${currentBridgeStep} step. Please ensure you have enough USDC (amount + forwarding fee) and that the bridge route is supported.`;
       }
 
       const errorState = {
@@ -737,13 +676,13 @@ export function useBridge() {
 
       console.log('📤 Returning error state:', {
         step: errorState.step,
-        error: errorState.error.substring(0, 100), // Log first 100 chars
+        error: errorState.error.substring(0, 100),
       });
 
       setState(errorState);
       return errorState;
     }
-  }, [address, isConnected, chainId, switchChain]);
+  }, [address, isConnected, chainId, switchChain, fetchForwardingFees, pollForMint]);
 
   // Reset bridge state (but preserve balance - refresh it instead)
   const reset = useCallback(() => {
@@ -756,7 +695,6 @@ export function useBridge() {
       receiveTxHash: undefined,
       direction: undefined,
     });
-    // Don't clear balance - refresh it instead if we have address and chainId
     if (address && chainId) {
       const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
       fetchTokenBalance('USDC', chainIdDecimal);
@@ -765,7 +703,6 @@ export function useBridge() {
 
   // Clear only balance (for disconnect scenarios)
   const clearBalance = useCallback(() => {
-    // With TanStack Query, we just wait for the next fetch or cache invalidation
     queryClient.invalidateQueries({ queryKey: ['balance', address] });
   }, [address, queryClient]);
 

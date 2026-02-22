@@ -1,5 +1,5 @@
 // Hook to access theme tokens directly (theme system)
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from './useTheme';
 
 /**
  * Hook to access theme tokens and utilities
@@ -21,34 +21,34 @@ export const useThemeTokens = () => {
   return {
     // Current theme object
     theme,
-    
+
     // Dark mode state
     isDark: darkMode,
-    
+
     // Quick access to colors
     colors: {
       primary: theme.primaryColor,
       focus: theme.focusColor,
     },
-    
+
     // Text colors
     text: theme.text,
-    
+
     // Background colors
     background: theme.background,
-    
+
     // Border colors
     border: theme.border,
-    
+
     // Button styles
     buttons: theme.buttons,
-    
+
     // Card styles
     card: theme.card,
-    
+
     // Font
     font: theme.font,
-    
+
     // Helper function to get CSS variable value
     getCSSVariable: (name) => {
       return getComputedStyle(document.documentElement)

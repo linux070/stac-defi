@@ -14,7 +14,7 @@ export const useWallet = () => {
 };
 
 export const WalletProvider = ({ children }) => {
-  const { address, isConnected, chainId: wagmiChainId } = useAccount();
+  const { address, isConnected, chainId: wagmiChainId, status } = useAccount();
   const { disconnect: wagmiDisconnect } = useDisconnect();
   const { data: balanceData } = useBalance({ address });
   const { switchChain } = useSwitchChain();
@@ -86,6 +86,7 @@ export const WalletProvider = ({ children }) => {
     switchToNetwork,
     sendTransaction,
     isConnected,
+    status,
     isNetworkSupported: wagmiChainId ? isNetworkSupported(typeof wagmiChainId === 'number' ? '0x' + wagmiChainId.toString(16) : wagmiChainId) : false,
   };
 

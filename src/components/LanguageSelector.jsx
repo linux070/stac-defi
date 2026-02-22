@@ -1,147 +1,159 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, ChevronRight, ArrowLeft, Check } from 'lucide-react';
 
 const LanguageSelector = ({ placement = 'header' }) => {
   const { t, i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const selectorRef = useRef(null);
 
-  // Language options with high-quality SVG flags from flagcdn
   const languages = [
-    { code: 'en', name: 'English', flag: 'https://flagcdn.com/w40/us.png' },
-    { code: 'es', name: 'Español', flag: 'https://flagcdn.com/w40/es.png' },
-    { code: 'fr', name: 'Français', flag: 'https://flagcdn.com/w40/fr.png' },
-    { code: 'de', name: 'Deutsch', flag: 'https://flagcdn.com/w40/de.png' },
-    { code: 'zh', name: '中文', flag: 'https://flagcdn.com/w40/cn.png' }
+    { code: 'en', name: 'English', flag: 'https://flagcdn.com/w80/us.png' },
+    { code: 'es', name: 'Español', flag: 'https://flagcdn.com/w80/es.png' },
+    { code: 'fr', name: 'Français', flag: 'https://flagcdn.com/w80/fr.png' },
+    { code: 'de', name: 'Deutsch', flag: 'https://flagcdn.com/w80/de.png' },
+    { code: 'zh', name: '中文', flag: 'https://flagcdn.com/w80/cn.png' }
   ];
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (selectorRef.current && !selectorRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Close dropdown on Escape key
-  useEffect(() => {
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, []);
-
   const changeLanguage = (langCode) => {
     i18n.changeLanguage(langCode);
-    setIsOpen(false);
   };
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
-
-  // Determine styling based on placement
-  const getContainerClasses = () => {
-    if (placement === 'footer') {
-      return 'relative inline-block';
-    }
-    if (placement === 'mobile-menu') {
-      return 'relative flex items-center justify-between w-full h-full';
-    }
-    return 'relative';
-  };
-
-  const getButtonClasses = () => {
-    if (placement === 'footer') {
-      return 'flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors bg-white dark:bg-gray-800 rounded-lg px-3 py-2 shadow-sm';
-    }
-    if (placement === 'mobile-menu') {
-      return 'flex items-center gap-2 w-full justify-between';
-    }
-    return 'h-[44px] px-3.5 rounded-2xl border border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10 hover:border-blue-500/30 dark:hover:border-blue-400/30 transition-all duration-300 flex items-center gap-2.5 shadow-sm active:scale-95 group font-medium';
-  };
-
-  const getDropdownPosition = () => {
-    if (placement === 'footer') {
-      return 'absolute bottom-full right-0 mb-2';
-    }
-    if (placement === 'mobile-menu') {
-      return 'absolute bottom-full right-0 mb-4';
-    }
-    return 'absolute right-0 top-full mt-1';
-  };
+  const currentLang = languages.find(l => i18n.language.startsWith(l.code)) || languages[0];
 
   return (
-    <div ref={selectorRef} className={getContainerClasses()}>
+    <div ref={selectorRef} className={`relative ${placement === 'mobile-menu' ? 'block w-full border-t border-slate-100 dark:border-white/5' : 'inline-block'}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={getButtonClasses()}
-        aria-haspopup="true"
-        aria-expanded={isOpen}
+        className={`flex items-center transition-all duration-200 group outline-none w-full
+          ${placement === 'footer'
+            ? 'gap-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-bold uppercase tracking-wider'
+            : placement === 'mobile-menu'
+              ? 'justify-between text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              : 'gap-1.5 h-[44px] px-4 rounded-xl border border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10 shadow-sm font-bold active:scale-95'
+          }`}
       >
-        {placement === 'mobile-menu' ? (
+        {placement === 'footer' ? (
           <>
-            <div className="flex items-center gap-4">
-              <span className="text-[15px] font-semibold text-slate-900 dark:text-white">{t('Language')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[13px] font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                {i18n.language === 'en' ? 'EN-US' : i18n.language.toUpperCase()}
+            <span>{currentLang.code.toUpperCase()}</span>
+            <ChevronDown
+              size={14}
+              strokeWidth={2.5}
+              className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`}
+            />
+          </>
+        ) : placement === 'mobile-menu' ? (
+          <>
+            <span>{t('Language')}</span>
+            <div className="flex items-center gap-3">
+              <span className="px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[11px] font-bold tracking-tight shadow-sm border border-blue-100/50 dark:border-blue-800/20 group-hover:scale-105 transition-transform">
+                {currentLang.name}
               </span>
-              {!isOpen && <ChevronRight size={16} className="text-slate-300 dark:text-slate-600" />}
+              <ChevronRight
+                size={20}
+                className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-colors"
+              />
             </div>
           </>
         ) : (
-          <>
-            <img
-              src={currentLanguage.flag}
-              alt={currentLanguage.name}
-              className="w-4 h-3 object-cover rounded-sm shadow-sm"
-            />
-            <span className="uppercase">{currentLanguage.code}</span>
-            <ChevronDown size={16} />
-          </>
+          <span>{t('Language')}</span>
         )}
       </button>
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className={`${getDropdownPosition()} z-[2000] w-40 bg-white dark:bg-[#1a1c23] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden backdrop-blur-xl`}
-          >
-            <div className="p-2 space-y-1">
-              {languages.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={() => changeLanguage(lang.code)}
-                  className={`w-full px-3 py-2 rounded-xl text-left text-sm flex items-center justify-between transition-all ${i18n.language === lang.code
-                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-500/10 font-medium'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
-                    }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <img
-                      src={lang.flag}
-                      alt={lang.name}
-                      className="w-4 h-3 object-cover rounded shadow-sm"
-                    />
-                    <span className="font-medium">{lang.name}</span>
-                  </div>
+          placement === 'mobile-menu' ? (
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-0 z-[10000] bg-white dark:bg-black flex flex-col p-6 overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <button onClick={() => setIsOpen(false)} className="p-2 -ml-2 text-slate-600 dark:text-slate-300 active:scale-90 transition-all">
+                  <ArrowLeft size={24} />
                 </button>
-              ))}
-            </div>
-          </motion.div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('Language')}</h2>
+                <div className="w-10" /> {/* Spacer */}
+              </div>
+
+              <div className="space-y-1">
+                {languages.map((lang) => {
+                  const isActive = i18n.language.startsWith(lang.code);
+                  return (
+                    <button
+                      key={lang.code}
+                      onClick={() => changeLanguage(lang.code)}
+                      className={`w-full py-4 px-2 flex items-center justify-between group transition-all
+                        ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100 dark:border-white/10 flex-shrink-0 shadow-sm">
+                          <img src={lang.flag} alt="" className="w-full h-full object-cover" />
+                        </div>
+                        <span className="text-[17px] font-semibold">{lang.name}</span>
+                      </div>
+                      {isActive && <Check size={20} className="text-blue-600 dark:text-blue-400" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.99 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.99 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              className={`absolute z-[2000] w-[220px] bg-white dark:bg-[#161616] rounded-[14px] border border-slate-200 dark:border-white/10 shadow-xl dark:shadow-none overflow-hidden
+                ${placement === 'footer' ? 'bottom-full mb-3 left-0' : 'top-full mt-2 right-0'}`}
+            >
+              <div className="px-5 pt-5 pb-2">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 uppercase tracking-[0.2em]">
+                  {t('Select Language')}
+                </span>
+              </div>
+              <div className="py-2">
+                {languages.map((lang) => {
+                  const isActive = i18n.language.startsWith(lang.code);
+                  return (
+                    <button
+                      key={lang.code}
+                      onClick={() => changeLanguage(lang.code)}
+                      className={`w-full px-5 py-2.5 text-left flex items-center group/item transition-all duration-200
+                        ${isActive
+                          ? 'bg-slate-100 dark:bg-white/[0.08]'
+                          : 'hover:bg-slate-50 dark:hover:bg-white/[0.03]'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-100 dark:border-white/5 flex-shrink-0">
+                          <img src={lang.flag} alt="" className="w-full h-full object-cover" />
+                        </div>
+                        <span className={`text-[13px] tracking-tight transition-colors duration-200
+                          ${isActive
+                            ? 'text-slate-900 dark:text-white font-bold'
+                            : 'text-slate-500 dark:text-white/60 group-hover/item:text-slate-800 dark:group-hover/item:text-white/90'}`}>
+                          {lang.name}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )
         )}
       </AnimatePresence>
     </div>

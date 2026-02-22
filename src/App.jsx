@@ -1,26 +1,26 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { WalletProvider } from './contexts/WalletContext';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { WalletProvider } from './contexts/WalletProvider';
+import { ThemeProvider } from './contexts/ThemeProvider';
 import Layout from './components/Layout';
 import { Analytics } from '@vercel/analytics/react';
 import { ModalProvider } from './contexts/ModalProvider';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// Lazy load pages for production performance
-const Home = lazy(() => import('./pages/Home'));
-const Swap = lazy(() => import('./pages/Swap'));
-const Bridge = lazy(() => import('./pages/Bridge'));
-const Liquidity = lazy(() => import('./pages/Liquidity'));
-const Transactions = lazy(() => import('./pages/Transactions'));
+import Home from './pages/Home';
+import Swap from './pages/Swap';
+import Bridge from './pages/Bridge';
+import Transactions from './pages/Transactions';
 
-// Production loading state
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[60dvh] w-full">
-    <div className="relative">
-      <div className="w-12 h-12 rounded-full border-2 border-slate-200 dark:border-white/10"></div>
-      <div className="absolute top-0 left-0 w-12 h-12 rounded-full border-t-2 border-blue-500 animate-spin"></div>
-    </div>
+// Lazy load secondary pages
+const Liquidity = lazy(() => import('./pages/Liquidity'));
+
+// Production loading state - Minimalist
+const PageLoader = ({ name }) => (
+  <div className="flex items-center justify-center min-h-[60dvh] w-full bg-white dark:bg-black">
+    <span className="text-[11px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-[0.5em] animate-pulse">
+      {name || 'Loading'}. . .
+    </span>
   </div>
 );
 
@@ -45,7 +45,6 @@ function App() {
     }
   };
 
-  // Optional: Persist to localStorage for other purposes, but routing is now URL-driven
   useEffect(() => {
     localStorage.setItem('stac_active_tab', activeTab);
   }, [activeTab]);
@@ -54,9 +53,9 @@ function App() {
     <ThemeProvider>
       <ModalProvider>
         <WalletProvider>
-          <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-            <ErrorBoundary key={activeTab}>
-              <Suspense fallback={<PageLoader />}>
+          <Suspense fallback={<PageLoader name={activeTab === 'home' ? 'Loading' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} />}>
+            <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+              <ErrorBoundary key={activeTab}>
                 <Routes>
                   <Route path="/" element={<Home setActiveTab={setActiveTab} />} />
                   <Route path="/home" element={<Home setActiveTab={setActiveTab} />} />
@@ -67,9 +66,9 @@ function App() {
                   {/* Catch-all for undefined routes defaults to home */}
                   <Route path="*" element={<Home setActiveTab={setActiveTab} />} />
                 </Routes>
-              </Suspense>
-            </ErrorBoundary>
-          </Layout>
+              </ErrorBoundary>
+            </Layout>
+          </Suspense>
           <Analytics />
         </WalletProvider>
       </ModalProvider>

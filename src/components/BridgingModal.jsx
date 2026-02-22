@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader, X, ArrowDown, Check } from 'lucide-react';
 import '../styles/bridge-styles.css';
 
-const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, stopTimer }) => {
+const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime, state, stopTimer }) => {
   const { t } = useTranslation();
   const [elapsedTime, setElapsedTime] = useState(0);
   const [finalTime, setFinalTime] = useState(null);
@@ -70,6 +70,18 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
       return 'completed';
     } else {
       return 'inProgress';
+    }
+  };
+
+  // Get step-aware status label for the Forwarding Service flow
+  const getStepLabel = () => {
+    switch (state?.step) {
+      case 'switching-network': return 'Switching network...';
+      case 'fetching-fees': return 'Fetching transfer fees...';
+      case 'approving': return 'Approve USDC in your wallet...';
+      case 'burning': return 'Confirm burn transaction...';
+      case 'forwarding': return 'Circle is auto-minting on destination...';
+      default: return 'Processing...';
     }
   };
 
@@ -157,6 +169,16 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                         <div className="bridging-modal-amount-value font-medium">{safeToChain}</div>
                       </div>
                     </div>
+
+                    {/* Amount Row (Optional: if we want to show amount) */}
+                    {state.result?.amount && state.result?.amount !== amount && (
+                      <div className="bridging-modal-amount-row mt-2 border-t border-slate-200/10 pt-2">
+                        <div className="bridging-modal-amount-content">
+                          <div className="bridging-modal-amount-label font-medium">{t('Receive Amount')}</div>
+                          <div className="bridging-modal-amount-value font-medium text-blue-500">{state.result.amount} USDC</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="bridging-modal-progress-section-new">
@@ -166,7 +188,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                         <span className="bridging-modal-progress-time-new">{formatTime(displayTime)}</span>
                       </div>
                       <div className="bridging-modal-loader-wrapper-shrunked">
-                        <Loader className="animate-spin text-indigo-500 dark:text-indigo-400" size={20} />
+                        <Loader className="animate-spin text-blue-500 dark:text-blue-400" size={20} />
                       </div>
                     </div>
                     <div className="bridging-modal-progress-bar-container-shrunked">
@@ -179,7 +201,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, startTime, state, 
                     </div>
                     <div className="bridging-modal-progress-footer-new">
                       <span className="bridging-modal-progress-estimate-new">
-                        {t('Estimated completion time: 1-3 minutes')}
+                        {t(getStepLabel())}
                       </span>
                     </div>
                   </div>

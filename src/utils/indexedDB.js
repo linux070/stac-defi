@@ -159,7 +159,7 @@ export const getItem = async (key) => {
     try {
       const value = localStorage.getItem(key);
       return value ? JSON.parse(value) : null;
-    } catch (e) {
+    } catch {
       return null;
     }
   }
@@ -266,7 +266,7 @@ export const removeItem = async (key) => {
           localStorage.removeItem(key);
           resolve();
         };
-      } catch (err) {
+      } catch {
         localStorage.removeItem(key);
         resolve();
       }
@@ -282,7 +282,7 @@ export const getItemSync = (key) => {
   try {
     const value = localStorage.getItem(key);
     return value ? JSON.parse(value) : null;
-  } catch (err) {
+  } catch {
     return null;
   }
 };

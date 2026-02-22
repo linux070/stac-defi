@@ -8,7 +8,7 @@ export function useNetworkUptime() {
     const [uptime, setUptime] = useState(100);
     const [change, setChange] = useState(null);
     const [trend, setTrend] = useState('stable');
-    const [loading, setLoading] = useState(false);
+    const [loading] = useState(false);
 
     useEffect(() => {
         // Arc Testnet is operational - 100% uptime
