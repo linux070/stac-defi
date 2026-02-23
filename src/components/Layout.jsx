@@ -192,7 +192,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                       <span className="text-[8px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded-md uppercase tracking-wider font-bold text-slate-400">{t('Soon')}</span>
                     )}
                     {!item.comingSoon && (
-                      <div className="absolute bottom-[-10px] left-0 right-0 h-[3px] bg-blue-500 dark:bg-blue-400 scale-x-0 group-hover:scale-x-100 transition-all duration-300 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.5)]" />
+                      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-blue-500 dark:bg-blue-400 scale-x-0 group-hover:scale-x-100 transition-all duration-300 rounded-full" />
                     )}
                   </a>
                 ))
@@ -207,12 +207,12 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                       {item.label}
                     </span>
                     {activeTab !== item.id && (
-                      <div className="absolute bottom-[-10px] left-0 right-0 h-[3px] bg-blue-500/50 dark:bg-blue-400/50 scale-x-0 group-hover:scale-x-100 transition-all duration-300 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.3)]" />
+                      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-blue-500/50 dark:bg-blue-400/50 scale-x-0 group-hover:scale-x-100 transition-all duration-300 rounded-full" />
                     )}
                     {activeTab === item.id && (
                       <motion.div
                         layoutId="activeTabUnderline"
-                        className="absolute bottom-[-10px] left-0 right-0 h-[3px] bg-blue-500 dark:bg-blue-400 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.5)]"
+                        className="absolute bottom-0 left-0 right-0 h-[3px] bg-blue-500 dark:bg-blue-400 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)]"
                         initial={false}
                         transition={{ type: "spring", stiffness: 380, damping: 30 }}
                       />
