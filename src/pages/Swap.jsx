@@ -289,6 +289,7 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
 const Swap = () => {
   const { t } = useTranslation();
   const { isConnected, chainId, status } = useWallet();
+  const wasConnected = typeof window !== 'undefined' ? localStorage.getItem('walletConnected') === 'true' : false;
   const { setIsFocusedModalOpen } = useModal();
   const { address } = useAccount();
   const [fromToken, setFromToken] = useState('USDC');
@@ -768,9 +769,9 @@ const Swap = () => {
           <button
             onClick={handleSwapClick}
             className={`swap-button ${(isConnected && parseFloat(fromAmount) > parseFloat(fromBalance)) ? 'swap-button-failed' : ''}`}
-            disabled={status === 'disconnected' || !fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance) || swapState.isLoading || status === 'reconnecting' || status === 'connecting'}
+            disabled={(status === 'disconnected' && !wasConnected) || !fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance) || swapState.isLoading || status === 'reconnecting' || status === 'connecting'}
           >
-            {(status === 'reconnecting' || status === 'connecting') ? (
+            {(status === 'reconnecting' || status === 'connecting' || wasConnected) && !isConnected ? (
               <div className="flex items-center justify-center">
                 <span>{t('Swap')}</span>
               </div>

@@ -1,4 +1,4 @@
-import { useAccount, useSwitchChain, useDisconnect } from 'wagmi';
+import { useAccount, useSwitchChain } from 'wagmi';
 import { useTranslation } from 'react-i18next';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
@@ -8,17 +8,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useWallet } from '../hooks/useWallet';
+
 const CustomConnectButton = ({ connectText, isMobile }) => {
     const { t } = useTranslation();
-    const { address, isConnected } = useAccount();
+    const { address, isConnected, status } = useAccount();
     const { switchChain } = useSwitchChain();
-    const { disconnect } = useDisconnect();
+    const { disconnect } = useWallet();
 
     // Use the new multi-chain balance hook
     const { balances } = useMultiChainBalances(address, isConnected);
 
     const [showDropdown, setShowDropdown] = useState(false);
     const [copied, setCopied] = useState(false);
+    const wasConnected = typeof window !== 'undefined' ? localStorage.getItem('walletConnected') === 'true' : false;
 
     const buttonText = connectText || t('Connect Wallet');
 
@@ -69,17 +72,54 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                 {({ account, chain, openChainModal, openConnectModal, mounted }) => {
                     return (
                         <div
-                            {...(!mounted && {
+                            {...((!mounted && !wasConnected) ? {
                                 'aria-hidden': true,
                                 'style': {
                                     opacity: 0,
                                     pointerEvents: 'none',
                                     userSelect: 'none',
                                 },
-                            })}
+                            } : {})}
                         >
                             {(() => {
-                                if (!mounted || !account || !chain) {
+                                const isReconnecting = status === 'reconnecting' || status === 'connecting';
+
+                                if (!mounted || isReconnecting || (wasConnected && (!account || !chain))) {
+                                    const lastAddress = typeof window !== 'undefined' ? localStorage.getItem('lastAddress') : null;
+                                    const displayAddr = typeof window !== 'undefined' ? localStorage.getItem('lastDisplayName') : '...';
+
+                                    if (isMobile) {
+                                        return (
+                                            <div className="w-[42px] h-[42px] rounded-full border border-slate-200/60 dark:border-white/20 bg-white/80 dark:bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-md shadow-black/5 dark:shadow-blue-500/10">
+                                                <div className="relative flex items-center justify-center transition-transform duration-500">
+                                                    {lastAddress ? (
+                                                        <Jazzicon diameter={32} seed={jsNumberForAddress(lastAddress)} />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-white/20" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <div className="h-[44px] flex items-center space-x-3 pl-2.5 pr-4 rounded-2xl border border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl shadow-sm relative overflow-hidden">
+                                            <div className="relative flex items-center justify-center">
+                                                {lastAddress ? (
+                                                    <Jazzicon diameter={30} seed={jsNumberForAddress(lastAddress)} />
+                                                ) : (
+                                                    <div className="w-[30px] h-[30px] rounded-full bg-slate-200 dark:bg-white/10" />
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col justify-center items-start pl-1">
+                                                <span className="text-[14px] text-slate-700 dark:text-slate-200 font-bold tracking-tight">
+                                                    {displayAddr}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                if (!account || !chain) {
                                     return (
                                         <button
                                             onClick={openConnectModal}

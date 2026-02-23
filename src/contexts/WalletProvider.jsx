@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { isNetworkSupported } from '../config/networks';
 import { useAccount, useDisconnect, useBalance, useSwitchChain, usePublicClient, useWalletClient } from 'wagmi';
@@ -14,6 +14,18 @@ export const WalletProvider = ({ children }) => {
 
     const [isConnecting, setIsConnecting] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (isConnected && address) {
+            localStorage.setItem('walletConnected', 'true');
+            localStorage.setItem('lastAddress', address);
+            // Cache a friendly display name (short address)
+            localStorage.setItem('lastDisplayName', `${address.slice(0, 6)}...${address.slice(-4)}`);
+            if (wagmiChainId) {
+                localStorage.setItem('lastChainId', wagmiChainId.toString());
+            }
+        }
+    }, [isConnected, address, wagmiChainId]);
 
     const connectWallet = async () => {
         setIsConnecting(true);

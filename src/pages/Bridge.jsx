@@ -201,6 +201,7 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
 const Bridge = () => {
   const { t } = useTranslation();
   const { isConnected, walletAddress, chainId, status } = useWallet();
+  const wasConnected = typeof window !== 'undefined' ? localStorage.getItem('walletConnected') === 'true' : false;
   const { setIsFocusedModalOpen } = useModal();
   const { switchChainAsync } = useSwitchChain();
   const [fromChain, setFromChain] = useState('Sepolia');
@@ -1113,7 +1114,7 @@ const Bridge = () => {
         {/* Bridge Button - Premium Call to Action */}
         <button
           onClick={handleBridge}
-          disabled={!amount || bridgeLoading || status === 'disconnected' || state.isLoading || bridgeButtonText === 'Bridge Failed' || (isConnected && amount && parseFloat(amount) > parseFloat(tokenBalance || '0')) || status === 'reconnecting' || status === 'connecting'}
+          disabled={!amount || bridgeLoading || (status === 'disconnected' && !wasConnected) || state.isLoading || bridgeButtonText === 'Bridge Failed' || (isConnected && amount && parseFloat(amount) > parseFloat(tokenBalance || '0')) || status === 'reconnecting' || status === 'connecting'}
           className={`
             bridge-button
             ${(bridgeButtonText === 'Bridge Failed' || (isConnected && amount && parseFloat(amount) > parseFloat(tokenBalance || '0'))) ? 'bridge-button-failed' : ''}
@@ -1125,7 +1126,7 @@ const Bridge = () => {
               <Loader className="animate-spin" size={20} />
               <span>{t('Bridging')}...</span>
             </>
-          ) : (status === 'reconnecting' || status === 'connecting') ? (
+          ) : (status === 'reconnecting' || status === 'connecting' || wasConnected) && !isConnected ? (
             <span>{t('Bridge')}</span>
           ) : status === 'disconnected' ? (
             <>

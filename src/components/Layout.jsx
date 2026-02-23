@@ -39,7 +39,8 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
   const { t, i18n } = useTranslation();
   const { darkMode, toggleDarkMode } = useTheme();
 
-  const { isConnected } = useAccount();
+  const { isConnected, status } = useAccount();
+  const wasConnected = typeof window !== 'undefined' ? localStorage.getItem('walletConnected') === 'true' : false;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showUpdates, setShowUpdates] = useState(false);
@@ -145,7 +146,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center">
-              {activeTab === 'home' && !isConnected ? (
+              {activeTab === 'home' && !isConnected && status !== 'reconnecting' && status !== 'connecting' && !wasConnected ? (
                 <button
                   onClick={() => setActiveTab('swap')}
                   className="h-[38px] px-4 rounded-lg bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition-all duration-300 font-bold text-[12px] whitespace-nowrap shadow-md shadow-blue-500/20 flex items-center justify-center group relative overflow-hidden"
@@ -413,7 +414,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
             {/* Wallet Button / Launch App */}
             <div className="flex items-center">
-              {activeTab === 'home' && !isConnected ? (
+              {activeTab === 'home' && !isConnected && status !== 'reconnecting' && status !== 'connecting' && !wasConnected ? (
                 <button
                   onClick={() => setActiveTab('swap')}
                   className="h-[44px] px-8 rounded-xl bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition-all duration-300 font-bold text-[13px] whitespace-nowrap shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 flex items-center justify-center group relative overflow-hidden"
