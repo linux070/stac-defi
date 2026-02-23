@@ -107,10 +107,10 @@ const SwapSuccessModal = ({ isOpen, onClose, fromToken, toToken, fromAmount, toA
                                         href={explorerUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="group flex items-center justify-center gap-2 w-full py-3.5 bg-gradient-to-r from-blue-500/10 to-blue-600/10 hover:from-blue-500/20 hover:to-blue-600/20 border border-blue-500/20 hover:border-blue-500/40 rounded-xl text-blue-500 hover:text-blue-400 font-semibold text-[13px] transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-blue-500/10"
+                                        className="group flex items-center justify-center gap-2.5 w-full py-3.5 bg-slate-50/50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/10 rounded-2xl text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all duration-300 font-bold text-[13px] tracking-tight"
                                     >
+                                        <ExternalLink size={14} className="opacity-60 group-hover:opacity-100 transition-opacity" />
                                         {t('View on Explorer')}
-                                        <ExternalLink size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
                                     </a>
                                 )}
                                 <button

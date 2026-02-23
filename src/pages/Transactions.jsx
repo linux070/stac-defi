@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../hooks/useWallet';
-import { Copy, ExternalLink, CheckCircle2, Check, Clock, XCircle, X, ArrowLeftRight, RefreshCw, Layers, History, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Calendar } from 'lucide-react';
+import { Copy, ExternalLink, Check, Clock, XCircle, X, ArrowLeftRight, Layers, History, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Calendar, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { timeAgo, formatAddress, copyToClipboard, getExplorerUrl } from '../utils/blockchain';
 import { useTransactionHistory } from '../hooks/useTransactionHistory';
@@ -80,43 +80,53 @@ const EmptyActivityState = () => {
 };
 
 const SkeletonCard = () => (
-  <div className="relative overflow-hidden rounded-2xl bg-white/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 p-4 min-w-[180px]">
-    <div className="skeleton w-24 h-3 mb-3 rounded-full opacity-50" />
-    <div className="skeleton w-32 h-8 mb-2 rounded-lg" />
-    <div className="skeleton w-20 h-3 rounded-full opacity-30" />
+  <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-3.5 min-w-[170px]">
+    <div className="skeleton w-20 h-2.5 mb-3 rounded-full opacity-50" />
+    <div className="skeleton w-28 h-7 mb-2 rounded-lg" />
+    <div className="skeleton w-24 h-2.5 rounded-full opacity-30" />
   </div>
 );
 
 const SkeletonRow = () => (
-  <tr className="border-b border-slate-50 dark:border-white/[0.02]">
-    <td className="p-4"><div className="skeleton w-24 h-5 rounded-lg" /></td>
-    <td className="p-4"><div className="skeleton w-32 h-5 rounded-lg" /></td>
-    <td className="p-4"><div className="skeleton w-32 h-5 rounded-lg" /></td>
-    <td className="p-4"><div className="skeleton w-20 h-5 rounded-lg" /></td>
-    <td className="p-4"><div className="skeleton w-16 h-4 rounded-lg" /></td>
-    <td className="p-4"><div className="skeleton w-16 h-5 rounded-full" /></td>
-    <td className="p-4"><div className="skeleton w-40 h-4 rounded-lg" /></td>
+  <tr className="border-b border-slate-200/40 dark:border-white/[0.05]">
+    <td className="p-[1.25rem]"><div className="skeleton w-24 h-5 rounded-lg" /></td>
+    <td className="p-[1.25rem]"><div className="skeleton w-32 h-5 rounded-lg" /></td>
+    <td className="p-[1.25rem]"><div className="skeleton w-32 h-5 rounded-lg" /></td>
+    <td className="p-[1.25rem]"><div className="skeleton w-20 h-5 rounded-lg" /></td>
+    <td className="p-[1.25rem]"><div className="skeleton w-16 h-4 rounded-lg" /></td>
+    <td className="p-[1.25rem]">
+      <div className="flex items-center gap-2">
+        <div className="skeleton w-4 h-4 rounded-full opacity-60" />
+        <div className="skeleton w-12 h-4 rounded-md opacity-40" />
+      </div>
+    </td>
+    <td className="p-[1.25rem]"><div className="skeleton w-40 h-4 rounded-lg" /></td>
   </tr>
 );
 
 const SkeletonMobileCard = () => (
-  <div className="card p-4 space-y-4 border border-slate-100 dark:border-slate-800">
-    <div className="flex justify-between">
-      <div className="skeleton w-20 h-4 rounded-lg" />
-      <div className="skeleton w-16 h-3 rounded-lg" />
+  <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-4 space-y-3.5">
+    <div className="flex justify-between items-start">
+      <div className="space-y-2">
+        <div className="skeleton w-20 h-4 rounded-lg" />
+        <div className="skeleton w-24 h-3.5 rounded-full opacity-40" />
+      </div>
+      <div className="skeleton w-16 h-3 rounded-lg opacity-40" />
     </div>
     <div className="flex justify-center">
-      <div className="skeleton w-24 h-7 rounded-full" />
+      <div className="skeleton w-28 h-7 rounded-full opacity-60" />
     </div>
-    <div className="flex gap-3 justify-between">
-      <div className="flex-1 min-w-0">
-        <div className="skeleton w-12 h-3 mb-2 rounded-full opacity-40" />
-        <div className="skeleton w-full h-8 rounded-xl" />
+    <div className="flex gap-3 justify-between items-center py-1">
+      <div className="flex-1">
+        <div className="skeleton w-full h-8 rounded-xl opacity-50" />
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="skeleton w-12 h-3 mb-2 rounded-full opacity-40" />
-        <div className="skeleton w-full h-8 rounded-xl" />
+      <div className="skeleton w-6 h-[2px] rounded-full opacity-20" />
+      <div className="flex-1">
+        <div className="skeleton w-full h-8 rounded-xl opacity-50" />
       </div>
+    </div>
+    <div className="pt-2 border-t border-slate-100 dark:border-slate-800/50">
+      <div className="skeleton w-full h-9 rounded-lg opacity-30" />
     </div>
   </div>
 );
@@ -582,26 +592,20 @@ const Transactions = () => {
         {activeActivityTab === 'my' && (
           <div className="stats-grid">
             {swapVolumeLoading ? <SkeletonCard /> : (
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 via-slate-50 to-blue-50 dark:from-blue-900/30 dark:via-slate-900/20 dark:to-blue-900/20 border border-blue-100/50 dark:border-blue-700/30 p-4 min-w-[180px] shadow-sm hover:shadow-md transition-all duration-300">
-                <svg className="absolute right-2 bottom-2 w-16 h-10 opacity-40" viewBox="0 0 60 30" fill="none">
-                  <path d="M0 25 Q10 20 15 22 T30 15 T45 18 T60 8" stroke="url(#swapGradient)" strokeWidth="2" fill="none" strokeLinecap="round" />
-                  <defs>
-                    <linearGradient id="swapGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#3b82f6" />
-                      <stop offset="100%" stopColor="#60a5fa" />
-                    </linearGradient>
-                  </defs>
+              <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-3.5 min-w-[170px] shadow-sm hover:border-blue-500/30 transition-all duration-300 group">
+                <svg className="absolute -right-2 -bottom-2 w-20 h-12 opacity-[0.08] dark:opacity-[0.15] transition-opacity group-hover:opacity-20" viewBox="0 0 60 30" fill="none">
+                  <path d="M0 25 Q10 20 15 22 T30 15 T45 18 T60 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" className="text-blue-500" />
                 </svg>
 
                 <div className="relative z-10">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-blue-600 dark:text-blue-400">{activeActivityTab === 'my' ? t('My Swap Volume') : t('Total Swap Volume')}</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-2xl font-semibold text-slate-800 dark:text-white">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 opacity-80">{activeActivityTab === 'my' ? t('My Swap Volume') : t('Total Swap Volume')}</span>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-xl font-bold text-slate-800 dark:text-white tabular-nums">
                       {`$${(activeActivityTab === 'my' && !isConnected) ? '0' : swapVolume.toLocaleString()}`}
                     </span>
-                    <span className="text-emerald-500 text-lg">↑</span>
+                    <TrendingUp size={14} className="text-emerald-500" />
                   </div>
-                  <div className="text-xs font-medium text-emerald-500 mt-0.5">
+                  <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-500/80 mt-1 flex items-center gap-1">
                     {swapCount} {swapCount === 1 ? t('swap completed') : t('swaps completed')}
                   </div>
                 </div>
@@ -609,20 +613,20 @@ const Transactions = () => {
             )}
 
             {bridgeVolumeLoading ? <SkeletonCard /> : (
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 via-slate-50 to-blue-50 dark:from-blue-900/30 dark:via-slate-900/20 dark:to-blue-900/20 border border-blue-100/50 dark:border-blue-700/30 p-4 min-w-[180px] shadow-sm hover:shadow-md transition-all duration-300">
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30">
-                  <Layers className="w-10 h-10 text-blue-400 dark:text-blue-500" strokeWidth={1.5} />
+              <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-3.5 min-w-[170px] shadow-sm hover:border-blue-500/30 transition-all duration-300 group">
+                <div className="absolute -right-2 -top-1 opacity-[0.06] dark:opacity-[0.1] group-hover:opacity-[0.12] transition-opacity rotate-12">
+                  <Layers className="w-16 h-16 text-blue-500" strokeWidth={1} />
                 </div>
 
                 <div className="relative z-10">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-blue-600 dark:text-blue-400">{activeActivityTab === 'my' ? t('My Bridge Volume') : t('Total Bridge Volume')}</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-2xl font-semibold text-slate-800 dark:text-white">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 opacity-80">{activeActivityTab === 'my' ? t('My Bridge Volume') : t('Total Bridge Volume')}</span>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-xl font-bold text-slate-800 dark:text-white tabular-nums">
                       {`$${(activeActivityTab === 'my' && !isConnected) ? '0' : bridgeVolume.toLocaleString()}`}
                     </span>
-                    <Layers className="w-5 h-5 text-blue-500" strokeWidth={2} />
+                    <Layers size={14} className="text-blue-500" strokeWidth={2.5} />
                   </div>
-                  <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-1">
                     {t('Across 3 networks')}
                   </div>
                 </div>
@@ -655,28 +659,30 @@ const Transactions = () => {
                 setShowStatusDropdown(!showStatusDropdown);
                 setShowDateDropdown(false);
               }}
-              className="flex items-center gap-2 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0d0d0d] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm font-medium"
+              className="flex items-center justify-between gap-2 px-4 py-3 min-w-[145px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0d0d0d] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm font-medium"
             >
-              {statusFilter === 'success' && (
-                <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 shadow-sm mr-1">
-                  <Check className="text-white" size={10} strokeWidth={4} />
-                </div>
-              )}
-              {statusFilter === 'pending' && (
-                <div className="flex items-center justify-center w-5 h-5 mr-1">
-                  <Clock className="text-amber-500" size={16} strokeWidth={3} />
-                </div>
-              )}
-              {statusFilter === 'failed' && (
-                <div className="flex items-center justify-center w-5 h-5 mr-1">
-                  <X className="text-red-500" size={16} strokeWidth={3} />
-                </div>
-              )}
-              {statusFilter === 'all' && <SlidersHorizontal size={16} />}
-              <span>
-                {statusFilter === 'all' ? t('Status') : statusFilter === 'success' ? t('Success') : statusFilter === 'pending' ? t('Pending') : t('Failed')}
-              </span>
-              <ChevronDown size={14} className={`transition-transform ${showStatusDropdown ? 'rotate-180' : ''} opacity-50`} />
+              <div className="flex items-center gap-2">
+                {statusFilter === 'success' && (
+                  <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 shadow-sm mr-0.5">
+                    <Check className="text-white" size={10} strokeWidth={4} />
+                  </div>
+                )}
+                {statusFilter === 'pending' && (
+                  <div className="flex items-center justify-center w-5 h-5 mr-0.5">
+                    <Clock className="text-amber-500" size={16} strokeWidth={3} />
+                  </div>
+                )}
+                {statusFilter === 'failed' && (
+                  <div className="flex items-center justify-center w-5 h-5 mr-0.5">
+                    <X className="text-red-500" size={16} strokeWidth={3} />
+                  </div>
+                )}
+                {statusFilter === 'all' && <SlidersHorizontal size={16} className="mr-0.5" />}
+                <span>
+                  {statusFilter === 'all' ? t('All Status') : statusFilter === 'success' ? t('Success') : statusFilter === 'pending' ? t('Pending') : t('Failed')}
+                </span>
+              </div>
+              <ChevronDown size={14} className={`transition-transform ${showStatusDropdown ? 'rotate-180' : ''} opacity-50 flex-shrink-0`} />
             </button>
             <AnimatePresence>
               {showStatusDropdown && (
@@ -738,14 +744,16 @@ const Transactions = () => {
                 setShowDateDropdown(!showDateDropdown);
                 setShowStatusDropdown(false);
               }}
-              className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors text-sm font-medium ${dateRangeFilter !== 'all'
+              className={`flex items-center justify-between gap-2 px-4 py-3 min-w-[145px] rounded-xl border transition-colors text-sm font-medium ${dateRangeFilter !== 'all'
                 ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-400'
                 : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0d0d0d] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
             >
-              <Calendar size={16} />
-              <span>{dateRangeFilter === 'all' ? t('Date Range') : dateRangeFilter === '24h' ? t('Last 24h') : dateRangeFilter === '7d' ? t('Last 7 Days') : t('Last 30 Days')}</span>
-              <ChevronDown size={14} className={`transition-transform ${showDateDropdown ? 'rotate-180' : ''} opacity-50`} />
+              <div className="flex items-center gap-2">
+                <Calendar size={16} />
+                <span>{dateRangeFilter === 'all' ? t('All Time') : dateRangeFilter === '24h' ? t('Last 24h') : dateRangeFilter === '7d' ? t('Last 7 Days') : t('Last 30 Days')}</span>
+              </div>
+              <ChevronDown size={14} className={`transition-transform ${showDateDropdown ? 'rotate-180' : ''} opacity-50 flex-shrink-0`} />
             </button>
             <AnimatePresence>
               {showDateDropdown && (
@@ -785,8 +793,8 @@ const Transactions = () => {
 
       {/* Transactions Table - Premium Desktop View */}
       <div className="hidden md:block">
-        {transactionsLoading ? (
-          <div className="transactions-table-container">
+        <div className="transactions-table-container flex flex-col">
+          {transactionsLoading ? (
             <table className="tx-table">
               <thead>
                 <tr>
@@ -795,191 +803,170 @@ const Transactions = () => {
                   <th>{t('To')}</th>
                   <th>{t('Amount')}</th>
                   <th>{t('Time')}</th>
-                  <th>{t('Status')}</th>
+                  <th className="w-[92px] min-w-[92px]">{t('Status')}</th>
                   <th>{t('Transaction Hash')}</th>
                 </tr>
               </thead>
               <tbody>
-                {[...Array(5)].map((_, i) => <SkeletonRow key={i} />)}
+                {[...Array(transactionsPerPage)].map((_, i) => <SkeletonRow key={i} />)}
               </tbody>
             </table>
-          </div>
-        ) : filteredTransactions.length > 0 ? (
-          <div className="transactions-table-container">
-            <table className="tx-table">
-              <thead>
-                <tr>
-                  <th>{t('Type')}</th>
-                  <th>{t('From')}</th>
-                  <th>{t('To')}</th>
-                  <th>{t('Amount')}</th>
-                  <th>{t('Time')}</th>
-                  <th>{t('Status')}</th>
-                  <th>{t('Transaction Hash')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedTransactions.map((tx, index) => (
-                  <motion.tr
-                    key={tx.id || tx.hash || `tx-${index}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.03 }}
+          ) : filteredTransactions.length > 0 ? (
+            <>
+              <table className="tx-table">
+                <thead>
+                  <tr>
+                    <th>{t('Type')}</th>
+                    <th>{t('From')}</th>
+                    <th>{t('To')}</th>
+                    <th>{t('Amount')}</th>
+                    <th>{t('Time')}</th>
+                    <th className="w-[92px] min-w-[92px]">{t('Status')}</th>
+                    <th>{t('Transaction Hash')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedTransactions.map((tx, index) => (
+                    <tr key={tx.id || tx.hash || `tx-${index}`} className="group">
+                      <td>
+                        <div className="type-cell">
+                          <span className="type-label">{tx.type}</span>
+                          {tx.type === 'Swap' && getNetworkName(tx.chainId) && (
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 w-fit">
+                              <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3 h-3 object-contain" />
+                              <span className="text-[10px] font-medium uppercase tracking-wider">
+                                {t(getNetworkName(tx.chainId))}
+                              </span>
+                            </div>
+                          )}
+                          {tx.type === 'Bridge' && (
+                            <span className="type-badge bridge">{t('Cross-Chain')}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="entity-cell">
+                          {tx.type === 'Bridge' ? (
+                            (() => {
+                              const chainKey = String(tx.from || '').toLowerCase();
+                              if (chainKey.includes('arc')) return <div className="entity-icon bg-black shadow-md"><img src="/icons/arc.png" alt="Arc" /></div>;
+                              if (chainKey.includes('base')) return <div className="entity-icon bg-white shadow-md"><img src="/icons/base.png" alt="Base" /></div>;
+                              if (chainKey.includes('sepolia')) return <div className="entity-icon bg-white shadow-md"><img src="/icons/eth.png" alt="ETH" /></div>;
+                              return <div className="entity-icon"><img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" /></div>;
+                            })()
+                          ) : (
+                            <div className="entity-icon">
+                              <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/stc.png'} alt="" />
+                            </div>
+                          )}
+                          <span className="entity-name uppercase">{tx.type === 'Bridge' ? t(tx.from) : getSwapFromToken(tx)}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="entity-cell">
+                          {tx.type === 'Bridge' ? (
+                            <div className="entity-icon">
+                              <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" />
+                            </div>
+                          ) : (
+                            <div className="entity-icon">
+                              <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" />
+                            </div>
+                          )}
+                          <span className="entity-name uppercase">{tx.type === 'Bridge' ? t(tx.to) : getSwapToToken(tx)}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="amount-cell tabular-nums">
+                          {tx.type === 'Swap' ? (getSwapToAmount(tx) || getSwapAmount(tx)) : getSwapAmount(tx)}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="text-slate-500 dark:text-slate-400 whitespace-nowrap font-medium">{timeAgo(tx.timestamp)}</span>
+                      </td>
+                      <td className="w-[92px] min-w-[92px]">
+                        <div className="flex items-center gap-2.5 whitespace-nowrap">
+                          {tx.status === 'success' ? (
+                            <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 shadow-sm flex-shrink-0">
+                              <Check className="text-white" size={10} strokeWidth={4} />
+                            </div>
+                          ) : tx.status === 'failed' ? (
+                            <XCircle className="text-red-500" size={16} />
+                          ) : (
+                            <Clock className="text-amber-500" size={16} />
+                          )}
+                          <span className={`font-normal text-[15px] ${tx.status === 'success' ? 'text-emerald-500' : tx.status === 'failed' ? 'text-red-500' : 'text-amber-500'}`}>
+                            {tx.status === 'success' ? t('Success') : tx.status === 'failed' ? t('Failed') : t('Pending')}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleCopyHash(tx.hash)}
+                            className="hash-link group/hash flex items-center gap-1.5 transition-colors relative"
+                          >
+                            <span className="opacity-80 group-hover/hash:opacity-100">{formatAddress(tx.hash)}</span>
+                            <Copy size={14} className="opacity-40 group-hover/hash:opacity-100 transition-all" />
+                            <AnimatePresence>
+                              {copiedHash === tx.hash && (
+                                <motion.span
+                                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                  className="absolute -top-10 left-0 bg-slate-950 text-white text-[10px] px-2 py-1 rounded-md shadow-xl border border-white/10 z-50 whitespace-nowrap"
+                                >
+                                  {t('copied')}
+                                </motion.span>
+                              )}
+                            </AnimatePresence>
+                          </button>
+                          <a
+                            href={getExplorerUrl(tx.hash, tx.chainId || chainId || 11155111)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-lg bg-slate-100 dark:bg-white/[0.05] text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all"
+                          >
+                            <ExternalLink size={14} />
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="table-footer mt-auto">
+                <div className="pagination-info">
+                  {t('Showing')} {startIndex + 1}-{Math.min(endIndex, filteredTransactions.length)} {t('of')} {filteredTransactions.length} {t('transactions')}
+                </div>
+                <div className="pagination-controls">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="pagination-btn"
                   >
-                    <td>
-                      <div className="type-cell">
-                        <span className="type-label">{tx.type}</span>
-                        {tx.type === 'Bridge' ? (
-                          <span className="type-badge bridge">{t('Cross-Chain')}</span>
-                        ) : tx.type === 'Swap' && getNetworkName(tx.chainId) ? (
-                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 w-fit">
-                            <div className={`w-3 h-3 ${getNetworkName(tx.chainId)?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
-                              <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" loading="lazy" decoding="async" className="w-full h-full object-contain" />
-                            </div>
-                            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium uppercase tracking-wider">
-                              {t(getNetworkName(tx.chainId))}
-                            </span>
-                          </div>
-                        ) : null}
-                      </div>
-                    </td>
-
-                    <td>
-                      <div className="entity-cell">
-                        {tx.type === 'Bridge' ? (
-                          <>
-                            <div className={`w-6 h-6 ${tx.from?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
-                              <img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
-                            </div>
-                            <span className="entity-name">{t(tx.from)}</span>
-                          </>
-                        ) : (
-                          <>
-                            <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="entity-icon" />
-                            <span className="entity-name uppercase">{getSwapFromToken(tx)}</span>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="entity-cell">
-                        {tx.type === 'Bridge' ? (
-                          <>
-                            <div className={`w-6 h-6 ${tx.to?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
-                              <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
-                            </div>
-                            <span className="entity-name">{t(tx.to)}</span>
-                          </>
-                        ) : (
-                          <>
-                            <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="entity-icon" />
-                            <span className="entity-name uppercase">{getSwapToToken(tx)}</span>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="amount-cell">
-                        {getSwapAmount(tx)}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="text-slate-500 font-medium whitespace-nowrap">
-                        {timeAgo(tx.timestamp)}
-                      </div>
-                    </td>
-                    <td>
-                      {tx.status === 'success' ? (
-                        <div className="inline-flex items-center gap-2">
-                          <CheckCircle2 className="text-emerald-500" size={16} />
-                          <span className="text-sm font-medium text-emerald-500 dark:text-emerald-400">{t('Success')}</span>
-                        </div>
-                      ) : tx.status === 'pending' ? (
-                        <div className="inline-flex items-center gap-2">
-                          <Clock className="text-amber-500" size={16} />
-                          <span className="text-sm font-medium text-amber-500 dark:text-amber-400">{t('Pending')}</span>
-                        </div>
-                      ) : (
-                        <div className="inline-flex items-center gap-2">
-                          <XCircle className="text-red-500" size={16} />
-                          <span className="text-sm font-medium text-red-500 dark:text-red-400">{t('Failed')}</span>
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleCopyHash(tx.hash)}
-                          className="hash-link relative"
-                        >
-                          <span>{formatAddress(tx.hash)}</span>
-                          <Copy size={14} className="opacity-40" />
-                          <AnimatePresence>
-                            {copiedHash === tx.hash && (
-                              <motion.span
-                                initial={{ opacity: 0, y: 5, scale: 0.9 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 5, scale: 0.9 }}
-                                className="absolute -top-11 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-bold shadow-xl border border-white/10 whitespace-nowrap z-50 capitalize"
-                              >
-                                {t('copied')}
-                              </motion.span>
-                            )}
-                          </AnimatePresence>
-                        </button>
-                        <a
-                          href={getExplorerUrl(tx.hash, tx.chainId || chainId || 11155111)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-blue-500 transition-colors"
-                        >
-                          <ExternalLink size={14} />
-                        </a>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div className="table-footer">
-              <div className="pagination-info">
-                {t('Showing')} {startIndex + 1}-{Math.min(endIndex, filteredTransactions.length)} {t('of')} {filteredTransactions.length} {t('transactions')}
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="pagination-btn"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
               </div>
-              <div className="pagination-controls">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="pagination-btn"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="pagination-btn"
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="card text-center py-20">
-            {transactionsLoading ? (
-              <div className="flex flex-col items-center gap-3">
-                <RefreshCw className="animate-spin text-blue-500" size={32} />
-                <p className="text-slate-500 font-medium">{t('Loading transactions...')}</p>
-              </div>
-            ) : (
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
               <EmptyActivityState />
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Mobile Card View */}
-      <div className="md:hidden space-y-4">
+      <div className="md:hidden space-y-4 min-h-[500px]">
         {transactionsLoading ? (
           <div className="space-y-4 px-4">
             {[...Array(3)].map((_, i) => <SkeletonMobileCard key={i} />)}
@@ -999,154 +986,134 @@ const Transactions = () => {
               {/* Header Row - Type and Time */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">{tx.type}</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">{tx.type}</span>
                   {tx.type === 'Swap' && getNetworkName(tx.chainId) && (
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 w-fit">
-                      <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3 h-3 object-contain" />
-                      <span className="text-[10px] font-medium uppercase tracking-wider">
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-100/50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 w-fit">
+                      <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3.5 h-3.5 object-contain" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">
                         {t(getNetworkName(tx.chainId))}
                       </span>
                     </div>
                   )}
                   {tx.type === 'Bridge' && (
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 w-fit">
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-100/50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 w-fit">
                       <ArrowLeftRight size={10} />
-                      <span className="text-[10px] font-medium uppercase tracking-wider">{t('Cross-Chain')}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider">{t('Cross-Chain')}</span>
                     </div>
                   )}
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap flex-shrink-0 font-medium">{timeAgo(tx.timestamp)}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap flex-shrink-0 font-bold bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-lg tabular-nums">{timeAgo(tx.timestamp)}</span>
               </div>
 
               {/* Centered Status */}
               <div className="flex justify-center py-1">
                 {tx.status === 'success' ? (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
-                    <CheckCircle2 className="text-emerald-500" size={16} />
-                    <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">{t('Success')}</span>
+                  <div className="inline-flex items-center gap-2.5">
+                    <div className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-emerald-500 shadow-sm">
+                      <Check className="text-white" size={11} strokeWidth={4} />
+                    </div>
+                    <span className="text-[15px] font-normal text-emerald-500">{t('Success')}</span>
                   </div>
                 ) : tx.status === 'pending' ? (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20">
-                    <Clock className="text-amber-500" size={16} />
-                    <span className="text-sm font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wide">{t('Pending')}</span>
+                  <div className="inline-flex items-center gap-2.5">
+                    <Clock className="text-amber-500" size={16} strokeWidth={2.5} />
+                    <span className="text-[15px] font-normal text-amber-500">{t('Pending')}</span>
                   </div>
                 ) : (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20">
+                  <div className="inline-flex items-center gap-2.5">
                     <XCircle className="text-red-500" size={16} />
-                    <span className="text-sm font-medium text-red-600 dark:text-red-400 uppercase tracking-wide">{t('Failed')}</span>
+                    <span className="text-[15px] font-normal text-red-500">{t('Failed')}</span>
                   </div>
                 )}
               </div>
 
-              {/* From/To (You Pay/You Receive) Row - Unified for Swap and Bridge */}
-              <div className="flex items-center gap-3 py-1 bg-slate-50/50 dark:bg-white/5 rounded-2xl px-3 border border-slate-100/50 dark:border-white/5">
+              {/* Transactions Entities */}
+              <div className="flex items-center py-3 px-1">
                 <div className="flex-1 min-w-0">
-                  <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider">
+                  <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">
                     {tx.type === 'Swap' ? t('You Pay') : t('From')}
                   </div>
                   <div className="flex items-center gap-2 min-w-0">
                     {tx.type === 'Bridge' ? (
-                      <>
-                        {(() => {
-                          const chainKey = tx.from?.toLowerCase() || '';
-                          if (chainKey.includes('arc')) return <img src="/icons/arc.png" alt="Arc" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover bg-black" />;
-                          if (chainKey.includes('base')) return <img src="/icons/base.png" alt="Base" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover bg-white" />;
-                          if (chainKey.includes('sepolia')) return <img src="/icons/eth.png" alt="ETH" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover bg-white" />;
-                          return <img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover" />;
-                        })()}
-                        <span className="text-sm font-semibold text-slate-800 dark:text-white truncate">{t(tx.from)}</span>
-                      </>
+                      (() => {
+                        const chainKey = String(tx.from || '').toLowerCase();
+                        if (chainKey.includes('arc')) return <img src="/icons/arc.png" alt="Arc" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover bg-black" />;
+                        if (chainKey.includes('base')) return <img src="/icons/base.png" alt="Base" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover bg-white shadow-sm" />;
+                        if (chainKey.includes('sepolia')) return <img src="/icons/eth.png" alt="ETH" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover bg-white shadow-sm" />;
+                        return <img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover" />;
+                      })()
                     ) : (
                       <>
-                        <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover" />
-                        <span className="text-sm font-semibold text-slate-800 dark:text-white truncate uppercase">{getSwapFromToken(tx)}</span>
+                        <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover shadow-sm" />
+                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate uppercase">{getSwapFromToken(tx)}</span>
                       </>
                     )}
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center gap-1 px-1">
-                  <div className="w-8 h-[2px] bg-slate-200 dark:bg-slate-700 rounded-full" />
-                  <ArrowLeftRight size={14} className="text-blue-500 dark:text-blue-400" />
-                  <div className="w-8 h-[2px] bg-slate-200 dark:bg-slate-700 rounded-full" />
+                <div className="flex flex-col items-center justify-center gap-1.5 px-3">
+                  <ArrowLeftRight size={14} className="text-blue-500 dark:text-blue-400 opacity-80" />
                 </div>
 
                 <div className="flex-1 min-w-0 text-right">
-                  <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider">
+                  <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">
                     {tx.type === 'Swap' ? t('You Receive') : t('To')}
                   </div>
                   <div className="flex items-center justify-end gap-2 min-w-0">
                     {tx.type === 'Bridge' ? (
                       <>
-                        <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover" />
-                        <span className="text-sm font-semibold text-slate-800 dark:text-white truncate">{t(tx.to)}</span>
+                        <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover shadow-sm" />
+                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate">{t(tx.to)}</span>
                       </>
                     ) : (
                       <>
                         <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover drop-shadow-[0_4px_8px_rgba(59,130,246,0.25)]" />
-                        <span className="text-sm font-semibold text-slate-800 dark:text-white truncate uppercase">{getSwapToToken(tx)}</span>
+                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate uppercase">{getSwapToToken(tx)}</span>
                       </>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Amount Row - Unified */}
-              <div className="flex items-center justify-between py-2.5 bg-slate-900/[0.03] dark:bg-white/[0.03] rounded-xl px-4 border border-slate-900/[0.05] dark:border-white/[0.05] shadow-inner group/amount transition-all duration-300">
-                <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">{t('Amount')}</span>
-                <div className="flex items-center gap-2 group-hover/amount:scale-[1.02] transition-transform duration-300">
-                  <span className="text-base font-medium text-slate-900 dark:text-white tabular-nums tracking-tight">
-                    {tx.type === 'Swap' ? (getSwapToAmount(tx) || getSwapAmount(tx)) : getSwapAmount(tx)}
-                  </span>
-                  {tx.type === 'Swap' ? (
-                    // Swap Amount: Just the number, No icon or symbol as requested
-                    null
-                  ) : (
-                    <>
-                      {/* Bridge dynamic token display - Default to USDC if no symbol found in amount */}
-                      <img src={getTokenLogo(tx.amount?.includes(' ') ? tx.amount.split(' ')[1] : 'USDC') || '/icons/usdc.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full drop-shadow-[0_4px_8px_rgba(59,130,246,0.25)]" />
-                      <span className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">
-                        {tx.amount?.includes(' ') ? tx.amount.split(' ')[1] : 'USDC'}
-                      </span>
-                    </>
-                  )}
-                </div>
+              {/* Amount Row */}
+              <div className="flex items-center justify-between py-3 bg-slate-50/50 dark:bg-white/[0.03] rounded-xl px-4 border border-slate-200/50 dark:border-white/5">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{t('Amount')}</span>
+                <span className="text-base font-bold text-slate-900 dark:text-white tabular-nums tracking-tight">
+                  {tx.type === 'Swap' ? (getSwapToAmount(tx) || getSwapAmount(tx)) : getSwapAmount(tx)}
+                </span>
               </div>
 
-              {/* Transaction Hash - Improved layout */}
-              <div className="pt-2.5 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex flex-col gap-2">
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{t('Transaction Hash')}</span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleCopyHash(tx.hash)}
-                      className="flex-1 font-mono text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center justify-between gap-2 touch-manipulation min-h-[44px] px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg active:bg-blue-100 dark:active:bg-blue-900/30 transition-colors relative"
-                    >
-                      <span className="truncate">{formatAddress(tx.hash)}</span>
-                      <Copy size={16} className="flex-shrink-0 opacity-60" />
-                      <AnimatePresence>
-                        {copiedHash === tx.hash && (
-                          <motion.span
-                            initial={{ opacity: 0, y: 5, scale: 0.9 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 5, scale: 0.9 }}
-                            className="absolute -top-11 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-bold shadow-xl border border-white/10 whitespace-nowrap z-50 capitalize"
-                          >
-                            {t('copied')}
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-                    </button>
-                    <a
-                      href={getExplorerUrl(tx.hash, tx.chainId || chainId || 11155111)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg active:bg-gray-200 dark:active:bg-gray-700 transition-colors"
-                    >
-                      <ExternalLink size={18} />
-                    </a>
+              {/* Transaction Actions */}
+              <div className="pt-3.5 border-t border-slate-100 dark:border-white/5 flex gap-2">
+                <button
+                  onClick={() => handleCopyHash(tx.hash)}
+                  className="flex-1 flex items-center justify-between px-4 py-3 bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/10 rounded-xl text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all font-bold text-xs relative"
+                >
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <Copy size={14} className="opacity-60 flex-shrink-0" />
+                    <span className="truncate tabular-nums opacity-80">{formatAddress(tx.hash)}</span>
                   </div>
-                </div>
+                  <AnimatePresence>
+                    {copiedHash === tx.hash && (
+                      <motion.span
+                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                        className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-bold shadow-xl border border-white/10 whitespace-nowrap z-50 capitalize"
+                      >
+                        {t('copied')}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </button>
+                <a
+                  href={getExplorerUrl(tx.hash, tx.chainId || chainId || 11155111)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center p-3 bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/10 rounded-xl text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all"
+                >
+                  <ExternalLink size={18} />
+                </a>
               </div>
             </motion.div>
           ))
@@ -1155,9 +1122,9 @@ const Transactions = () => {
         )}
       </div>
 
-      {/* Mobile-only pagination footer if needed */}
+      {/* Mobile-only pagination footer */}
       <div className="md:hidden">
-        {mergedTransactions.length > transactionsPerPage && (
+        {filteredTransactions.length > transactionsPerPage && (
           <div className="flex items-center justify-center gap-4 mt-6 pb-10">
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -1180,7 +1147,7 @@ const Transactions = () => {
         )}
       </div>
 
-    </div >
+    </div>
   );
 };
 

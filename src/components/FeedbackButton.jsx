@@ -95,20 +95,21 @@ const FeedbackButton = ({ isOpen, setIsOpen }) => {
 
                         {/* Form Content — Background Pre-loaded Logic */}
                         <div className="flex-grow relative bg-white dark:bg-black overflow-y-auto no-scrollbar touch-pan-y">
-                            {(!iframeLoaded || isSubmitting) && (
+                            {/* Loader ONLY shown during form submission - removed the connection/hydration overlay */}
+                            {isSubmitting && (
                                 <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white dark:bg-black">
                                     <div className="relative">
                                         <Loader2 size={32} className="text-blue-500 animate-spin" />
                                         <div className="absolute inset-0 blur-xl bg-blue-500/20 animate-pulse"></div>
                                     </div>
                                     <span className="mt-4 text-[11px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-[0.2em] animate-pulse">
-                                        {isSubmitting ? t('Sending...') : t('Connecting')}
+                                        {t('Sending...')}
                                     </span>
                                 </div>
                             )}
 
-                            {/* The iframe is ALWAYS mounted, so it hydrates instantly when opened */}
-                            <div className={`w-full min-h-full flex flex-col transition-all duration-300 ${iframeLoaded ? 'opacity-100' : 'opacity-0'}`}
+                            {/* The iframe is ALWAYS mounted and begins loading immediately */}
+                            <div className={`w-full min-h-full flex flex-col transition-opacity duration-300 ${iframeLoaded ? 'opacity-100' : 'opacity-0'}`}
                                 style={{
                                     filter: darkMode ? 'invert(1) hue-rotate(180deg) brightness(1.05) contrast(1.05)' : 'none',
                                     background: darkMode ? '#ffffff' : 'transparent'

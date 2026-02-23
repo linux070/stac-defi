@@ -192,7 +192,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                       <span className="text-[8px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded-md uppercase tracking-wider font-bold text-slate-400">{t('Soon')}</span>
                     )}
                     {!item.comingSoon && (
-                      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-blue-500 dark:bg-blue-400 scale-x-0 group-hover:scale-x-100 transition-all duration-300 rounded-full" />
+                      <div className="absolute bottom-[1px] left-0 right-0 h-[3px] bg-blue-500 dark:bg-blue-400 scale-x-0 group-hover:scale-x-100 transition-all duration-300 rounded-full" />
                     )}
                   </a>
                 ))
@@ -201,18 +201,15 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                   <div
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className="relative px-5 py-2 flex flex-col items-center cursor-pointer group h-full justify-center"
+                    className="relative px-5 py-2 flex flex-col items-center cursor-pointer group"
                   >
-                    <span className={`text-[14px] font-semibold transition-colors duration-300 ${activeTab === item.id ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'}`}>
+                    <span className={`text-[14px] font-semibold transition-colors duration-300 ${activeTab === item.id ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
                       {item.label}
                     </span>
-                    {activeTab !== item.id && (
-                      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-blue-500/50 dark:bg-blue-400/50 scale-x-0 group-hover:scale-x-100 transition-all duration-300 rounded-full" />
-                    )}
                     {activeTab === item.id && (
                       <motion.div
                         layoutId="activeTabUnderline"
-                        className="absolute bottom-0 left-0 right-0 h-[3px] bg-blue-500 dark:bg-blue-400 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)]"
+                        className="absolute bottom-[1px] left-0 right-0 h-[3px] bg-blue-500 dark:bg-blue-400 rounded-full"
                         initial={false}
                         transition={{ type: "spring", stiffness: 380, damping: 30 }}
                       />
@@ -227,7 +224,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                   onClick={() => setIsMoreOpen(!isMoreOpen)}
                   className="relative px-5 py-2 flex flex-col items-center cursor-pointer group h-full justify-center"
                 >
-                  <div className="flex items-center gap-1.5 transition-colors duration-300 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">
+                  <div className="flex items-center gap-1.5 transition-colors duration-300 text-slate-600 dark:text-slate-400">
                     <span className="text-[14px] font-semibold">{t('More')}</span>
                     <ChevronDown size={14} strokeWidth={2.5} className={`transition-transform duration-300 ${isMoreOpen ? 'rotate-180' : ''}`} />
                   </div>
