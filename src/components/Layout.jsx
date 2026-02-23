@@ -35,12 +35,12 @@ const SunIcon = ({ size = 18, className = "" }) => (
     <line x1="17.66" y1="6.34" x2="19.07" y2="4.93" />
   </svg>
 );
+
 const Layout = ({ children, activeTab, setActiveTab }) => {
   const { t, i18n } = useTranslation();
   const { darkMode, toggleDarkMode } = useTheme();
 
   const { isConnected, status } = useAccount();
-  const wasConnected = typeof window !== 'undefined' ? localStorage.getItem('walletConnected') === 'true' : false;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showUpdates, setShowUpdates] = useState(false);
@@ -60,14 +60,12 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
   const currentLang = languages.find(l => i18n.language.startsWith(l.code)) || languages[0];
 
-  // Reset more menu page when closed
   useEffect(() => {
     if (!isMoreOpen) {
       setTimeout(() => setMoreMenuPage('main'), 200);
     }
   }, [isMoreOpen]);
 
-  // Click outside for More dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (moreRef.current && !moreRef.current.contains(event.target)) {
@@ -78,7 +76,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Body scroll lock effect - Simplified and robust
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -90,18 +87,17 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
     };
   }, [isMenuOpen]);
 
-  // Auto-close menu and safety reset on tab/route change
   useEffect(() => {
     setIsMenuOpen(false);
     document.body.style.overflow = '';
   }, [activeTab]);
 
-  // Global listener for updates modal
   useEffect(() => {
     const handleOpenUpdates = () => setShowUpdates(true);
     window.addEventListener('open-updates', handleOpenUpdates);
     return () => window.removeEventListener('open-updates', handleOpenUpdates);
   }, []);
+
   const navItems = [
     { id: 'swap', label: t('Swap') },
     { id: 'bridge', label: t('Bridge') },
@@ -118,38 +114,24 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
   return (
     <div className={`min-h-[100dvh] flex flex-col bg-white dark:bg-black ${['home', 'swap', 'bridge'].includes(activeTab) ? 'bg-transparent' : ''}`}>
-      {/* Animated Background Gradient - Only for Swap and Bridge pages */}
       {(activeTab === 'swap' || activeTab === 'bridge') && <BackgroundGradient />}
 
-      {/* Header - Immersive full-width design */}
       <div className="fixed top-0 left-0 right-0 z-[100]">
-        {/* Mobile Header (Relay Style) - Always visible */}
         <div className="lg:hidden w-full h-16 backdrop-blur-2xl bg-transparent border-b border-white/10 dark:border-white/5 px-5 flex items-center justify-between relative z-[100] transition-colors duration-300">
-          {/* Logo Section */}
           <div className="flex items-center cursor-pointer transition-all active:scale-95 group" onClick={() => setActiveTab('home')}>
             <div className="h-7 w-5 overflow-hidden flex-shrink-0 bg-transparent transition-transform group-hover:scale-110">
-              <img
-                src="/icons/stac.png"
-                alt=""
-                className="h-7 max-w-none object-cover dark:invert"
-                style={{ objectPosition: 'left' }}
-              />
+              <img src="/icons/stac.png" alt="" className="h-7 max-w-none object-cover dark:invert" style={{ objectPosition: 'left' }} />
             </div>
             <div className="h-7 overflow-hidden flex-shrink-0 ml-1.5 bg-transparent">
-              <img
-                src="/icons/stac.png"
-                alt="Stac"
-                className="h-7 max-w-none object-cover dark:invert"
-                style={{ marginLeft: '-20px' }}
-              />
+              <img src="/icons/stac.png" alt="Stac" className="h-7 max-w-none object-cover dark:invert" style={{ marginLeft: '-20px' }} />
             </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center">
-              {activeTab === 'home' && !isConnected && status !== 'reconnecting' && status !== 'connecting' && !wasConnected ? (
+              {activeTab === 'home' && status === 'disconnected' && !isConnected ? (
                 <button
                   onClick={() => setActiveTab('swap')}
-                  className="h-[38px] px-4 rounded-lg bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition-all duration-300 font-bold text-[12px] whitespace-nowrap shadow-md shadow-blue-500/20 flex items-center justify-center group relative overflow-hidden"
+                  className="h-[38px] px-5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition-all duration-300 font-bold text-[12px] whitespace-nowrap shadow-md shadow-blue-500/20 flex items-center justify-center group relative overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                   <span className="relative z-10">{t('Launch App')}</span>
@@ -160,7 +142,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                 </div>
               )}
             </div>
-            {/* Menu Button - Always accessible */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -170,93 +151,68 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               aria-label={isMenuOpen ? t("Close Menu") : t("Open Menu")}
             >
               <div className="w-6 h-6 flex flex-col items-end justify-center gap-1.5">
-                <motion.span
-                  animate={isMenuOpen ? { rotate: 45, y: 4, width: '100%' } : { rotate: 0, y: 0, width: '100%' }}
-                  className="block h-0.5 bg-current rounded-full"
-                />
-                <motion.span
-                  animate={isMenuOpen ? { opacity: 0, x: 10 } : { opacity: 1, x: 0, width: '70%' }}
-                  className="block h-0.5 bg-current rounded-full"
-                />
-                <motion.span
-                  animate={isMenuOpen ? { rotate: -45, y: -4, width: '100%' } : { rotate: 0, y: 0, width: '100%' }}
-                  className="block h-0.5 bg-current rounded-full"
-                />
+                <motion.span animate={isMenuOpen ? { rotate: 45, y: 4, width: '100%' } : { rotate: 0, y: 0, width: '100%' }} className="block h-0.5 bg-current rounded-full" />
+                <motion.span animate={isMenuOpen ? { opacity: 0, x: 10 } : { opacity: 1, x: 0, width: '70%' }} className="block h-0.5 bg-current rounded-full" />
+                <motion.span animate={isMenuOpen ? { rotate: -45, y: -4, width: '100%' } : { rotate: 0, y: 0, width: '100%' }} className="block h-0.5 bg-current rounded-full" />
               </div>
             </button>
           </div>
         </div>
 
-        <div className="hidden lg:grid grid-cols-3 fixed top-0 left-0 right-0 h-20 items-center px-10 backdrop-blur-2xl bg-transparent border-b border-white/10 dark:border-white/5 transition-all duration-300">
-          {/* Left Section: Logo */}
+        {/* Desktop Header - Refined Nav Positions */}
+        <div className="hidden lg:grid grid-cols-[1fr_auto_1fr] fixed top-0 left-0 right-0 h-20 items-center px-10 backdrop-blur-2xl bg-transparent border-b border-white/10 dark:border-white/5 transition-all duration-300">
+          {/* Column 1: Logo */}
           <div className="flex items-center">
-            <div
-              className="flex items-center cursor-pointer transition-all hover:opacity-80 active:scale-95 flex-shrink-0 group"
-              onClick={() => setActiveTab('home')}
-            >
+            <div className="flex items-center cursor-pointer transition-all hover:opacity-80 active:scale-95 flex-shrink-0 group" onClick={() => setActiveTab('home')}>
               <div className="h-9 w-7 overflow-hidden flex-shrink-0 bg-transparent transition-transform group-hover:scale-110">
-                <img
-                  src="/icons/stac.png"
-                  alt=""
-                  className="h-9 max-w-none object-cover dark:invert"
-                  style={{ objectPosition: 'left' }}
-                />
+                <img src="/icons/stac.png" alt="" className="h-9 max-w-none object-cover dark:invert" style={{ objectPosition: 'left' }} />
               </div>
               <div className="h-9 overflow-hidden flex-shrink-0 ml-3 bg-transparent">
-                <img
-                  src="/icons/stac.png"
-                  alt="Stac"
-                  className="h-9 max-w-none object-cover dark:invert"
-                  style={{ marginLeft: '-28px' }}
-                />
+                <img src="/icons/stac.png" alt="Stac" className="h-9 max-w-none object-cover dark:invert" style={{ marginLeft: '-28px' }} />
               </div>
             </div>
           </div>
 
-          {/* Center Section: Navigation */}
-          <div className="flex justify-center items-center">
-            <div className="flex items-center gap-1">
+          {/* Column 2: Navigation Groups (Centered) */}
+          <div className="flex items-center justify-center h-full">
+            <div className="flex items-center h-full">
               {activeTab === 'home' ? (
-                // Landing Page Navigation - Underline style
                 landingNavItems.map((item, idx) => (
                   <a
                     key={idx}
                     href={item.href}
                     target={item.href.startsWith('http') ? '_blank' : undefined}
                     rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                    className="relative px-6 py-2 text-[14px] font-semibold transition-all duration-300 flex items-center whitespace-nowrap gap-2 group"
+                    className={`relative px-5 py-2 text-[14px] font-semibold transition-all duration-300 flex items-center whitespace-nowrap gap-2 group ${item.comingSoon ? 'cursor-not-allowed' : ''}`}
                   >
-                    <span className={`transition-colors duration-300 ${item.comingSoon ? 'text-slate-400 cursor-not-allowed opacity-60' : 'text-slate-600 dark:text-slate-400'}`}>
+                    <span className={`transition-colors duration-300 ${item.comingSoon ? 'text-slate-400 opacity-60' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'}`}>
                       {item.label}
                     </span>
                     {item.comingSoon && (
                       <span className="text-[8px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded-md uppercase tracking-wider font-bold text-slate-400">{t('Soon')}</span>
                     )}
-                    {/* Hover underline for links */}
                     {!item.comingSoon && (
-                      <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-blue-600 dark:bg-blue-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-full" />
+                      <div className="absolute bottom-[-10px] left-0 right-0 h-[3px] bg-blue-500 dark:bg-blue-400 scale-x-0 group-hover:scale-x-100 transition-all duration-300 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.5)]" />
                     )}
                   </a>
                 ))
               ) : (
-                // App Navigation - Underline style
                 navItems.map((item) => (
                   <div
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className="relative px-6 py-2 flex flex-col items-center cursor-pointer group"
+                    className="relative px-5 py-2 flex flex-col items-center cursor-pointer group h-full justify-center"
                   >
-                    <span className="text-[14px] font-semibold transition-colors duration-300 text-slate-600 dark:text-slate-400">
+                    <span className={`text-[14px] font-semibold transition-colors duration-300 ${activeTab === item.id ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'}`}>
                       {item.label}
                     </span>
-                    {/* Hover Underline (Desktop Only) */}
                     {activeTab !== item.id && (
-                      <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-blue-600 dark:bg-blue-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-full" />
+                      <div className="absolute bottom-[-10px] left-0 right-0 h-[3px] bg-blue-500/50 dark:bg-blue-400/50 scale-x-0 group-hover:scale-x-100 transition-all duration-300 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.3)]" />
                     )}
                     {activeTab === item.id && (
                       <motion.div
                         layoutId="activeTabUnderline"
-                        className="absolute bottom-0 left-6 right-6 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full"
+                        className="absolute bottom-[-10px] left-0 right-0 h-[3px] bg-blue-500 dark:bg-blue-400 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.5)]"
                         initial={false}
                         transition={{ type: "spring", stiffness: 380, damping: 30 }}
                       />
@@ -265,26 +221,26 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                 ))
               )}
 
-
-
-              {/* Premium More Dropdown */}
-              <div className="relative" ref={moreRef}>
-                <button
+              {/* More Tab - Minimalism (No Underline) */}
+              <div className="relative h-full flex items-center" ref={moreRef}>
+                <div
                   onClick={() => setIsMoreOpen(!isMoreOpen)}
-                  className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-[13px] font-semibold transition-colors duration-200"
+                  className="relative px-5 py-2 flex flex-col items-center cursor-pointer group h-full justify-center"
                 >
-                  <span>{t('More')}</span>
-                  <ChevronDown size={14} strokeWidth={2.5} className={`transition-transform duration-200 ${isMoreOpen ? 'rotate-180' : ''}`} />
-                </button>
+                  <div className="flex items-center gap-1.5 transition-colors duration-300 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">
+                    <span className="text-[14px] font-semibold">{t('More')}</span>
+                    <ChevronDown size={14} strokeWidth={2.5} className={`transition-transform duration-300 ${isMoreOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </div>
 
                 <AnimatePresence>
                   {isMoreOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                      initial={{ opacity: 0, y: 8, scale: 0.99 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-                      className="absolute top-full left-0 mt-4 w-[300px] z-[200] bg-white/95 dark:bg-[#0c0c0c]/95 backdrop-blur-2xl rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.4)] border border-slate-200/60 dark:border-white/10 overflow-hidden origin-top-left"
+                      exit={{ opacity: 0, y: 8, scale: 0.99 }}
+                      transition={{ duration: 0.15, ease: 'easeOut' }}
+                      className="absolute top-[85%] left-0 w-[220px] z-[2000] bg-white dark:bg-black rounded-[18px] border border-slate-200 dark:border-white/10 shadow-2xl dark:shadow-none overflow-hidden origin-top-left backdrop-blur-3xl"
                     >
                       <AnimatePresence mode="wait">
                         {moreMenuPage === 'main' ? (
@@ -295,55 +251,58 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                             exit={{ opacity: 0, x: -10 }}
                             transition={{ duration: 0.15 }}
                           >
-                            <div className="px-6 pt-6 pb-2 border-b border-gray-100/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-                              <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                            <div className="px-5 pt-5 pb-2 border-b border-gray-100/50 dark:border-white/5 bg-slate-50/50 dark:bg-black">
+                              <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 uppercase tracking-[0.2em]">
                                 {t('App Settings')}
                               </span>
                             </div>
-                            <div className="p-3">
+                            <div className="py-2">
+                              {/* What's New */}
                               <button
                                 onClick={() => {
                                   setShowUpdates(true);
                                   setIsMoreOpen(false);
                                 }}
-                                className="w-full px-3 py-3 text-left flex items-center rounded-2xl group/item transition-all duration-200 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-[0.98]"
+                                className="w-full px-5 py-2.5 text-left flex items-center group/item transition-all duration-200 hover:bg-slate-50 dark:hover:bg-white/[0.03]"
                               >
-                                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white">
-                                  <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center transition-colors group-hover/item:bg-blue-500/10 dark:group-hover/item:bg-blue-500/20">
-                                    <Bell size={18} strokeWidth={2.2} className="group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400" />
+                                <div className="flex items-center gap-3 text-slate-500 dark:text-white/60 group-hover/item:text-slate-900 dark:group-hover/item:text-white transition-colors">
+                                  <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center transition-colors group-hover/item:bg-blue-500/10 dark:group-hover/item:bg-blue-500/20">
+                                    <Bell size={16} strokeWidth={2.2} className="group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400" />
                                   </div>
-                                  <span className="text-[14px] font-bold tracking-tight">{t("What's New")}</span>
+                                  <span className="text-[13px] font-bold tracking-tight">{t("What's New")}</span>
                                 </div>
                               </button>
 
+                              {/* Feedback */}
                               <button
                                 onClick={() => {
                                   setIsFeedbackOpen(true);
                                   setIsMoreOpen(false);
                                 }}
-                                className="w-full px-3 py-3 text-left flex items-center rounded-2xl group/item transition-all duration-200 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-[0.98]"
+                                className="w-full px-5 py-2.5 text-left flex items-center group/item transition-all duration-200 hover:bg-slate-50 dark:hover:bg-white/[0.03]"
                               >
-                                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white">
-                                  <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center transition-colors group-hover/item:bg-blue-500/10 dark:group-hover/item:bg-blue-500/20">
-                                    <MessageCircle size={18} strokeWidth={2.2} className="group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400" />
+                                <div className="flex items-center gap-3 text-slate-500 dark:text-white/60 group-hover/item:text-slate-900 dark:group-hover/item:text-white transition-colors">
+                                  <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center transition-colors group-hover/item:bg-blue-500/10 dark:group-hover/item:bg-blue-500/20">
+                                    <MessageCircle size={16} strokeWidth={2.2} className="group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400" />
                                   </div>
-                                  <span className="text-[14px] font-bold tracking-tight">{t("Feedback")}</span>
+                                  <span className="text-[13px] font-bold tracking-tight">{t("Feedback")}</span>
                                 </div>
                               </button>
 
+                              {/* Language */}
                               <button
                                 onClick={() => setMoreMenuPage('language')}
-                                className="w-full px-3 py-3 text-left flex items-center justify-between rounded-2xl group/item transition-all duration-200 hover:bg-slate-50 dark:hover:bg-white/5"
+                                className="w-full px-5 py-2.5 text-left flex items-center justify-between group/item transition-all duration-200 hover:bg-slate-50 dark:hover:bg-white/[0.03]"
                               >
-                                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white">
-                                  <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center transition-colors group-hover/item:bg-blue-500/10 dark:group-hover/item:bg-blue-500/20">
-                                    <Globe size={18} strokeWidth={2.2} className="group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400" />
+                                <div className="flex items-center gap-3 text-slate-500 dark:text-white/60 group-hover/item:text-slate-900 dark:group-hover/item:text-white transition-colors">
+                                  <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center transition-colors group-hover/item:bg-blue-500/10 dark:group-hover/item:bg-blue-500/20">
+                                    <Globe size={16} strokeWidth={2.2} className="group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400" />
                                   </div>
-                                  <span className="text-[14px] font-bold tracking-tight">{t("Language")}</span>
+                                  <span className="text-[13px] font-bold tracking-tight">{t("Language")}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[11px] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-600/10 dark:bg-blue-500/10 px-2.5 py-1 rounded-lg uppercase tracking-wider">{currentLang.code}</span>
-                                  <ChevronRight size={14} className="text-slate-400 opacity-60 group-hover/item:opacity-100 group-hover/item:translate-x-0.5 transition-all text-slate-400" />
+                                  <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-600/10 dark:bg-blue-400/10 px-2 py-0.5 rounded-md uppercase tracking-wider">{currentLang.code}</span>
+                                  <ChevronRight size={12} className="text-slate-400 group-hover/item:translate-x-0.5 transition-all" />
                                 </div>
                               </button>
                             </div>
@@ -356,33 +315,31 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                             exit={{ opacity: 0, x: 10 }}
                             transition={{ duration: 0.15 }}
                           >
-                            <div className="px-6 pt-6 pb-2 border-b border-gray-100/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                            <div className="px-5 pt-5 pb-2 border-b border-gray-100/50 dark:border-white/5 bg-slate-50/50 dark:bg-black">
                               <button
                                 onClick={() => setMoreMenuPage('main')}
-                                className="flex items-center gap-2 group/back text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                className="flex items-center gap-2 group/back text-slate-400 dark:text-white/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                               >
-                                <ArrowLeft size={16} className="group-hover/back:-translate-x-0.5 transition-transform" />
-                                <span className="text-[10px] font-extrabold uppercase tracking-[0.2em]">{t('Back')}</span>
+                                <ArrowLeft size={14} className="group-hover/back:-translate-x-0.5 transition-transform" />
+                                <span className="text-[9px] font-bold uppercase tracking-[0.2em]">{t('Back')}</span>
                               </button>
                             </div>
-                            <div className="p-3">
+                            <div className="py-2">
                               {languages.map((lang) => {
                                 const isActive = i18n.language.startsWith(lang.code);
                                 return (
                                   <button
                                     key={lang.code}
-                                    onClick={() => {
-                                      i18n.changeLanguage(lang.code);
-                                    }}
-                                    className={`w-full px-3 py-3 text-left flex items-center justify-between rounded-2xl group/item transition-all duration-200 active:scale-[0.98] ${isActive ? 'bg-blue-600/5 dark:bg-blue-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                                    onClick={() => i18n.changeLanguage(lang.code)}
+                                    className={`w-full px-5 py-2.5 text-left flex items-center justify-between group/item transition-all duration-200 active:scale-[0.98] ${isActive ? 'bg-slate-100 dark:bg-white/[0.08]' : 'hover:bg-slate-50 dark:hover:bg-white/[0.03]'}`}
                                   >
                                     <div className="flex items-center gap-3">
-                                      <div className="w-8 h-8 rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm transition-transform group-hover/item:scale-110">
-                                        <img src={lang.flag} alt="" className="w-full h-full object-cover scale-[1.2]" />
+                                      <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm transition-transform group-hover/item:scale-110">
+                                        <img src={lang.flag} alt="" className="w-full h-full object-cover" />
                                       </div>
-                                      <span className={`text-[14px] font-bold tracking-tight ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-800 dark:text-slate-200 group-hover/item:text-slate-900 dark:group-hover/item:text-white transition-colors'}`}>{lang.name}</span>
+                                      <span className={`text-[13px] tracking-tight ${isActive ? 'text-slate-900 dark:text-white font-bold' : 'text-slate-500 dark:text-white/60 group-hover/item:text-slate-800 dark:group-hover/item:text-white transition-colors'}`}>{lang.name}</span>
                                     </div>
-                                    {isActive && <Check size={16} className="text-blue-600 dark:text-blue-400" />}
+                                    {isActive && <Check size={14} className="text-blue-600 dark:text-blue-400" />}
                                   </button>
                                 );
                               })}
@@ -397,12 +354,11 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             </div>
           </div>
 
-          {/* Right Section: Actions */}
-          <div className="flex items-center justify-end gap-3">
-            {/* Theme Toggle */}
+          {/* Column 3: Actions (Right) */}
+          <div className="flex items-center justify-end gap-3 h-full">
             <button
               onClick={toggleDarkMode}
-              className="h-[40px] w-[40px] flex items-center justify-center rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-200 active:scale-90 group"
+              className="h-[40px] w-[40px] flex items-center justify-center rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-200 active:scale-90 group"
               aria-label={t("Toggle Theme")}
             >
               {darkMode ? (
@@ -412,9 +368,8 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               )}
             </button>
 
-            {/* Wallet Button / Launch App */}
             <div className="flex items-center">
-              {activeTab === 'home' && !isConnected && status !== 'reconnecting' && status !== 'connecting' && !wasConnected ? (
+              {activeTab === 'home' && status === 'disconnected' && !isConnected ? (
                 <button
                   onClick={() => setActiveTab('swap')}
                   className="h-[44px] px-8 rounded-xl bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition-all duration-300 font-bold text-[13px] whitespace-nowrap shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 flex items-center justify-center group relative overflow-hidden"
@@ -435,99 +390,38 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[7000] bg-white dark:bg-black flex flex-col lg:hidden"
           >
-            {/* Absolute Close Button */}
-            <button
-              onClick={() => setIsMenuOpen(false)}
-              className="absolute top-6 right-6 p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all bg-transparent border-none z-[7001] active:scale-75"
-              aria-label={t("Close Menu")}
-            >
+            <button onClick={() => setIsMenuOpen(false)} className="absolute top-6 right-6 p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all bg-transparent border-none z-[7001] active:scale-75">
               <X size={28} strokeWidth={2} />
             </button>
-
-            {/* Scrollable Content Area */}
             <div className="flex-grow overflow-y-auto flex flex-col">
-              {/* Navigation Links - Always visible */}
               <nav className="flex flex-col items-start px-8 pt-20 pb-8 gap-1">
                 {navItems.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setIsMenuOpen(false);
-                    }}
-                    className="text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all duration-300 relative cursor-pointer w-full"
-                  >
-                    {activeTab === item.id && (
-                      <motion.div
-                        layoutId="mobile-active-indicator"
-                        className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-6 bg-blue-600 dark:bg-blue-400 rounded-full shadow-[0_0_12px_rgba(37,99,235,0.4)]"
-                      />
-                    )}
+                  <div key={item.id} onClick={() => { setActiveTab(item.id); setIsMenuOpen(false); }} className="text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all duration-300 relative cursor-pointer w-full">
+                    {activeTab === item.id && <motion.div layoutId="mobile-active-indicator" className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-6 bg-blue-600 dark:bg-blue-400 rounded-full shadow-[0_0_12px_rgba(37,99,235,0.4)]" />}
                     {item.label}
                   </div>
                 ))}
-
-                <div
-                  onClick={() => setIsThemeModalOpen(true)}
-                  className="flex items-center justify-between text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all duration-300 cursor-pointer w-full border-t border-slate-100 dark:border-white/5 mt-2 pt-5 group"
-                >
+                <div onClick={() => setIsThemeModalOpen(true)} className="flex items-center justify-between text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all duration-300 cursor-pointer w-full border-t border-slate-100 dark:border-white/5 mt-2 pt-5 group">
                   <span>{t('Theme')}</span>
                   <div className="flex items-center gap-3">
-                    <span className="px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[11px] font-bold tracking-tight shadow-sm border border-blue-100/50 dark:border-blue-800/20 group-hover:scale-105 transition-transform">
-                      {darkMode ? t('Dark') : t('Light')}
-                    </span>
-                    <ChevronRight size={20} className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-colors" />
+                    <span className="px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[11px] font-bold tracking-tight shadow-sm border border-blue-100/50 dark:border-blue-800/20">{darkMode ? t('Dark') : t('Light')}</span>
+                    <ChevronRight size={20} className="text-slate-400" />
                   </div>
                 </div>
-                <LanguageSelector
-                  placement="mobile-menu"
-                />
-
-                {/* Feedback as a Tab */}
-                <div
-                  onClick={() => setIsFeedbackOpen(true)}
-                  className="text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all duration-300 cursor-pointer w-full"
-                >
-                  {t('Feedback')}
-                </div>
-
-                {/* What's New as a Tab */}
-                <div
-                  onClick={() => {
-                    setShowUpdates(true);
-                    setIsMenuOpen(false);
-                  }}
-                  className="flex items-center justify-between text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all duration-300 cursor-pointer w-full border-t border-slate-100 dark:border-white/5 mt-2 pt-5 group"
-                >
+                <LanguageSelector placement="mobile-menu" />
+                <div onClick={() => setIsFeedbackOpen(true)} className="text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all duration-300 cursor-pointer w-full">{t('Feedback')}</div>
+                <div onClick={() => { setShowUpdates(true); setIsMenuOpen(false); }} className="flex items-center justify-between text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all duration-300 cursor-pointer w-full border-t border-slate-100 dark:border-white/5 mt-2 pt-5 group">
                   <span>{t("What's New")}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[11px] font-bold tracking-tight shadow-sm border border-blue-100/50 dark:border-blue-800/20 group-hover:scale-105 transition-transform">
-                      {t('Latest')}
-                    </span>
-                  </div>
+                  <div className="flex items-center gap-3"><span className="px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[11px] font-bold tracking-tight shadow-sm border border-blue-100/50 dark:border-blue-800/20">{t('Latest')}</span></div>
                 </div>
               </nav>
-
-              {/* Bottom Controls Area - Pushed to bottom with mt-auto */}
               <div className="mt-auto w-full flex flex-col px-8 pb-6">
                 <div className="flex flex-col items-center gap-1.5 text-slate-400 dark:text-slate-600 text-[10px] font-semibold uppercase tracking-[0.2em]">
-                  <div className="flex items-center gap-2">
-                    <span>Built by :</span>
-                    <a
-                      href="https://x.com/linux_mode"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-semibold uppercase tracking-[0.15em]"
-                    >
-                      Linux
-                    </a>
-                  </div>
+                  <div className="flex items-center gap-2"><span>Built by :</span><a href="https://x.com/linux_mode" target="_blank" rel="noopener noreferrer" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-semibold uppercase tracking-[0.15em]">Linux</a></div>
                   <span className="opacity-50 text-[8px] font-semibold tracking-[0.3em]">© 2026 Stac</span>
                 </div>
               </div>
@@ -539,48 +433,27 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
       <AnimatePresence>
         {isThemeModalOpen && (
           <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed inset-0 z-[20000] bg-white dark:bg-black flex flex-col p-6 overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-8">
-              <button onClick={() => setIsThemeModalOpen(false)} className="p-2 -ml-2 text-slate-600 dark:text-slate-300 active:scale-90 transition-all">
-                <ArrowLeft size={24} />
-              </button>
+              <button onClick={() => setIsThemeModalOpen(false)} className="p-2 -ml-2 text-slate-600 dark:text-slate-300 active:scale-90 transition-all"><ArrowLeft size={24} /></button>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('Theme')}</h2>
-              <div className="w-10" /> {/* Spacer */}
+              <div className="w-10" />
             </div>
-
             <div className="space-y-1">
               {[
-                {
-                  id: 'light',
-                  label: t('Light'),
-                  active: !darkMode,
-                  icon: <SunIcon size={20} />
-                },
-                {
-                  id: 'dark',
-                  label: t('Dark'),
-                  active: darkMode,
-                  icon: <Moon size={18} strokeWidth={2.5} />
-                }
+                { id: 'light', label: t('Light'), active: !darkMode, icon: <SunIcon size={20} /> },
+                { id: 'dark', label: t('Dark'), active: darkMode, icon: <Moon size={18} strokeWidth={2.5} /> }
               ].map((option) => (
                 <button
                   key={option.id}
-                  onClick={() => {
-                    if (option.id === 'light' && darkMode) toggleDarkMode();
-                    if (option.id === 'dark' && !darkMode) toggleDarkMode();
-                  }}
-                  className={`w-full py-4 px-2 flex items-center justify-between group transition-all
-                    ${option.active ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                  onClick={() => { if (option.id === 'light' && darkMode) toggleDarkMode(); if (option.id === 'dark' && !darkMode) toggleDarkMode(); }}
+                  className={`w-full py-4 px-2 flex items-center justify-between group transition-all ${option.active ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`${option.active ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>
-                      {option.icon}
-                    </div>
+                    <div className={`${option.active ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>{option.icon}</div>
                     <span className="text-[17px] font-semibold">{option.label}</span>
                   </div>
                   {option.active && <Check size={20} className="text-blue-600 dark:text-blue-400" />}
@@ -591,25 +464,16 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
       <main className={`flex-grow w-full ${activeTab === 'home' ? 'bg-transparent pt-0 lg:pt-0 pb-0' : ['swap', 'bridge'].includes(activeTab) ? 'bg-transparent pt-20 lg:pt-28 pb-0' : 'bg-white dark:bg-black pt-20 lg:pt-20 pb-12'} text-slate-900 dark:text-white overflow-x-hidden relative z-10 flex flex-col`}>
         {children}
       </main>
 
-      {/* Footer moved to Home.jsx for better reload synchronization */}
-
-
-      <FeedbackButton
-        isOpen={isFeedbackOpen}
-        setIsOpen={setIsFeedbackOpen}
-      />
+      {/* Global Feedback Component */}
+      <FeedbackButton isOpen={isFeedbackOpen} setIsOpen={setIsFeedbackOpen} />
 
       {/* Global Updates Modal */}
-      <UpdatesModal
-        isOpen={showUpdates}
-        onClose={() => setShowUpdates(false)}
-      />
-    </div >
+      <UpdatesModal isOpen={showUpdates} onClose={() => setShowUpdates(false)} />
+    </div>
   );
 };
 

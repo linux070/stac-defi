@@ -174,7 +174,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
     };
 
     return (
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
             {isOpen && (
                 <div className="fixed inset-0 z-[100000] overflow-hidden flex items-center justify-center p-0 sm:p-6 md:p-10">
                     {/* Backdrop */}
@@ -227,7 +227,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                 onClick={() => handleVersionSelect(idx)}
                                                 className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 group flex flex-col ${isActive
                                                     ? 'bg-blue-600 shadow-[0_8px_24px_rgba(37,99,235,0.2)] border-transparent text-white'
-                                                    : 'hover:bg-slate-100 dark:hover:bg-active-bg dark:text-slate-400 border border-transparent'
+                                                    : 'hover:bg-slate-100 dark:hover:bg-white/[0.08] dark:text-slate-400 border border-transparent'
                                                     }`}
                                             >
                                                 <div className="flex items-center justify-between w-full gap-3">
@@ -286,8 +286,8 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                 </button>
 
                                                 {/* Version Content */}
-                                                <AnimatePresence>
-                                                    {(isActive || typeof window !== 'undefined' && window.innerWidth >= 768) && (
+                                                <AnimatePresence mode="wait">
+                                                    {(isActive || (typeof window !== 'undefined' && window.innerWidth >= 768)) && (
                                                         <motion.div
                                                             initial={typeof window !== 'undefined' && window.innerWidth < 768 ? { height: 0, opacity: 0 } : { opacity: 1 }}
                                                             animate={typeof window !== 'undefined' && window.innerWidth < 768 ? { height: 'auto', opacity: 1 } : { opacity: 1 }}

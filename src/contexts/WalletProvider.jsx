@@ -24,8 +24,13 @@ export const WalletProvider = ({ children }) => {
             if (wagmiChainId) {
                 localStorage.setItem('lastChainId', wagmiChainId.toString());
             }
+        } else if (status === 'disconnected') {
+            localStorage.removeItem('walletConnected');
+            localStorage.removeItem('lastAddress');
+            localStorage.removeItem('lastDisplayName');
+            localStorage.removeItem('lastChainId');
         }
-    }, [isConnected, address, wagmiChainId]);
+    }, [isConnected, address, wagmiChainId, status]);
 
     const connectWallet = async () => {
         setIsConnecting(true);
@@ -47,6 +52,9 @@ export const WalletProvider = ({ children }) => {
         wagmiDisconnect();
         localStorage.removeItem('walletConnected');
         localStorage.removeItem('walletType');
+        localStorage.removeItem('lastAddress');
+        localStorage.removeItem('lastDisplayName');
+        localStorage.removeItem('lastChainId');
     };
 
     const fetchBalance = async () => {

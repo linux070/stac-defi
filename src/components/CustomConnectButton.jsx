@@ -72,7 +72,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                 {({ account, chain, openChainModal, openConnectModal, mounted }) => {
                     return (
                         <div
-                            {...((!mounted && !wasConnected) ? {
+                            {...((!mounted && wasConnected) ? {
                                 'aria-hidden': true,
                                 'style': {
                                     opacity: 0,
@@ -82,12 +82,11 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                             } : {})}
                         >
                             {(() => {
-                                const isReconnecting = status === 'reconnecting' || status === 'connecting';
+                                const isReconnecting = status === 'reconnecting' || (status === 'connecting' && mounted);
+                                const lastAddress = typeof window !== 'undefined' ? localStorage.getItem('lastAddress') : null;
 
-                                if (!mounted || isReconnecting || (wasConnected && (!account || !chain))) {
-                                    const lastAddress = typeof window !== 'undefined' ? localStorage.getItem('lastAddress') : null;
-                                    const displayAddr = typeof window !== 'undefined' ? localStorage.getItem('lastDisplayName') : '...';
-
+                                // Hydration/Reconnection state: Show ghost avatar ONLY if we have a real session to restore
+                                if (wasConnected && lastAddress && (!mounted || isReconnecting)) {
                                     if (isMobile) {
                                         return (
                                             <div className="w-[42px] h-[42px] rounded-full border border-slate-200/60 dark:border-white/20 bg-white/80 dark:bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-md shadow-black/5 dark:shadow-blue-500/10">
@@ -110,9 +109,9 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                     <div className="w-[30px] h-[30px] rounded-full bg-slate-200 dark:bg-white/10" />
                                                 )}
                                             </div>
-                                            <div className="flex flex-col justify-center items-start pl-1">
+                                            <div className="flex-col justify-center items-start pl-1 hidden sm:flex">
                                                 <span className="text-[14px] text-slate-700 dark:text-slate-200 font-bold tracking-tight">
-                                                    {displayAddr}
+                                                    ...
                                                 </span>
                                             </div>
                                         </div>
@@ -183,16 +182,16 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                     exit={{ y: '100%' }}
                                                                     transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
                                                                     onClick={(e) => e.stopPropagation()}
-                                                                    className="w-full max-w-[480px] bg-white/95 dark:bg-[#0c0c0c]/98 backdrop-blur-2xl rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-15px_50px_rgba(0,0,0,0.4)] border-t border-x border-slate-200/60 dark:border-white/10 overflow-hidden touch-none"
+                                                                    className="w-full max-w-[480px] bg-white dark:bg-slate-950 backdrop-blur-2xl rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-20px_60px_rgba(0,0,0,0.5)] border-t border-x border-slate-200/60 dark:border-white/10 overflow-hidden touch-none"
                                                                 >
                                                                     {/* Drag Handle */}
                                                                     <div className="flex justify-center pt-4 pb-2 active:opacity-50 transition-opacity">
                                                                         <div className="w-12 h-1.5 rounded-full bg-slate-200 dark:bg-white/20"></div>
                                                                     </div>
 
-                                                                    {/* Account Header */}
-                                                                    <div className="px-6 pt-4 pb-4 border-b border-gray-100/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-                                                                        <div className="flex items-center justify-between mb-4">
+                                                                    {/* Account Header - RESTORED SPLIT BACKGROUND COLOR (Light/Dark style) */}
+                                                                    <div className="px-6 pt-5 pb-5 border-b border-gray-100/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                                                                        <div className="flex items-center justify-between mb-5">
                                                                             <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
                                                                                 {t('Account details')}
                                                                             </span>
@@ -204,26 +203,26 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                             </button>
                                                                         </div>
 
-                                                                        <div className="flex items-center space-x-3 p-3 bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm">
+                                                                        <div className="flex items-center space-x-3 p-4 bg-white dark:bg-white/5 rounded-2xl border border-gray-200/60 dark:border-white/10 shadow-sm">
                                                                             <div className="relative">
-                                                                                <Jazzicon diameter={40} seed={jsNumberForAddress(account.address)} />
-                                                                                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full"></div>
+                                                                                <Jazzicon diameter={44} seed={jsNumberForAddress(account.address)} />
+                                                                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 border-[3px] border-white dark:border-[#0c0c0c] rounded-full"></div>
                                                                             </div>
                                                                             <div className="flex-1 overflow-hidden">
-                                                                                <div className="text-[18px] font-bold text-slate-900 dark:text-white truncate font-['Satoshi','Inter',sans-serif] tracking-tight">
+                                                                                <div className="text-[19px] font-bold text-slate-900 dark:text-white truncate font-['Satoshi','Inter',sans-serif] tracking-tight">
                                                                                     {shortenAddress(account.address)}
                                                                                 </div>
-                                                                                <div className="text-[10px] text-slate-900 dark:text-white font-medium uppercase tracking-widest">
+                                                                                <div className="text-[10px] text-slate-900/60 dark:text-white/40 font-bold uppercase tracking-widest mt-0.5">
                                                                                     {t('Connected')}
                                                                                 </div>
                                                                             </div>
 
-                                                                            <div className="flex items-center space-x-1.5">
+                                                                            <div className="flex items-center space-x-2">
                                                                                 <button
                                                                                     onClick={handleCopyAddress}
-                                                                                    className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 relative border border-transparent hover:border-blue-200 dark:hover:border-blue-500/20 active:scale-90"
+                                                                                    className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 relative border border-transparent hover:border-blue-200 dark:hover:border-blue-500/20 active:scale-90"
                                                                                 >
-                                                                                    <Copy size={16} />
+                                                                                    <Copy size={18} />
                                                                                     <AnimatePresence>
                                                                                         {copied && (
                                                                                             <motion.span
@@ -240,16 +239,16 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                                 </button>
                                                                                 <button
                                                                                     onClick={() => { disconnect(); setShowDropdown(false); }}
-                                                                                    className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-red-500 border border-transparent hover:border-red-200 dark:hover:border-red-500/20 active:scale-90"
+                                                                                    className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-red-500 border border-transparent hover:border-red-200 dark:hover:border-red-500/20 active:scale-90"
                                                                                 >
-                                                                                    <LogOut size={16} />
+                                                                                    <LogOut size={18} />
                                                                                 </button>
                                                                             </div>
                                                                         </div>
                                                                     </div>
 
-                                                                    {/* Networks */}
-                                                                    <div className="p-2 bg-white dark:bg-[#0c0c0c]">
+                                                                    {/* Networks - Cleaned area */}
+                                                                    <div className="p-2 bg-transparent">
                                                                         <div className="px-6 py-4">
                                                                             <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
                                                                                 {t('Select Network')}
@@ -302,7 +301,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                     </div>
 
                                                                     {/* Safe bottom padding for phones with home bar */}
-                                                                    <div className="h-8 bg-white dark:bg-[#0c0c0c]"></div>
+                                                                    <div className="h-8 bg-transparent"></div>
                                                                 </motion.div>
                                                             </motion.div>
                                                         )}
