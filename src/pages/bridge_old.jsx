@@ -102,7 +102,7 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
             {/* Premium Search Bar - Modern DeFi Style */}
             <div className="px-5 py-4">
               <div className="relative group">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors duration-200">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-black dark:text-white transition-colors duration-200">
                   <Search size={16} />
                 </div>
                 <input
@@ -111,7 +111,7 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
                   placeholder={t('Search network name or paste address')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-2xl pl-11 pr-4 py-3 text-[14px] outline-none group-hover:bg-white dark:group-hover:bg-white/[0.06] focus:bg-white dark:focus:bg-white/[0.08] focus:border-blue-500/40 focus:ring-4 focus:ring-blue-500/5 transition-all duration-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
+                  className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-2xl pl-11 pr-4 py-3 text-[14px] outline-none group-hover:bg-white dark:group-hover:bg-white/[0.06] focus:bg-white dark:focus:bg-white/[0.08] focus:border-black dark:border-white focus:ring-4 focus:ring-black dark:ring-white transition-all duration-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
                 />
               </div>
             </div>
@@ -855,7 +855,7 @@ const Bridge = () => {
             className="add-arc-button group relative flex items-center gap-2"
             aria-label="Add Arc Testnet to Wallet"
           >
-            <Wallet size={14} className="text-indigo-500 group-hover:text-blue-500 transition-colors" />
+            <Wallet size={14} className="text-slate-500 group-hover:text-black dark:text-white transition-colors" />
             <span>{t('Add Arc')}</span>
             <AnimatePresence>
               {showNetworkSuccess && (
@@ -863,10 +863,10 @@ const Bridge = () => {
                   initial={{ opacity: 0, scale: 0.9, x: 10 }}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.9, x: 10 }}
-                  className="absolute top-1/2 -translate-y-1/2 right-[calc(100%+12px)] sm:top-[-8px] sm:translate-y-0 sm:left-[calc(100%+12px)] sm:right-auto bg-indigo-600 dark:bg-indigo-500 px-3 py-2 rounded-xl shadow-[0_8px_20px_rgba(79,70,229,0.4)] flex items-center gap-2.5 z-50 border border-white/10 min-w-max"
+                  className="absolute top-1/2 -translate-y-1/2 right-[calc(100%+12px)] sm:top-[-8px] sm:translate-y-0 sm:left-[calc(100%+12px)] sm:right-auto bg-slate-500 dark:bg-slate-500 px-3 py-2 rounded-xl shadow-[0_8px_20px_rgba(128, 128, 128,0.4)] flex items-center gap-2.5 z-50 border border-white/10 min-w-max"
                 >
-                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-400 flex items-center justify-center shadow-sm">
-                    <Check size={12} className="text-indigo-900 stroke-[3.5]" />
+                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-500 flex items-center justify-center shadow-sm">
+                    <Check size={12} className="text-slate-500 stroke-[3.5]" />
                   </div>
                   <span className="text-[12px] font-bold text-white tracking-tight leading-none whitespace-nowrap">
                     {t('Network added successfully')}

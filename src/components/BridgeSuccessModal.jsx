@@ -98,7 +98,7 @@ const BridgeSuccessModal = ({ isOpen, onClose, fromChain, toChain, amount, timeT
                                         href={explorerUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="group flex items-center justify-center gap-2.5 w-full py-3.5 bg-slate-50/50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/10 rounded-2xl text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all duration-300 font-bold text-[13px] mb-6 tracking-tight"
+                                        className="group flex items-center justify-center gap-2.5 w-full py-3.5 bg-slate-50/50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/10 rounded-2xl text-slate-600 dark:text-slate-400 hover:text-black dark:text-white dark:hover:text-black dark:text-white hover:border-black dark:border-white hover:bg-slate-50 dark:bg-black dark:hover:bg-black dark:bg-white transition-all duration-300 font-bold text-[13px] mb-6 tracking-tight"
                                     >
                                         <ExternalLink size={14} className="opacity-60 group-hover:opacity-100 transition-opacity" />
                                         {t('View on Explorer')}

@@ -58,13 +58,13 @@ const WalletModal = ({ isOpen, onClose }) => {
                     {connector.icon ? (
                       <img src={connector.icon} alt={connector.name} className="w-full h-full object-contain" />
                     ) : (
-                      <div className="w-full h-full bg-blue-500/10 rounded-lg" />
+                      <div className="w-full h-full bg-black dark:bg-white rounded-lg" />
                     )}
                   </div>
                   <span className="font-bold text-gray-900 dark:text-white capitalize">{connector.name}</span>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center transition-transform group-hover:translate-x-1">
-                  <span className="text-blue-500">→</span>
+                  <span className="text-black dark:text-white">→</span>
                 </div>
               </button>
             ))}

@@ -1,8 +1,8 @@
 // theme stac  configuration (i suffered a lil bit).
 export const lightTheme = {
   font: 'Inter, system-ui, sans-serif',
-  primaryColor: '#3b82f6',
-  focusColor: '#2563eb',
+  primaryColor: '#000000',
+  focusColor: '#374151',
   text: {
     default: '#111827',
     subtle: '#6b7280',
@@ -20,17 +20,17 @@ export const lightTheme = {
   buttons: {
     primary: {
       color: '#ffffff',
-      background: '#3b82f6',
+      background: '#000000',
       hover: {
         color: '#ffffff',
-        background: '#2563eb',
+        background: '#374151',
       },
     },
     secondary: {
-      color: '#3b82f6',
+      color: '#000000',
       background: '#ffffff',
       hover: {
-        color: '#2563eb',
+        color: '#111827',
         background: '#f9fafb',
       },
     },
@@ -44,8 +44,8 @@ export const lightTheme = {
 
 export const darkTheme = {
   font: 'Inter, system-ui, sans-serif',
-  primaryColor: '#60a5fa',
-  focusColor: '#3b82f6',
+  primaryColor: '#ffffff',
+  focusColor: '#d1d5db',
   text: {
     default: '#f9fafb',
     subtle: '#d1d5db',
@@ -63,17 +63,17 @@ export const darkTheme = {
   buttons: {
     primary: {
       color: '#020617',
-      background: '#60a5fa',
+      background: '#ffffff',
       hover: {
         color: '#020617',
-        background: '#3b82f6',
+        background: '#e5e7eb',
       },
     },
     secondary: {
-      color: '#60a5fa',
+      color: '#ffffff',
       background: '#1e293b',
       hover: {
-        color: '#93c5fd',
+        color: '#f3f4f6',
         background: '#334155',
       },
     },

@@ -36,7 +36,7 @@ class ErrorBoundary extends Component {
                         <AlertTriangle size={32} />
                     </div>
 
-                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                    <h3 className="text-xl sm:text-2xl font-bold text-black dark:text-white mb-3">
                         {this.props.title || "Unable to load content"}
                     </h3>
 
@@ -46,7 +46,7 @@ class ErrorBoundary extends Component {
 
                     <button
                         onClick={() => window.location.reload()}
-                        className="px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm transition-all hover:opacity-90 active:scale-95"
+                        className="px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm transition-all hover:opacity-90 active:scale-95"
                     >
                         Reload
                     </button>

@@ -245,15 +245,15 @@ const NotificationBell = ({ placement = 'header' }) => {
             <button
                 onClick={toggleOpen}
                 className={`h-[44px] relative px-3.5 rounded-2xl border transition-all duration-300 active:scale-95 group flex items-center gap-2.5 backdrop-blur-xl font-medium ${isOpen
-                    ? 'bg-white dark:bg-white/10 border-blue-500/40 dark:border-blue-400/40 text-blue-600 dark:text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.1)]'
-                    : 'bg-slate-50/50 dark:bg-white/5 border-slate-200/60 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10 hover:border-blue-500/30 dark:hover:border-blue-400/30 hover:shadow-sm'
+                    ? 'bg-white dark:bg-white/10 border-black dark:border-white dark:border-black dark:border-white text-black dark:text-white dark:text-black dark:text-white shadow-[0_0_15px_rgba(128, 128, 128,0.1)]'
+                    : 'bg-slate-50/50 dark:bg-white/5 border-slate-200/60 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10 hover:border-black dark:border-white dark:hover:border-black dark:border-white hover:shadow-sm'
                     }`}
                 aria-label={t("Toggle Notifications")}
             >
                 <div className="relative flex items-center justify-center">
                     <Bell
                         size={placement === 'mobile' ? 22 : 18}
-                        className={`${isOpen ? 'text-blue-500' : ''} transition-transform group-hover:rotate-12`}
+                        className={`${isOpen ? 'text-black dark:text-white' : ''} transition-transform group-hover:rotate-12`}
                     />
 
                     {/* Notification Badge */}
@@ -264,7 +264,7 @@ const NotificationBell = ({ placement = 'header' }) => {
 
                 {/* Text inside the button (Desktop only) */}
                 {placement === 'header' && (
-                    <span className={`text-[14px] font-bold tracking-tight hidden xl:block ${isOpen ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}>
+                    <span className={`text-[14px] font-bold tracking-tight hidden xl:block ${isOpen ? 'text-black dark:text-white dark:text-black dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
                         {t("What's New")}
                     </span>
                 )}
@@ -284,7 +284,7 @@ const NotificationBell = ({ placement = 'header' }) => {
                         {/* Dropdown Header */}
                         <div className="p-6 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5 bg-slate-50/30 dark:bg-white/[0.01]">
                             <div className="flex flex-col">
-                                <h4 className="text-[20px] font-bold tracking-tight text-slate-900 dark:text-white leading-none mb-2">{t("What's New?")}</h4>
+                                <h4 className="text-[20px] font-bold tracking-tight text-black dark:text-white leading-none mb-2">{t("What's New?")}</h4>
                                 <div className="flex items-center gap-2">
                                     <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-[0.1em]">{t("Latest Updates on Stac")}</p>
                                 </div>
@@ -305,7 +305,7 @@ const NotificationBell = ({ placement = 'header' }) => {
                                         onClick={() => toggleVersion(versionGroup.version)}
                                         className="w-full flex items-center justify-between px-5 py-3 rounded-2xl hover:bg-slate-100/50 dark:hover:bg-white/5 transition-colors group"
                                     >
-                                        <span className="text-[13px] font-bold font-['Inter'] text-slate-900 dark:text-white tracking-tight whitespace-pre">{versionGroup.version}</span>
+                                        <span className="text-[13px] font-bold font-['Inter'] text-black dark:text-white tracking-tight whitespace-pre">{versionGroup.version}</span>
                                         <div className={`transition-transform duration-300 ${expandedVersions.includes(versionGroup.version) ? 'rotate-180' : ''}`}>
                                             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                 <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -328,10 +328,10 @@ const NotificationBell = ({ placement = 'header' }) => {
                                                             className="px-5 py-3 rounded-[24px] transition-all cursor-pointer group/item relative overflow-hidden"
                                                         >
                                                             <div className="flex gap-4 relative z-10">
-                                                                <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-slate-900 dark:bg-white mt-2 opacity-60" />
+                                                                <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-black dark:bg-white mt-2 opacity-60" />
                                                                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                                                                     <div className="flex items-center justify-between mb-0.5">
-                                                                        <h4 className="text-[15px] font-bold text-slate-900 dark:text-white truncate tracking-tight">
+                                                                        <h4 className="text-[15px] font-bold text-black dark:text-white truncate tracking-tight">
                                                                             {update.title}
                                                                         </h4>
                                                                         <span className="text-[10px] text-slate-600 dark:text-slate-300 font-bold lowercase bg-slate-100 dark:bg-white/10 px-2 py-0.5 rounded-lg ml-3 whitespace-nowrap">

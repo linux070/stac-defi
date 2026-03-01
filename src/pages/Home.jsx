@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrendingUp, Wallet, Network, ArrowLeftRight, Activity, ShieldCheck, Zap, ArrowRight, Code2, Layers, Droplets, ArrowRightLeft } from 'lucide-react';
-import { motion, useMotionValue, useSpring } from 'framer-motion';
+import { TrendingUp, Wallet, Network, Activity, ShieldCheck, Zap, ArrowRight, Code2, Layers, Droplets, ArrowRightLeft, ArrowUp, RefreshCw } from 'lucide-react';
+import { motion, useMotionValue, useSpring, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { formatCurrency, formatNumber } from '../utils/blockchain';
 import { useDappTransactionCount } from '../hooks/useDappTransactionCount';
 import { useDappBridgeCount } from '../hooks/useDappBridgeCount';
@@ -13,9 +13,11 @@ import { useTotalValueProcessed } from '../hooks/useTotalValueProcessed';
 
 import { useTransactionHistory } from '../hooks/useTransactionHistory';
 import LanguageSelector from '../components/LanguageSelector';
+import { useTheme } from '../hooks/useTheme';
 
 const Home = ({ setActiveTab }) => {
   const { t } = useTranslation();
+  const { darkMode } = useTheme();
   const { fetchGlobalStats } = useTransactionHistory();
   const { transactionCount, change, trend } = useDappTransactionCount();
   const { bridgeCount, change: bridgeChange, trend: bridgeTrend } = useDappBridgeCount();
@@ -119,6 +121,31 @@ const Home = ({ setActiveTab }) => {
     }
   }, [totalVolume, volumeLoading]);
 
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
+
+  // Scroll to top visibility logic
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show button after scrolling down 400px
+      if (window.scrollY > 400) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: shouldReduceMotion ? 'auto' : 'smooth'
+    });
+  };
+
   // Update total value processed when real data is available
   useEffect(() => {
     if (totalValue !== null && !tvpLoading) {
@@ -178,7 +205,7 @@ const Home = ({ setActiveTab }) => {
       rawValue: stats.tvl.value,
       formatFn: (val) => formatCurrency(val, 0),
       lucideIcon: TrendingUp,
-      iconColor: 'blue',
+      iconColor: 'primary',
       suffix: 'USD'
     },
     {
@@ -186,7 +213,7 @@ const Home = ({ setActiveTab }) => {
       label: t('Swap Volume'),
       rawValue: stats.volume.value,
       formatFn: (val) => formatCurrency(val, 0),
-      lucideIcon: ArrowLeftRight,
+      lucideIcon: RefreshCw,
       iconColor: 'indigo',
       suffix: 'USD'
     },
@@ -228,57 +255,32 @@ const Home = ({ setActiveTab }) => {
     },
   ];
 
-  const getIconColor = (color) => {
-    const colors = {
-      blue: 'text-blue-500',
-      indigo: 'text-indigo-500',
-      purple: 'text-purple-500',
-      orange: 'text-orange-500',
-      pink: 'text-pink-500',
-      green: 'text-emerald-500'
-    };
-    return colors[color] || 'text-blue-500';
+  const getIconColor = () => {
+    return 'text-slate-900 dark:text-white opacity-80';
   };
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       {/* Hero Section */}
-      <section className="relative pt-32 pb-16 overflow-hidden flex flex-col items-center justify-center border-b border-slate-100 dark:border-white/5 bg-[#eaf0f8] dark:bg-[#020617] hero-blueprint-grid">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {/* Main Blueprint Crosshair (Dashed) */}
-          <div className="absolute inset-0">
-            {/* Horizontal Dashed Axis */}
-            <div className="absolute top-1/2 left-0 right-0 h-[1.5px] border-t border-dashed border-blue-500/30 dark:border-blue-400/20"></div>
-            {/* Vertical Dashed Axis */}
-            <div className="absolute left-1/2 top-0 bottom-0 w-[1.5px] border-l border-dashed border-blue-500/30 dark:border-blue-400/20"></div>
+      <section className="relative pt-32 pb-16 overflow-hidden flex flex-col items-center justify-center bg-white dark:bg-black dark:border-b dark:border-white/5 hero-blueprint-grid">
+        {/* Dark Mode Background Blobs (Exactly Matched with Swap Page / BackgroundGradient.jsx) */}
+        <div className="hidden dark:block absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Primary Glow */}
+          <div className="absolute top-[-15%] left-[-10%] w-[700px] h-[700px] bg-white rounded-full mix-blend-plus-lighter filter blur-[120px] opacity-70 animate-blob" style={{ willChange: 'transform' }}></div>
 
-            {/* Major Grid Lines Readout (Technical detail) */}
-            <div className="absolute top-[20%] left-0 right-0 h-[0.5px] bg-blue-500/15 dark:bg-blue-400/10"></div>
-            <div className="absolute bottom-[20%] left-0 right-0 h-[0.5px] bg-blue-500/15 dark:bg-blue-400/10"></div>
-          </div>
+          {/* Secondary Blobs */}
+          <div className="absolute top-[5%] left-[5%] w-[500px] h-[500px] bg-slate-800/30 rounded-full mix-blend-plus-lighter filter blur-[100px] opacity-20 animate-blob animation-delay-3000" style={{ willChange: 'transform' }}></div>
+          <div className="absolute top-[-10%] right-[10%] w-[600px] h-[600px] bg-slate-800/20 rounded-full mix-blend-plus-lighter filter blur-[120px] opacity-20 animate-blob" style={{ willChange: 'transform' }}></div>
+          <div className="absolute bottom-[-15%] right-[-10%] w-[800px] h-[800px] bg-slate-900/40 rounded-full mix-blend-plus-lighter filter blur-[130px] opacity-20 animate-blob animation-delay-2000" style={{ willChange: 'transform' }}></div>
+          <div className="absolute bottom-[15%] right-[5%] w-[600px] h-[600px] bg-slate-800/25 rounded-full mix-blend-plus-lighter filter blur-[110px] opacity-20 animate-blob animation-delay-5000" style={{ willChange: 'transform' }}></div>
 
-          {/* Technical Coordination Text - Hidden on small mobile */}
-          <div className="hidden sm:block absolute top-24 right-10 text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-[0.25em] leading-relaxed text-right uppercase">
-            {t('COORDS')}: 34.0522° N<br />118.2437° W
-          </div>
+          {/* Center Ambient Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-white filter blur-[150px] opacity-30 pointer-events-none"></div>
 
-          <div className="absolute bottom-12 left-6 sm:left-10 md:left-24 text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-[0.25em] uppercase">
-            X: 1.02
-          </div>
-
-          <div className="absolute bottom-12 right-6 sm:right-10 md:right-24 text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-[0.25em] uppercase text-right">
-            Y: 4.88
-          </div>
-
-          {/* Top Left Decoration Element */}
-          <div className="absolute top-32 left-10 md:left-24 flex items-center gap-6">
-            <div className="h-[0.5px] w-24 bg-slate-200 dark:bg-white/10"></div>
-            <div className="flex gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-500/20 dark:bg-blue-400/20"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-500/20 dark:bg-blue-400/20"></div>
-            </div>
-          </div>
+          {/* Grain Texture Overlay */}
+          <div className="absolute inset-0 opacity-[0.06] pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}></div>
         </div>
+        {/* Blueprint Decorative Elements Removed */}
 
         <div className="relative z-10 text-center max-w-6xl mx-auto px-6 pt-4 pb-10">
           {/* Main Title with HUD Brackets */}
@@ -293,7 +295,7 @@ const Home = ({ setActiveTab }) => {
               animate={{ opacity: 1, scale: 1 }}
               className="text-4xl sm:text-6xl md:text-[60px] lg:text-[75px] xl:text-[85px] font-bold tracking-tighter text-[#0f172a] dark:text-white leading-[1.1] sm:leading-[0.82] mb-0 md:whitespace-nowrap"
             >
-              {t('Home of DeFi on')} <span className="text-blue-600 dark:text-blue-500">{t('Arc')}</span>
+              {t('Home of DeFi on')} <span className="text-black dark:text-white dark:text-white">{t('Arc')}</span>
             </motion.h1>
           </div>
 
@@ -303,7 +305,7 @@ const Home = ({ setActiveTab }) => {
             transition={{ delay: 0.2 }}
             className="text-lg md:text-xl text-slate-500 dark:text-slate-400 mt-6 mb-8 max-w-2xl mx-auto leading-relaxed"
           >
-            {t('Swap tokens, bridge assets, and provide liquidity with')} <span className="text-slate-900 dark:text-white font-semibold">{t('zero friction')}</span>. {t('Built on')} <span className="text-blue-600 dark:text-blue-500 font-medium">{t('Arc\'s')}</span> {t('enterprise-grade infrastructure.')}
+            {t('Swap tokens, bridge assets, and provide liquidity with')} <span className="text-black dark:text-white font-semibold">{t('zero friction')}</span>. {t('Built on')} <span className="text-black dark:text-white dark:text-white font-medium">{t('Arc\'s')}</span> {t('enterprise-grade infrastructure.')}
           </motion.p>
 
           <motion.div
@@ -314,7 +316,7 @@ const Home = ({ setActiveTab }) => {
           >
             <button
               onClick={handleGetStarted}
-              className="w-full sm:w-52 h-16 bg-blue-500 text-white rounded-2xl font-bold hover:bg-blue-600 active:scale-[0.97] transition-all duration-300 flex items-center justify-center space-x-2 text-lg shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 group"
+              className="w-full sm:w-52 h-16 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold hover:bg-black dark:bg-white active:scale-[0.97] transition-all duration-300 flex items-center justify-center space-x-2 text-lg group"
             >
               <span>{t('Get Started')}</span>
               <ArrowRight size={22} strokeWidth={2.5} className="group-hover:translate-x-1 transition-transform" />
@@ -342,10 +344,10 @@ const Home = ({ setActiveTab }) => {
               { label: t('Best Execution') }
             ].map((feature, i) => (
               <div key={i} className="flex flex-col items-center">
-                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-[0.2em] sm:tracking-[0.3em]">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 dark:text-white uppercase tracking-[0.2em] sm:tracking-[0.3em]">
                   {feature.label}
                 </span>
-                <div className="w-8 sm:w-10 h-0.5 bg-blue-500/50 mt-3 sm:mt-4 rounded-full"></div>
+                <div className="w-8 sm:w-10 h-0.5 bg-black dark:bg-white mt-3 sm:mt-4 rounded-full"></div>
               </div>
             ))}
           </motion.div>
@@ -371,8 +373,8 @@ const Home = ({ setActiveTab }) => {
               transition={{ delay: index * 0.05 }}
               className="flex flex-col items-center text-center"
             >
-              <div className={`mb-4 ${getIconColor(stat.iconColor)}`}>
-                <stat.lucideIcon size={24} strokeWidth={2.5} />
+              <div className={`mb-4 ${getIconColor()}`}>
+                <stat.lucideIcon size={24} strokeWidth={2} />
               </div>
               <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">{stat.label}</p>
               <div className="flex flex-col items-center">
@@ -404,7 +406,7 @@ const Home = ({ setActiveTab }) => {
               { name: t('ECR Token'), icon: '/icons/ecr.png', symbol: 'ECR' }
             ].map((token) => (
               <div key={token.name} className="group flex flex-col items-center text-center min-w-[100px]">
-                <div className="w-16 h-16 rounded-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 flex items-center justify-center mb-4 transition-all duration-300 group-hover:border-blue-500/50 group-hover:shadow-lg group-hover:shadow-blue-500/10 group-hover:-translate-y-1 overflow-hidden">
+                <div className="w-16 h-16 rounded-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 flex items-center justify-center mb-4 transition-all duration-300 group-hover:border-black dark:border-white group-hover:shadow-lg group-hover:shadow-black dark:shadow-white group-hover:-translate-y-1 overflow-hidden">
                   <img src={token.icon} alt={token.name} className="w-10 h-10 object-contain dark:invert-0" />
                 </div>
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{token.name}</span>
@@ -428,26 +430,26 @@ const Home = ({ setActiveTab }) => {
             {
               title: t('Swap Assets'),
               desc: t('Exchange digital assets with sub-second finality and the lowest gas fees in the industry using our optimized liquidity routes.'),
-              icon: ArrowLeftRight,
-              bg: 'bg-blue-50 dark:bg-blue-500/10',
-              iconColor: 'text-blue-600'
+              icon: RefreshCw,
+              bg: 'bg-slate-50 dark:bg-black dark:bg-[#131720]',
+              iconColor: 'text-black dark:text-white'
             },
             {
               title: t('Bridge Tokens'),
               desc: t('Seamlessly move your assets across multiple chains with institutional-grade security and minimal friction.'),
               icon: ArrowRightLeft,
-              bg: 'bg-indigo-50 dark:bg-indigo-500/10',
-              iconColor: 'text-indigo-600'
+              bg: 'bg-slate-50 dark:bg-black dark:bg-[#131720]',
+              iconColor: 'text-black dark:text-white'
             },
             {
               title: t('Provide Liquidity'),
               desc: t('Earn protocol fees'),
               icon: Droplets,
-              bg: 'bg-blue-50 dark:bg-blue-500/10',
-              iconColor: 'text-blue-600'
+              bg: 'bg-slate-50 dark:bg-black dark:bg-[#131720]',
+              iconColor: 'text-black dark:text-white'
             }
           ].map((step, i) => (
-            <div key={i} className="flex flex-col items-start p-8 rounded-3xl bg-slate-50 dark:bg-[#020617] border border-slate-100 dark:border-white/5 transition-all duration-300 hover:border-blue-500/30">
+            <div key={i} className="flex flex-col items-start p-8 rounded-3xl bg-slate-50 dark:bg-[#020617] border border-slate-100 dark:border-white/5 transition-all duration-300 hover:border-black dark:hover:border-white">
               <div className={`w-12 h-12 flex items-center justify-center rounded-xl ${step.bg} mb-8`}>
                 <step.icon size={20} className={step.iconColor} />
               </div>
@@ -475,28 +477,28 @@ const Home = ({ setActiveTab }) => {
               title: t('Lightning Fast'),
               desc: t('Experience sub-second finality on every transaction. Our proprietary consensus mechanism ensures your trades are executed at the speed of thought.'),
               icon: Zap,
-              iconColor: 'text-blue-500'
+              iconColor: 'text-black dark:text-white'
             },
             {
               title: t('Institutional Security'),
               desc: t('Benefit from multi-layered security protocols and battle-tested smart contracts audited by the world\'s leading firms.'),
               icon: ShieldCheck,
-              iconColor: 'text-blue-500'
+              iconColor: 'text-black dark:text-white'
             },
             {
               title: t('Zero Friction'),
               desc: t('Removal of DeFi complexity. Pay gas fees in USDC, enjoy automated portfolio management, and bridge assets seamlessly.'),
               icon: Layers,
-              iconColor: 'text-blue-500'
+              iconColor: 'text-black dark:text-white'
             },
             {
               title: t('Developer Friendly'),
               desc: t('Build on Arc with ease using our comprehensive SDKs, robust documentation, and modular API architecture.'),
               icon: Code2,
-              iconColor: 'text-blue-500'
+              iconColor: 'text-black dark:text-white'
             }
           ].map((feature, i) => (
-            <div key={i} className="flex flex-col items-start p-10 rounded-3xl bg-slate-50 dark:bg-[#131720] border border-slate-100 dark:border-white/5 transition-all duration-300 hover:border-blue-500/30 group">
+            <div key={i} className="flex flex-col items-start p-10 rounded-3xl bg-slate-50 dark:bg-[#131720] border border-slate-100 dark:border-white/5 transition-all duration-300 hover:border-black dark:hover:border-white group">
               <div className="mb-6">
                 <feature.icon size={20} className={feature.iconColor} />
               </div>
@@ -533,32 +535,32 @@ const Home = ({ setActiveTab }) => {
 
             {/* Product Column */}
             <div className="flex flex-col items-start">
-              <h4 className="font-bold text-slate-900 dark:text-white mb-6 uppercase tracking-wider text-xs">{t('Product')}</h4>
+              <h4 className="font-bold text-black dark:text-white mb-6 uppercase tracking-wider text-xs">{t('Product')}</h4>
               <ul className="space-y-4 text-left">
-                <li><button onClick={() => setActiveTab('swap')} className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">{t('Swap')}</button></li>
-                <li><button onClick={() => setActiveTab('bridge')} className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">{t('Bridge')}</button></li>
+                <li><button onClick={() => setActiveTab('swap')} className="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 text-sm font-medium">{t('Swap')}</button></li>
+                <li><button onClick={() => setActiveTab('bridge')} className="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 text-sm font-medium">{t('Bridge')}</button></li>
                 <li><button onClick={() => setActiveTab('liquidity')} className="text-slate-400 dark:text-slate-500 cursor-not-allowed text-sm flex items-center gap-2">{t('Liquidity')} <span className="text-[10px] opacity-60 uppercase tracking-widest">{t('Soon')}</span></button></li>
               </ul>
             </div>
 
             {/* Developers Column */}
             <div className="flex flex-col items-start">
-              <h4 className="font-bold text-slate-900 dark:text-white mb-6 uppercase tracking-wider text-xs">{t('Developers')}</h4>
+              <h4 className="font-bold text-black dark:text-white mb-6 uppercase tracking-wider text-xs">{t('Developers')}</h4>
               <ul className="space-y-4 text-left">
-                <li><a href="https://docs.arc.network" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">{t('Documentation')}</a></li>
-                <li><a href="https://www.arc.network/ecosystem" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">{t('Ecosystem')}</a></li>
-                <li><a href="https://community.arc.network/" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">{t('Community')}</a></li>
+                <li><a href="https://docs.arc.network" className="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 text-sm font-medium">{t('Documentation')}</a></li>
+                <li><a href="https://www.arc.network/ecosystem" className="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 text-sm font-medium">{t('Ecosystem')}</a></li>
+                <li><a href="https://community.arc.network/" className="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 text-sm font-medium">{t('Community')}</a></li>
               </ul>
             </div>
 
             {/* App Settings */}
             <div className="flex flex-col items-start">
-              <h4 className="font-bold text-slate-900 dark:text-white mb-6 uppercase tracking-wider text-xs">{t('App Settings')}</h4>
+              <h4 className="font-bold text-black dark:text-white mb-6 uppercase tracking-wider text-xs">{t('App Settings')}</h4>
               <ul className="space-y-4 text-left">
                 <li>
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent('open-updates'))}
-                    className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm"
+                    className="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 text-sm font-medium"
                   >
                     {t("What's New")}
                   </button>
@@ -571,12 +573,12 @@ const Home = ({ setActiveTab }) => {
 
             {/* Socials Column */}
             <div className="flex flex-col items-start">
-              <h4 className="font-bold text-slate-900 dark:text-white mb-6 uppercase tracking-wider text-xs">{t('Socials')}</h4>
+              <h4 className="font-bold text-black dark:text-white mb-6 uppercase tracking-wider text-xs">{t('Socials')}</h4>
               <ul className="space-y-4 text-left">
-                <li><a href="https://x.com/stac_defi" target="_blank" rel="noopener noreferrer" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">{t('Twitter')}</a></li>
-                <li><a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">{t('Discord')}</a></li>
-                <li><a href="#" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">{t('Telegram')}</a></li>
-                <li><a href="https://github.com/linux070/stac-defi" target="_blank" rel="noopener noreferrer" className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">{t('GitHub')}</a></li>
+                <li><a href="https://x.com/stac_defi" target="_blank" rel="noopener noreferrer" className="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 text-sm font-medium">{t('Twitter')}</a></li>
+                <li><a href="#" className="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 text-sm font-medium">{t('Discord')}</a></li>
+                <li><a href="#" className="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 text-sm font-medium">{t('Telegram')}</a></li>
+                <li><a href="https://github.com/linux070/stac-defi" target="_blank" rel="noopener noreferrer" className="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 text-sm font-medium">{t('GitHub')}</a></li>
               </ul>
             </div>
           </div>
@@ -596,7 +598,7 @@ const Home = ({ setActiveTab }) => {
                     href="https://x.com/linux_mode"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="transition-colors font-semibold uppercase tracking-[0.15em]"
+                    className="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 font-bold uppercase tracking-[0.15em]"
                   >
                     Linux
                   </a>
@@ -606,16 +608,18 @@ const Home = ({ setActiveTab }) => {
 
             {/* Center Section: Credit (Desktop only) */}
             <div className="hidden md:flex md:col-span-1 items-center justify-center gap-1.5">
-              <span>Built by :</span>
-              <div className="flex items-center gap-2">
-                <a
-                  href="https://x.com/linux_mode"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition-colors font-semibold uppercase tracking-[0.15em]"
-                >
-                  Linux
-                </a>
+              <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                <span>Built by :</span>
+                <div className="flex items-center gap-2">
+                  <a
+                    href="https://x.com/linux_mode"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 font-bold uppercase tracking-[0.15em]"
+                  >
+                    Linux
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -624,6 +628,24 @@ const Home = ({ setActiveTab }) => {
           </div>
         </div>
       </footer>
+
+      {/* Scroll to Top Button */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.5, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.5, y: 20 }}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            whileTap={{ scale: 0.95 }}
+            onClick={scrollToTop}
+            className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-[100] p-3 sm:p-4 rounded-2xl bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 shadow-2xl shadow-black dark:shadow-white text-black dark:text-white dark:text-white flex items-center justify-center transition-all hover:bg-slate-50 dark:hover:bg-[#1e293b] group outline-none focus-visible:ring-2 focus-visible:ring-black dark:ring-white"
+            aria-label="Scroll to top"
+          >
+            <ArrowUp size={24} strokeWidth={2.5} className="group-hover:-translate-y-0.5 transition-transform" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

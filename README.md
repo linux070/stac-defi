@@ -87,4 +87,4 @@ The Stac platform is built on the principle of **Functional Minimalism**, focusi
 ---
 
 Created and maintained by the linux_mode and team.
-[visit site](https://stac-defi.vercel.app)
+[visit site] (https://stac-defi.vercel.app)

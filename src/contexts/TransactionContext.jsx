@@ -32,7 +32,7 @@ const PersistentToast = ({ id, tx, onDismiss }) => {
             animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
             exit={{ opacity: 0, x: 100, scale: 0.8 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="bg-slate-900/90 dark:bg-slate-950/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 w-72 md:w-80 group relative overflow-hidden ring-1 ring-white/5"
+            className="bg-black/90 dark:bg-slate-950/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 w-72 md:w-80 group relative overflow-hidden ring-1 ring-white/5"
         >
             {/* status bar background tracking */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-white/5" />
@@ -40,23 +40,23 @@ const PersistentToast = ({ id, tx, onDismiss }) => {
             {/* status bar progress animation */}
             {status === 'pending' && (
                 <motion.div
-                    className="absolute top-0 left-0 h-1 bg-blue-500"
+                    className="absolute top-0 left-0 h-1 bg-black dark:bg-white"
                     initial={{ width: "0%" }}
                     animate={{ width: "100%" }}
                     transition={{ duration: 30, ease: "linear" }}
                 />
             )}
 
-            {status === 'success' && <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />}
+            {status === 'success' && <div className="absolute top-0 left-0 right-0 h-1 bg-slate-500" />}
             {status === 'error' && <div className="absolute top-0 left-0 right-0 h-1 bg-red-500" />}
 
             <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-500 ${status === 'pending' ? 'bg-blue-500/10' :
-                    status === 'success' ? 'bg-emerald-500/10' :
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-500 ${status === 'pending' ? 'bg-black dark:bg-white' :
+                    status === 'success' ? 'bg-slate-500/10' :
                         'bg-red-500/10'
                     }`}>
-                    {status === 'pending' ? <Loader2 className="animate-spin text-blue-500" size={20} /> :
-                        status === 'success' ? <Check className="text-emerald-500" size={20} /> :
+                    {status === 'pending' ? <Loader2 className="animate-spin text-black dark:text-white" size={20} /> :
+                        status === 'success' ? <Check className="text-slate-500" size={20} /> :
                             <X className="text-red-500" size={20} />}
                 </div>
 
@@ -76,7 +76,7 @@ const PersistentToast = ({ id, tx, onDismiss }) => {
                                 href={`${tx.explorerUrl}/tx/${tx.hash}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-[10px] uppercase tracking-wider font-extrabold text-blue-400/80 hover:text-blue-400 flex items-center gap-1 transition-colors"
+                                className="text-[10px] uppercase tracking-wider font-extrabold text-black dark:text-white hover:text-black dark:text-white flex items-center gap-1 transition-colors"
                             >
                                 Explorer <ExternalLink size={10} />
                             </a>

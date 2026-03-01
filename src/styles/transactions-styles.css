@@ -177,7 +177,7 @@ html.dark .stat-icon-container,
 }
 
 .stat-meta-positive {
-    color: #10b981;
+    color: #555555;
 }
 
 .stat-meta-neutral {
@@ -285,7 +285,7 @@ html.dark .tx-table tbody tr:hover,
 
 .type-badge.swap {
     background: #eff6ff;
-    color: #3b82f6;
+    color: #666666;
 }
 
 /* From/To Cell */
@@ -312,7 +312,7 @@ html.dark .tx-table tbody tr:hover,
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
-    filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.2));
+    filter: drop-shadow(0 4px 8px rgba(128, 128, 128, 0.2));
 }
 
 /* Seamless dark mode entity icons - no white backgrounds */
@@ -345,7 +345,7 @@ html.dark .entity-icon img,
 /* Hash Cell */
 .hash-link {
     font-family: var(--theme-font-mono, monospace);
-    color: #3b82f6;
+    color: #666666;
     text-decoration: none;
     font-weight: 500;
     display: flex;
@@ -501,13 +501,13 @@ html.dark .type-badge.bridge,
 
 html.dark .type-badge.swap,
 .dark .type-badge.swap {
-    background: rgba(59, 130, 246, 0.15);
+    background: rgba(128, 128, 128, 0.15);
     color: #93c5fd;
 }
 
 html.dark .type-badge.lp,
 .dark .type-badge.lp {
-    background: rgba(59, 130, 246, 0.15);
+    background: rgba(128, 128, 128, 0.15);
     color: #93c5fd;
 }
 
@@ -526,9 +526,9 @@ html.dark .amount-cell,
 /* Status Badges */
 html.dark .status-badge.success,
 .dark .status-badge.success {
-    background: rgba(16, 185, 129, 0.12);
+    background: rgba(128, 128, 128, 0.12);
     color: #34d399;
-    border-color: rgba(16, 185, 129, 0.2);
+    border-color: rgba(128, 128, 128, 0.2);
 }
 
 html.dark .status-badge.pending,
@@ -548,7 +548,7 @@ html.dark .status-badge.failed,
 /* Hash Link */
 html.dark .hash-link,
 .dark .hash-link {
-    color: #60a5fa;
+    color: #999999;
 }
 
 html.dark .hash-link:hover,

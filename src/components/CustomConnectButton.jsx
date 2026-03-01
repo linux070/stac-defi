@@ -89,7 +89,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                 if (wasConnected && lastAddress && (!mounted || isReconnecting)) {
                                     if (isMobile) {
                                         return (
-                                            <div className="w-[42px] h-[42px] rounded-full border border-slate-200/60 dark:border-white/20 bg-white/80 dark:bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-md shadow-black/5 dark:shadow-blue-500/10">
+                                            <div className="w-[42px] h-[42px] rounded-full border border-slate-200/60 dark:border-white/20 bg-white/80 dark:bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-md shadow-black/5 dark:shadow-black dark:shadow-white">
                                                 <div className="relative flex items-center justify-center transition-transform duration-500">
                                                     {lastAddress ? (
                                                         <Jazzicon diameter={32} seed={jsNumberForAddress(lastAddress)} />
@@ -122,9 +122,8 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                     return (
                                         <button
                                             onClick={openConnectModal}
-                                            className="h-[44px] px-6 rounded-xl bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition-all duration-300 font-bold text-[13px] whitespace-nowrap flex items-center justify-center tracking-tight shadow-lg shadow-blue-500/20 group relative overflow-hidden"
+                                            className="h-[44px] px-6 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 active:scale-95 transition-all duration-300 font-bold text-[13px] whitespace-nowrap flex items-center justify-center tracking-tight group relative overflow-hidden"
                                         >
-                                            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                                             <span className="relative z-10">{buttonText}</span>
                                         </button>
                                     );
@@ -150,11 +149,11 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                         e.stopPropagation();
                                                         setShowDropdown(!showDropdown);
                                                     }}
-                                                    className="relative flex items-center justify-center active:scale-95 transition-all duration-300 p-1 rounded-full border border-slate-200/60 dark:border-white/20 bg-white/80 dark:bg-white/10 backdrop-blur-sm shadow-md shadow-black/5 dark:shadow-blue-500/10"
+                                                    className="relative flex items-center justify-center active:scale-95 transition-all duration-300 p-1 rounded-full border border-slate-200/60 dark:border-white/20 bg-white dark:bg-white/10 backdrop-blur-sm"
                                                 >
                                                     <div className="relative flex items-center justify-center">
                                                         <Jazzicon diameter={32} seed={jsNumberForAddress(account.address)} />
-                                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full shadow-sm"></div>
+                                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-slate-500 border-2 border-white dark:border-black rounded-full shadow-sm"></div>
                                                     </div>
                                                 </button>
 
@@ -206,13 +205,13 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                         <div className="flex items-center space-x-3 p-4 bg-white dark:bg-white/5 rounded-2xl border border-gray-200/60 dark:border-white/10 shadow-sm">
                                                                             <div className="relative">
                                                                                 <Jazzicon diameter={44} seed={jsNumberForAddress(account.address)} />
-                                                                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 border-[3px] border-white dark:border-[#0c0c0c] rounded-full"></div>
+                                                                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-slate-500 border-[3px] border-white dark:border-[#0c0c0c] rounded-full"></div>
                                                                             </div>
                                                                             <div className="flex-1 overflow-hidden">
-                                                                                <div className="text-[19px] font-bold text-slate-900 dark:text-white truncate font-['Satoshi','Inter',sans-serif] tracking-tight">
+                                                                                <div className="text-[19px] font-bold text-black dark:text-white truncate font-['Satoshi','Inter',sans-serif] tracking-tight">
                                                                                     {shortenAddress(account.address)}
                                                                                 </div>
-                                                                                <div className="text-[10px] text-slate-900/60 dark:text-white/40 font-bold uppercase tracking-widest mt-0.5">
+                                                                                <div className="text-[10px] text-black/60 dark:text-white/40 font-bold uppercase tracking-widest mt-0.5">
                                                                                     {t('Connected')}
                                                                                 </div>
                                                                             </div>
@@ -220,7 +219,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                             <div className="flex items-center space-x-2">
                                                                                 <button
                                                                                     onClick={handleCopyAddress}
-                                                                                    className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 relative border border-transparent hover:border-blue-200 dark:hover:border-blue-500/20 active:scale-90"
+                                                                                    className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-50 dark:bg-black dark:hover:bg-black dark:bg-white transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-black dark:text-white dark:hover:text-black dark:text-white relative border border-transparent hover:border-slate-200 dark:border-slate-700 dark:hover:border-black dark:border-white active:scale-90"
                                                                                 >
                                                                                     <Copy size={18} />
                                                                                     <AnimatePresence>
@@ -268,12 +267,12 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                                     onClick={() => !isActive && handleSwitchChain(network.id)}
                                                                                 >
                                                                                     <div className={`w-9 h-9 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 shadow-sm
-                                                                                ${isActive ? 'scale-110 shadow-lg shadow-blue-500/20' : ''}
+                                                                                ${isActive ? 'scale-110 shadow-lg shadow-black dark:shadow-white' : ''}
                                                                                 ${network.isBase ? 'p-0.5 bg-white' : 'bg-white dark:bg-black p-0'}`}>
                                                                                         <img src={network.icon} alt={network.name} className="w-full h-full object-cover" />
                                                                                     </div>
                                                                                     <div className={`flex-1 text-left ${isActive ? 'pl-0.5' : ''}`}>
-                                                                                        <div className={`text-[15px] font-bold tracking-tight transition-colors ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-900 dark:text-white'}`}>
+                                                                                        <div className={`text-[15px] font-bold tracking-tight transition-colors ${isActive ? 'text-black dark:text-white' : 'text-black dark:text-white'}`}>
                                                                                             {network.name}
                                                                                         </div>
                                                                                         <div className={`text-[12px] font-medium font-['Satoshi','Inter',sans-serif] ${isActive ? 'text-slate-500 dark:text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}>
@@ -285,7 +284,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                                         </div>
                                                                                     </div>
                                                                                     {isActive && (
-                                                                                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 dark:bg-emerald-600 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-slate-900">
+                                                                                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-500 dark:bg-slate-500 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-black">
                                                                                             <motion.svg
                                                                                                 initial={{ pathLength: 0, opacity: 0 }}
                                                                                                 animate={{ pathLength: 1, opacity: 1 }}
@@ -321,9 +320,8 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                     e.stopPropagation();
                                                     setShowDropdown(!showDropdown);
                                                 }}
-                                                className="h-[44px] flex items-center space-x-3 pl-2.5 pr-4 rounded-2xl border border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl hover:bg-white dark:hover:bg-white/10 hover:border-blue-500/30 dark:hover:border-blue-400/30 transition-all duration-300 shadow-sm active:scale-95 group relative overflow-hidden"
+                                                className="h-[44px] flex items-center space-x-3 pl-2.5 pr-4 rounded-2xl border border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl hover:bg-white dark:hover:bg-white/10 hover:border-black/20 dark:hover:border-white/20 transition-all duration-300 active:scale-95 group relative overflow-hidden"
                                             >
-                                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
 
                                                 <div className="relative flex items-center justify-center transition-transform duration-500 group-hover:scale-105">
                                                     <Jazzicon diameter={30} seed={jsNumberForAddress(account.address)} />
@@ -332,7 +330,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
 
                                                 <div className="flex flex-col justify-center items-start relative z-10 pl-1">
                                                     <div className="flex items-center">
-                                                        <span className="text-[14px] text-slate-700 dark:text-slate-200 font-bold tracking-tight transition-colors group-hover:text-slate-900 dark:group-hover:text-white">
+                                                        <span className="text-[14px] text-slate-700 dark:text-slate-200 font-bold tracking-tight transition-colors group-hover:text-black dark:group-hover:text-white">
                                                             {shortenAddress(account.address)}
                                                         </span>
                                                     </div>
@@ -359,10 +357,10 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                     <Jazzicon diameter={34} seed={jsNumberForAddress(account.address)} />
                                                                 </div>
                                                                 <div className="flex-1 overflow-hidden">
-                                                                    <div className="text-[14px] font-bold text-slate-900 dark:text-white truncate font-['Satoshi','Inter',sans-serif] tracking-tight">
+                                                                    <div className="text-[14px] font-bold text-black dark:text-white truncate font-['Satoshi','Inter',sans-serif] tracking-tight">
                                                                         {shortenAddress(account.address)}
                                                                     </div>
-                                                                    <div className="text-[10px] text-slate-900 dark:text-white font-medium uppercase tracking-widest">
+                                                                    <div className="text-[10px] text-black dark:text-white font-medium uppercase tracking-widest">
                                                                         {t('Connected')}
                                                                     </div>
                                                                 </div>
@@ -370,7 +368,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                 <div className="flex items-center space-x-1.5">
                                                                     <button
                                                                         onClick={handleCopyAddress}
-                                                                        className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 relative group/copy border border-transparent hover:border-blue-200 dark:hover:border-blue-500/20"
+                                                                        className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-50 dark:bg-black dark:hover:bg-black dark:bg-white transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-black dark:text-white dark:hover:text-black dark:text-white relative group/copy border border-transparent hover:border-slate-200 dark:border-slate-700 dark:hover:border-black dark:border-white"
                                                                     >
                                                                         <Copy size={14} />
                                                                         <AnimatePresence>
@@ -414,12 +412,12 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                         onClick={() => !isActive && handleSwitchChain(network.id)}
                                                                     >
                                                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 shadow-sm
-                                                                                ${isActive ? 'scale-110 shadow-lg shadow-blue-500/20' : ''}
+                                                                                ${isActive ? 'scale-110 shadow-lg shadow-black dark:shadow-white' : ''}
                                                                                 ${network.isBase ? 'p-0.5 bg-white' : 'bg-white dark:bg-black p-0'}`}>
                                                                             <img src={network.icon} alt={network.name} className="w-full h-full object-cover" />
                                                                         </div>
                                                                         <div className={`flex-1 text-left ${isActive ? 'pl-0.5' : ''}`}>
-                                                                            <div className={`text-[15px] font-bold tracking-tight transition-colors ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-900 dark:text-white'}`}>
+                                                                            <div className={`text-[15px] font-bold tracking-tight transition-colors ${isActive ? 'text-black dark:text-white' : 'text-black dark:text-white'}`}>
                                                                                 {network.name}
                                                                             </div>
                                                                             <div className={`text-[12px] font-medium font-['Satoshi','Inter',sans-serif] ${isActive ? 'text-slate-500 dark:text-slate-400' : 'text-slate-500 dark:text-slate-500'}`}>
@@ -431,7 +429,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                             </div>
                                                                         </div>
                                                                         {isActive && (
-                                                                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 dark:bg-emerald-600 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-slate-900 transition-all duration-500 animate-in zoom-in">
+                                                                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-500 dark:bg-slate-500 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-black transition-all duration-500 animate-in zoom-in">
                                                                                 <motion.svg
                                                                                     initial={{ pathLength: 0, opacity: 0 }}
                                                                                     animate={{ pathLength: 1, opacity: 1 }}

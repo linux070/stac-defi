@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPublicClient, createWalletClient, custom, http, fallback, formatUnits, parseUnits, defineChain, encodeFunctionData, pad } from 'viem';
@@ -238,6 +238,8 @@ export function useBridge() {
     direction: undefined,
   });
 
+  const activeTxIdRef = useRef(0);
+
   const [selectedTokenKey, setSelectedTokenKey] = useState('USDC');
   const [selectedChainId, setSelectedChainId] = useState(chainId || SEPOLIA_CHAIN_ID);
 
@@ -341,7 +343,7 @@ export function useBridge() {
         : '100000';              // 0.1 USDC (6 decimals)
 
       return [{
-        finalityThreshold: 2000,
+        finalityThreshold: 1, // Default to Fast finality for better UX
         forwardFee: {
           low: fallbackForwardFee,
           med: fallbackForwardFee,
@@ -377,8 +379,8 @@ export function useBridge() {
         console.warn(`[Forwarding] Poll attempt ${attempt + 1} failed:`, err.message);
       }
 
-      // Wait 3 seconds between polls
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Wait 2 seconds between polls for faster confirmation
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
     // If we reach here, we exceeded max attempts but the burn was successful
@@ -389,13 +391,20 @@ export function useBridge() {
 
   // --- Execute bridge transaction using Forwarding Service ---
   const bridge = useCallback(async (token, amount, direction) => {
-    let sourceChainId = null;
-    let destinationChainId = null;
-    let currentBridgeStep = 'init'; // Track which step fails for debugging
+    let currentBridgeStep = 'init';
+    const txId = ++activeTxIdRef.current;
+
+    const setBridgeState = (newState) => {
+      if (activeTxIdRef.current === txId) {
+        setState(prev => ({ ...prev, ...newState }));
+      }
+    };
+
+    const isCancelled = () => activeTxIdRef.current !== txId;
 
     try {
       if (!isConnected || !address) {
-        setState({
+        setBridgeState({
           step: 'error',
           error: 'Please connect your wallet first',
           result: null,
@@ -405,7 +414,7 @@ export function useBridge() {
       }
 
       if (!amount || parseFloat(amount) <= 0) {
-        setState({
+        setBridgeState({
           step: 'error',
           error: `Please enter a valid ${token} amount`,
           result: null,
@@ -414,7 +423,18 @@ export function useBridge() {
         return;
       }
 
-      setState(prev => ({ ...prev, step: 'idle', error: null, isLoading: true }));
+      setBridgeState({
+        step: 'idle',
+        error: null,
+        result: null,
+        isLoading: true,
+        sourceTxHash: undefined,
+        receiveTxHash: undefined,
+        direction: undefined,
+      });
+
+      let sourceChainId = null;
+      let destinationChainId = null;
 
       // Get the provider from wallet
       if (!window?.ethereum) {
@@ -467,22 +487,27 @@ export function useBridge() {
       // Switch to source chain if needed
       if (chainId !== sourceChainId) {
         currentBridgeStep = 'switch-network';
-        setState(prev => ({ ...prev, step: 'switching-network' }));
+        setBridgeState({ step: 'switching-network' });
         await switchChain({ chainId: sourceChainId });
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
 
+      if (isCancelled()) return;
+
       // --- Step 1: Fetch forwarding fees ---
       currentBridgeStep = 'fetch-fees';
-      setState(prev => ({ ...prev, step: 'fetching-fees' }));
+      setBridgeState({ step: 'fetching-fees' });
       console.log('--- FORWARDING BRIDGE INITIATED ---');
       console.log('Direction:', direction);
       console.log('Amount:', amount, 'USDC');
 
       const fees = await fetchForwardingFees(sourceChainId, destinationChainId);
+      if (isCancelled()) return;
 
-      // Use standard transfer fees (finalityThreshold: 2000) — no protocol fee
-      const feeData = fees.find(f => f.finalityThreshold === 2000) || fees[fees.length - 1];
+      // Select the "Fastest" finality threshold available (lowest value)
+      // Standard: 2000, Fast: 1, Instant: 0
+      const feeData = [...fees].sort((a, b) => a.finalityThreshold - b.finalityThreshold)[0];
+      const selectedThreshold = feeData.finalityThreshold;
       const forwardFee = BigInt(feeData.forwardFee.high); // Use high to ensure enough gas coverage
       const minimumFeeBps = feeData.minimumFee || 0;
 
@@ -497,8 +522,11 @@ export function useBridge() {
 
       // --- Pre-flight balance check ---
       // Read actual on-chain balance to prevent "transfer amount exceeds balance" revert
+      // On Arc Testnet, USDC is used for gas, so we must leave a buffer (0.5 USDC) to prevent
+      // the native gas payment from making the bridge burn fail.
       const sourceChainDef = CHAIN_DEFINITIONS[sourceChainId];
       const sourcePublicClient = getClient(sourceChainId, RPC_URLS_BY_CHAIN[sourceChainId], sourceChainDef);
+      const gasBuffer = sourceChainId === ARC_CHAIN_ID ? parseUnits('1.5', decimals) : 0n;
 
       let onChainBalance;
       if (sourceChainId === ARC_CHAIN_ID) {
@@ -515,21 +543,21 @@ export function useBridge() {
 
       console.log('[Forwarding] On-chain balance:', formatUnits(onChainBalance, decimals), 'USDC');
 
-      // If totalAmount exceeds balance, auto-adjust transferAmount down
-      if (totalAmount > onChainBalance) {
-        const adjustedTransfer = onChainBalance - maxFee;
+      // If needed balance (total + gas buffer) exceeds actual balance, auto-adjust transferAmount down
+      if (totalAmount > (onChainBalance - gasBuffer)) {
+        const adjustedTransfer = onChainBalance - maxFee - gasBuffer;
         const minTransfer = parseUnits('0.01', decimals); // Minimum 0.01 USDC
 
         if (adjustedTransfer < minTransfer) {
           throw new Error(
-            `Insufficient balance. You need at least ${formatUnits(maxFee + minTransfer, decimals)} USDC ` +
-            `(${formatUnits(minTransfer, decimals)} transfer + ${formatUnits(maxFee, decimals)} fee) ` +
+            `Insufficient balance. You need at least ${formatUnits(maxFee + gasBuffer + minTransfer, decimals)} USDC ` +
+            `(${formatUnits(minTransfer, decimals)} transfer + ${formatUnits(maxFee, decimals)} fee + ${formatUnits(gasBuffer, decimals)} gas reserve) ` +
             `but only have ${formatUnits(onChainBalance, decimals)} USDC.`
           );
         }
 
-        console.log(`[Forwarding] Adjusted transfer: ${formatUnits(transferAmount, decimals)} → ${formatUnits(adjustedTransfer, decimals)} USDC (fee deducted)`);
-        totalAmount = onChainBalance; // Use full balance
+        console.log(`[Forwarding] Adjusted transfer: ${formatUnits(transferAmount, decimals)} → ${formatUnits(adjustedTransfer, decimals)} USDC (fee + gas buffer deducted)`);
+        totalAmount = onChainBalance - gasBuffer; // Use everything except the buffer
       }
 
       console.log('[Forwarding] Fee breakdown:', {
@@ -552,7 +580,7 @@ export function useBridge() {
 
       // --- Step 2: Approve USDC spend on TokenMessengerV2 ---
       currentBridgeStep = 'approve';
-      setState(prev => ({ ...prev, step: 'approving' }));
+      setBridgeState({ step: 'approving' });
       console.log('[Forwarding] Approving USDC spend...');
 
       const approveData = encodeFunctionData({
@@ -566,15 +594,17 @@ export function useBridge() {
         data: approveData,
       });
 
+      if (isCancelled()) return;
       console.log('[Forwarding] ✅ Approval tx:', approveTxHash);
 
       // Wait for approval confirmation
       await sourcePublicClient.waitForTransactionReceipt({ hash: approveTxHash, confirmations: 1 });
+      if (isCancelled()) return;
       console.log('[Forwarding] ✅ Approval confirmed');
 
       // --- Step 3: depositForBurnWithHook (Burn + Forwarding Hook) ---
       currentBridgeStep = 'burn';
-      setState(prev => ({ ...prev, step: 'burning' }));
+      setBridgeState({ step: 'burning' });
       console.log('[Forwarding] Executing depositForBurnWithHook...');
 
       const mintRecipientBytes32 = pad(address, { size: 32 });
@@ -590,7 +620,7 @@ export function useBridge() {
           sourceToken.contractAddress,    // burnToken (USDC on source chain)
           destinationCallerEmpty,         // destinationCaller (empty = any relay can execute)
           maxFee,                         // maxFee (forwarding gas + protocol fee)
-          2000,                           // minFinalityThreshold (Standard = 2000)
+          selectedThreshold,              // minFinalityThreshold (Optimized for speed)
           FORWARDING_SERVICE_HOOK_DATA,   // hookData (magic "cctp-forward" bytes)
         ],
       });
@@ -604,14 +634,16 @@ export function useBridge() {
 
       // Wait for burn confirmation
       await sourcePublicClient.waitForTransactionReceipt({ hash: burnTxHash, confirmations: 1 });
+      if (isCancelled()) return;
       console.log('[Forwarding] ✅ Burn confirmed on source chain');
 
       // --- Step 4: Poll for automatic mint (Circle's relayer handles this) ---
       currentBridgeStep = 'forwarding';
-      setState(prev => ({ ...prev, step: 'forwarding', sourceTxHash: burnTxHash }));
+      setBridgeState({ step: 'forwarding', sourceTxHash: burnTxHash });
       console.log('[Forwarding] Waiting for Circle to auto-mint on destination chain...');
 
       const mintTxHash = await pollForMint(sourceDomain, burnTxHash);
+      if (isCancelled()) return;
 
       // --- Success ---
       const receivedAmount = formatUnits(totalAmount - maxFee, decimals);
@@ -631,7 +663,7 @@ export function useBridge() {
         direction,
       };
 
-      setState(finalState);
+      setBridgeState(finalState);
       return finalState;
 
     } catch (err) {
@@ -679,13 +711,15 @@ export function useBridge() {
         error: errorState.error.substring(0, 100),
       });
 
-      setState(errorState);
+      if (isCancelled()) return;
+      setBridgeState(errorState);
       return errorState;
     }
   }, [address, isConnected, chainId, switchChain, fetchForwardingFees, pollForMint]);
 
   // Reset bridge state (but preserve balance - refresh it instead)
   const reset = useCallback(() => {
+    activeTxIdRef.current++; // Invalidate any running transactions
     setState({
       step: 'idle',
       error: null,

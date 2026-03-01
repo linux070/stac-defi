@@ -175,7 +175,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
                       <div className="bridging-modal-amount-row mt-2 border-t border-slate-200/10 pt-2">
                         <div className="bridging-modal-amount-content">
                           <div className="bridging-modal-amount-label font-medium">{t('Receive Amount')}</div>
-                          <div className="bridging-modal-amount-value font-medium text-blue-500">{state.result.amount} USDC</div>
+                          <div className="bridging-modal-amount-value font-medium text-black dark:text-white">{state.result.amount} USDC</div>
                         </div>
                       </div>
                     )}
@@ -188,7 +188,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
                         <span className="bridging-modal-progress-time-new">{formatTime(displayTime)}</span>
                       </div>
                       <div className="bridging-modal-loader-wrapper-shrunked">
-                        <Loader className="animate-spin text-blue-500 dark:text-blue-400" size={20} />
+                        <Loader className="animate-spin text-black dark:text-white dark:text-black dark:text-white" size={20} />
                       </div>
                     </div>
                     <div className="bridging-modal-progress-bar-container-shrunked">

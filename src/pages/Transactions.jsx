@@ -293,7 +293,69 @@ const Transactions = () => {
       return timeB - timeA;
     });
 
-    return merged;
+    // 4. Group adjacent swap legs into a single transaction (TokenA -> USDC -> TokenB)
+    const grouped = [];
+    const processedHashes = new Set();
+
+    for (let i = 0; i < merged.length; i++) {
+      const tx = merged[i];
+      if (processedHashes.has(tx.hash)) continue;
+
+      // Try to merge if it's a Swap involving USDC
+      const fromTokenStr = getSwapFromToken(tx);
+      const toTokenStr = getSwapToToken(tx);
+
+      if (tx.type === 'Swap' && (fromTokenStr === 'USDC' || toTokenStr === 'USDC')) {
+        // Find partner leg (within 60s window for testnet)
+        const partnerIndex = merged.findIndex((other, idx) => {
+          if (idx <= i || processedHashes.has(other.hash)) return false;
+          if (other.type !== 'Swap') return false;
+
+          const timeDiff = Math.abs((tx.timestamp || 0) - (other.timestamp || 0));
+          if (timeDiff > 60000) return false;
+
+          const otherFromToken = getSwapFromToken(other);
+          const otherToToken = getSwapToToken(other);
+
+          // Pattern: User sent TokenA, received USDC (Leg 1) AND User sent USDC, received TokenB (Leg 2)
+          const isMatchingPair = (
+            (fromTokenStr !== 'USDC' && toTokenStr === 'USDC' && otherFromToken === 'USDC' && otherToToken !== 'USDC') ||
+            (fromTokenStr === 'USDC' && toTokenStr !== 'USDC' && otherFromToken !== 'USDC' && otherToToken === 'USDC')
+          );
+
+          return isMatchingPair;
+        });
+
+        if (partnerIndex !== -1) {
+          const partner = merged[partnerIndex];
+          processedHashes.add(partner.hash);
+
+          // Logic: 
+          // Leg 1 is Token -> USDC
+          // Leg 2 is USDC -> Token
+          const leg1 = toTokenStr === 'USDC' ? tx : partner;
+          const leg2 = fromTokenStr === 'USDC' ? tx : partner;
+
+          const tokenA = getSwapFromToken(leg1);
+          const tokenB = getSwapToToken(leg2);
+          const amountA = getSwapAmount(leg1);
+          const amountB = getSwapToAmount(leg2) || getSwapAmount(leg2);
+
+          // Merge into a "Direct" swap row
+          grouped.push({
+            ...leg2, // Use final hash
+            from: `${amountA} ${tokenA}`,
+            to: `${amountB} ${tokenB}`,
+            amount: `${amountA} ${tokenA} → ${amountB} ${tokenB}`,
+            id: `merged-${leg1.hash}-${leg2.hash}`,
+          });
+          continue;
+        }
+      }
+      grouped.push(tx);
+    }
+
+    return grouped;
   }, [blockchainTransactions, myTransactions, walletAddress, activeActivityTab]);
 
   // Apply filters (search, status, date range) to merged transactions
@@ -554,11 +616,11 @@ const Transactions = () => {
       <div className="transactions-header">
         <div className="transactions-title-section">
           <div className="flex flex-col mb-4">
-            <h1 className="!mb-0 text-emerald-600 dark:text-emerald-500">{t('Transactions')}</h1>
-            <span className="text-sm font-medium text-blue-500 dark:text-blue-400 mt-1">
+            <h1 className="!mb-0 text-slate-500 dark:text-slate-500">{t('Transactions')}</h1>
+            <span className="text-sm font-medium text-black dark:text-white mt-1">
               {activeActivityTab === 'all'
                 ? (txCountLoading ? '...' : `${transactionCount?.toLocaleString() || '0'} ${t('total transactions')}`)
-                : (isConnected ? `${mergedTransactions.length.toLocaleString()} ${t('total transactions')}` : `0 ${t('total transactions')}`)
+                : (isConnected ? `${myTransactions?.length.toLocaleString()} ${t('total transactions')}` : `0 ${t('total transactions')}`)
               }
             </span>
           </div>
@@ -576,7 +638,7 @@ const Transactions = () => {
                   {activeActivityTab === tab && (
                     <motion.div
                       layoutId="activeTabPill"
-                      className="absolute inset-0 bg-slate-900 dark:bg-white rounded-[10px] shadow-sm"
+                      className="absolute inset-0 bg-black dark:bg-white rounded-[10px] shadow-sm"
                       transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                     />
                   )}
@@ -592,20 +654,20 @@ const Transactions = () => {
         {activeActivityTab === 'my' && (
           <div className="stats-grid">
             {swapVolumeLoading ? <SkeletonCard /> : (
-              <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-3.5 min-w-[170px] shadow-sm hover:border-blue-500/30 transition-all duration-300 group">
+              <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-3.5 min-w-[170px] shadow-sm hover:border-black dark:border-white transition-all duration-300 group">
                 <svg className="absolute -right-2 -bottom-2 w-20 h-12 opacity-[0.08] dark:opacity-[0.15] transition-opacity group-hover:opacity-20" viewBox="0 0 60 30" fill="none">
-                  <path d="M0 25 Q10 20 15 22 T30 15 T45 18 T60 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" className="text-blue-500" />
+                  <path d="M0 25 Q10 20 15 22 T30 15 T45 18 T60 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" className="text-black dark:text-white" />
                 </svg>
 
                 <div className="relative z-10">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 opacity-80">{activeActivityTab === 'my' ? t('My Swap Volume') : t('Total Swap Volume')}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-black dark:text-white dark:text-black dark:text-white opacity-80">{activeActivityTab === 'my' ? t('My Swap Volume') : t('Total Swap Volume')}</span>
                   <div className="flex items-center gap-1.5 mt-1">
                     <span className="text-xl font-bold text-slate-800 dark:text-white tabular-nums">
                       {`$${(activeActivityTab === 'my' && !isConnected) ? '0' : swapVolume.toLocaleString()}`}
                     </span>
-                    <TrendingUp size={14} className="text-emerald-500" />
+                    <TrendingUp size={14} className="text-slate-500" />
                   </div>
-                  <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-500/80 mt-1 flex items-center gap-1">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-500/80 mt-1 flex items-center gap-1">
                     {swapCount} {swapCount === 1 ? t('swap completed') : t('swaps completed')}
                   </div>
                 </div>
@@ -613,18 +675,18 @@ const Transactions = () => {
             )}
 
             {bridgeVolumeLoading ? <SkeletonCard /> : (
-              <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-3.5 min-w-[170px] shadow-sm hover:border-blue-500/30 transition-all duration-300 group">
+              <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-3.5 min-w-[170px] shadow-sm hover:border-black dark:border-white transition-all duration-300 group">
                 <div className="absolute -right-2 -top-1 opacity-[0.06] dark:opacity-[0.1] group-hover:opacity-[0.12] transition-opacity rotate-12">
-                  <Layers className="w-16 h-16 text-blue-500" strokeWidth={1} />
+                  <Layers className="w-16 h-16 text-black dark:text-white" strokeWidth={1} />
                 </div>
 
                 <div className="relative z-10">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 opacity-80">{activeActivityTab === 'my' ? t('My Bridge Volume') : t('Total Bridge Volume')}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-black dark:text-white dark:text-black dark:text-white opacity-80">{activeActivityTab === 'my' ? t('My Bridge Volume') : t('Total Bridge Volume')}</span>
                   <div className="flex items-center gap-1.5 mt-1">
                     <span className="text-xl font-bold text-slate-800 dark:text-white tabular-nums">
                       {`$${(activeActivityTab === 'my' && !isConnected) ? '0' : bridgeVolume.toLocaleString()}`}
                     </span>
-                    <Layers size={14} className="text-blue-500" strokeWidth={2.5} />
+                    <Layers size={14} className="text-black dark:text-white" strokeWidth={2.5} />
                   </div>
                   <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-1">
                     {t('Across 3 networks')}
@@ -646,7 +708,7 @@ const Transactions = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={activeActivityTab === 'all' ? t('Search by hash, token, or wallet address...') : t('Search by transaction hash or token symbol...')}
-            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0d0d0d] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0d0d0d] text-black dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-black dark:ring-white focus:border-black dark:border-white transition-all text-sm"
           />
         </div>
 
@@ -663,7 +725,7 @@ const Transactions = () => {
             >
               <div className="flex items-center gap-2">
                 {statusFilter === 'success' && (
-                  <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 shadow-sm mr-0.5">
+                  <div className="flex items-center justify-center w-4 h-4 rounded-full bg-slate-500 shadow-sm mr-0.5">
                     <Check className="text-white" size={10} strokeWidth={4} />
                   </div>
                 )}
@@ -697,7 +759,7 @@ const Transactions = () => {
                     { value: 'all', label: t('All Status'), icon: null },
                     {
                       value: 'success', label: t('Success'), icon: (
-                        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 shadow-sm">
+                        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-slate-500 shadow-sm">
                           <Check className="text-white" size={10} strokeWidth={4} />
                         </div>
                       )
@@ -724,7 +786,7 @@ const Transactions = () => {
                         setShowStatusDropdown(false);
                       }}
                       className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors flex items-center gap-3 ${statusFilter === option.value
-                        ? 'text-blue-600 dark:text-blue-400'
+                        ? 'text-black dark:text-white dark:text-black dark:text-white'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-gray-800/50'
                         }`}
                     >
@@ -745,7 +807,7 @@ const Transactions = () => {
                 setShowStatusDropdown(false);
               }}
               className={`flex items-center justify-between gap-2 px-4 py-3 min-w-[145px] rounded-xl border transition-colors text-sm font-medium ${dateRangeFilter !== 'all'
-                ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-400'
+                ? 'bg-slate-50 dark:bg-black dark:bg-black dark:bg-white border-slate-200 dark:border-slate-700 dark:border-black dark:border-white text-black dark:text-white dark:text-black dark:text-white'
                 : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0d0d0d] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
             >
@@ -777,7 +839,7 @@ const Transactions = () => {
                         setShowDateDropdown(false);
                       }}
                       className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors ${dateRangeFilter === option.value
-                        ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
+                        ? 'bg-slate-50 dark:bg-black dark:bg-black dark:bg-white text-black dark:text-white dark:text-black dark:text-white'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-gray-800/50'
                         }`}
                     >
@@ -832,7 +894,7 @@ const Transactions = () => {
                         <div className="type-cell">
                           <span className="type-label">{tx.type}</span>
                           {tx.type === 'Swap' && getNetworkName(tx.chainId) && (
-                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 w-fit">
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 dark:bg-black dark:bg-white text-black dark:text-white dark:text-black dark:text-white w-fit">
                               <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3 h-3 object-contain" />
                               <span className="text-[10px] font-medium uppercase tracking-wider">
                                 {t(getNetworkName(tx.chainId))}
@@ -887,7 +949,7 @@ const Transactions = () => {
                       <td className="w-[92px] min-w-[92px]">
                         <div className="flex items-center gap-2.5 whitespace-nowrap">
                           {tx.status === 'success' ? (
-                            <div className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 shadow-sm flex-shrink-0">
+                            <div className="flex items-center justify-center w-4 h-4 rounded-full bg-slate-500 shadow-sm flex-shrink-0">
                               <Check className="text-white" size={10} strokeWidth={4} />
                             </div>
                           ) : tx.status === 'failed' ? (
@@ -895,7 +957,7 @@ const Transactions = () => {
                           ) : (
                             <Clock className="text-amber-500" size={16} />
                           )}
-                          <span className={`font-normal text-[15px] ${tx.status === 'success' ? 'text-emerald-500' : tx.status === 'failed' ? 'text-red-500' : 'text-amber-500'}`}>
+                          <span className={`font-normal text-[15px] ${tx.status === 'success' ? 'text-slate-500' : tx.status === 'failed' ? 'text-red-500' : 'text-amber-500'}`}>
                             {tx.status === 'success' ? t('Success') : tx.status === 'failed' ? t('Failed') : t('Pending')}
                           </span>
                         </div>
@@ -925,7 +987,7 @@ const Transactions = () => {
                             href={getExplorerUrl(tx.hash, tx.chainId || chainId || 11155111)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 rounded-lg bg-slate-100 dark:bg-white/[0.05] text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all"
+                            className="p-2 rounded-lg bg-slate-100 dark:bg-white/[0.05] text-slate-400 hover:text-black dark:text-white dark:hover:text-black dark:text-white hover:bg-slate-50 dark:bg-black dark:hover:bg-black dark:bg-white transition-all"
                           >
                             <ExternalLink size={14} />
                           </a>
@@ -979,16 +1041,16 @@ const Transactions = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               className={`card p-4 space-y-3.5 touch-manipulation ${tx.type === 'Swap'
-                ? 'border border-blue-100/80 dark:border-blue-900/40 bg-gradient-to-b from-white to-blue-50/40 dark:from-gray-900 dark:to-blue-950/15'
+                ? 'border border-slate-200 dark:border-slate-700 dark:border-black dark:border-white bg-gradient-to-b from-white to-slate-100 dark:to-slate-800 dark:from-gray-900 dark:to-slate-950/15'
                 : 'border border-slate-100 dark:border-slate-800'
                 }`}
             >
               {/* Header Row - Type and Time */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">{tx.type}</span>
+                  <span className="text-sm font-bold text-black dark:text-white uppercase tracking-wider">{tx.type}</span>
                   {tx.type === 'Swap' && getNetworkName(tx.chainId) && (
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-100/50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 w-fit">
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 dark:bg-black dark:bg-white text-black dark:text-white dark:text-black dark:text-white w-fit">
                       <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3.5 h-3.5 object-contain" />
                       <span className="text-[10px] font-bold uppercase tracking-wider">
                         {t(getNetworkName(tx.chainId))}
@@ -996,7 +1058,7 @@ const Transactions = () => {
                     </div>
                   )}
                   {tx.type === 'Bridge' && (
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-100/50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 w-fit">
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-100/50 dark:bg-slate-500/30 text-slate-500 dark:text-slate-500 w-fit">
                       <ArrowLeftRight size={10} />
                       <span className="text-[10px] font-bold uppercase tracking-wider">{t('Cross-Chain')}</span>
                     </div>
@@ -1009,10 +1071,10 @@ const Transactions = () => {
               <div className="flex justify-center py-1">
                 {tx.status === 'success' ? (
                   <div className="inline-flex items-center gap-2.5">
-                    <div className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-emerald-500 shadow-sm">
+                    <div className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-slate-500 shadow-sm">
                       <Check className="text-white" size={11} strokeWidth={4} />
                     </div>
-                    <span className="text-[15px] font-normal text-emerald-500">{t('Success')}</span>
+                    <span className="text-[15px] font-normal text-slate-500">{t('Success')}</span>
                   </div>
                 ) : tx.status === 'pending' ? (
                   <div className="inline-flex items-center gap-2.5">
@@ -1052,7 +1114,7 @@ const Transactions = () => {
                 </div>
 
                 <div className="flex flex-col items-center justify-center gap-1.5 px-3">
-                  <ArrowLeftRight size={14} className="text-blue-500 dark:text-blue-400 opacity-80" />
+                  <ArrowLeftRight size={14} className="text-black dark:text-white dark:text-black dark:text-white opacity-80" />
                 </div>
 
                 <div className="flex-1 min-w-0 text-right">
@@ -1067,7 +1129,7 @@ const Transactions = () => {
                       </>
                     ) : (
                       <>
-                        <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover drop-shadow-[0_4px_8px_rgba(59,130,246,0.25)]" />
+                        <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover drop-shadow-[0_4px_8px_rgba(128, 128, 128,0.25)]" />
                         <span className="text-sm font-bold text-slate-800 dark:text-white truncate uppercase">{getSwapToToken(tx)}</span>
                       </>
                     )}
@@ -1078,7 +1140,7 @@ const Transactions = () => {
               {/* Amount Row */}
               <div className="flex items-center justify-between py-3 bg-slate-50/50 dark:bg-white/[0.03] rounded-xl px-4 border border-slate-200/50 dark:border-white/5">
                 <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{t('Amount')}</span>
-                <span className="text-base font-bold text-slate-900 dark:text-white tabular-nums tracking-tight">
+                <span className="text-base font-bold text-black dark:text-white tabular-nums tracking-tight">
                   {tx.type === 'Swap' ? (getSwapToAmount(tx) || getSwapAmount(tx)) : getSwapAmount(tx)}
                 </span>
               </div>
@@ -1087,7 +1149,7 @@ const Transactions = () => {
               <div className="pt-3.5 border-t border-slate-100 dark:border-white/5 flex gap-2">
                 <button
                   onClick={() => handleCopyHash(tx.hash)}
-                  className="flex-1 flex items-center justify-between px-4 py-3 bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/10 rounded-xl text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all font-bold text-xs relative"
+                  className="flex-1 flex items-center justify-between px-4 py-3 bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/10 rounded-xl text-slate-600 dark:text-slate-400 hover:text-black dark:text-white dark:hover:text-black dark:text-white transition-all font-bold text-xs relative"
                 >
                   <div className="flex items-center gap-2 overflow-hidden">
                     <Copy size={14} className="opacity-60 flex-shrink-0" />
@@ -1110,7 +1172,7 @@ const Transactions = () => {
                   href={getExplorerUrl(tx.hash, tx.chainId || chainId || 11155111)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center p-3 bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/10 rounded-xl text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all"
+                  className="flex items-center justify-center p-3 bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/10 rounded-xl text-slate-400 hover:text-black dark:text-white dark:hover:text-black dark:text-white transition-all"
                 >
                   <ExternalLink size={18} />
                 </a>

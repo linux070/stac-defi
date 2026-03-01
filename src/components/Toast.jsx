@@ -4,10 +4,10 @@ import { createPortal } from 'react-dom';
 
 const Toast = ({ type = 'info', message, onClose, visible }) => {
   const icons = {
-    success: <Check className="text-emerald-500" size={20} strokeWidth={3} />,
+    success: <Check className="text-slate-500" size={20} strokeWidth={3} />,
     error: <X className="text-red-500" size={20} strokeWidth={3} />,
     warning: <AlertCircle className="text-amber-500" size={20} strokeWidth={3} />,
-    info: <Info className="text-blue-500" size={20} strokeWidth={3} />,
+    info: <Info className="text-black dark:text-white" size={20} strokeWidth={3} />,
   };
 
   const titles = {

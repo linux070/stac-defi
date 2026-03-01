@@ -38,9 +38,9 @@ const LanguageSelector = ({ placement = 'header' }) => {
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center transition-all duration-200 group outline-none w-full
           ${placement === 'footer'
-            ? 'gap-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-bold uppercase tracking-wider'
+            ? 'gap-1.5 text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white text-sm font-bold uppercase tracking-wider'
             : placement === 'mobile-menu'
-              ? 'justify-between text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              ? 'justify-between text-[18px] font-semibold tracking-tight py-3 text-slate-500 dark:text-slate-500 hover:text-black dark:hover:text-white'
               : 'gap-1.5 h-[44px] px-4 rounded-xl border border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10 shadow-sm font-bold active:scale-95'
           }`}
       >
@@ -57,7 +57,7 @@ const LanguageSelector = ({ placement = 'header' }) => {
           <>
             <span>{t('Language')}</span>
             <div className="flex items-center gap-3">
-              <span className="px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[11px] font-bold tracking-tight shadow-sm border border-blue-100/50 dark:border-blue-800/20 group-hover:scale-105 transition-transform">
+              <span className="text-black dark:text-white text-[14px] font-bold tracking-tight opacity-70 group-hover:opacity-100 transition-opacity">
                 {currentLang.name}
               </span>
               <ChevronRight
@@ -85,7 +85,7 @@ const LanguageSelector = ({ placement = 'header' }) => {
                 <button onClick={() => setIsOpen(false)} className="p-2 -ml-2 text-slate-600 dark:text-slate-300 active:scale-90 transition-all">
                   <ArrowLeft size={24} />
                 </button>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('Language')}</h2>
+                <h2 className="text-xl font-bold text-black dark:text-white">{t('Language')}</h2>
                 <div className="w-10" /> {/* Spacer */}
               </div>
 
@@ -97,7 +97,7 @@ const LanguageSelector = ({ placement = 'header' }) => {
                       key={lang.code}
                       onClick={() => changeLanguage(lang.code)}
                       className={`w-full py-4 px-2 flex items-center justify-between group transition-all
-                        ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
+                        ${isActive ? 'text-black dark:text-white dark:text-black dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100 dark:border-white/10 flex-shrink-0 shadow-sm">
@@ -105,7 +105,7 @@ const LanguageSelector = ({ placement = 'header' }) => {
                         </div>
                         <span className="text-[17px] font-semibold">{lang.name}</span>
                       </div>
-                      {isActive && <Check size={20} className="text-blue-600 dark:text-blue-400" />}
+                      {isActive && <Check size={20} className="text-black dark:text-white dark:text-black dark:text-white" />}
                     </button>
                   );
                 })}
@@ -121,7 +121,7 @@ const LanguageSelector = ({ placement = 'header' }) => {
                 ${placement === 'footer' ? 'bottom-full mb-3 left-0' : 'top-full mt-2 right-0'}`}
             >
               <div className="px-5 pt-5 pb-2">
-                <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 uppercase tracking-[0.2em]">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
                   {t('Select Language')}
                 </span>
               </div>
@@ -143,8 +143,8 @@ const LanguageSelector = ({ placement = 'header' }) => {
                         </div>
                         <span className={`text-[13px] tracking-tight transition-colors duration-200
                           ${isActive
-                            ? 'text-slate-900 dark:text-white font-bold'
-                            : 'text-slate-500 dark:text-white/60 group-hover/item:text-slate-800 dark:group-hover/item:text-white/90'}`}>
+                            ? 'text-black dark:text-white font-bold'
+                            : 'text-slate-500 dark:text-slate-400 group-hover/item:text-black dark:group-hover/item:text-white'}`}>
                           {lang.name}
                         </span>
                       </div>

@@ -2,7 +2,7 @@
 
 export const APP_NAME = 'Stac DeFi';
 export const APP_DESCRIPTION = 'The next generation of blockchain infrastructure on Arc Network';
-export const DEX_ADDRESS = "0xf910763933b1af74C45B7E3D947fB14460bD8C40"; // StacDEX Address (From Remix)
+export const DEX_ADDRESS = "0x00EBABdF8B2F811074DF4922f8601190Aa0bab4f"; // StacDEX Address (From Remix)
 
 // The Official USDC Address on Arc (Do not change)
 export const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";

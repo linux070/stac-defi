@@ -4,6 +4,8 @@ import { createPublicClient, http } from 'viem';
 import { sepolia } from 'viem/chains';
 import { SEPOLIA_CHAIN_ID, ARC_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID } from './useBridge';
 import { getItem, setItem } from '../utils/indexedDB';
+import DexABI from '../abis/StacDEX.json';
+import { DEX_ADDRESS, TOKENS } from '../config/constants';
 
 // Chain configurations
 const ARC_RPC_URLS = [
@@ -106,10 +108,25 @@ const createArcClient = () => getClient(ARC_CHAIN_ID, ARC_RPC_URLS);
 const createSepoliaClient = () => getClient(SEPOLIA_CHAIN_ID, SEPOLIA_RPC_URLS, sepolia);
 const createBaseSepoliaClient = () => getClient(BASE_SEPOLIA_CHAIN_ID, BASE_SEPOLIA_RPC_URLS);
 
+// Token mapping (address -> symbol)
+const OTHER_TOKENS = {};
+Object.entries(TOKENS).forEach(([symbol, address]) => {
+  OTHER_TOKENS[address.toLowerCase()] = symbol;
+});
+OTHER_TOKENS[USDC_CONTRACTS[ARC_CHAIN_ID].toLowerCase()] = 'USDC';
+
+// Swap event signature hash from StacDEX
+const SWAP_EVENT_SIGNATURE = '0xdc381c81559902678f24b219ed05f63bc0dc2e81b671fccf207ed2e4f014f329';
+
 const determineTransactionType = (tx, logs, chainId) => {
+  const isSwapEvent = logs?.some(log => log.topics?.[0]?.toLowerCase() === SWAP_EVENT_SIGNATURE);
+  if (isSwapEvent) return 'Swap';
+
   const usdcAddress = USDC_CONTRACTS[chainId];
   if (!usdcAddress) return 'Transaction';
   const hasUSDCTransfer = logs?.some(log => log.address?.toLowerCase() === usdcAddress.toLowerCase());
+  const hasOtherToken = logs?.some(log => log.address && OTHER_TOKENS[log.address.toLowerCase()]);
+  if (hasUSDCTransfer && hasOtherToken) return 'Swap';
   return hasUSDCTransfer ? 'Transfer' : 'Transaction';
 };
 
@@ -119,28 +136,103 @@ const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
   let amount = '0.00';
   let isOutgoing = true;
   const usdcAddress = USDC_CONTRACTS[chainId];
-  if (receipt?.logs && usdcAddress) {
-    const transferLogs = receipt.logs.filter(log =>
+  let fromLabel = chainName;
+  let toLabel = chainName;
+
+  if (receipt?.logs) {
+    // 1. Check for DEX Swap Event (New Single-Signature Flow)
+    const swapLog = receipt.logs.find(log => log.topics?.[0]?.toLowerCase() === SWAP_EVENT_SIGNATURE);
+
+    if (swapLog) {
+      try {
+        // Parse Swap Event: user(indexed), token(address), type(string), amountIn(uint256), amountOut(uint256)
+        // Data contains: token (32 bytes), type (offset + length + data), amountIn (32 bytes), amountOut (32 bytes)
+        // For simplicity, we can look at the Transfer logs which are always emitted alongside Swap
+        const transfers = receipt.logs.filter(l => l.topics?.[0] === TRANSFER_EVENT_SIGNATURE);
+        const userLower = address.toLowerCase().replace('0x', '');
+
+        // Find what the user sent and received
+        const sentLog = transfers.find(l => l.topics?.[1]?.toLowerCase().includes(userLower));
+        const receivedLog = transfers.find(l => l.topics?.[2]?.toLowerCase().includes(userLower));
+
+        if (sentLog && receivedLog) {
+          const fromToken = OTHER_TOKENS[sentLog.address.toLowerCase()] || 'Unknown';
+          const toToken = OTHER_TOKENS[receivedLog.address.toLowerCase()] || 'Unknown';
+
+          fromLabel = fromToken;
+          toLabel = toToken;
+          isOutgoing = true;
+
+          const hexAmount = sentLog.data.startsWith('0x') ? sentLog.data.slice(2) : sentLog.data;
+          const decimals = fromToken === 'USDC' ? 1000000 : 1e18;
+          amount = (Number(BigInt('0x' + hexAmount)) / decimals).toFixed(2);
+
+          return { id: tx.hash, type: 'Swap', from: fromLabel, to: toLabel, amount, timestamp, status: 'success', hash: tx.hash, chainId, chainName, address: address?.toLowerCase(), isOutgoing };
+        }
+      } catch (e) {
+        console.warn("Failed to parse Swap direct logs", e);
+      }
+    }
+
+    // 2. Fallback to USDC Transfer detection (Old flow or simple Transfer)
+    const usdcAddress = USDC_CONTRACTS[chainId];
+    const usdcLogs = receipt.logs.filter(log =>
       log.address?.toLowerCase() === usdcAddress.toLowerCase() &&
       log.topics?.[0] === TRANSFER_EVENT_SIGNATURE
     );
-    if (transferLogs.length > 0) {
-      const log = transferLogs[0];
+
+    const otherLogs = receipt.logs.filter(log =>
+      log.address?.toLowerCase() !== usdcAddress.toLowerCase() &&
+      log.topics?.[0] === TRANSFER_EVENT_SIGNATURE &&
+      log.address && OTHER_TOKENS[log.address.toLowerCase()]
+    );
+
+    if (usdcLogs.length > 0) {
+      const log = usdcLogs[0];
       const userLower = address.toLowerCase().replace('0x', '');
       const toTopic = log.topics?.[2]?.toLowerCase() || '';
-      isOutgoing = !toTopic.includes(userLower);
+
+      if (type === 'Swap' && otherLogs.length > 0) {
+        const otherTokenAddress = otherLogs[0].address.toLowerCase();
+        const otherToken = OTHER_TOKENS[otherTokenAddress];
+        const isReceivingUSDC = toTopic.includes(userLower);
+
+        if (isReceivingUSDC) {
+          fromLabel = otherToken;
+          toLabel = 'USDC';
+          isOutgoing = true;
+        } else {
+          fromLabel = 'USDC';
+          toLabel = otherToken;
+          isOutgoing = false;
+        }
+      } else {
+        isOutgoing = !toTopic.includes(userLower);
+      }
+
       try {
         if (log.data && log.data !== '0x') {
           const hexAmount = log.data.startsWith('0x') ? log.data.slice(2) : log.data;
-          amount = (Number(BigInt('0x' + hexAmount)) / 1000000).toFixed(2);
+          const decimals = usdcAddress.toLowerCase() === log.address.toLowerCase() ? 1000000 : 1e18;
+          amount = (Number(BigInt('0x' + hexAmount)) / decimals).toFixed(2);
         }
       } catch { amount = 'N/A'; }
     }
   }
+
   return {
-    id: tx.hash, type, from: chainName, to: chainName, amount, timestamp,
+    id: tx.hash,
+    type,
+    from: fromLabel,
+    to: toLabel,
+    amount,
+    timestamp,
     status: receipt?.status === 'success' ? 'success' : 'failed',
-    hash: tx.hash, chainId, chainName, address: address?.toLowerCase(), isOutgoing,
+    hash: tx.hash,
+    chainId,
+    chainName,
+    address: address?.toLowerCase(),
+    isOutgoing,
   };
 };
 
@@ -244,11 +336,28 @@ export function useTransactionHistory() {
       const fromBlock = currentBlock - 100n > 0n ? currentBlock - 100n : 0n;
       const usdcAddress = USDC_CONTRACTS[chainId];
       if (!usdcAddress) return [];
-      const [logsFrom, logsTo] = await Promise.all([
+      const [logsFrom, logsTo, logsSwap] = await Promise.all([
         client.getLogs({ address: usdcAddress, event: { type: 'event', name: 'Transfer', inputs: [{ type: 'address', indexed: true, name: 'from' }, { type: 'address', indexed: true, name: 'to' }, { type: 'uint256', indexed: false, name: 'value' }] }, args: { from: address }, fromBlock, toBlock: currentBlock }),
         client.getLogs({ address: usdcAddress, event: { type: 'event', name: 'Transfer', inputs: [{ type: 'address', indexed: true, name: 'from' }, { type: 'address', indexed: true, name: 'to' }, { type: 'uint256', indexed: false, name: 'value' }] }, args: { to: address }, fromBlock, toBlock: currentBlock }),
+        chainId === ARC_CHAIN_ID ? client.getLogs({
+          address: DEX_ADDRESS,
+          event: {
+            type: 'event',
+            name: 'Swap',
+            inputs: [
+              { type: 'address', indexed: true, name: 'user' },
+              { type: 'address', indexed: false, name: 'token' },
+              { type: 'string', indexed: false, name: 'typeOfSwap' },
+              { type: 'uint256', indexed: false, name: 'amountIn' },
+              { type: 'uint256', indexed: false, name: 'amountOut' }
+            ]
+          },
+          args: { user: address },
+          fromBlock,
+          toBlock: currentBlock
+        }) : []
       ]);
-      const txHashes = [...new Set([...logsFrom, ...logsTo].map(log => log.transactionHash))];
+      const txHashes = [...new Set([...logsFrom, ...logsTo, ...logsSwap].map(log => log.transactionHash))];
       const existingHashes = new Set(transactionsRef.current.map(tx => tx.hash));
       const txPromises = txHashes.filter(hash => !fetchedHashesRef.current.has(hash) && !existingHashes.has(hash)).slice(0, 15).map(async (hash) => {
         try {

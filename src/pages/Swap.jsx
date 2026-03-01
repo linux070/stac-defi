@@ -7,6 +7,7 @@ import { ArrowDownUp, Loader, Wallet, X, ChevronDown, Search } from 'lucide-reac
 import { motion, AnimatePresence } from 'framer-motion';
 import { TOKENS } from '../config/networks';
 import { sanitizeInput, getFilteredTokens } from '../utils/blockchain';
+import { CHAINS } from '../config/constants';
 import useTokenBalance from '../hooks/useTokenBalance';
 import useMultiChainBalances from '../hooks/useMultiChainBalances';
 import Toast from '../components/Toast';
@@ -199,7 +200,7 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
             {/* Premium Search Bar - Token Selector */}
             <div className="px-5 py-4">
               <div className="relative group">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors duration-200">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-black dark:text-white transition-colors duration-200">
                   <Search size={16} />
                 </div>
                 <input
@@ -207,7 +208,7 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
                   placeholder={t('Search name or paste address')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-2xl pl-11 pr-4 py-3 text-[14px] outline-none group-hover:bg-white dark:group-hover:bg-white/[0.06] focus:bg-white dark:focus:bg-white/[0.08] focus:border-blue-500/40 focus:ring-4 focus:ring-blue-500/5 transition-all duration-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
+                  className="w-full bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 rounded-2xl pl-11 pr-4 py-3 text-[14px] outline-none group-hover:bg-white dark:group-hover:bg-white/[0.04] focus:bg-white dark:focus:bg-white/[0.06] focus:border-black/20 dark:focus:border-white/20 focus:ring-4 focus:ring-black/5 dark:focus:ring-white/5 transition-all duration-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
                 />
               </div>
             </div>
@@ -553,8 +554,30 @@ const Swap = () => {
       return;
     }
 
-    // For all tokens (including ETH when available), use full balance
-    setFromAmount(fromBalance);
+    // On Arc Testnet, USDC is used for gas. To prevent "transfer amount exceeds balance" revert,
+    // we must leave a buffer (1.5 USDC) if selling USDC.
+    const chainIdNum = chainId ? (typeof chainId === 'string' ? parseInt(chainId, 16) : chainId) : null;
+    if (chainIdNum === CHAINS.ARC_TESTNET && fromToken === 'USDC') {
+      const balanceNum = parseFloat(fromBalance);
+      const buffer = 1.5;
+      if (balanceNum <= buffer) {
+        setToast({
+          visible: true,
+          type: 'error',
+          message: `Insufficient balance for gas. Keep at least ${buffer} USDC for Arc fees.`
+        });
+        return;
+      }
+      setFromAmount((balanceNum - buffer).toFixed(2));
+      setToast({
+        visible: true,
+        type: 'info',
+        message: `Reserved ${buffer} USDC for Arc gas fees.`
+      });
+    } else {
+      // For all other tokens/chains, use full balance
+      setFromAmount(fromBalance);
+    }
   };
 
   const handleFaucetClick = (e) => {
@@ -589,10 +612,10 @@ const Swap = () => {
         className="swap-container group"
       >
         {/* 4-Corner Grey Glow System - Desktop Only */}
-        <div className="hidden md:block absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-slate-300 to-slate-400 opacity-[0.1] blur-[60px] rounded-full"></div>
-        <div className="hidden md:block absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-slate-300 to-slate-400 opacity-[0.1] blur-[60px] rounded-full"></div>
-        <div className="hidden md:block absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-slate-300 to-slate-400 opacity-[0.1] blur-[60px] rounded-full"></div>
-        <div className="hidden md:block absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-slate-300 to-slate-400 opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full"></div>
         <div className="relative z-10">
           {/* Header */}
           <div className="swap-header">
@@ -602,8 +625,8 @@ const Swap = () => {
                 onClick={handleFaucetClick}
                 className="swap-faucet-button-premium group/faucet"
               >
-                <FaucetIcon size={14} className="text-blue-500 group-hover/faucet:text-blue-600 transition-colors" />
-                <span>{t('Faucet')}</span>
+                <FaucetIcon size={14} className="text-black dark:text-white transition-colors" />
+                <span>{t('Arc Faucet')}</span>
               </button>
 
             </div>
@@ -805,17 +828,18 @@ const Swap = () => {
               }
             }}
             onError={(error) => {
-              const errorMsg = error?.message || error?.toString() || "";
+              const errorMsg = swapState.error || error?.message || error?.toString() || "";
+              const lowerError = errorMsg.toLowerCase();
               const isRejection =
-                errorMsg.toLowerCase().includes('user rejected') ||
-                errorMsg.toLowerCase().includes('user denied') ||
-                errorMsg.toLowerCase().includes('action_rejected') ||
-                errorMsg.toLowerCase().includes('request rejected') ||
-                errorMsg.toLowerCase().includes('rejected by user') ||
+                lowerError.includes('user rejected') ||
+                lowerError.includes('user denied') ||
+                lowerError.includes('action_rejected') ||
+                lowerError.includes('request rejected') ||
+                lowerError.includes('rejected by user') ||
                 error?.name === 'UserRejectedRequestError' ||
                 error?.code === 4001;
 
-              setSwapError(error);
+              setSwapError(errorMsg);
               setIsSwapModalOpen(false);
 
               if (isRejection) {

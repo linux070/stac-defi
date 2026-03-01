@@ -11,7 +11,8 @@
     /* Professional Typography */
     --theme-font: 'Outfit', 'Inter', system-ui, sans-serif;
 
-    /* Light Mode - Premium Slate & Blue Palette */
+
+    /* Light Mode - Premium Slate Palette */
     --theme-bg-page: #f8fafc;
     --theme-bg-card: rgba(255, 255, 255, 0.8);
     --theme-bg-surface: #ffffff;
@@ -23,8 +24,8 @@
     --theme-border-soft: rgba(226, 232, 240, 0.6);
     --theme-border-medium: #e2e8f0;
 
-    --theme-accent-primary: #3b82f6;
-    --theme-accent-secondary: #6366f1;
+    --theme-accent-primary: #000000;
+    --theme-accent-secondary: #374151;
 
     --theme-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --theme-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
@@ -33,7 +34,8 @@
   }
 
   .dark {
-    /* Dark Mode - Deep Midnight & Azure Palette */
+
+    /* Dark Mode - Deep Midnight Palette */
     --theme-bg-page: #020617;
     --theme-bg-card: rgba(15, 23, 42, 0.6);
     --theme-bg-surface: #0f172a;
@@ -45,8 +47,8 @@
     --theme-border-soft: rgba(30, 41, 59, 0.6);
     --theme-border-medium: #1e2b44;
 
-    --theme-accent-primary: #60a5fa;
-    --theme-accent-secondary: #818cf8;
+    --theme-accent-primary: #ffffff;
+    --theme-accent-secondary: #d1d5db;
 
     --theme-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
     --theme-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
@@ -103,7 +105,7 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-gradient-arc text-white font-semibold py-2 px-6 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-black dark:bg-white text-white dark:text-black font-semibold py-2 px-6 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
     /* Instant theme changes, smooth transitions for hover/opacity */
     transition: opacity 0.2s ease, transform 0.2s ease;
     transition-property: opacity, transform;
@@ -111,7 +113,7 @@
 
   /* Custom colors defined in tailwind.config.js */
   .btn-secondary {
-    @apply bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border-2 border-primary-500 font-semibold py-2 px-6 rounded-lg hover:bg-primary-50 dark:hover:bg-gray-700;
+    @apply bg-white dark:bg-gray-800 text-black dark:text-white border-2 border-black dark:border-white font-semibold py-2 px-6 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700;
     /* Instant theme changes, smooth transitions for hover */
     transition: opacity 0.2s ease, transform 0.2s ease;
     transition-property: opacity, transform;
@@ -141,7 +143,7 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 dark:text-white;
+    @apply w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white dark:text-white;
     /* Instant theme changes, smooth transitions for focus states */
     transition: box-shadow 0.2s ease, outline 0.2s ease;
     transition-property: box-shadow, outline;
@@ -149,7 +151,7 @@
 
   /* Custom gradient defined in tailwind.config.js */
   .gradient-text {
-    @apply bg-gradient-arc bg-clip-text text-transparent;
+    @apply text-black dark:text-white font-bold;
   }
 
   /* Responsive token selector container */
@@ -179,7 +181,7 @@
 
   /* Switch button for bridge/swap */
   .switch-button {
-    @apply p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110;
+    @apply p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110;
   }
 }
 
@@ -207,7 +209,7 @@
 
   /* Neon glow effects for dark mode */
   .neon-icon-container {
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
@@ -232,22 +234,14 @@
 
   /* Dual-level technical grid for Hero section */
   .hero-blueprint-grid {
-    background-color: #eaf0f8;
-    background-image: 
-      linear-gradient(rgba(59, 130, 246, 0.1) 1.5px, transparent 1.5px),
-      linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1.5px, transparent 1.5px),
-      linear-gradient(rgba(59, 130, 246, 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(59, 130, 246, 0.06) 1px, transparent 1px);
-    background-size: 200px 200px, 200px 200px, 40px 40px, 40px 40px;
+    background-color: #f8fafc;
+    background-image: none;
   }
 
   .dark .hero-blueprint-grid {
     background-color: #020617;
-    background-image: 
-      linear-gradient(rgba(59, 130, 246, 0.08) 1.5px, transparent 1.5px),
-      linear-gradient(90deg, rgba(59, 130, 246, 0.08) 1.5px, transparent 1.5px),
-      linear-gradient(rgba(59, 130, 246, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(59, 130, 246, 0.04) 1px, transparent 1px);
+    background-image: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.05) 0%, transparent 40%),
+                      radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.03) 0%, transparent 40%);
   }
 
   .dark .grid-background {
@@ -446,8 +440,11 @@
 /* Feedback Button Styling */
 .feedback-widget {
   position: fixed !important;
-  z-index: 40 !important;
-  display: none !important;
+  z-index: 9000 !important;
+  right: 24px;
+  bottom: 96px; 
+  display: none !important; /* Hidden on mobile */
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @media (min-width: 768px) {
@@ -455,10 +452,18 @@
     display: block !important;
     right: 0;
     bottom: auto;
-    top: 50%;
+    top: 40%;
     transform: translateY(-50%);
   }
 }
+
+@media (max-width: 767px) {
+  .feedback-widget {
+    display: none !important; /* Removed on mobile per user request */
+  }
+}
+
+
 
 .feedback-button {
   display: flex !important;
@@ -470,9 +475,8 @@
   font-weight: 600;
   transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-  /* Mobile Style (FAB) */
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -481,21 +485,28 @@
   .feedback-button {
     width: auto;
     height: auto;
-    padding: 26px 12px;
+    width: 32px; /* Set a fixed width for the vertical tab */
+    padding: 24px 0;
     writing-mode: vertical-rl;
     text-orientation: mixed;
-    border-radius: 4px 0 0 4px;
-    letter-spacing: 1px;
-    font-size: 14px;
-    transform: translateX(8px);
+    border-radius: 12px 0 0 12px;
+    letter-spacing: 2px;
+    font-size: 11px;
+    transform: translateX(4px);
     box-shadow: -2px 0 12px rgba(0, 0, 0, 0.3);
   }
 
   .feedback-button:hover {
     transform: translateX(0px);
-    background: #1e2530;
-    color: #60a5fa;
-    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4);
+    background: #000000;
+    color: #ffffff;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2);
+  }
+
+  html.dark .feedback-button:hover {
+    background: #ffffff;
+    color: #000000;
+    box-shadow: -8px 0 24px rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -534,21 +545,13 @@ html.dark .feedback-button {
 /* Feedback Button Mobile Style - Premium Icon-Only Circle */
 @media (max-width: 767px) {
   .feedback-button {
-    background: #000000 !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    width: 52px !important;
-    height: 52px !important;
-    padding: 0 !important;
-    border-radius: 50% !important;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .feedback-button::after {
     display: none !important;
   }
+}
+
+@keyframes fab-glow {
+  0%, 100% { box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05); }
+  50% { box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.15); }
 }
 
 @keyframes fab-pulse {

@@ -183,7 +183,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="absolute inset-0 bg-slate-900/40 dark:bg-black/98 sm:dark:bg-black/80 backdrop-blur-md"
+                        className="absolute inset-0 bg-black/40 dark:bg-black/98 sm:dark:bg-black/80 backdrop-blur-md"
                     />
 
                     {/* Modal Container */}
@@ -202,7 +202,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all active:scale-90"
+                                className="p-2 rounded-xl text-slate-400 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all active:scale-90"
                             >
                                 <X size={20} strokeWidth={2.5} />
                             </button>
@@ -214,7 +214,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                             {/* Left Sidebar — Desktop Only */}
                             <div className="hidden md:block w-[260px] flex-shrink-0 border-r border-slate-100 dark:border-white/[0.08] bg-slate-50/30 dark:bg-white/[0.01] overflow-y-auto no-scrollbar">
                                 <div className="px-5 pt-5 pb-2">
-                                    <span className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-[0.15em]">
+                                    <span className="text-[10px] font-bold text-black dark:text-white dark:text-black dark:text-white uppercase tracking-[0.15em]">
                                         {t("Release History")}
                                     </span>
                                 </div>
@@ -226,21 +226,21 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                 key={idx}
                                                 onClick={() => handleVersionSelect(idx)}
                                                 className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 group flex flex-col ${isActive
-                                                    ? 'bg-blue-600 shadow-[0_8px_24px_rgba(37,99,235,0.2)] border-transparent text-white'
+                                                    ? 'bg-black dark:bg-white border-transparent text-white'
                                                     : 'hover:bg-slate-100 dark:hover:bg-white/[0.08] dark:text-slate-400 border border-transparent'
                                                     }`}
                                             >
                                                 <div className="flex items-center justify-between w-full gap-3">
-                                                    <span className={`text-[15px] font-black tracking-tight ${isActive ? 'text-white' : 'text-slate-900 dark:text-slate-200'}`}>
+                                                    <span className={`text-[15px] font-black tracking-tight ${isActive ? 'text-white' : 'text-black dark:text-slate-200'}`}>
                                                         {version.version}
                                                     </span>
                                                     {version.isLatest && (
-                                                        <span className={`px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider ${isActive ? 'bg-white text-blue-600' : 'bg-blue-500 text-white'}`}>
+                                                        <span className={`px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider ${isActive ? 'bg-white dark:bg-black text-black dark:text-white' : 'bg-black dark:bg-white text-white dark:text-black'}`}>
                                                             {t("Latest")}
                                                         </span>
                                                     )}
                                                 </div>
-                                                <span className={`text-[11px] font-medium mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-500 dark:text-slate-500'}`}>
+                                                <span className={`text-[11px] font-medium mt-0.5 ${isActive ? 'text-slate-500 dark:text-slate-400' : 'text-slate-500 dark:text-slate-500'}`}>
                                                     {version.date}
                                                 </span>
                                             </button>
@@ -267,11 +267,11 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                 >
                                                     <div className="flex flex-col items-start text-left">
                                                         <div className="flex items-center gap-2 mb-1">
-                                                            <span className={`text-[15px] font-black tracking-tight ${isActive ? 'text-blue-500' : 'text-slate-900 dark:text-slate-200'}`}>
+                                                            <span className={`text-[15px] font-black tracking-tight ${isActive ? 'text-black dark:text-white' : 'text-black dark:text-slate-200'}`}>
                                                                 {version.version}
                                                             </span>
                                                             {version.isLatest && (
-                                                                <span className="px-1.5 py-0.5 rounded-md bg-blue-500 text-white text-[8px] font-black uppercase tracking-wider">
+                                                                <span className="px-1.5 py-0.5 rounded-md bg-black dark:bg-white text-white dark:text-black text-[8px] font-black uppercase tracking-wider">
                                                                     {t("Latest")}
                                                                 </span>
                                                             )}
@@ -280,7 +280,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                             {version.date}
                                                         </span>
                                                     </div>
-                                                    <div className={`p-2 rounded-lg bg-slate-100 dark:bg-white/5 transition-transform duration-300 ${isActive ? 'rotate-180 text-blue-500' : 'text-slate-400'}`}>
+                                                    <div className={`p-2 rounded-lg bg-slate-100 dark:bg-white/5 transition-transform duration-300 ${isActive ? 'rotate-180 text-black dark:text-white' : 'text-slate-400'}`}>
                                                         <ChevronDown size={18} strokeWidth={3} />
                                                     </div>
                                                 </button>
@@ -297,13 +297,13 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                         >
                                                             <div className="px-6 pb-8 md:p-0">
                                                                 <div className="hidden md:flex items-center gap-3 mb-6">
-                                                                    <div className="w-8 h-[2px] bg-blue-500/20 rounded-full" />
-                                                                    <span className="text-[10px] sm:text-[11px] font-bold text-blue-500 uppercase tracking-[0.15em]">
+                                                                    <div className="w-8 h-[2px] bg-black dark:bg-white rounded-full" />
+                                                                    <span className="text-[10px] sm:text-[11px] font-bold text-black dark:text-white uppercase tracking-[0.15em]">
                                                                         {version.version} — {version.date}
                                                                     </span>
                                                                 </div>
 
-                                                                <h3 className="text-[clamp(1.15rem,5vw,2.25rem)] font-black text-slate-900 dark:text-white tracking-tight leading-[1.2] mb-5 md:mb-6">
+                                                                <h3 className="text-[clamp(1.15rem,5vw,2.25rem)] font-black text-black dark:text-white tracking-tight leading-[1.2] mb-5 md:mb-6">
                                                                     {version.title}
                                                                 </h3>
 
@@ -317,7 +317,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                                             key={itemIdx}
                                                                             className="relative pl-6 sm:pl-7"
                                                                         >
-                                                                            <div className="absolute left-0 top-[10px] w-1.5 h-1.5 rounded-full bg-blue-500/30" />
+                                                                            <div className="absolute left-0 top-[10px] w-1.5 h-1.5 rounded-full bg-black dark:bg-white" />
                                                                             <h5 className="text-[14px] sm:text-[15px] font-bold text-slate-800 dark:text-slate-100 tracking-tight mb-2">
                                                                                 {item.title}
                                                                             </h5>

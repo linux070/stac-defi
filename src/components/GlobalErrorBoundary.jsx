@@ -40,18 +40,18 @@ class GlobalErrorBoundary extends Component {
             return (
                 <div className="min-h-screen bg-slate-50 dark:bg-[#060606] flex items-center justify-center p-4 font-['Inter','Satoshi','General_Sans',sans-serif]">
                     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-500/10 blur-[120px] rounded-full"></div>
-                        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-500/10 blur-[120px] rounded-full"></div>
+                        <div className="absolute -top-24 -left-24 w-96 h-96 bg-black dark:bg-white blur-[120px] rounded-full"></div>
+                        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-slate-500/10 blur-[120px] rounded-full"></div>
                     </div>
 
-                    <div className="relative z-10 w-full max-w-xl bg-white/80 dark:bg-slate-900/40 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 rounded-[32px] p-8 md:p-12 shadow-2xl text-center">
+                    <div className="relative z-10 w-full max-w-xl bg-white/80 dark:bg-black/40 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 rounded-[32px] p-8 md:p-12 shadow-2xl text-center">
                         <div className="flex justify-center mb-8">
                             <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 shadow-lg shadow-red-500/10">
                                 <AlertOctagon size={40} strokeWidth={2} />
                             </div>
                         </div>
 
-                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-4">
+                        <h1 className="text-2xl md:text-3xl font-bold text-black dark:text-white mb-4">
                             Something went wrong
                         </h1>
 
@@ -62,7 +62,7 @@ class GlobalErrorBoundary extends Component {
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <button
                                 onClick={this.handleRestart}
-                                className="flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 dark:hover:bg-blue-400/20 rounded-xl font-bold transition-all active:scale-95 group shadow-sm"
+                                className="flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white dark:bg-black dark:bg-white text-black dark:text-white dark:text-black dark:text-white hover:bg-black dark:bg-white dark:hover:bg-black dark:bg-white rounded-xl font-bold transition-all active:scale-95 group shadow-sm"
                             >
                                 <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
                                 Refresh Application

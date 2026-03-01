@@ -89,16 +89,13 @@ const SwapModal = ({
         needsApproval,
         handleApprove,
         handleSwap,
-        isApproving,
         approveSuccess,
-        isSwapping,
         isLoading,
         isSuccess,
         txHash,
         error,
         price,
         priceImpact,
-        swapStep,
         isTokenToToken
     } = swapState;
 
@@ -160,31 +157,33 @@ const SwapModal = ({
 
     useEffect(() => {
         if (txHash && onSuccess && isOpen) {
-            if (!isTokenToToken || swapStep === 2) {
-                onSuccess(txHash);
-                setButtonLoading(false);
-            } else {
-                console.log("Leg 1 swap hash received:", txHash);
-            }
+            onSuccess(txHash);
+            setButtonLoading(false);
         }
-    }, [txHash, onSuccess, isOpen, isTokenToToken, swapStep]);
+    }, [txHash, onSuccess, isOpen]);
 
-    // Handle Auto-Swap after Approval OR Step transition
+    // Handle Auto-Swap after Approval
     useEffect(() => {
         if (!isOpen || !buttonLoading) return;
 
-        if (approveSuccess && needsApproval === false) {
+        // Automatically trigger swap when approval is successful and we are in the 'approving' step
+        if (approveSuccess && needsApproval === false && swapState.step === 'approving') {
             handleSwap();
         }
+    }, [approveSuccess, buttonLoading, isOpen, needsApproval, handleSwap, swapState.step]);
 
-        if (isTokenToToken && swapStep === 2 && !isSwapping && !isApproving) {
-            if (needsApproval) {
-                handleApprove();
-            } else {
-                handleSwap();
-            }
+    // Update status labels based on current hook step
+    const getStatusLabel = () => {
+        switch (swapState.step) {
+            case 'approving': return `${t('Approving')} ${displayFromSymbol}`;
+            case 'swapping': return `${t('Swapping')} ${displayFromSymbol}`;
+            case 'success': return t('Success!');
+            case 'error': return t('Error');
+            default:
+                if (needsApproval && !approveSuccess) return `${t('Approve')} ${displayFromSymbol}`;
+                return t('Confirm Swap');
         }
-    }, [approveSuccess, buttonLoading, isOpen, needsApproval, handleSwap, isTokenToToken, swapStep, isSwapping, isApproving, handleApprove]);
+    };
 
     useEffect(() => {
         let warning = '';
@@ -250,7 +249,6 @@ const SwapModal = ({
         }
     };
 
-    const slippageLabel = slippage === 0.5 ? t('Auto') : t('Custom');
 
     const modalContent = (
         <AnimatePresence>
@@ -322,6 +320,21 @@ const SwapModal = ({
 
                             {/* Transaction Details Rows */}
                             <div className="swap-confirm-details">
+                                {isTokenToToken && (
+                                    <div className="swap-confirm-detail-row">
+                                        <div className="swap-confirm-detail-left">
+                                            <RefreshCcw size={15} className="rotate-90" />
+                                            <span>{t('Route')}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                            <span>{displayFromSymbol}</span>
+                                            <ArrowDown size={10} className="-rotate-90 opacity-40" />
+                                            <span>USDC</span>
+                                            <ArrowDown size={10} className="-rotate-90 opacity-40" />
+                                            <span>{displayToSymbol}</span>
+                                        </div>
+                                    </div>
+                                )}
                                 {/* Price Row */}
                                 <div className="swap-confirm-detail-row">
                                     <div className="swap-confirm-detail-left">
@@ -397,7 +410,7 @@ const SwapModal = ({
                                                 }}
                                                 className="swap-confirm-slippage-btn"
                                             >
-                                                <span className="swap-confirm-slippage-badge">{slippageLabel}</span>
+                                                <span className="swap-confirm-slippage-badge">{slippage === 0.5 ? t('Auto') : t('Custom')}</span>
                                                 <span className="swap-confirm-slippage-value">{slippage}%</span>
                                             </button>
                                         )}
@@ -411,9 +424,9 @@ const SwapModal = ({
                                         <span>{t('Network Fee')}</span>
                                     </div>
                                     <div className="swap-confirm-detail-right">
-                                        <div className="swap-confirm-fee-display">
-                                            <span className="swap-confirm-fee-badge">{t('Avg')}</span>
-                                            <span className="swap-confirm-fee-value">~$0.0001</span>
+                                        <div className="swap-confirm-slippage-btn" style={{ cursor: 'default', pointerEvents: 'none' }}>
+                                            <span className="swap-confirm-slippage-badge">{t('Avg')}</span>
+                                            <span className="swap-confirm-slippage-value">~$0.0001</span>
                                         </div>
                                     </div>
                                 </div>
@@ -432,23 +445,15 @@ const SwapModal = ({
                                 disabled={isLoading || buttonLoading}
                                 className="swap-modal-action-button"
                             >
-                                {isApproving || (buttonLoading && needsApproval && !approveSuccess) ? (
+                                {isLoading || (buttonLoading && swapState.step !== 'idle') ? (
                                     <div className="flex items-center justify-center">
                                         <Loader className="animate-spin mr-2" size={20} />
-                                        <span>{t('Approving')}</span>
+                                        <span>{getStatusLabel()}</span>
                                         <DotProgress />
                                     </div>
-                                ) : isSwapping || (buttonLoading && (!needsApproval || approveSuccess)) ? (
-                                    <div className="flex items-center justify-center">
-                                        <Loader className="animate-spin mr-2" size={20} />
-                                        <span>{isTokenToToken ? (swapStep === 1 ? t('Step 1: Selling...') : t('Finalizing Swap...')) : t('Swapping')}</span>
-                                        <DotProgress />
-                                    </div>
-                                ) : needsApproval && !approveSuccess ? (
-                                    `${t('Approve')} ${(isTokenToToken && swapStep === 2) ? 'USDC' : displayFromSymbol}`
                                 ) : (
                                     <span className="font-semibold">
-                                        {isTokenToToken && swapStep === 2 ? t('Complete Swap') : t('Confirm Swap')}
+                                        {getStatusLabel()}
                                     </span>
                                 )}
                             </button>

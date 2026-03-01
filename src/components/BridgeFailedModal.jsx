@@ -76,7 +76,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorMessage }
                 </div>
 
                 <div className="mb-6">
-                  <h4 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                  <h4 className="text-2xl font-bold text-black dark:text-white mb-2">
                     {t('Transaction Failed')}
                   </h4>
                   <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed max-w-[280px] mx-auto">
@@ -109,7 +109,7 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorMessage }
 
                 <button
                   onClick={onClose}
-                  className="w-full py-4 rounded-2xl bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-bold transition-all active:scale-[0.98] hover:bg-slate-200 dark:hover:bg-white/20"
+                  className="w-full py-4 rounded-2xl bg-slate-100 dark:bg-white/10 text-black dark:text-white font-bold transition-all active:scale-[0.98] hover:bg-slate-200 dark:hover:bg-white/20"
                 >
                   {t('Retry')}
                 </button>

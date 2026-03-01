@@ -102,7 +102,7 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
             {/* Premium Search Bar - Modern DeFi Style */}
             <div className="px-5 py-4">
               <div className="relative group">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors duration-200">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-black dark:text-white transition-colors duration-200">
                   <Search size={16} />
                 </div>
                 <input
@@ -111,7 +111,7 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
                   placeholder={t('Search network name or paste address')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-2xl pl-11 pr-4 py-3 text-[14px] outline-none group-hover:bg-white dark:group-hover:bg-white/[0.06] focus:bg-white dark:focus:bg-white/[0.08] focus:border-blue-500/40 focus:ring-4 focus:ring-blue-500/5 transition-all duration-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
+                  className="w-full bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 rounded-2xl pl-11 pr-4 py-3 text-[14px] outline-none group-hover:bg-white dark:group-hover:bg-white/[0.04] focus:bg-white dark:focus:bg-white/[0.06] focus:border-black/20 dark:focus:border-white/20 focus:ring-4 focus:ring-black/5 dark:focus:ring-white/5 transition-all duration-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
                 />
               </div>
             </div>
@@ -791,23 +791,40 @@ const Bridge = () => {
     } finally { setBridgeLoading(false); }
   }, [isConnected, amount, tokenBalance, fromChain, toChain, state.step, bridge, reset, saveBridgeTransaction]);
 
+  const handleReset = useCallback(() => {
+    setShowBridgingModal(false);
+    setShowBridgeSuccessModal(false);
+    setShowBridgeFailedModal(false);
+    setShowBridgeRejectedModal(false);
+    setShowBridgeCancelledModal(false);
+    setAmount('');
+    setBridgeButtonText('Bridge');
+    setBridgeLoading(false);
+    setBridgeStartTime(null);
+    setStopTimer(true);
+    reset();
+    bridgeInitiatedRef.current = false;
+    initialFromChainRef.current = null;
+    initialToChainRef.current = null;
+
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    }
+  }, [reset]);
+
   const closeBridgingModal = useCallback(() => {
     if (state.step !== 'success' && bridgeLoading) {
-      setStopTimer(true);
-      if (timeoutIdRef.current) { clearTimeout(timeoutIdRef.current); timeoutIdRef.current = null; }
-      setShowBridgingModal(false);
-      setBridgeError({ title: 'Error Details', message: 'Transaction cancelled.' });
-      setShowBridgeFailedModal(true); setBridgeLoading(false); reset();
-      bridgeInitiatedRef.current = false;
+      handleReset();
+      setShowBridgeCancelledModal(true);
       return;
     }
-    setShowBridgingModal(false); setAmount(''); setBridgeButtonText('Bridge'); setBridgeLoading(false); reset();
-  }, [state.step, bridgeLoading, reset]);
+    handleReset();
+  }, [state.step, bridgeLoading, handleReset]);
 
   const closeBridgeFailedModal = useCallback(() => {
-    setShowBridgeFailedModal(false); setAmount(''); setBridgeButtonText('Bridge'); reset();
-    bridgeInitiatedRef.current = false;
-  }, [reset]);
+    handleReset();
+  }, [handleReset]);
 
   // Effect to show bridge failed modal when state indicates an error
   useEffect(() => {
@@ -845,10 +862,10 @@ const Bridge = () => {
         className="bridge-container group"
       >
         {/* 4-Corner Grey Glow System - Desktop Only */}
-        <div className="hidden md:block absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-slate-300 to-slate-400 opacity-[0.1] blur-[60px] rounded-full"></div>
-        <div className="hidden md:block absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-slate-300 to-slate-400 opacity-[0.1] blur-[60px] rounded-full"></div>
-        <div className="hidden md:block absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-slate-300 to-slate-400 opacity-[0.1] blur-[60px] rounded-full"></div>
-        <div className="hidden md:block absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-slate-300 to-slate-400 opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full"></div>
+        <div className="hidden md:block absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full"></div>
 
         {/* Header - Refined */}
         <div className="flex items-center justify-between mb-8">
@@ -860,7 +877,7 @@ const Bridge = () => {
             className="add-arc-button group relative flex items-center gap-2"
             aria-label={t('Add Arc Testnet to Wallet')}
           >
-            <Wallet size={14} className="text-blue-500 group-hover:text-blue-600 transition-colors" />
+            <Wallet size={14} className="text-black dark:text-white transition-colors" />
             <span>{t('Add Arc')}</span>
             <AnimatePresence>
               {showNetworkSuccess && (
@@ -868,17 +885,17 @@ const Bridge = () => {
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute bottom-[calc(100%+14px)] right-0 bg-blue-50 dark:bg-blue-900 px-3.5 py-2.5 rounded-xl shadow-[0_12px_28px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_28px_rgba(0,0,0,0.4)] flex items-center gap-2.5 z-50 border border-blue-200 dark:border-blue-500/30 min-w-max backdrop-blur-md"
+                  className="absolute bottom-[calc(100%+14px)] right-0 bg-slate-50 dark:bg-black px-3.5 py-2.5 rounded-xl shadow-[0_12px_28px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_28px_rgba(255,255,255,0.08)] flex items-center gap-2.5 z-50 border border-slate-200 dark:border-white/10 min-w-max backdrop-blur-md"
                 >
-                  <div className="flex-shrink-0 w-5 h-5 rounded-lg bg-blue-500 flex items-center justify-center shadow-sm">
-                    <Check size={13} className="text-white stroke-[4]" />
+                  <div className="flex-shrink-0 w-5 h-5 rounded-lg bg-black dark:bg-white flex items-center justify-center shadow-sm">
+                    <Check size={13} className="text-white dark:text-black stroke-[4]" />
                   </div>
-                  <span className="text-[12px] font-bold text-blue-800 dark:text-blue-50 tracking-tight leading-none whitespace-nowrap">
+                  <span className="text-[12px] font-bold text-black dark:text-white tracking-tight leading-none whitespace-nowrap">
                     {t('Network added successfully')}
                   </span>
                   {/* Tooltip Arrow Layered for Border Effect - Positioned Right */}
-                  <div className="absolute top-full right-4 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[7px] border-t-blue-200 dark:border-t-blue-500/30"></div>
-                  <div className="absolute top-[calc(100%-1.5px)] right-4 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[7px] border-t-blue-50 dark:border-t-blue-900"></div>
+                  <div className="absolute top-full right-4 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[7px] border-t-slate-200 dark:border-t-white/10"></div>
+                  <div className="absolute top-[calc(100%-1.5px)] right-4 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[7px] border-t-slate-50 dark:border-t-black"></div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1181,7 +1198,7 @@ const Bridge = () => {
 
       <BridgeSuccessModal
         isOpen={showBridgeSuccessModal}
-        onClose={() => setShowBridgeSuccessModal(false)}
+        onClose={handleReset}
         fromChain={fromChain}
         toChain={toChain}
         amount={state.result?.amount || amount}
@@ -1191,17 +1208,14 @@ const Bridge = () => {
 
       <BridgeRejectedModal
         isOpen={showBridgeRejectedModal}
-        onClose={() => {
-          setShowBridgeRejectedModal(false);
-          setBridgeButtonText('Bridge');
-        }}
+        onClose={handleReset}
         fromChain={fromChain}
         toChain={toChain}
       />
 
       <BridgeCancelledModal
         isOpen={showBridgeCancelledModal}
-        onClose={() => setShowBridgeCancelledModal(false)}
+        onClose={handleReset}
         fromChain={fromChain}
         toChain={toChain}
       />
