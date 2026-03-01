@@ -146,8 +146,8 @@ html.dark .swap-container,
 
 .swap-faucet-button-premium:hover {
   background: var(--swap-surface-hover);
-  border-color: rgba(128, 128, 128, 0.3);
-  color: #666666;
+  border-color: rgba(128, 128, 128, 0.4);
+  opacity: 0.9;
   transform: translateY(-1px);
 }
 
@@ -163,7 +163,6 @@ html.dark .swap-faucet-button-premium {
 html.dark .swap-faucet-button-premium:hover {
   background: rgba(128, 128, 128, 0.1);
   border-color: rgba(128, 128, 128, 0.4);
-  color: #999999;
 }
 
 .swap-faucet-button-premium svg {
@@ -221,14 +220,14 @@ html.dark .swap-faucet-button-premium:hover {
   background: var(--swap-surface-card);
   border: 1px solid var(--swap-border-light);
   border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .swap-input-group:focus-within {
-  border-color: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+  border-color: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 html.dark .swap-input-group,
@@ -347,7 +346,21 @@ html.dark .swap-input-group:focus-within,
   white-space: nowrap;
 }
 
-.max-button:hover { background: #000; color: #fff; transform: translateY(-1px); }
+.max-button:hover { 
+  transform: translateY(-1px); 
+}
+
+html.dark .max-button,
+.dark .max-button {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+html.dark .max-button:hover,
+.dark .max-button:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
 
 .max-button:active {
   transform: scale(0.95);
@@ -357,16 +370,18 @@ html.dark .swap-input-group:focus-within,
 .swap-token-selector {
   background: var(--swap-bg-primary);
   border: 1px solid var(--swap-border-medium);
-  border-radius: 10px;
-  padding: 10px 14px;
+  border-radius: 12px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 105px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 110px;
+  height: 44px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 @media (max-width: 480px) {
@@ -392,7 +407,7 @@ html.dark .swap-token-selector,
 html.dark .swap-token-selector:hover,
 .dark .swap-token-selector:hover {
   background: rgba(255, 255, 255, 0.1);
-  border-color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .swap-token-selector:active {
@@ -1212,10 +1227,8 @@ html.dark .swap-slippage-container,
 
 [data-theme='dark'] .swap-token-selector-modal,
 html.dark .swap-token-selector-modal {
-  background: #000000;
-  /* Pure Black Background */
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  /* Slightly more visible gray border */
+  background: #0d0d0f;
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Refined subtle border */
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.9);
 }
 
@@ -1339,9 +1352,16 @@ html.dark .swap-token-selector-popular-button {
 }
 
 /* Modern glass highlight for active state */
-.swap-token-selector-popular-button.active { background: #000; color: #fff; border-color: #000; }
+/* Modern glass highlight for active state - Refined */
+.swap-token-selector-popular-button.active { 
+  background: rgba(0, 0, 0, 0.1); 
+  border-color: rgba(0, 0, 0, 0.4); 
+}
 
-[data-theme='dark'] .swap-token-selector-popular-button.active, html.dark .swap-token-selector-popular-button.active { background: #fff; color: #000; border-color: #fff; }
+[data-theme='dark'] .swap-token-selector-popular-button.active, html.dark .swap-token-selector-popular-button.active { 
+  background: rgba(255, 255, 255, 0.15); 
+  border-color: rgba(255, 255, 255, 0.4); 
+}
 
 .swap-token-selector-popular-button:hover:not(.active):not(.disabled) {
   background: var(--swap-surface-hover);
@@ -1430,11 +1450,17 @@ html.dark .swap-token-selector-popular-button.active .swap-token-selector-popula
   overflow: hidden;
 }
 
-/* Gray highlight for selected state */
-.swap-token-selector-list-item.selected { background: rgba(0, 0, 0, 0.05); border-color: rgba(0, 0, 0, 0.1); }
+/* Subtle highlight for selected state - Refined */
+.swap-token-selector-list-item.selected { 
+  background: rgba(0, 0, 0, 0.04); 
+  border-color: rgba(0, 0, 0, 0.1); 
+}
 
 [data-theme='dark'] .swap-token-selector-list-item.selected,
-html.dark .swap-token-selector-list-item.selected { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
+html.dark .swap-token-selector-list-item.selected { 
+  background: rgba(255, 255, 255, 0.08); 
+  border-color: rgba(255, 255, 255, 0.15); 
+}
 
 /* Hover effect - applies to all including selected */
 .swap-token-selector-list-item:hover:not(.disabled) {
@@ -1701,9 +1727,9 @@ html.dark .swap-token-selector-list-symbol,
 
 [data-theme='dark'] .swap-modal-container,
 html.dark .swap-modal-container {
-  background: #0a0a0c;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.8);
+  background: #0d0d0f;
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Glorified institutional border */
+  box-shadow: 0 40px 100px -12px rgba(0, 0, 0, 0.5);
 }
 
 .swap-modal-header {

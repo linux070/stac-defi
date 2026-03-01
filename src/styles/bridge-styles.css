@@ -151,13 +151,13 @@ html.dark .bridge-container,
 
 .add-arc-button:hover {
     background: var(--bridge-surface-hover);
-    border-color: rgba(128, 128, 128, 0.3);
-    color: #666666;
+    border-color: rgba(128, 128, 128, 0.4);
+    opacity: 0.9;
     transform: translateY(-1px);
 }
 
 .add-arc-button:active {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.98);
 }
 
 /* ===================================
@@ -328,8 +328,8 @@ html.dark .arrow-divider-button:hover:not(:disabled),
     background: var(--bridge-surface-card);
     border: 1px solid var(--bridge-border-light);
     border-radius: 20px;
-    padding: 24px;
-    margin-bottom: 20px;
+    padding: 16px;
+    margin-bottom: 16px;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -399,20 +399,23 @@ html.dark .input-group:focus-within,
 .token-selector {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
-    padding: 10px 14px;
+    padding: 8px 12px;
     background: var(--bridge-bg-primary);
     border: 1px solid var(--bridge-border-medium);
-    border-radius: 10px;
+    border-radius: 12px;
+    min-width: 105px;
+    height: 44px;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .token-selector:hover {
     background: var(--bridge-bg-tertiary);
-    border-color: var(--bridge-border-focus);
+    border-color: rgba(128, 128, 128, 0.4);
     transform: scale(1.02);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
@@ -471,23 +474,32 @@ html.dark .input-footer,
     border-top-color: rgba(255, 255, 255, 0.06);
 }
 
-/* Max Button */
 .max-button {
     padding: 6px 14px;
     font-size: 12px;
     font-weight: 600;
-    background: rgba(128, 128, 128, 0.1);
+    background: rgba(128, 128, 128, 0.08);
     border: 1px solid rgba(128, 128, 128, 0.2);
     border-radius: 8px;
-    color: #666666;
+    color: var(--bridge-text-primary);
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .max-button:hover {
-    background: rgba(128, 128, 128, 0.1);
-    border-color: rgba(128, 128, 128, 0.3);
+    border-color: rgba(128, 128, 128, 0.35);
     transform: scale(1.02);
+}
+
+html.dark .max-button,
+.dark .max-button {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark .max-button:hover,
+.dark .max-button:hover {
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .max-button:active {
@@ -629,9 +641,9 @@ html.dark .powered-by-badge-bottom,
 
 html.dark .bridging-modal-container,
 .dark .bridging-modal-container {
-    background: #0a0a0c;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.8);
+    background: #0d0d0f;
+    border: 1px solid rgba(255, 255, 255, 0.08); /* Sophisticated institutional border */
+    box-shadow: 0 40px 100px -12px rgba(0, 0, 0, 0.5);
 }
 
 /* Responsive modal sizing */
@@ -672,8 +684,8 @@ html.dark .bridging-modal-container,
 
 html.dark .bridge-selector-modal,
 .dark .bridge-selector-modal {
-    background: #0a0a0c;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #0d0d0f;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 24px 80px rgba(0, 0, 0, 0.9);
 }
 
@@ -742,16 +754,14 @@ html.dark .bridge-selector-header,
 }
 
 .bridge-selector-item.selected {
-    background: rgba(128, 128, 128, 0.1);
-    border-color: rgba(128, 128, 128, 0.25);
-    box-shadow: 0 0 15px rgba(128, 128, 128, 0.08);
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
 }
 
 html.dark .bridge-selector-item.selected,
 .dark .bridge-selector-item.selected {
-    background: rgba(128, 128, 128, 0.15);
-    border-color: rgba(150, 150, 150, 0.3);
-    box-shadow: 0 0 20px rgba(128, 128, 128, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 .bridge-selector-item.disabled {

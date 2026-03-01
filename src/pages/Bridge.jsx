@@ -102,7 +102,7 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
             {/* Premium Search Bar - Modern DeFi Style */}
             <div className="px-5 py-4">
               <div className="relative group">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-black dark:text-white transition-colors duration-200">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-slate-800 dark:group-focus-within:text-white transition-colors duration-200">
                   <Search size={16} />
                 </div>
                 <input
