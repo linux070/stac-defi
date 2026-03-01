@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import { isNetworkSupported } from '../config/networks';
 import { useAccount, useDisconnect, useBalance, useSwitchChain, usePublicClient, useWalletClient } from 'wagmi';
@@ -15,8 +15,14 @@ export const WalletProvider = ({ children }) => {
     const [isConnecting, setIsConnecting] = useState(false);
     const [error, setError] = useState('');
 
+    // Track whether the wallet was ever connected in THIS browser session.
+    // This prevents clearing localStorage on the transient 'disconnected' status
+    // that wagmi fires during page refresh before reconnection completes.
+    const hasBeenConnectedRef = useRef(false);
+
     useEffect(() => {
         if (isConnected && address) {
+            hasBeenConnectedRef.current = true;
             localStorage.setItem('walletConnected', 'true');
             localStorage.setItem('lastAddress', address);
             // Cache a friendly display name (short address)
@@ -24,7 +30,10 @@ export const WalletProvider = ({ children }) => {
             if (wagmiChainId) {
                 localStorage.setItem('lastChainId', wagmiChainId.toString());
             }
-        } else if (status === 'disconnected') {
+        } else if (status === 'disconnected' && hasBeenConnectedRef.current) {
+            // Only clear localStorage if the wallet was connected at least once
+            // in this session — meaning this is a real disconnect, not a page-refresh
+            // transient state where wagmi hasn't started reconnecting yet.
             localStorage.removeItem('walletConnected');
             localStorage.removeItem('lastAddress');
             localStorage.removeItem('lastDisplayName');

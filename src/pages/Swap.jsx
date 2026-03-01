@@ -1,3 +1,9 @@
+// =============================================================================
+// SWAP PAGE
+// This is the main swap screen where users trade one token for another.
+// For example: swap USDC → STC, or STC → BALL, etc.
+// =============================================================================
+
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +25,13 @@ import SwapFailedModal from '../components/SwapFailedModal';
 import SwapRejectedModal from '../components/SwapRejectedModal';
 import '../styles/swap-styles.css';
 import { useModal } from '../contexts/ModalContext';
-const FaucetIcon = ({ size = 16, className = "" }) => (
+
+
+// =============================================================================
+// FAUCET ICON
+// A small water-drop icon used on the "Get tokens from faucet" button.
+// =============================================================================
+const FaucetIcon = ({ size = 16, className = '' }) => (
   <svg
     width={size}
     height={size}
@@ -31,36 +43,53 @@ const FaucetIcon = ({ size = 16, className = "" }) => (
     strokeLinejoin="round"
     className={className}
   >
-    {/* Water Droplet — universal faucet/tap symbol */}
+    {/* Water droplet shape */}
     <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
   </svg>
 );
 
 
+// =============================================================================
+// GET TOKEN ICON
+// Returns the image path for a token's logo based on its symbol.
+// If no image is found, we'll fall back to showing the first letter of the token.
+// =============================================================================
 const getTokenIcon = (symbol) => {
   if (!symbol) return null;
+
   const s = String(symbol).toUpperCase();
+
+  // Icon file paths for each supported token
   const iconMap = {
-    'USDC': '/icons/usdc.png',
-    'STC': '/icons/stc.png',
-    'STAC': '/icons/stc.png',
-    'BALL': '/icons/ball.png',
-    'MTB': '/icons/mtb.png',
-    'ECR': '/icons/ecr.png',
-    'EURC': '/icons/eurc.png',
-    'ETH': '/icons/eth.png'
+    USDC: '/icons/usdc.png',
+    STC: '/icons/stc.png',
+    STAC: '/icons/stc.png',
+    BALL: '/icons/ball.png',
+    MTB: '/icons/mtb.png',
+    ECR: '/icons/ecr.png',
+    EURC: '/icons/eurc.png',
+    ETH: '/icons/eth.png',
   };
 
+  // Special handling for tokens that share an icon
   if (s.includes('MTB')) return '/icons/mtb.png';
   if (s.includes('STC') || s.includes('STAC')) return '/icons/stc.png';
 
   return iconMap[s] || null;
 };
 
+
+// =============================================================================
+// TOKEN ROW
+// A single row in the token selection list (inside the token picker modal).
+// Shows the token's icon, name, symbol, and the user's current balance.
+// =============================================================================
 const TokenRow = ({ token, selectedToken, exclude, onSelect, onClose, isConnected, t }) => {
+  // Fetch the user's balance for this token
   const { balance: tokenBalance, loading: tokenLoading } = useTokenBalance(token.symbol);
-  const isSelected = token.symbol === selectedToken;
-  const isExcluded = token.symbol === exclude;
+
+  const isSelected = token.symbol === selectedToken; // Highlight if this is already chosen
+  const isExcluded = token.symbol === exclude;       // Dim if already used on the other side
 
   return (
     <button
@@ -71,26 +100,25 @@ const TokenRow = ({ token, selectedToken, exclude, onSelect, onClose, isConnecte
       }}
       className={`swap-token-selector-list-item ${isSelected ? 'selected' : ''} ${isExcluded ? 'disabled' : ''}`}
     >
+      {/* Left side: icon + name */}
       <div className="swap-token-selector-list-item-content">
         <div className="swap-token-selector-list-icon">
           {getTokenIcon(token.symbol) ? (
             <img src={getTokenIcon(token.symbol)} alt={token.symbol} className="w-full h-full object-cover" />
           ) : (
+            // Fallback: show first letter of token symbol
             <span className="flex items-center justify-center w-full h-full text-sm font-medium uppercase">
               {token.symbol?.charAt(0)}
             </span>
           )}
         </div>
         <div className="swap-token-selector-list-info">
-          <p className="swap-token-selector-list-symbol">
-            {token.symbol || t('Unknown')}
-          </p>
-          <p className="swap-token-selector-list-name">
-            {token.name || t('Token')}
-          </p>
+          <p className="swap-token-selector-list-symbol">{token.symbol || t('Unknown')}</p>
+          <p className="swap-token-selector-list-name">{token.name || t('Token')}</p>
         </div>
       </div>
 
+      {/* Right side: user's balance (only shown if wallet is connected) */}
       <div className="flex items-center gap-2">
         {isConnected && (
           <div className="swap-token-selector-list-balance">
@@ -109,66 +137,65 @@ const TokenRow = ({ token, selectedToken, exclude, onSelect, onClose, isConnecte
   );
 };
 
+
+// =============================================================================
+// TOKEN SELECTOR MODAL
+// The popup panel that lets users search and pick a token.
+// Renders as a portal (floating above everything) using React's createPortal.
+// =============================================================================
 const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, tokenList, t, isConnected }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const selectorRef = useRef(null);
 
-  // Debounce search query
+  // Wait 400ms after the user stops typing before filtering results.
+  // This prevents flickering with every keystroke.
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 400);
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Filter tokens based on search query
+  // Filter the full token list based on what the user typed.
+  // Matches on symbol, name, or contract address.
   const filteredTokens = useMemo(() => {
     if (!debouncedSearch) return tokenList;
 
     const query = debouncedSearch.toLowerCase();
     return tokenList.filter(token =>
-      token &&
-      token.symbol &&
+      token?.symbol &&
       typeof token.symbol === 'string' &&
-      (token.symbol.toLowerCase().includes(query) ||
+      (
+        token.symbol.toLowerCase().includes(query) ||
         (token.name && typeof token.name === 'string' && token.name.toLowerCase().includes(query)) ||
         (token.address && typeof token.address === 'string' && token.address.toLowerCase().includes(query)) ||
         (token.address && typeof token.address === 'object' &&
-          Object.values(token.address).some(addr => typeof addr === 'string' && addr.toLowerCase().includes(query))))
+          Object.values(token.address).some(addr => typeof addr === 'string' && addr.toLowerCase().includes(query)))
+      )
     );
   }, [debouncedSearch, tokenList]);
 
-  // Popular tokens for quick selection.
-  const popularTokens = useMemo(() => {
-    return tokenList.filter(token =>
-      token &&
-      token.symbol &&
+  // These are the "pinned" tokens shown at the top for quick access.
+  const popularTokens = useMemo(() =>
+    tokenList.filter(token =>
+      token?.symbol &&
       typeof token.symbol === 'string' &&
       ['USDC', 'STC', 'BALL', 'MTB', 'ECR'].includes(token.symbol)
-    );
-  }, [tokenList]);
+    ),
+    [tokenList]
+  );
 
-  // Handle ESC key press to close modal
+  // Close the modal when the user presses the Escape key
   useEffect(() => {
-    const handleEsc = (event) => {
-      if (event.keyCode === 27) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEsc);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEsc);
-    };
+    const handleEsc = (e) => { if (e.keyCode === 27) onClose(); };
+    if (isOpen) document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose]);
 
+  // Render the modal into the <body> element so it floats above all other content
   return createPortal(
     <AnimatePresence>
       {isOpen && (
+        // Backdrop (dimmed background overlay)
         <motion.div
           className="swap-token-selector-modal-backdrop"
           initial={{ opacity: 0 }}
@@ -178,26 +205,25 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
           onClick={onClose}
           style={{ zIndex: 100000 }}
         >
+          {/* Modal card — stop click from bubbling to backdrop */}
           <motion.div
             ref={selectorRef}
             className="swap-token-selector-modal"
             initial={{ scale: 0.9, opacity: 0, y: 10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 10 }}
-            transition={{ type: "spring", damping: 25, stiffness: 400 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Modal header */}
             <div className="swap-token-selector-header">
               <h3 className="swap-token-selector-title">{t('Select Token')}</h3>
-              <button
-                onClick={onClose}
-                className="swap-token-selector-close-button"
-              >
+              <button onClick={onClose} className="swap-token-selector-close-button">
                 <X size={18} />
               </button>
             </div>
 
-            {/* Premium Search Bar - Token Selector */}
+            {/* Search bar */}
             <div className="px-5 py-4">
               <div className="relative group">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-slate-800 dark:group-focus-within:text-white transition-colors duration-200">
@@ -213,15 +239,12 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
               </div>
             </div>
 
-            {/* Popular Tokens */}
+            {/* Quick-pick / popular tokens row */}
             <div className="swap-token-selector-popular-section">
               <h4 className="swap-token-selector-popular-label">{t('Your Tokens')}</h4>
               <div className="swap-token-selector-popular-tokens">
                 {popularTokens.map((token) => {
-                  // Safety check: skip invalid tokens
-                  if (!token || !token.symbol || typeof token.symbol !== 'string') {
-                    return null;
-                  }
+                  if (!token?.symbol || typeof token.symbol !== 'string') return null;
 
                   const isExcluded = token.symbol === exclude;
                   const isSelected = token.symbol === selectedToken;
@@ -229,10 +252,7 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
                   return (
                     <button
                       key={`popular-${token.symbol}`}
-                      onClick={() => {
-                        onSelect(token.symbol);
-                        onClose();
-                      }}
+                      onClick={() => { onSelect(token.symbol); onClose(); }}
                       className={`swap-token-selector-popular-button ${isSelected ? 'active' : ''} ${isExcluded ? 'disabled' : ''}`}
                     >
                       {getTokenIcon(token.symbol) ? (
@@ -246,7 +266,7 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
                       ) : (
                         <div className="swap-token-selector-popular-icon" style={{ background: 'var(--swap-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <span style={{ fontSize: '12px', fontWeight: 500 }}>
-                            {token.symbol && token.symbol.length > 0 ? token.symbol.charAt(0) : '?'}
+                            {token.symbol?.length > 0 ? token.symbol.charAt(0) : '?'}
                           </span>
                         </div>
                       )}
@@ -257,7 +277,7 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
               </div>
             </div>
 
-            {/* Token List */}
+            {/* Full scrollable token list */}
             <div className="swap-token-selector-list">
               {filteredTokens.map((token) => (
                 <TokenRow
@@ -272,6 +292,7 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
                 />
               ))}
 
+              {/* "No results" message when search has no matches */}
               {filteredTokens.length === 0 && searchQuery && (
                 <div className="swap-token-selector-empty">
                   <p>{t('noTokensFound')}</p>
@@ -287,43 +308,83 @@ const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, toke
 };
 
 
+// =============================================================================
+// SWAP PAGE — MAIN COMPONENT
+// This is the heart of the swap feature. It manages all state for the swap
+// interface: which tokens are selected, how much to swap, and what modals
+// are open. It calls the useSwap hook to get price quotes and execute trades.
+// =============================================================================
 const Swap = () => {
   const { t } = useTranslation();
   const { isConnected, chainId, status } = useWallet();
-  const wasConnected = typeof window !== 'undefined' ? localStorage.getItem('walletConnected') === 'true' : false;
-  const { setIsFocusedModalOpen } = useModal();
   const { address } = useAccount();
-  const [fromToken, setFromToken] = useState('USDC');
-  const [toToken, setToToken] = useState('STC');
+  const { setIsFocusedModalOpen } = useModal();
+
+  // ─── Ghost-state protection ───────────────────────────────────────────────
+  // On page refresh, wagmi briefly reports "disconnected" before it finishes
+  // reconnecting. We capture the true connected-state on first load (from
+  // localStorage) so the UI never flashes "Connect Wallet" for returning users.
+  const wasConnectedRef = useRef(
+    typeof window !== 'undefined' ? localStorage.getItem('walletConnected') === 'true' : false
+  );
+  const wasConnected = wasConnectedRef.current;
+
+
+  // ─── Which tokens the user has selected ───────────────────────────────────
+  const [fromToken, setFromToken] = useState('USDC'); // Token the user is swapping FROM
+  const [toToken, setToToken] = useState('STC');  // Token the user is swapping TO
+
+
+  // ─── Amount fields ─────────────────────────────────────────────────────────
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
-  const [slippage, setSlippage] = useState(0.5);
-  const [showFromSelector, setShowFromSelector] = useState(false);
-  const [showToSelector, setShowToSelector] = useState(false);
-  const [toast, setToast] = useState({ visible: false, type: 'info', message: '' });
-  const [lastEditedField, setLastEditedField] = useState('from'); // 'from' or 'to'
-  const [debouncedFromAmount, setDebouncedFromAmount] = useState('');
+  const [lastEditedField, setLastEditedField] = useState('from'); // which input the user last typed in
+  const [debouncedFromAmount, setDebouncedFromAmount] = useState('');  // delayed fromAmount (avoids too many RPC calls)
 
-  // Debounce fromAmount change to avoid rapid-fire calculations/RPC
+  // Wait 500ms after the user stops typing before recalculating the swap quote.
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedFromAmount(fromAmount);
-    }, 500);
+    const timer = setTimeout(() => setDebouncedFromAmount(fromAmount), 500);
     return () => clearTimeout(timer);
   }, [fromAmount]);
 
-  // Modal states
-  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
-  const [showSwapSuccessModal, setShowSwapSuccessModal] = useState(false);
-  const [showSwapFailedModal, setShowSwapFailedModal] = useState(false);
-  const [showSwapRejectedModal, setShowSwapRejectedModal] = useState(false);
-  const [lastSwapTxHash, setLastSwapTxHash] = useState(null);
-  const [swapError, setSwapError] = useState(null);
-  const [frozenSwapData, setFrozenSwapData] = useState(null);
 
-  // Sync focused modal state with layout
+  // ─── Slippage ──────────────────────────────────────────────────────────────
+  // Slippage is the max % price movement the user will accept during the swap.
+  // E.g. 0.5 means they'll accept a price up to 0.5% worse than the quoted price.
+  const [slippage, setSlippage] = useState(0.5);
+
+
+  // ─── Token Selector modals ─────────────────────────────────────────────────
+  const [showFromSelector, setShowFromSelector] = useState(false); // "pick token to send"
+  const [showToSelector, setShowToSelector] = useState(false); // "pick token to receive"
+
+
+  // ─── Transaction modal states ──────────────────────────────────────────────
+  // These control which confirmation/result popup is currently visible.
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false); // Swap confirmation
+  const [showSwapSuccessModal, setShowSwapSuccessModal] = useState(false); // ✅ Success
+  const [showSwapFailedModal, setShowSwapFailedModal] = useState(false); // ❌ Failed
+  const [showSwapRejectedModal, setShowSwapRejectedModal] = useState(false); // 🚫 User rejected
+  const [lastSwapTxHash, setLastSwapTxHash] = useState(null);  // transaction hash to show in success modal
+  const [swapError, setSwapError] = useState(null);  // error message to show in failed modal
+  const [frozenSwapData, setFrozenSwapData] = useState(null);  // snapshot of swap details at the moment of success
+
+
+  // ─── Toast notifications ───────────────────────────────────────────────────
+  // A small banner that pops up at the bottom for warnings/errors.
+  const [toast, setToast] = useState({ visible: false, type: 'info', message: '' });
+
+  // Helper to show a toast and auto-dismiss it after 3 seconds
+  const showToast = (type, message, duration = 3000) => {
+    setToast({ visible: true, type, message });
+    setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), duration);
+  };
+
+
+  // ─── Tell the layout when a focused modal is open ─────────────────────────
+  // The layout uses this to hide/show certain elements while modals are active.
   useEffect(() => {
-    const isAnyFocusedModalOpen =
+    const anyModalOpen =
       isSwapModalOpen ||
       showFromSelector ||
       showToSelector ||
@@ -331,9 +392,9 @@ const Swap = () => {
       showSwapFailedModal ||
       showSwapRejectedModal;
 
-    setIsFocusedModalOpen(isAnyFocusedModalOpen);
+    setIsFocusedModalOpen(anyModalOpen);
 
-    // Reset focused state on unmount
+    // Always clean up when this component unmounts
     return () => setIsFocusedModalOpen(false);
   }, [
     isSwapModalOpen,
@@ -342,268 +403,284 @@ const Swap = () => {
     showSwapSuccessModal,
     showSwapFailedModal,
     showSwapRejectedModal,
-    setIsFocusedModalOpen
+    setIsFocusedModalOpen,
   ]);
 
-  // Token objects based on current selection
+
+  // ─── Token objects ─────────────────────────────────────────────────────────
+  // Convert the selected symbol strings ("USDC", "STC"…) into full token data objects.
   const fromTokenObj = useMemo(() => TOKENS[fromToken], [fromToken]);
   const toTokenObj = useMemo(() => TOKENS[toToken], [toToken]);
 
 
-  // Wagmi-based Swap Hook - now using debounced amount
+  // ─── Swap hook ─────────────────────────────────────────────────────────────
+  // This hook does all the heavy lifting: getting price quotes from the DEX
+  // contract, handling approvals, and executing the actual swap transaction.
   const swapState = useSwap(fromToken, toToken, debouncedFromAmount, slippage);
 
 
-  // Helper function to get token address for current chain
-
-  // Refs for trigger buttons
+  // ─── Button refs ───────────────────────────────────────────────────────────
+  // Used internally to attach the token selector popup to the right button.
   const fromTokenTriggerRef = useRef(null);
   const toTokenTriggerRef = useRef(null);
 
-  // Multi-chain balances for USDC (fetches both chains simultaneously)
+
+  // ─── Balances ──────────────────────────────────────────────────────────────
+  // USDC is a special case: its balance is fetched per-chain (Arc / Sepolia / Base Sepolia).
+  // All other tokens use a simpler single-chain balance hook.
   const { balances: multiChainBalances } = useMultiChainBalances(address, isConnected);
+  const { balance: fromBalanceRegular, loading: fromLoadingRegular } = useTokenBalance(fromToken === 'USDC' ? null : fromToken);
+  const { balance: toBalanceRegular, loading: toLoadingRegular } = useTokenBalance(toToken === 'USDC' ? null : toToken);
 
-
-  // For USDC, use multi-chain balances; for other tokens, use regular balance hook
-  const { balance: fromBalanceRegular, loading: fromLoadingRegular } = useTokenBalance((fromToken === 'USDC') ? null : fromToken);
-  const { balance: toBalanceRegular, loading: toLoadingRegular } = useTokenBalance((toToken === 'USDC') ? null : toToken);
-
+  // Returns the balance + loading state for the "From" token on the correct chain
   const getFromBalance = () => {
     if (fromToken === 'USDC') {
-      // Use current chain's balance from multi-chain hook
       const chainIdNum = chainId ? parseInt(chainId, 16) : null;
-      const tokenKey = fromToken.toLowerCase(); // 'usdc'
-
-      if (chainIdNum === 5042002) { // Arc Testnet
-        const balance = multiChainBalances?.arcTestnet?.[tokenKey] || '0.00';
-
-        return {
-          balance,
-          loading: multiChainBalances?.arcTestnet?.loading || false,
-        };
-      } else if (chainIdNum === 11155111) { // Sepolia
-        const balance = multiChainBalances?.sepolia?.[tokenKey] || '0.00';
-
-        return {
-          balance,
-          loading: multiChainBalances?.sepolia?.loading || false,
-        };
-      } else if (chainIdNum === 84532) { // Base Sepolia
-        const balance = multiChainBalances?.baseSepolia?.[tokenKey] || '0.00';
-
-        return {
-          balance,
-          loading: multiChainBalances?.baseSepolia?.loading || false,
-        };
-      }
+      const key = 'usdc';
+      if (chainIdNum === 5042002) return { balance: multiChainBalances?.arcTestnet?.[key] || '0.00', loading: multiChainBalances?.arcTestnet?.loading || false };
+      if (chainIdNum === 11155111) return { balance: multiChainBalances?.sepolia?.[key] || '0.00', loading: multiChainBalances?.sepolia?.loading || false };
+      if (chainIdNum === 84532) return { balance: multiChainBalances?.baseSepolia?.[key] || '0.00', loading: multiChainBalances?.baseSepolia?.loading || false };
       return { balance: '0.00', loading: false };
     }
-    return {
-      balance: fromBalanceRegular || '0.00',
-      loading: fromLoadingRegular || false,
-    };
+    return { balance: fromBalanceRegular || '0.00', loading: fromLoadingRegular || false };
   };
 
+  // Returns the balance + loading state for the "To" token on the correct chain
   const getToBalance = () => {
     if (toToken === 'USDC') {
-      // Use current chain's balance from multi-chain hook
       const chainIdNum = chainId ? parseInt(chainId, 16) : null;
-      const tokenKey = toToken.toLowerCase(); // 'usdc'
-
-      if (chainIdNum === 5042002) { // Arc Testnet
-        return {
-          balance: multiChainBalances?.arcTestnet?.[tokenKey] || '0.00',
-          loading: multiChainBalances?.arcTestnet?.loading || false,
-        };
-      } else if (chainIdNum === 11155111) { // Sepolia
-        return {
-          balance: multiChainBalances?.sepolia?.[tokenKey] || '0.00',
-          loading: multiChainBalances?.sepolia?.loading || false,
-        };
-      } else if (chainIdNum === 84532) { // Base Sepolia
-        return {
-          balance: multiChainBalances?.baseSepolia?.[tokenKey] || '0.00',
-          loading: multiChainBalances?.baseSepolia?.loading || false,
-        };
-      }
+      const key = 'usdc';
+      if (chainIdNum === 5042002) return { balance: multiChainBalances?.arcTestnet?.[key] || '0.00', loading: multiChainBalances?.arcTestnet?.loading || false };
+      if (chainIdNum === 11155111) return { balance: multiChainBalances?.sepolia?.[key] || '0.00', loading: multiChainBalances?.sepolia?.loading || false };
+      if (chainIdNum === 84532) return { balance: multiChainBalances?.baseSepolia?.[key] || '0.00', loading: multiChainBalances?.baseSepolia?.loading || false };
       return { balance: '0.00', loading: false };
     }
-    return {
-      balance: toBalanceRegular || '0.00',
-      loading: toLoadingRegular || false,
-    };
+    return { balance: toBalanceRegular || '0.00', loading: toLoadingRegular || false };
   };
 
-  const fromBalanceData = getFromBalance();
-  const toBalanceData = getToBalance();
-  const fromBalance = fromBalanceData.balance;
-  const fromLoading = fromBalanceData.loading;
-  const toBalance = toBalanceData.balance;
-  const toLoading = toBalanceData.loading;
+  const { balance: fromBalance, loading: fromLoading } = getFromBalance();
+  const { balance: toBalance, loading: toLoading } = getToBalance();
 
+
+  // ─── Available token list ──────────────────────────────────────────────────
+  // Filters the full token registry down to only the tokens supported on the
+  // user's current chain, and removes any tokens with missing data.
   const tokenList = useMemo(() => {
     try {
       const allTokens = Object.values(TOKENS);
       const filtered = getFilteredTokens(allTokens, chainId);
-      // Filter out any invalid tokens that don't have a symbol
-      return Array.isArray(filtered) ? filtered.filter(token =>
-        token &&
-        typeof token === 'object' &&
-        token.symbol &&
-        typeof token.symbol === 'string' &&
-        token.symbol.length > 0
-      ) : [];
-    } catch (error) {
-      console.error('Error building token list:', error);
+      return Array.isArray(filtered)
+        ? filtered.filter(t => t && typeof t === 'object' && t.symbol && typeof t.symbol === 'string' && t.symbol.length > 0)
+        : [];
+    } catch (err) {
+      console.error('Error building token list:', err);
       return [];
     }
-  }, [chainId]); // Removed tokenList dependency
+  }, [chainId]);
 
-  // Reset selected tokens when network changes to ARC or Sepolia and ETH was selected
+
+  // ─── Reset tokens when switching chains ───────────────────────────────────
+  // ETH is not available on Arc Testnet or Sepolia — reset to USDC if selected.
   useEffect(() => {
-    const networksExcludingETH = [
-      '0x4cef52', // ARC Testnet (5042002)
-      '0xaa36a7' // Sepolia (11155111)
+    const networksWithoutETH = [
+      '0x4cef52', // Arc Testnet (chain ID 5042002)
+      '0xaa36a7', // Sepolia     (chain ID 11155111)
     ];
-
-    if (networksExcludingETH.includes(chainId)) {
-      // Reset fromToken if it's ETH
-      if (fromToken === 'ETH') {
-        setFromToken('USDC');
-      }
-
-      // Reset toToken if it's ETH
-      if (toToken === 'ETH') {
-        setToToken('USDC');
-      }
+    if (networksWithoutETH.includes(chainId)) {
+      if (fromToken === 'ETH') setFromToken('USDC');
+      if (toToken === 'ETH') setToToken('USDC');
     }
   }, [chainId, fromToken, toToken]);
 
-  // Validate slippage when it changes
-  useEffect(() => {
-    // Slippage validation is now handled inside the SwapModal
-  }, [slippage]);
 
-  // Sync ToAmount when FromAmount changes (and it was the one edited)
+  // ─── Sync "To" amount when swap quote updates ─────────────────────────────
+  // When the user types a "From" amount and the DEX hook returns a quote,
+  // automatically fill in the estimated "To" amount.
   useEffect(() => {
     if (fromAmount && parseFloat(fromAmount) > 0) {
-      if (swapState.expectedOut && swapState.expectedOut !== "0" && lastEditedField === 'from') {
-        // Round to 2 decimal places for display
-        const roundedAmount = parseFloat(swapState.expectedOut).toFixed(2);
-        setToAmount(roundedAmount);
+      if (swapState.expectedOut && swapState.expectedOut !== '0' && lastEditedField === 'from') {
+        setToAmount(parseFloat(swapState.expectedOut).toFixed(2));
       }
-    } else if (!fromAmount && !toAmount) {
-      // Clear amounts if both are empty
     }
   }, [fromAmount, toAmount, swapState.expectedOut, swapState.price, lastEditedField]);
 
-  // Handle bidirectional input
+
+  // =============================================================================
+  // EVENT HANDLERS
+  // =============================================================================
+
+  // Called every time the user types in the "From" input
   const handleFromAmountChange = (val) => {
     setLastEditedField('from');
     setFromAmount(val);
-    if (!val || parseFloat(val) <= 0) {
-      setToAmount('');
-    }
+    if (!val || parseFloat(val) <= 0) setToAmount('');
   };
 
+  // Called every time the user types in the "To" input.
+  // We reverse-calculate what the "From" amount should be based on current price.
   const handleToAmountChange = (val) => {
     const sanitized = sanitizeInput(val);
     setLastEditedField('to');
     setToAmount(sanitized);
 
-    if (sanitized && parseFloat(sanitized) > 0) {
-      // Calculate inverse amount based on current price
-      if (swapState.price && parseFloat(swapState.price) > 0) {
-        const price = parseFloat(swapState.price);
-        const isBuying = fromToken === 'USDC';
-
-        const calculatedFrom = isBuying
-          ? (parseFloat(sanitized) * price).toFixed(2)
-          : (parseFloat(sanitized) / price).toFixed(2);
-
-        setFromAmount(calculatedFrom);
-      }
+    if (sanitized && parseFloat(sanitized) > 0 && swapState.price && parseFloat(swapState.price) > 0) {
+      const price = parseFloat(swapState.price);
+      const isBuying = fromToken === 'USDC'; // buying means paying USDC to get another token
+      const calcFrom = isBuying
+        ? (parseFloat(sanitized) * price).toFixed(2)   // how much USDC to spend
+        : (parseFloat(sanitized) / price).toFixed(2);  // how much token to spend
+      setFromAmount(calcFrom);
     } else {
       setFromAmount('');
     }
   };
 
+  // Swap the two tokens (flip "From" ↔ "To") and also flip their amounts
   const handleSwitch = () => {
-    // Add animation class for smooth transition
-    const switchButton = document.querySelector('.switch-button');
-    if (switchButton) {
-      switchButton.classList.add('rotate-180');
-      setTimeout(() => {
-        switchButton.classList.remove('rotate-180');
-      }, 300);
+    // Animate the switch button with a quick CSS rotation
+    const btn = document.querySelector('.switch-button');
+    if (btn) {
+      btn.classList.add('rotate-180');
+      setTimeout(() => btn.classList.remove('rotate-180'), 300);
     }
-
-    // Swap tokens
     setFromToken(toToken);
     setToToken(fromToken);
-
-    // Preserve amounts if possible
     setFromAmount(toAmount);
     setToAmount(fromAmount);
   };
 
+  // Fill the "From" field with the user's entire balance (minus a gas buffer on Arc)
   const handleMaxClick = () => {
     if (!fromBalance || parseFloat(fromBalance) === 0) {
-      setToast({ visible: true, type: 'warning', message: t('No balance available') });
-      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
+      showToast('warning', t('No balance available'));
       return;
     }
 
-    // On Arc Testnet, USDC is used for gas. To prevent "transfer amount exceeds balance" revert,
-    // we must leave a buffer (1.5 USDC) if selling USDC.
+    // Arc Testnet uses USDC for gas fees. If the user is swapping USDC on Arc,
+    // we automatically reserve 1.5 USDC so the transaction doesn't fail.
     const chainIdNum = chainId ? (typeof chainId === 'string' ? parseInt(chainId, 16) : chainId) : null;
     if (chainIdNum === CHAINS.ARC_TESTNET && fromToken === 'USDC') {
-      const balanceNum = parseFloat(fromBalance);
-      const buffer = 1.5;
-      if (balanceNum <= buffer) {
-        setToast({
-          visible: true,
-          type: 'error',
-          message: `Insufficient balance for gas. Keep at least ${buffer} USDC for Arc fees.`
-        });
+      const balance = parseFloat(fromBalance);
+      const buffer = 1.5; // USDC reserved for gas
+
+      if (balance <= buffer) {
+        showToast('error', `Insufficient balance for gas. Keep at least ${buffer} USDC for Arc fees.`);
         return;
       }
-      setFromAmount((balanceNum - buffer).toFixed(2));
-      setToast({
-        visible: true,
-        type: 'info',
-        message: `Reserved ${buffer} USDC for Arc gas fees.`
-      });
+      // Set the max amount with the gas buffer already deducted (no notification needed)
+      setFromAmount((balance - buffer).toFixed(2));
     } else {
-      // For all other tokens/chains, use full balance
+      // On all other chains/tokens, use the full balance
       setFromAmount(fromBalance);
     }
   };
 
+  // Open Circle's faucet in a new tab so the user can get testnet tokens
   const handleFaucetClick = (e) => {
     e.preventDefault();
     window.open('https://faucet.circle.com/', '_blank');
   };
 
+  // Called when the user clicks the main "Swap" button
   const handleSwapClick = () => {
     if (!isConnected) {
-      setToast({ visible: true, type: 'error', message: t('connectWalletFirst') });
+      showToast('error', t('connectWalletFirst'));
       return;
     }
     if (!fromAmount || parseFloat(fromAmount) <= 0) {
-      setToast({ visible: true, type: 'error', message: t('Please enter a valid amount') });
+      showToast('error', t('Please enter a valid amount'));
       return;
     }
-
-    // Always open the confirmation modal, it will handle approval if needed
+    // Open the confirmation modal — it handles approvals + execution
     setIsSwapModalOpen(true);
   };
 
+  // Called when the swap confirmation modal reports an error
+  const handleSwapError = (error) => {
+    const errorMsg = swapState.error || error?.message || error?.toString() || '';
+    const lower = errorMsg.toLowerCase();
+
+    // Detect if the user deliberately rejected the wallet prompt
+    const isRejection =
+      lower.includes('user rejected') ||
+      lower.includes('user denied') ||
+      lower.includes('action_rejected') ||
+      lower.includes('request rejected') ||
+      lower.includes('rejected by user') ||
+      error?.name === 'UserRejectedRequestError' ||
+      error?.code === 4001;
+
+    setSwapError(errorMsg);
+    setIsSwapModalOpen(false);
+
+    if (isRejection) {
+      setShowSwapRejectedModal(true); // Show "you cancelled" modal
+    } else {
+      setShowSwapFailedModal(true);   // Show "something went wrong" modal
+    }
+
+    if (swapState.reset) swapState.reset();
+  };
+
+  // Called when the swap confirmation modal reports a successful transaction
+  const handleSwapSuccess = (txHash) => {
+    // Snapshot the swap details so the success modal shows correct info
+    // even after the user clears the fields
+    const frozen = {
+      fromToken: fromTokenObj,
+      toToken: toTokenObj,
+      fromAmount,
+      toAmount: swapState.expectedOut || toAmount,
+    };
+
+    setLastSwapTxHash(txHash);
+    setFrozenSwapData(frozen);
+    setIsSwapModalOpen(false);
+    setShowSwapSuccessModal(true);
+
+    // Clear the swap inputs for the next trade
+    setFromAmount('');
+    setToAmount('');
+
+    // Save this transaction to the local history (stored in IndexedDB)
+    if (txHash && address) {
+      const logTransaction = async () => {
+        try {
+          const history = await getItem('myTransactions') || [];
+          const alreadySaved = history.some(tx => tx.hash === txHash);
+
+          if (!alreadySaved) {
+            const newTx = {
+              id: txHash,
+              hash: txHash,
+              type: 'Swap',
+              from: `${frozen.fromAmount} ${frozen.fromToken?.symbol}`,
+              to: `${frozen.toAmount} ${frozen.toToken?.symbol}`,
+              amount: `${frozen.fromAmount} ${frozen.fromToken?.symbol} → ${frozen.toAmount} ${frozen.toToken?.symbol}`,
+              timestamp: Date.now(),
+              status: 'success',
+              address: address.toLowerCase(),
+              chainId,
+            };
+            // Keep only the last 100 transactions
+            await setItem('myTransactions', [newTx, ...history].slice(0, 100));
+            // Notify the Transactions page that new data is available
+            window.dispatchEvent(new CustomEvent('swapTransactionSaved'));
+          }
+        } catch (err) {
+          console.error('Failed to save swap transaction to history:', err);
+        }
+      };
+      logTransaction();
+    }
+
+    if (swapState.reset) swapState.reset();
+  };
 
 
-
-
-
+  // =============================================================================
+  // RENDER
+  // =============================================================================
   return (
     <div className="max-w-2xl mx-auto w-full">
       <motion.div
@@ -611,44 +688,43 @@ const Swap = () => {
         animate={{ opacity: 1, y: 0 }}
         className="swap-container group"
       >
-        {/* 4-Corner Grey Glow System - Desktop Only */}
-        <div className="hidden md:block absolute -top-20 -left-20 w-48 h-48 bg-gradient-to-br from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full"></div>
-        <div className="hidden md:block absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-bl from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full"></div>
-        <div className="hidden md:block absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full"></div>
-        <div className="hidden md:block absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full"></div>
+        {/* Subtle corner glow effect — desktop only, invisible in light mode */}
+        <div className="hidden md:block absolute -top-20    -left-20  w-48 h-48 bg-gradient-to-br from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full" />
+        <div className="hidden md:block absolute -top-20    -right-20 w-48 h-48 bg-gradient-to-bl from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full" />
+        <div className="hidden md:block absolute -bottom-20 -left-20  w-48 h-48 bg-gradient-to-tr from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full" />
+        <div className="hidden md:block absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full" />
+
         <div className="relative z-10">
-          {/* Header */}
+
+          {/* ── Header ─────────────────────────────────────────────────────── */}
           <div className="swap-header">
             <h2 className="swap-header-title">{t('Swap Tokens')}</h2>
             <div className="swap-header-actions">
-              <button
-                onClick={handleFaucetClick}
-                className="swap-faucet-button-premium group/faucet"
-              >
+              {/* Link to Circle's testnet faucet for getting test tokens */}
+              <button onClick={handleFaucetClick} className="swap-faucet-button-premium group/faucet">
                 <FaucetIcon size={14} className="text-black dark:text-white transition-colors" />
-                <span>{t('Arc Faucet')}</span>
+                <span>{t('Faucet')}</span>
               </button>
-
             </div>
           </div>
 
-          {/* From Token */}
+          {/* ── "From" Token Input ─────────────────────────────────────────── */}
           <div className="swap-input-group">
             <div className="swap-input-header">
               <div className="swap-input-label">{t('From')}</div>
+              {/* Show the user's balance of the "from" token */}
               {isConnected && (
                 <div className="swap-balance-text">
-                  {fromLoading ? (
-                    <div className="skeleton w-16 h-4 rounded-md" />
-                  ) : (
-                    <span>
-                      <span className="font-medium">{fromBalance || '0.00'}</span>
-                    </span>
-                  )}
+                  {fromLoading
+                    ? <div className="skeleton w-16 h-4 rounded-md" />
+                    : <span><span className="font-medium">{fromBalance || '0.00'}</span></span>
+                  }
                 </div>
               )}
             </div>
+
             <div className="swap-input-row">
+              {/* Amount the user wants to send */}
               <input
                 type="text"
                 inputMode="decimal"
@@ -657,6 +733,7 @@ const Swap = () => {
                 placeholder="0.0"
                 className="swap-amount-input"
               />
+              {/* Token picker button */}
               <button
                 ref={fromTokenTriggerRef}
                 onClick={() => setShowFromSelector(true)}
@@ -664,11 +741,7 @@ const Swap = () => {
               >
                 <div className="swap-token-icon">
                   {getTokenIcon(fromToken) ? (
-                    <img
-                      src={getTokenIcon(fromToken)}
-                      alt={fromToken}
-                      className="w-full h-full rounded-full"
-                    />
+                    <img src={getTokenIcon(fromToken)} alt={fromToken} className="w-full h-full rounded-full" />
                   ) : (
                     <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                       <span className="text-[10px] font-bold">{fromToken}</span>
@@ -679,45 +752,39 @@ const Swap = () => {
                 <ChevronDown size={16} className="swap-token-chevron" />
               </button>
             </div>
+
+            {/* "Max" button — fills in the user's full sendable balance */}
             {isConnected && (
               <div className="flex items-center justify-end mt-2">
-                <button
-                  onClick={handleMaxClick}
-                  className="max-button"
-                >
-                  {t('Max')}
-                </button>
+                <button onClick={handleMaxClick} className="max-button">{t('Max')}</button>
               </div>
             )}
           </div>
 
-          {/* Switch Button */}
+          {/* ── Switch Button (flip From ↔ To) ─────────────────────────────── */}
           <div className="swap-direction-container">
-            <button
-              onClick={handleSwitch}
-              className="swap-direction-button"
-            >
+            <button onClick={handleSwitch} className="swap-direction-button">
               <ArrowDownUp size={18} />
             </button>
           </div>
 
-          {/* To Token */}
+          {/* ── "To" Token Input ───────────────────────────────────────────── */}
           <div className="swap-input-group">
             <div className="swap-input-header">
               <div className="swap-input-label">{t('To')}</div>
+              {/* Show the user's balance of the "to" token */}
               {isConnected && (
                 <div className="swap-balance-text">
-                  {toLoading ? (
-                    <div className="skeleton w-16 h-4 rounded-md" />
-                  ) : (
-                    <span>
-                      <span className="font-medium">{toBalance || '0.00'}</span>
-                    </span>
-                  )}
+                  {toLoading
+                    ? <div className="skeleton w-16 h-4 rounded-md" />
+                    : <span><span className="font-medium">{toBalance || '0.00'}</span></span>
+                  }
                 </div>
               )}
             </div>
+
             <div className="swap-input-row">
+              {/* Estimated amount the user will receive */}
               <input
                 type="text"
                 inputMode="decimal"
@@ -726,6 +793,7 @@ const Swap = () => {
                 placeholder="0.0"
                 className="swap-amount-input"
               />
+              {/* Token picker button */}
               <button
                 ref={toTokenTriggerRef}
                 onClick={() => setShowToSelector(true)}
@@ -733,11 +801,7 @@ const Swap = () => {
               >
                 <div className="swap-token-icon">
                   {getTokenIcon(toToken) ? (
-                    <img
-                      src={getTokenIcon(toToken)}
-                      alt={toToken}
-                      className="w-full h-full rounded-full"
-                    />
+                    <img src={getTokenIcon(toToken)} alt={toToken} className="w-full h-full rounded-full" />
                   ) : (
                     <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                       <span className="text-[10px] font-bold">{toToken}</span>
@@ -748,32 +812,29 @@ const Swap = () => {
                 <ChevronDown size={16} className="swap-token-chevron" />
               </button>
             </div>
+
+            {/* "Max" button for the "To" field — reverse-calculates the required "From" amount */}
             {isConnected && (
               <div className="flex items-center justify-end mt-2">
                 <button
+                  className="max-button"
                   onClick={() => {
                     if (!toBalance || parseFloat(toBalance) === 0) {
-                      setToast({ visible: true, type: 'warning', message: t('No balance available') });
-                      setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), 3000);
+                      showToast('warning', t('No balance available'));
                       return;
                     }
-                    // Set the "To" amount to maximum balance
-                    // Note: This will trigger the swap calculation in reverse
                     setToAmount(toBalance);
 
-                    // Calculate the required "From" amount based on the "To" amount
+                    // Calculate how much "From" token is needed to receive the full "To" balance
                     if (swapState.price && parseFloat(swapState.price) > 0) {
                       const price = parseFloat(swapState.price);
                       const isBuying = fromToken === 'USDC';
-
-                      const calculatedFrom = isBuying
+                      const calcFrom = isBuying
                         ? (parseFloat(toBalance) * price).toFixed(6)
                         : (parseFloat(toBalance) / price).toFixed(6);
-
-                      setFromAmount(calculatedFrom);
+                      setFromAmount(calcFrom);
                     }
                   }}
-                  className="max-button"
                 >
                   {t('Max')}
                 </button>
@@ -782,124 +843,65 @@ const Swap = () => {
           </div>
 
 
-
-
-
-
-
-
-          {/* Swap Button */}
+          {/* ── Main Swap / Connect Button ─────────────────────────────────── */}
+          {/*
+            Button states (in priority order):
+            1. Reconnecting to wallet → show "Swap" (disabled, waiting)
+            2. Wallet not connected   → show "Connect Wallet"
+            3. Insufficient balance   → show "Insufficient Balance" in red
+            4. Swap is executing      → show spinner + "Swapping..." or "Approving..."
+            5. Token approval needed  → show "Approve [token]"
+            6. Ready to swap          → show "Swap"
+          */}
           <button
             onClick={handleSwapClick}
             className={`swap-button ${(isConnected && parseFloat(fromAmount) > parseFloat(fromBalance)) ? 'swap-button-failed' : ''}`}
-            disabled={(status === 'disconnected' && !wasConnected) || !fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance) || swapState.isLoading || status === 'reconnecting' || status === 'connecting'}
+            disabled={
+              (status === 'disconnected' && !wasConnected) ||
+              !fromAmount ||
+              parseFloat(fromAmount) <= 0 ||
+              parseFloat(fromAmount) > parseFloat(fromBalance) ||
+              swapState.isLoading ||
+              status === 'reconnecting' ||
+              status === 'connecting'
+            }
           >
             {(status === 'reconnecting' || status === 'connecting' || wasConnected) && !isConnected ? (
-              <div className="flex items-center justify-center">
-                <span>{t('Swap')}</span>
-              </div>
+              // Wallet is in the process of reconnecting (e.g. after page refresh)
+              <div className="flex items-center justify-center"><span>{t('Swap')}</span></div>
             ) : status === 'disconnected' ? (
-              <>
-                <Wallet size={18} className="inline mr-2" />
-                <span>{t('Connect Wallet')}</span>
-              </>
+              // No wallet connected at all
+              <><Wallet size={18} className="inline mr-2" /><span>{t('Connect Wallet')}</span></>
             ) : parseFloat(fromAmount) > parseFloat(fromBalance) ? (
+              // User typed more than they have
               <span>{t('Insufficient Balance')}</span>
             ) : swapState.isLoading ? (
+              // Swap transaction is in flight
               <div className="flex items-center justify-center gap-2">
                 <Loader className="animate-spin" size={18} />
                 <span>{swapState.isApproving ? t('Approving...') : t('Swapping...')}</span>
               </div>
             ) : swapState.needsApproval ? (
+              // Token allowance must be set before swapping
               <span>{t('Approve')} {fromToken}</span>
             ) : (
+              // All good — ready to swap
               <span>{t('Swap')}</span>
             )}
           </button>
 
-          {/* Modals */}
+
+          {/* ── Modals ─────────────────────────────────────────────────────── */}
+
+          {/* Swap confirmation + execution modal */}
           <SwapModal
             isOpen={isSwapModalOpen}
             onClose={() => {
               setIsSwapModalOpen(false);
-              if (swapState.isSuccess) {
-                setFromAmount('');
-                setToAmount('');
-              }
+              if (swapState.isSuccess) { setFromAmount(''); setToAmount(''); }
             }}
-            onError={(error) => {
-              const errorMsg = swapState.error || error?.message || error?.toString() || "";
-              const lowerError = errorMsg.toLowerCase();
-              const isRejection =
-                lowerError.includes('user rejected') ||
-                lowerError.includes('user denied') ||
-                lowerError.includes('action_rejected') ||
-                lowerError.includes('request rejected') ||
-                lowerError.includes('rejected by user') ||
-                error?.name === 'UserRejectedRequestError' ||
-                error?.code === 4001;
-
-              setSwapError(errorMsg);
-              setIsSwapModalOpen(false);
-
-              if (isRejection) {
-                setShowSwapRejectedModal(true);
-              } else {
-                setShowSwapFailedModal(true);
-              }
-
-              // Reset swap state after handling error
-              if (swapState.reset) swapState.reset();
-            }}
-            onSuccess={(txHash) => {
-              // Close swap modal and show success modal
-              setLastSwapTxHash(txHash);
-              const frozen = {
-                fromToken: fromTokenObj,
-                toToken: toTokenObj,
-                fromAmount,
-                toAmount: swapState.expectedOut || toAmount
-              };
-              setFrozenSwapData(frozen);
-              setIsSwapModalOpen(false);
-              setShowSwapSuccessModal(true);
-
-              // Clear amounts
-              setFromAmount('');
-              setToAmount('');
-
-              // Log transaction to history
-              if (txHash && address) {
-                const logTransaction = async () => {
-                  try {
-                    const history = await getItem('myTransactions') || [];
-                    const exists = history.some(tx => tx.hash === txHash);
-                    if (!exists) {
-                      const newTx = {
-                        id: txHash,
-                        hash: txHash,
-                        type: 'Swap',
-                        from: `${frozen.fromAmount} ${frozen.fromToken?.symbol}`,
-                        to: `${frozen.toAmount} ${frozen.toToken?.symbol}`,
-                        amount: `${frozen.fromAmount} ${frozen.fromToken?.symbol} → ${frozen.toAmount} ${frozen.toToken?.symbol}`,
-                        timestamp: Date.now(),
-                        status: 'success',
-                        address: address.toLowerCase(),
-                        chainId: chainId
-                      };
-                      await setItem('myTransactions', [newTx, ...history].slice(0, 100));
-                      window.dispatchEvent(new CustomEvent('swapTransactionSaved'));
-                    }
-                  } catch (err) {
-                    console.error('Failed to log swap transaction:', err);
-                  }
-                };
-                logTransaction();
-              }
-
-              // Reset swap state
-              if (swapState.reset) swapState.reset();
-            }}
+            onError={handleSwapError}
+            onSuccess={handleSwapSuccess}
             fromToken={TOKENS[fromToken]}
             toToken={TOKENS[toToken]}
             fromAmount={fromAmount}
@@ -909,7 +911,7 @@ const Swap = () => {
             setSlippage={setSlippage}
           />
 
-          {/* Swap Success Modal */}
+          {/* ✅ Success modal */}
           <SwapSuccessModal
             isOpen={showSwapSuccessModal}
             onClose={() => setShowSwapSuccessModal(false)}
@@ -920,7 +922,7 @@ const Swap = () => {
             txHash={lastSwapTxHash}
           />
 
-          {/* Swap Failed Modal */}
+          {/* ❌ Failed modal */}
           <SwapFailedModal
             isOpen={showSwapFailedModal}
             onClose={() => setShowSwapFailedModal(false)}
@@ -931,33 +933,33 @@ const Swap = () => {
         </div>
       </motion.div>
 
-      {/* Token Selectors */}
+
+      {/* ── Token Selector Popups ───────────────────────────────────────────── */}
+
+      {/* "From" token picker */}
       <TokenSelector
         isOpen={showFromSelector}
         onClose={() => setShowFromSelector(false)}
         selectedToken={fromToken}
         onSelect={(token) => {
-          if (token === toToken) {
-            handleSwitch();
-          } else {
-            setFromToken(token);
-          }
+          // If the user picks the same token as "To", just swap them
+          if (token === toToken) handleSwitch();
+          else setFromToken(token);
         }}
         exclude={toToken}
         tokenList={tokenList}
         t={t}
         isConnected={isConnected}
       />
+
+      {/* "To" token picker */}
       <TokenSelector
         isOpen={showToSelector}
         onClose={() => setShowToSelector(false)}
         selectedToken={toToken}
         onSelect={(token) => {
-          if (token === fromToken) {
-            handleSwitch();
-          } else {
-            setToToken(token);
-          }
+          if (token === fromToken) handleSwitch();
+          else setToToken(token);
         }}
         exclude={fromToken}
         tokenList={tokenList}
@@ -965,7 +967,8 @@ const Swap = () => {
         isConnected={isConnected}
       />
 
-      {/* Toast Notifications */}
+
+      {/* ── Toast Notifications ─────────────────────────────────────────────── */}
       <Toast
         type={toast.type}
         message={toast.message}
@@ -973,15 +976,14 @@ const Swap = () => {
         onClose={() => setToast({ ...toast, visible: false })}
       />
 
-      {/* Swap Rejected Modal */}
+      {/* 🚫 User rejected modal */}
       <SwapRejectedModal
         isOpen={showSwapRejectedModal}
         onClose={() => setShowSwapRejectedModal(false)}
         fromToken={frozenSwapData?.fromToken || fromTokenObj}
         toToken={frozenSwapData?.toToken || toTokenObj}
       />
-
-    </div >
+    </div>
   );
 };
 

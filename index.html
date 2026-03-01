@@ -34,19 +34,24 @@
   <script>
     (function () {
       try {
-        const saved = localStorage.getItem('darkMode');
-        const isDark = saved !== null ? JSON.parse(saved) : false;
-        const root = document.documentElement;
+        const saved = localStorage.getItem('theme');
+        let isDark = false;
+        if (saved) {
+          isDark = saved === 'dark';
+        } else {
+          isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
 
+        const root = document.documentElement;
         if (isDark) {
           root.classList.add('dark');
-          root.style.backgroundColor = '#020617';
-          root.style.setProperty('--theme-bg-page', '#020617');
+          root.style.backgroundColor = '#000000';
+          root.style.setProperty('--theme-bg-page', '#000000');
           root.style.setProperty('--theme-text-primary', '#f8fafc');
         } else {
           root.classList.remove('dark');
-          root.style.backgroundColor = '#f8fafc';
-          root.style.setProperty('--theme-bg-page', '#f8fafc');
+          root.style.backgroundColor = '#ffffff';
+          root.style.setProperty('--theme-bg-page', '#ffffff');
           root.style.setProperty('--theme-text-primary', '#0f172a');
         }
       } catch (e) {

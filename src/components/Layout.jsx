@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAccount } from 'wagmi';
 import { useTheme } from '../hooks/useTheme';
 import {
-  X, Moon, ChevronRight, ArrowLeft, Check, ChevronDown, Bell, Globe, MessageCircle
+  X, Moon, ChevronRight, ArrowLeft, Check, ChevronDown, Bell, Globe
 } from 'lucide-react';
 import UpdatesModal from './UpdatesModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -40,7 +40,20 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
   const { t, i18n } = useTranslation();
   const { darkMode, toggleDarkMode } = useTheme();
 
-  const { isConnected, status } = useAccount();
+  const { status, isConnected, address } = useAccount();
+
+  // Capture initial localStorage value in a ref so it survives wagmi's
+  // transient 'disconnected' status that fires on page refresh before reconnection.
+  const wasConnectedRef = useRef(
+    typeof window !== 'undefined' ? localStorage.getItem('walletConnected') === 'true' : false
+  );
+
+  // Keep ref in sync with actual connection state
+  useEffect(() => {
+    if (isConnected && address) {
+      wasConnectedRef.current = true;
+    }
+  }, [isConnected, address]);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showUpdates, setShowUpdates] = useState(false);
@@ -128,18 +141,24 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center">
-              {activeTab === 'home' && status === 'disconnected' && !isConnected ? (
-                <button
-                  onClick={() => setActiveTab('swap')}
-                  className="h-[38px] px-5 rounded-lg bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 active:scale-95 transition-all duration-300 font-bold text-[12px] whitespace-nowrap flex items-center justify-center group relative overflow-hidden"
-                >
-                  <span className="relative z-10">{t('Launch App')}</span>
-                </button>
-              ) : (
-                <div className="flex items-center scale-90 origin-right translate-y-[1px]">
-                  <CustomConnectButton connectText={t('Connect')} isMobile={true} />
-                </div>
-              )}
+              {(() => {
+                const wasConnected = wasConnectedRef.current;
+                const isReturningUser = wasConnected || status === 'reconnecting' || status === 'connecting';
+                const showLaunchApp = activeTab === 'home' && status === 'disconnected' && !isReturningUser;
+
+                return showLaunchApp ? (
+                  <button
+                    onClick={() => setActiveTab('swap')}
+                    className="h-[38px] px-5 rounded-lg bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 active:scale-95 transition-all duration-300 font-bold text-[12px] whitespace-nowrap flex items-center justify-center group relative overflow-hidden"
+                  >
+                    <span className="relative z-10">{t('Launch App')}</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center scale-90 origin-right translate-y-[1px]">
+                    <CustomConnectButton connectText={t('Connect')} isMobile={true} />
+                  </div>
+                );
+              })()}
             </div>
             <button
               onClick={(e) => {
@@ -221,10 +240,10 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               <div className="relative h-full flex items-center" ref={moreRef}>
                 <div
                   onClick={() => setIsMoreOpen(!isMoreOpen)}
-                  className="relative px-5 py-2 flex flex-col items-center cursor-pointer group h-full justify-center"
+                  className="relative px-5 py-2 flex items-center cursor-pointer group h-full justify-center transition-all duration-200"
                 >
-                  <div className={`flex items-center gap-1.5 transition-colors duration-300 ${isMoreOpen ? 'text-black dark:text-white' : 'text-slate-600 dark:text-slate-400 group-hover:text-black dark:group-hover:text-white'}`}>
-                    <span className="text-[14px] font-semibold">{t('More')}</span>
+                  <div className={`flex items-center gap-1.5 transition-all duration-200 text-sm font-bold tracking-wider ${isMoreOpen ? 'text-black dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white'}`}>
+                    <span>{t('More')}</span>
                     <ChevronDown size={14} strokeWidth={2.5} className={`transition-transform duration-300 ${isMoreOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
@@ -236,7 +255,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 8, scale: 0.99 }}
                       transition={{ duration: 0.15, ease: 'easeOut' }}
-                      className="absolute top-[calc(100%-8px)] left-0 w-[240px] z-[2000] bg-white dark:bg-black rounded-[24px] border border-slate-200 dark:border-white/10 shadow-[0_20px_48px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_48px_rgba(0,0,0,0.4)] overflow-hidden origin-top-left backdrop-blur-3xl"
+                      className="absolute top-[calc(100%-8px)] left-0 w-[220px] z-[2000] bg-white dark:bg-[#161616] rounded-[14px] border border-slate-200 dark:border-white/10 shadow-xl dark:shadow-none overflow-hidden origin-top-left backdrop-blur-3xl"
                     >
                       <AnimatePresence mode="wait">
                         {moreMenuPage === 'main' ? (
@@ -266,22 +285,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                                     <Bell size={15} strokeWidth={2.5} className="text-slate-600 dark:text-slate-400 group-hover/item:text-white dark:group-hover/item:text-black transition-colors" />
                                   </div>
                                   <span className="text-[14px] font-bold text-slate-600 dark:text-slate-400 group-hover/item:text-black dark:group-hover/item:text-white transition-colors">{t("What's New")}</span>
-                                </div>
-                              </button>
-
-                              {/* Feedback */}
-                              <button
-                                onClick={() => {
-                                  setIsFeedbackOpen(true);
-                                  setIsMoreOpen(false);
-                                }}
-                                className="w-full px-6 py-3.5 text-left flex items-center group/item transition-all duration-200 hover:bg-slate-100 dark:hover:bg-white/10"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center transition-all duration-300 group-hover/item:bg-black dark:group-hover/item:bg-white">
-                                    <MessageCircle size={15} strokeWidth={2.5} className="text-slate-600 dark:text-slate-400 group-hover/item:text-white dark:group-hover/item:text-black transition-colors" />
-                                  </div>
-                                  <span className="text-[14px] font-bold text-slate-600 dark:text-slate-400 group-hover/item:text-black dark:group-hover/item:text-white transition-colors">{t("Feedback")}</span>
                                 </div>
                               </button>
 
@@ -365,18 +368,24 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
             </button>
 
             <div className="flex items-center">
-              {activeTab === 'home' && status === 'disconnected' && !isConnected ? (
-                <button
-                  onClick={() => setActiveTab('swap')}
-                  className="h-[44px] px-8 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 active:scale-95 transition-all duration-300 font-bold text-[13px] whitespace-nowrap flex items-center justify-center group relative overflow-hidden"
-                >
-                  <span className="relative z-10">{t('Launch App')}</span>
-                </button>
-              ) : (
-                <div className="scale-95 origin-right">
-                  <CustomConnectButton />
-                </div>
-              )}
+              {(() => {
+                const wasConnected = wasConnectedRef.current;
+                const isReturningUser = wasConnected || status === 'reconnecting' || status === 'connecting';
+                const showLaunchApp = activeTab === 'home' && status === 'disconnected' && !isReturningUser;
+
+                return showLaunchApp ? (
+                  <button
+                    onClick={() => setActiveTab('swap')}
+                    className="h-[44px] px-8 rounded-xl bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90 active:scale-95 transition-all duration-300 font-bold text-[13px] whitespace-nowrap flex items-center justify-center group relative overflow-hidden"
+                  >
+                    <span className="relative z-10">{t('Launch App')}</span>
+                  </button>
+                ) : (
+                  <div className="scale-95 origin-right">
+                    <CustomConnectButton />
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

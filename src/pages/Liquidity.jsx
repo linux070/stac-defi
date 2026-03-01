@@ -1,56 +1,73 @@
+// =============================================================================
+// LIQUIDITY PAGE (Coming Soon)
+// This is a placeholder page shown while the Liquidity Pools feature is
+// being built. It displays a branded "Coming Soon" card with an animated
+// icon and a preview of the four upcoming Liquidity features:
+// Yield, Liquidity, Farming, and Governance.
+// No wallet connection is needed; this page has no functional logic.
+// =============================================================================
+
 import { useTranslation } from 'react-i18next';
 import { LucideClock } from 'lucide-react';
 import { motion } from 'framer-motion';
+
 
 const Liquidity = () => {
   const { t } = useTranslation();
 
   return (
+    // Full-height centred layout — looks great on both mobile and desktop
     <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 flex items-center justify-center py-10 md:py-20 min-h-[100dvh]">
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
         className="w-full relative group"
       >
+        {/* Main card */}
         <div className="relative z-10 bg-white/80 dark:bg-[#0f1729]/80 border border-slate-200/60 dark:border-white/[0.12] rounded-[32px] p-8 md:p-12 text-center shadow-md dark:shadow-[0_8px_40px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] overflow-hidden font-['Inter','Satoshi','General_Sans',sans-serif]">
-          {/* Top light sweep decoration - Arc Blue */}
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-black dark:via-white dark:via-black dark:via-white to-transparent"></div>
-          {/* Subtle inner top glow for dark mode depth */}
-          <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black dark:from-white/[0.04] to-transparent pointer-events-none hidden dark:block"></div>
+
+          {/* Top decorative border sweep line */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-black dark:via-white dark:via-black dark:via-white to-transparent" />
+          {/* Subtle inner top glow — dark mode only */}
+          <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black dark:from-white/[0.04] to-transparent pointer-events-none hidden dark:block" />
 
           <div className="flex flex-col items-center">
-            {/* Visual Centerpiece - Arc Logo Themed */}
-            <div className="relative mb-8 md:mb-12">
-              <motion.div
-                animate={{
-                  scale: [1, 1.15, 1],
-                  opacity: [0.15, 0.35, 0.15]
-                }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute inset-0 bg-black dark:bg-black dark:bg-white blur-3xl rounded-full"
-              ></motion.div>
 
+            {/* ── Animated Icon ─────────────────────────────────────────────
+                The clock icon rotates 12° at rest and slides to 0° on hover.
+                A pulsing blur blob sits behind it for a glow effect.
+            ────────────────────────────────────────────────────────────── */}
+            <div className="relative mb-8 md:mb-12">
+              {/* Ambient glow blob */}
+              <motion.div
+                animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.35, 0.15] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute inset-0 bg-black dark:bg-black dark:bg-white blur-3xl rounded-full"
+              />
+
+              {/* Icon container — rotates on hover */}
               <div className="relative w-20 h-20 bg-gradient-to-br from-[#111827] to-[#9ca3af] dark:from-[#ffffff] dark:to-[#d1d5db] rounded-2xl flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-500 shadow-2xl dark:shadow-[0_8px_30px_rgba(255,255,255,0.15)] overflow-hidden">
                 <LucideClock size={36} className="text-white" strokeWidth={2} />
-                {/* Gloss effect on icon */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-50"></div>
+                {/* Gloss overlay on the icon */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-50" />
               </div>
             </div>
 
-            {/* Content Section */}
+            {/* ── "Coming Soon" label and description ─────────────────────── */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.4 }}
               className="space-y-6"
             >
+              {/* Decorative divider lines around the label */}
               <div className="flex items-center justify-center gap-3 md:gap-4">
-                <div className="h-px w-6 md:w-12 bg-gradient-to-r from-transparent to-black dark:to-white dark:to-black dark:to-white"></div>
+                <div className="h-px w-6 md:w-12 bg-gradient-to-r from-transparent to-black dark:to-white dark:to-black dark:to-white" />
                 <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] text-black dark:text-white dark:text-slate-500 dark:text-slate-400">
                   {t('Coming Soon')}
                 </span>
-                <div className="h-px w-6 md:w-12 bg-gradient-to-l from-transparent to-black dark:to-white dark:to-black dark:to-white"></div>
+                <div className="h-px w-6 md:w-12 bg-gradient-to-l from-transparent to-black dark:to-white dark:to-black dark:to-white" />
               </div>
 
               <p className="text-lg md:text-xl text-slate-800 dark:text-white max-w-md mx-auto leading-relaxed font-bold tracking-tight">
@@ -58,16 +75,20 @@ const Liquidity = () => {
               </p>
             </motion.div>
 
-            {/* Bottom Status Grid */}
+            {/* ── Feature preview grid ──────────────────────────────────────
+                Shows what's coming: Yield, Liquidity, Farming, Governance.
+                Fades in more visibly on hover to tease upcoming features.
+            ────────────────────────────────────────────────────────────── */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 mt-12 md:mt-16 w-full border-t border-slate-200/50 dark:border-white/[0.08] pt-10">
               {[
                 { label: t('Yield') },
                 { label: t('Liquidity') },
                 { label: t('Farming') },
-                { label: t('Governance') }
+                { label: t('Governance') },
               ].map((item, i) => (
                 <div key={i} className="flex flex-col items-center gap-2.5 opacity-60 group-hover:opacity-100 transition-all duration-300">
-                  <div className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white shadow-[0_0_8px_rgba(128, 128, 128,0.6)] dark:shadow-[0_0_10px_rgba(128, 128, 128,0.7)]"></div>
+                  {/* Dot indicator */}
+                  <div className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white shadow-[0_0_8px_rgba(128,128,128,0.6)] dark:shadow-[0_0_10px_rgba(128,128,128,0.7)]" />
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     {item.label}
                   </span>

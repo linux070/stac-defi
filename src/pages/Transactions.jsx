@@ -1,3 +1,14 @@
+// =============================================================================
+// TRANSACTIONS PAGE
+// Shows the user's full transaction history (swaps + bridges).
+// Data comes from two places:
+//   1. IndexedDB (browser storage) — transactions the user initiated from this dApp
+//   2. Blockchain — on-chain history fetched via useTransactionHistory hook
+// Both sources are merged, deduplicated, and displayed in a unified table.
+// Supports filtering by status, date range, and free-text search.
+// Paginated: 10 rows per page on desktop, card list on mobile.
+// =============================================================================
+
 import { useState, useEffect, useMemo, useRef, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../hooks/useWallet';
@@ -12,7 +23,11 @@ import { useTotalBridgeVolume } from '../hooks/useTotalBridgeVolume';
 import { useDappTransactionCount } from '../hooks/useDappTransactionCount';
 import '../styles/transactions-styles.css';
 
-// Helper function to get network name from chainId
+// =============================================================================
+// PURE HELPER FUNCTIONS (outside the component for performance)
+// =============================================================================
+
+// Convert a numeric or hex chainId → human-readable network name ("Arc Testnet" etc.)
 const getNetworkName = (chainId) => {
   if (!chainId) return null;
 
@@ -33,7 +48,7 @@ const getNetworkName = (chainId) => {
   return null;
 };
 
-// Helper to get chain icon
+// Return the local icon path for a given chain name
 const getChainIcon = (chainName) => {
   if (!chainName) return null;
   const name = chainName.toLowerCase();
@@ -45,7 +60,7 @@ const getChainIcon = (chainName) => {
   return null;
 };
 
-// Helper to get token logo
+// Return the local icon path for a given token symbol
 const getTokenLogo = (symbol) => {
   if (!symbol) return null;
   const s = String(symbol).toUpperCase();
@@ -59,6 +74,7 @@ const getTokenLogo = (symbol) => {
   return null;
 };
 
+// Shown when there are no transactions to display (empty state)
 const EmptyActivityState = () => {
   const { t } = useTranslation();
   return (
@@ -79,6 +95,7 @@ const EmptyActivityState = () => {
   );
 };
 
+// Loading skeleton for the summary stat cards (shown while data is fetching)
 const SkeletonCard = () => (
   <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-3.5 min-w-[170px]">
     <div className="skeleton w-20 h-2.5 mb-3 rounded-full opacity-50" />
@@ -87,6 +104,7 @@ const SkeletonCard = () => (
   </div>
 );
 
+// Loading skeleton for desktop table rows
 const SkeletonRow = () => (
   <tr className="border-b border-slate-200/40 dark:border-white/[0.05]">
     <td className="p-[1.25rem]"><div className="skeleton w-24 h-5 rounded-lg" /></td>
@@ -104,6 +122,7 @@ const SkeletonRow = () => (
   </tr>
 );
 
+// Loading skeleton for mobile transaction cards
 const SkeletonMobileCard = () => (
   <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-4 space-y-3.5">
     <div className="flex justify-between items-start">
@@ -131,49 +150,59 @@ const SkeletonMobileCard = () => (
   </div>
 );
 
+// =============================================================================
+// TRANSACTIONS COMPONENT
+// =============================================================================
 const Transactions = () => {
   const { t } = useTranslation();
   const { isConnected, walletAddress, chainId } = useWallet();
+
+  // Track which hash is currently showing the "Copied!" tooltip
   const [copiedHash, setCopiedHash] = useState(null);
-  const prevWalletRef = useRef(null);
+  const prevWalletRef = useRef(null); // Tracks previous wallet address to detect account switches
 
-  // Fetch real-time transactions from blockchain (auto-updates every 30 seconds)
-  const { transactions: blockchainTransactions, loading: transactionsLoading } = useTransactionHistory();
+  // Live blockchain transactions — auto-refreshes every 30s
+  // blockchainTransactions = user's own txs | globalTransactions = all dApp txs
+  const { transactions: blockchainTransactions, globalTransactions, loading: transactionsLoading } = useTransactionHistory();
 
-  // Activity data - stored in IndexedDB for persistence (web3-native)
+  // Transactions saved locally in the browser's IndexedDB (our dApp-written records)
   const [myTransactions, setMyTransactions] = useState([]);
-  const [activeActivityTab, setActiveActivityTab] = useState('my'); // 'my' or 'all'
+  // 'my' = only the connected wallet's txs | 'all' = every dApp transaction
+  const [activeActivityTab, setActiveActivityTab] = useState('my');
 
-  // Automatically switch to 'all' tab if wallet is disconnected
+  // Auto-switch to "All" tab when wallet disconnects (can't show "My" with no wallet)
   useEffect(() => {
-    if (!isConnected && activeActivityTab === 'my') {
-      setActiveActivityTab('all');
-    }
+    if (!isConnected && activeActivityTab === 'my') setActiveActivityTab('all');
   }, [isConnected, activeActivityTab]);
 
-  // Filter states
+  // ─── Filter state ────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'success', 'pending', 'failed'
-  const [dateRangeFilter, setDateRangeFilter] = useState('all'); // 'all', '24h', '7d', '30d'
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'success' | 'pending' | 'failed'
+  const [dateRangeFilter, setDateRangeFilter] = useState('all'); // 'all' | '24h' | '7d' | '30d'
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
 
-  // Global dapp stats for All Activity tab
+  // Total dApp transaction count (shown in the "All Transactions" sub-heading)
   const { transactionCount, loading: txCountLoading } = useDappTransactionCount();
 
-  // Stats for the cards - pass wallet address when on "My Activity" tab for per-wallet volumes
+  // Volume hooks: pass the wallet address when on "My Activity" to scope USD volumes per wallet
   const walletFilterForVolume = activeActivityTab === 'my' && walletAddress ? walletAddress : null;
   const { totalVolume: swapVolume, loading: swapVolumeLoading } = useTotalVolume(walletFilterForVolume);
   const { totalVolume: bridgeVolume, loading: bridgeVolumeLoading } = useTotalBridgeVolume(walletFilterForVolume);
 
-  // Calculate swap count for the volume card
+  // Count of successful swap transactions (used in the "X swaps completed" card stat)
   const swapCount = useMemo(() => {
     const txs = activeActivityTab === 'my' ? myTransactions : blockchainTransactions;
     if (!txs || !Array.isArray(txs)) return 0;
     return txs.filter(tx => tx.type === 'Swap' && tx.status === 'success').length;
   }, [activeActivityTab, myTransactions, blockchainTransactions]);
 
-  // Helper: Backup transactions to sessionStorage for recovery
+  // ─── Session storage helpers ─────────────────────────────────────────────
+  // IndexedDB can occasionally be wiped by the browser (e.g. private mode timeout).
+  // We keep a sessionStorage copy as a short-lived fallback so users don't lose
+  // their transaction history within a single browser session.
+
+  // Write a wallet's transactions to sessionStorage
   const backupToSessionStorage = (address, transactions) => {
     try {
       if (address && transactions && transactions.length > 0) {
@@ -185,7 +214,7 @@ const Transactions = () => {
     }
   };
 
-  // Helper: Recover transactions from sessionStorage
+  // Read from sessionStorage — returns null if nothing is found
   const recoverFromSessionStorage = (address) => {
     try {
       if (address) {
@@ -199,7 +228,10 @@ const Transactions = () => {
     return null;
   };
 
-  // Load transactions from IndexedDB on mount and when wallet address changes
+  // ─── Load local transactions when the wallet address changes ────────────
+  // On first load and on every wallet switch: pull ALL transactions from IndexedDB,
+  // then filter them in the UI. We don't store per-wallet siloed data — one shared
+  // store keeps data available for the "All Activity" tab too.
   useEffect(() => {
     const loadTransactions = async () => {
       try {
@@ -239,16 +271,21 @@ const Transactions = () => {
     loadTransactions();
   }, [walletAddress]); // Reload when wallet address changes
 
-  // Merge blockchain transactions with IndexedDB transactions
-  // PRIORITY: IndexedDB transactions have accurate from/to chains (user-selected)
-  // Blockchain transactions are fallback when no user-saved data exists
+  // ─── Merge local + blockchain transactions ────────────────────────────────
+  // Strategy:
+  //   1. Local (IndexedDB) transactions win — they have the correct from/to chain labels
+  //      that the user selected, not just raw chain IDs from the blockchain.
+  //   2. Blockchain transactions fill in any gaps (txs the user made outside this dApp).
+  //   3. Adjacent swap legs (Token → USDC → Token) are grouped into a single "Direct Swap" row.
+  // The result is sorted by timestamp (newest first).
   const mergedTransactions = useMemo(() => {
     // Basic wallet filter
     const walletAddressLower = walletAddress?.toLowerCase();
 
     // 1. Get filtered blockchain transactions (if My Activity, only user's; if All, all of them)
-    // For now, blockchainTransactions usually returns the latest block's activity anyway
-    const filteredBlockchain = blockchainTransactions.filter(tx => {
+    // For now, use globalTransactions for All Activity tab
+    const sourceTxs = activeActivityTab === 'my' ? blockchainTransactions : (globalTransactions || []);
+    const filteredBlockchain = sourceTxs.filter(tx => {
       if (activeActivityTab === 'my') {
         if (!walletAddressLower) return false;
         if (tx.from && tx.from.toLowerCase() === walletAddressLower) return true;
@@ -356,9 +393,11 @@ const Transactions = () => {
     }
 
     return grouped;
-  }, [blockchainTransactions, myTransactions, walletAddress, activeActivityTab]);
+  }, [blockchainTransactions, globalTransactions, myTransactions, walletAddress, activeActivityTab]);
 
-  // Apply filters (search, status, date range) to merged transactions
+  // ─── Apply UI filters ──────────────────────────────────────────────────────
+  // Runs after merge — filters by free-text search, status badge, and date range.
+  // This does NOT modify what's stored in IndexedDB; it only changes what's displayed.
   const filteredTransactions = useMemo(() => {
     let filtered = [...mergedTransactions];
 
@@ -417,7 +456,8 @@ const Transactions = () => {
     return filtered;
   }, [mergedTransactions, searchQuery, statusFilter, dateRangeFilter]);
 
-  // Pagination state
+  // ─── Pagination ────────────────────────────────────────────────────────────
+  // 10 rows per page. Resets to page 1 whenever filters or wallet change.
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 10;
 
@@ -453,7 +493,10 @@ const Transactions = () => {
   // The original transactions with all wallet addresses are kept in storage
   // We only filter when displaying. This preserves data for all wallets.
 
-  // Listen for new transactions from other pages (Bridge, Swap, etc.)
+  // ─── Live update listener ──────────────────────────────────────────────────
+  // When Swap.jsx or Bridge.jsx successfully completes a transaction, they fire
+  // a custom browser event. We listen here and reload IndexedDB so the new
+  // transaction appears immediately without a full page refresh.
   useEffect(() => {
     const handleTransactionSaved = async () => {
       console.log('🔄 Transaction saved event received, reloading all local activity...');
@@ -478,6 +521,7 @@ const Transactions = () => {
     };
   }, []); // Reload on event
 
+  // Copy a transaction hash to the clipboard and show a brief "Copied!" tooltip
   const handleCopyHash = async (hash) => {
     const success = await copyToClipboard(hash);
     if (success) {
@@ -487,9 +531,13 @@ const Transactions = () => {
       }, 2500);
     }
   };
+  // =============================================================================
+  // TRANSACTION DATA FORMATTERS
+  // Transactions come in inconsistent formats from the blockchain and IndexedDB.
+  // These helpers normalise them into clean, display-ready strings.
+  // =============================================================================
 
-
-  // Helper functions to format swap transaction data
+  // Extract only the "from" token symbol (e.g. "1.0 USDC" → "USDC")
   const getSwapFromToken = (tx) => {
     if (tx.type !== 'Swap') return tx.from || '';
     if (!tx.from) return '';
@@ -515,6 +563,7 @@ const Transactions = () => {
     return fromStr;
   };
 
+  // Extract only the "to" token symbol (e.g. "1.096700 USDC" → "USDC")
   const getSwapToToken = (tx) => {
     if (tx.type !== 'Swap') return tx.to || '';
     if (!tx.to) return '';
@@ -541,6 +590,7 @@ const Transactions = () => {
     return toStr;
   };
 
+  // Extract the numeric amount from the "from" side of a swap (rounded to 2dp)
   const getSwapAmount = (tx) => {
     if (tx.type !== 'Swap') return tx.amount || '';
     if (!tx.amount) return '';
@@ -574,8 +624,7 @@ const Transactions = () => {
     return amountStr;
   };
 
-
-  // Helper to get to amount for swap transactions
+  // Extract the numeric amount from the "to" side of a swap (rounded to 2dp)
   const getSwapToAmount = (tx) => {
     if (tx.type !== 'Swap') return '';
 

@@ -5,7 +5,7 @@ import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import { Loader, Copy, LogOut, X } from 'lucide-react';
 import useMultiChainBalances from '../hooks/useMultiChainBalances';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useWallet } from '../hooks/useWallet';
@@ -21,7 +21,31 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
 
     const [showDropdown, setShowDropdown] = useState(false);
     const [copied, setCopied] = useState(false);
-    const wasConnected = typeof window !== 'undefined' ? localStorage.getItem('walletConnected') === 'true' : false;
+
+    // Capture initial localStorage values in refs on mount.
+    // Refs survive re-renders and prevent the ghost state from breaking
+    // if WalletProvider's useEffect clears localStorage during wagmi's
+    // transient 'disconnected' status on page refresh.
+    const wasConnectedRef = useRef(
+        typeof window !== 'undefined' ? localStorage.getItem('walletConnected') === 'true' : false
+    );
+    const lastAddressRef = useRef(
+        typeof window !== 'undefined' ? localStorage.getItem('lastAddress') : null
+    );
+
+    // Keep refs in sync: update when wallet connects/disconnects
+    useEffect(() => {
+        if (isConnected && address) {
+            wasConnectedRef.current = true;
+            lastAddressRef.current = address;
+        } else if (status === 'disconnected' && !wasConnectedRef.current) {
+            // Only reset if we never had a connection (fresh visitor)
+            lastAddressRef.current = null;
+        }
+    }, [isConnected, address, status]);
+
+    // Expose as a readable constant for backward compatibility in the render
+    const wasConnected = wasConnectedRef.current;
 
     const buttonText = connectText || t('Connect Wallet');
 
@@ -46,6 +70,14 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
         } catch (error) {
             console.error('Error switching chain:', error);
         }
+    };
+
+    // Disconnect and reset refs so ghost state doesn't persist
+    const handleDisconnect = () => {
+        wasConnectedRef.current = false;
+        lastAddressRef.current = null;
+        disconnect();
+        setShowDropdown(false);
     };
 
     // Get shortened wallet address
@@ -83,36 +115,44 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                         >
                             {(() => {
                                 const isReconnecting = status === 'reconnecting' || (status === 'connecting' && mounted);
-                                const lastAddress = typeof window !== 'undefined' ? localStorage.getItem('lastAddress') : null;
+                                const lastAddress = lastAddressRef.current;
 
-                                // Hydration/Reconnection state: Show ghost avatar ONLY if we have a real session to restore
-                                if (wasConnected && lastAddress && (!mounted || isReconnecting)) {
+                                // Hydration/Reconnection state: Show ghost avatar if we have a real session to restore
+                                // Covers: unmounted, reconnecting, AND the gap where mounted=true but account/chain aren't populated yet
+                                // Also covers the transient 'disconnected' status wagmi fires on page refresh before reconnection starts
+                                const isWaitingForAccount = mounted && wasConnected && lastAddress && (!account || !chain);
+                                const isTransientDisconnect = mounted && wasConnected && lastAddress && status === 'disconnected' && !account;
+                                if (wasConnected && lastAddress && (!mounted || isReconnecting || isWaitingForAccount || isTransientDisconnect)) {
                                     if (isMobile) {
                                         return (
-                                            <div className="w-[42px] h-[42px] rounded-full border border-slate-200/60 dark:border-white/20 bg-white/80 dark:bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-md shadow-black/5 dark:shadow-black dark:shadow-white">
-                                                <div className="relative flex items-center justify-center transition-transform duration-500">
+                                            <div className="relative flex items-center justify-center p-1 rounded-full border border-slate-200/60 dark:border-white/20 bg-white dark:bg-white/10 backdrop-blur-sm animate-pulse opacity-80 shadow-md shadow-black/5 dark:shadow-black dark:shadow-white">
+                                                <div className="relative flex items-center justify-center">
                                                     {lastAddress ? (
                                                         <Jazzicon diameter={32} seed={jsNumberForAddress(lastAddress)} />
                                                     ) : (
                                                         <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-white/20" />
                                                     )}
+                                                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-black rounded-full shadow-sm"></div>
                                                 </div>
                                             </div>
                                         );
                                     }
                                     return (
-                                        <div className="h-[44px] flex items-center space-x-3 pl-2.5 pr-4 rounded-2xl border border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl shadow-sm relative overflow-hidden">
+                                        <div className="h-[44px] flex items-center space-x-3 pl-2.5 pr-4 rounded-2xl border border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 backdrop-blur-xl shadow-sm relative overflow-hidden animate-pulse opacity-80">
                                             <div className="relative flex items-center justify-center">
                                                 {lastAddress ? (
                                                     <Jazzicon diameter={30} seed={jsNumberForAddress(lastAddress)} />
                                                 ) : (
                                                     <div className="w-[30px] h-[30px] rounded-full bg-slate-200 dark:bg-white/10" />
                                                 )}
+                                                <div className="absolute inset-0 rounded-full border border-black/5 dark:border-white/5 pointer-events-none"></div>
                                             </div>
-                                            <div className="flex-col justify-center items-start pl-1 hidden sm:flex">
-                                                <span className="text-[14px] text-slate-700 dark:text-slate-200 font-bold tracking-tight">
-                                                    ...
-                                                </span>
+                                            <div className="flex flex-col justify-center items-start pl-1 hidden sm:flex">
+                                                <div className="flex items-center">
+                                                    <span className="text-[14px] text-slate-700 dark:text-slate-200 font-bold tracking-tight">
+                                                        {shortenAddress(lastAddress)}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -153,7 +193,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                 >
                                                     <div className="relative flex items-center justify-center">
                                                         <Jazzicon diameter={32} seed={jsNumberForAddress(account.address)} />
-                                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-slate-500 border-2 border-white dark:border-black rounded-full shadow-sm"></div>
+                                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-black rounded-full shadow-sm"></div>
                                                     </div>
                                                 </button>
 
@@ -181,7 +221,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                     exit={{ y: '100%' }}
                                                                     transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
                                                                     onClick={(e) => e.stopPropagation()}
-                                                                    className="w-full max-w-[480px] bg-white dark:bg-slate-950 backdrop-blur-2xl rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-20px_60px_rgba(0,0,0,0.5)] border-t border-x border-slate-200/60 dark:border-white/10 overflow-hidden touch-none"
+                                                                    className="w-full max-w-[480px] bg-white dark:bg-[#0a0a0a] backdrop-blur-2xl rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-20px_60px_rgba(0,0,0,0.5)] border-t border-x border-slate-200/60 dark:border-white/10 overflow-hidden touch-none"
                                                                 >
                                                                     {/* Drag Handle */}
                                                                     <div className="flex justify-center pt-4 pb-2 active:opacity-50 transition-opacity">
@@ -205,7 +245,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                         <div className="flex items-center space-x-3 p-4 bg-white dark:bg-white/5 rounded-2xl border border-gray-200/60 dark:border-white/10 shadow-sm">
                                                                             <div className="relative">
                                                                                 <Jazzicon diameter={44} seed={jsNumberForAddress(account.address)} />
-                                                                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-slate-500 border-[3px] border-white dark:border-[#0c0c0c] rounded-full"></div>
+                                                                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 border-[3px] border-white dark:border-[#0a0a0a] rounded-full"></div>
                                                                             </div>
                                                                             <div className="flex-1 overflow-hidden">
                                                                                 <div className="text-[19px] font-bold text-black dark:text-white truncate font-['Satoshi','Inter',sans-serif] tracking-tight">
@@ -219,7 +259,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                             <div className="flex items-center space-x-2">
                                                                                 <button
                                                                                     onClick={handleCopyAddress}
-                                                                                    className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-50 dark:bg-black dark:hover:bg-black dark:bg-white transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-black dark:text-white dark:hover:text-black dark:text-white relative border border-transparent hover:border-slate-200 dark:border-slate-700 dark:hover:border-black dark:border-white active:scale-90"
+                                                                                    className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white relative border border-transparent active:scale-90"
                                                                                 >
                                                                                     <Copy size={18} />
                                                                                     <AnimatePresence>
@@ -237,7 +277,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                                     </AnimatePresence>
                                                                                 </button>
                                                                                 <button
-                                                                                    onClick={() => { disconnect(); setShowDropdown(false); }}
+                                                                                    onClick={handleDisconnect}
                                                                                     className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-red-500 border border-transparent hover:border-red-200 dark:hover:border-red-500/20 active:scale-90"
                                                                                 >
                                                                                     <LogOut size={18} />
@@ -284,7 +324,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                                         </div>
                                                                                     </div>
                                                                                     {isActive && (
-                                                                                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-500 dark:bg-slate-500 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-black">
+                                                                                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 dark:bg-emerald-500 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-[#0a0a0a]">
                                                                                             <motion.svg
                                                                                                 initial={{ pathLength: 0, opacity: 0 }}
                                                                                                 animate={{ pathLength: 1, opacity: 1 }}
@@ -343,7 +383,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                         initial={{ opacity: 0, y: 20, scale: 0.95 }}
                                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                                         exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                                                        className="absolute top-full right-0 mt-8 w-80 bg-white dark:bg-slate-950 rounded-3xl shadow-2xl border border-gray-200 dark:border-white/10 p-0 z-[60] overflow-hidden backdrop-blur-xl dark:bg-slate-950/90"
+                                                        className="absolute top-full right-0 mt-8 w-80 bg-white dark:bg-[#0a0a0a] rounded-3xl shadow-2xl border border-gray-200 dark:border-white/10 p-0 z-[60] overflow-hidden backdrop-blur-xl"
                                                     >
                                                         <div className="p-5 border-b border-gray-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
                                                             <div className="flex items-center justify-between mb-4">
@@ -368,7 +408,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                 <div className="flex items-center space-x-1.5">
                                                                     <button
                                                                         onClick={handleCopyAddress}
-                                                                        className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-50 dark:bg-black dark:hover:bg-black dark:bg-white transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-black dark:text-white dark:hover:text-black dark:text-white relative group/copy border border-transparent hover:border-slate-200 dark:border-slate-700 dark:hover:border-black dark:border-white"
+                                                                        className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white relative group/copy border border-transparent"
                                                                     >
                                                                         <Copy size={14} />
                                                                         <AnimatePresence>
@@ -385,7 +425,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                         </AnimatePresence>
                                                                     </button>
                                                                     <button
-                                                                        onClick={() => { disconnect(); setShowDropdown(false); }}
+                                                                        onClick={handleDisconnect}
                                                                         className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-red-500 border border-transparent hover:border-red-200 dark:hover:border-red-500/20"
                                                                     >
                                                                         <LogOut size={14} />
@@ -394,7 +434,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                             </div>
                                                         </div>
 
-                                                        <div className="p-2 space-y-0.5 bg-white dark:bg-slate-950 border-b border-gray-100 dark:border-white/10">
+                                                        <div className="p-2 space-y-0.5 bg-white dark:bg-[#0a0a0a] border-b border-gray-100 dark:border-white/10">
                                                             {[
                                                                 { id: 5042002, name: t('Arc Testnet'), icon: '/icons/arc.png', balance: balances.arcTestnet },
                                                                 { id: 11155111, name: t('Sepolia'), icon: '/icons/eth.png', balance: balances.sepolia },
@@ -429,7 +469,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                             </div>
                                                                         </div>
                                                                         {isActive && (
-                                                                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-500 dark:bg-slate-500 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-black transition-all duration-500 animate-in zoom-in">
+                                                                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 dark:bg-emerald-500 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-[#0a0a0a] transition-all duration-500 animate-in zoom-in">
                                                                                 <motion.svg
                                                                                     initial={{ pathLength: 0, opacity: 0 }}
                                                                                     animate={{ pathLength: 1, opacity: 1 }}

@@ -4,7 +4,6 @@ import { createPublicClient, http } from 'viem';
 import { sepolia } from 'viem/chains';
 import { SEPOLIA_CHAIN_ID, ARC_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID } from './useBridge';
 import { getItem, setItem } from '../utils/indexedDB';
-import DexABI from '../abis/StacDEX.json';
 import { DEX_ADDRESS, TOKENS } from '../config/constants';
 
 // Chain configurations
@@ -135,7 +134,6 @@ const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
   const type = determineTransactionType(tx, receipt?.logs, chainId);
   let amount = '0.00';
   let isOutgoing = true;
-  const usdcAddress = USDC_CONTRACTS[chainId];
   let fromLabel = chainName;
   let toLabel = chainName;
 
@@ -281,6 +279,7 @@ let lastStatsFetchTime = 0;
 export function useTransactionHistory() {
   const { address, isConnected } = useAccount();
   const [transactions, setTransactions] = useState([]);
+  const [globalTransactions, setGlobalTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const lastFetchRef = useRef(0);
@@ -426,7 +425,9 @@ export function useTransactionHistory() {
       ]);
       const globalTxs = [...arcTxs, ...sepoliaTxs, ...baseSepoliaTxs];
       const existing = await getItem(GLOBAL_TX_KEY) || [];
-      await setItem(GLOBAL_TX_KEY, [...globalTxs, ...existing].slice(0, 200));
+      const newGlobalTxs = [...globalTxs, ...existing].slice(0, 200);
+      await setItem(GLOBAL_TX_KEY, newGlobalTxs);
+      setGlobalTransactions(newGlobalTxs);
       window.dispatchEvent(new CustomEvent('globalStatsUpdated'));
     } catch { /* ignore */ } finally {
       globalIsFetchingStats = false;
@@ -434,6 +435,10 @@ export function useTransactionHistory() {
   }, [fetchChainTransactions]);
 
   useEffect(() => {
+    getItem(GLOBAL_TX_KEY).then(res => {
+      if (res && Array.isArray(res)) setGlobalTransactions(res);
+    }).catch(() => { });
+
     const init = async () => {
       if (previousAddressRef.current !== address) {
         fetchedHashesRef.current.clear(); lastFetchRef.current = 0;
@@ -462,5 +467,5 @@ export function useTransactionHistory() {
     return () => { clearTimeout(t); clearInterval(i); };
   }, [isConnected, address, fetchTransactions, fetchGlobalStats]);
 
-  return { transactions, loading, error, refetch: fetchTransactions, fetchGlobalStats };
+  return { transactions, globalTransactions, loading, error, refetch: fetchTransactions, fetchGlobalStats };
 }
