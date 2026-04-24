@@ -1,7 +1,8 @@
-import { createContext, useContext, useState } from 'react';
+﻿import { createContext, useContext, useState } from 'react';
 import { ethers } from 'ethers';
 import { isNetworkSupported } from '../config/networks';
 import { useAccount, useDisconnect, useBalance, useSwitchChain, usePublicClient, useWalletClient } from 'wagmi';
+import { logger } from '../utils/logger';
 
 const WalletContext = createContext();
 
@@ -37,7 +38,7 @@ export const WalletProvider = ({ children }) => {
         setIsConnecting(false);
       }, 1000);
     } catch (err) {
-      console.error('Error connecting wallet:', err);
+      logger.error('Error connecting wallet:', err);
       setError(err.message);
       setIsConnecting(false);
       throw err;
@@ -60,7 +61,7 @@ export const WalletProvider = ({ children }) => {
       const chainIdDecimal = parseInt(networkConfig.chainId, 16);
       switchChain({ chainId: chainIdDecimal });
     } catch (err) {
-      console.error('Error switching network:', err);
+      logger.error('Error switching network:', err);
       throw err;
     }
   };
@@ -68,7 +69,7 @@ export const WalletProvider = ({ children }) => {
   const sendTransaction = async () => {
     // Transaction sending would be handled by wagmi hooks
     // This function is kept for backward compatibility
-    console.warn('Use wagmi hooks for transaction sending in RainbowKit integration');
+    logger.warn('Use wagmi hooks for transaction sending in RainbowKit integration');
     return Promise.resolve();
   };
 

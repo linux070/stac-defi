@@ -1,24 +1,27 @@
 import { Component } from 'react';
-import { RefreshCw, AlertOctagon, Home } from 'lucide-react';
+import { logger } from '../utils/logger';
+import { motion } from 'framer-motion';
 
 /**
- * GlobalErrorBoundary catches JavaScript errors anywhere in its child component tree,
- * logs those errors, and displays a fallback UI instead of the component tree that crashed.
+ * GlobalErrorBoundary — Zen Minimalist Profile
+ * Stripped of all decorative artifacts for absolute clarity and stability.
  */
 class GlobalErrorBoundary extends Component {
     constructor(props) {
         super(props);
-        this.state = { hasError: false, error: null, errorInfo: null };
+        this.state = { 
+            hasError: false, 
+            error: null, 
+            errorInfo: null 
+        };
     }
 
     static getDerivedStateFromError() {
-        // Update state so the next render will show the fallback UI.
         return { hasError: true };
     }
 
     componentDidCatch(error, errorInfo) {
-        // You can also log the error to an error reporting service
-        console.error("GlobalErrorBoundary caught an error", error, errorInfo);
+        logger.error("GlobalErrorBoundary caught an error", error, errorInfo);
         this.setState({
             error: error,
             errorInfo: errorInfo
@@ -26,7 +29,6 @@ class GlobalErrorBoundary extends Component {
     }
 
     handleRestart = () => {
-        // Full page reload to clear memory and state
         window.location.reload();
     };
 
@@ -36,64 +38,71 @@ class GlobalErrorBoundary extends Component {
 
     render() {
         if (this.state.hasError) {
-            // Premium error UI matching the app's aesthetic
             return (
-                <div className="min-h-screen bg-slate-50 dark:bg-[#060606] flex items-center justify-center p-4 font-['Inter','Satoshi','General_Sans',sans-serif]">
-                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <div className="absolute -top-24 -left-24 w-96 h-96 bg-black dark:bg-white blur-[120px] rounded-full"></div>
-                        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-slate-500/10 blur-[120px] rounded-full"></div>
-                    </div>
+                <div className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-white dark:bg-page-dark overflow-hidden font-['Satoshi','Inter',sans-serif] selection:bg-brand selection:text-white">
+                    {/* Replicated background logic for visual depth since it's a global overlay */}
+                    <div className="absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.06] pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}></div>
+                    
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                        className="relative z-10 w-full max-w-md"
+                    >
+                        {/* Double-Bezel Architecture */}
+                        <div className="p-1 rounded-[2.5rem] bg-slate-100/50 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5 shadow-2xl shadow-black/5">
+                            <div className="bg-white dark:bg-zinc-950 p-10 rounded-[calc(2.5rem-4px)] flex flex-col items-center text-center text-black dark:text-white">
 
-                    <div className="relative z-10 w-full max-w-xl bg-white/80 dark:bg-black/40 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 rounded-[32px] p-8 md:p-12 shadow-2xl text-center">
-                        <div className="flex justify-center mb-8">
-                            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 shadow-lg shadow-red-500/10">
-                                <AlertOctagon size={40} strokeWidth={2} />
-                            </div>
-                        </div>
+                                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight leading-none font-['Satoshi','Inter',sans-serif]">
+                                    This page failed to load
+                                </h3>
 
-                        <h1 className="text-2xl md:text-3xl font-bold text-black dark:text-white mb-4">
-                            Something went wrong
-                        </h1>
-
-                        <p className="text-slate-600 dark:text-slate-400 mb-10 leading-relaxed font-medium">
-                            The application encountered an unexpected error. We&apos;ve been notified and are working on a fix. In the meantime, you can try refreshing the page.
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <button
-                                onClick={this.handleRestart}
-                                className="flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white dark:bg-black dark:bg-white text-black dark:text-white dark:text-black dark:text-white hover:bg-black dark:bg-white dark:hover:bg-black dark:bg-white rounded-xl font-bold transition-all active:scale-95 group shadow-sm"
-                            >
-                                <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
-                                Refresh Application
-                            </button>
-
-                            <button
-                                onClick={this.handleGoHome}
-                                className="flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-xl font-semibold transition-all active:scale-95"
-                            >
-                                <Home size={18} />
-                                Return to Home
-                            </button>
-                        </div>
-
-                        {import.meta.env?.DEV && this.state.error && (
-                            <div className="mt-10 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-xl text-left overflow-auto max-h-48">
-                                <p className="text-xs font-mono text-red-600 dark:text-red-400">
-                                    {this.state.error.toString()}
+                                <p className="text-[17px] text-slate-500 dark:text-secondary mb-10 max-w-[32ch] leading-relaxed font-medium">
+                                    An unexpected error occurred. Please try refreshing the page to recover.
                                 </p>
-                                {this.state.errorInfo && (
-                                    <pre className="mt-2 text-[10px] font-mono text-slate-500 dark:text-slate-400">
-                                        {this.state.errorInfo.componentStack}
-                                    </pre>
+
+                                <div className="flex flex-col gap-3 w-full">
+                                    <button
+                                        onClick={this.handleRestart}
+                                        className="w-full h-[54px] bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-bold text-[14px] uppercase tracking-widest transition-all active:scale-[0.98] active:-translate-y-[1px] shadow-lg shadow-black/10 flex items-center justify-center gap-3 group"
+                                    >
+                                        <span>Try Refreshing</span>
+                                        <div className="w-6 h-6 rounded-full bg-white/10 dark:bg-black/5 flex items-center justify-center group-hover:translate-x-1 group-hover:-translate-y-[1px] transition-transform">
+                                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M2.5 12V0L12 6L2.5 12Z" fill="currentColor" className="scale-75 translate-x-[1px]"/>
+                                            </svg>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={this.handleGoHome}
+                                        className="w-full h-[54px] bg-transparent border border-slate-200 dark:border-white/5 text-slate-500 dark:text-secondary rounded-2xl font-bold text-[14px] uppercase tracking-widest transition-all hover:bg-slate-50 dark:hover:bg-white/[0.03] active:scale-[0.98]"
+                                    >
+                                        Back to Home
+                                    </button>
+                                </div>
+
+                                {this.state.error && (
+                                    <div className="mt-12 pt-8 border-t border-slate-100 dark:border-white/5 w-full">
+                                        <div className="flex items-center justify-center gap-2 mb-2">
+                                            <div className="w-1 h-1 rounded-full bg-brand/50 animate-pulse" />
+                                            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-slate-600 block">System Diagnostics</span>
+                                        </div>
+                                        <div className="max-h-[100px] overflow-y-auto scrollbar-none text-left">
+                                            <p className="text-[10px] font-mono text-slate-500 bg-slate-50 dark:bg-white/[0.01] py-2.5 px-4 rounded-xl border border-slate-100 dark:border-white/5 break-all font-medium">
+                                                {this.state.error.name}: {this.state.error.message}
+                                            </p>
+                                            {this.state.errorInfo && (
+                                                <pre className="mt-2 text-[8px] font-mono text-slate-400 dark:text-slate-600 leading-tight whitespace-pre-wrap px-4">
+                                                    {this.state.errorInfo.componentStack}
+                                                </pre>
+                                            )}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
-                        )}
-
-                        <p className="mt-8 text-[11px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-widest">
-                            Error ID: {Math.random().toString(36).substring(2, 9).toUpperCase()}
-                        </p>
-                    </div>
+                        </div>
+                    </motion.div>
                 </div>
             );
         }

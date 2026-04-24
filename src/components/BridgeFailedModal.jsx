@@ -1,39 +1,26 @@
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 import '../styles/bridge-styles.css';
 
-
-const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorMessage }) => {
+const BridgeFailedModal = ({ isOpen, onClose, onRetry, fromChain, toChain, errorMessage, state }) => {
   const { t } = useTranslation();
 
-  // Safety checks for chain names
-  const safeFromChain = typeof fromChain === 'string' ? fromChain : 'Sepolia';
-  const safeToChain = typeof toChain === 'string' ? toChain : 'Arc Testnet';
-
-  // Helper to simplify technical RPC/Network errors
   const getCleanErrorMessage = (msg) => {
     if (!msg) return t('User rejected the transaction in wallet.');
+    const errorStr = String(msg?.message || msg);
+    const isInternalError =
+      errorStr.toLowerCase().includes('unterminated string') ||
+      errorStr.toLowerCase().includes('json') ||
+      errorStr.toLowerCase().includes('failed to fetch') ||
+      errorStr.toLowerCase().includes('maximum retry attempts') ||
+      errorStr.toLowerCase().includes('drpc.org');
 
-    const isTechnicalError =
-      msg.toLowerCase().includes('http request failed') ||
-      msg.toLowerCase().includes('unterminated string') ||
-      msg.toLowerCase().includes('json') ||
-      msg.toLowerCase().includes('viem') ||
-      msg.toLowerCase().includes('failed to fetch') ||
-      msg.toLowerCase().includes('maximum retry attempts') ||
-      msg.toLowerCase().includes('mint step failed') ||
-      msg.toLowerCase().includes('drpc.org') ||
-      msg.toLowerCase().includes('execution reverted') ||
-      msg.toLowerCase().includes('estimategas');
-
-    if (isTechnicalError) {
+    if (isInternalError) {
       return t('A temporary network error occurred. Please click Retry to try again.');
     }
-
-    // fallback to original if it's already user-friendly (like rejection)
-    return msg;
+    return errorStr;
   };
 
   const getChainIcon = (name) => {
@@ -44,84 +31,95 @@ const BridgeFailedModal = ({ isOpen, onClose, fromChain, toChain, errorMessage }
     return "/icons/eth.png";
   };
 
-  const modalContent = (
+  // Helper to convert to Title Case
+  const toTitleCase = (str) => {
+    if (!str) return '';
+    return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+  };
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[100000] bridging-modal-backdrop"
+          className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="relative bridging-modal-container"
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="w-full max-w-[440px] bg-white dark:bg-[#0B0F1A] rounded-[32px] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10"
+            initial={{ scale: 0.95, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            exit={{ scale: 0.95, opacity: 0, y: 30 }}
             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button (Absolute) */}
-            <button onClick={onClose} className="bridging-modal-close-button-alt" aria-label="Close">
-              <X size={20} />
-            </button>
-
-            <div className="bridging-modal-content p-6 sm:p-8">
-              <div className="bridging-modal-status-card-new text-center">
-                <div className="flex justify-center mb-6">
-                  <div className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center border-2 border-red-500/20">
-                    <X size={40} className="text-red-500" strokeWidth={3} />
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h4 className="text-2xl font-bold text-black dark:text-white mb-2">
-                    {t('Transaction Failed')}
-                  </h4>
-                  <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed max-w-[280px] mx-auto">
-                    {getCleanErrorMessage(errorMessage)}
-                  </p>
-                </div>
-
-                <div className="bridging-modal-success-details mb-8 text-left bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-200/50 dark:border-white/10">
-                  {/* Source Row */}
-                  <div className="flex justify-between items-center py-2 border-b border-slate-200/50 dark:border-white/10">
-                    <span className="text-sm font-medium text-slate-500">{t('Source')}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full overflow-hidden">
-                        <img src={getChainIcon(safeFromChain)} alt="" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{safeFromChain}</span>
-                    </div>
-                  </div>
-                  {/* Destination Row */}
-                  <div className="flex justify-between items-center py-2 mt-1">
-                    <span className="text-sm font-medium text-slate-500">{t('Destination')}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full overflow-hidden">
-                        <img src={getChainIcon(safeToChain)} alt="" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{safeToChain}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={onClose}
-                  className="w-full py-4 rounded-2xl bg-slate-100 dark:bg-white/10 text-black dark:text-white font-bold transition-all active:scale-[0.98] hover:bg-slate-200 dark:hover:bg-white/20"
-                >
-                  {t('Retry')}
+            <div className="p-8 pb-4 text-center">
+              <div className="flex justify-end -mr-4 -mt-4 mb-2">
+                <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors text-slate-400">
+                  <X size={20} />
                 </button>
+              </div>
+
+              <div className="flex flex-col items-center mb-6">
+                <motion.div 
+                    initial={{ scale: 0, rotate: -45 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: 'spring', delay: 0.2 }}
+                    className="w-16 h-16 rounded-full bg-slate-50 dark:bg-white/[0.03] flex items-center justify-center mb-5 border border-slate-200 dark:border-white/5"
+                >
+                    <AlertTriangle size={32} className="text-red-500" strokeWidth={2} />
+                </motion.div>
+                <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-slate-900 dark:text-white font-mono">
+                  Transaction Failed
+                </span>
+              </div>
+
+              <p className="text-[15px] text-slate-500 dark:text-slate-400 font-medium leading-[1.4] max-w-[280px] mx-auto">
+                The transaction could not be finalized on the selected network.
+              </p>
+            </div>
+
+            <div className="px-8 pb-10 space-y-6">
+              <div className="bg-slate-50 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5 rounded-[24px] p-6 space-y-5">
+                 <div className="flex justify-between items-center">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">SOURCE</span>
+                    <div className="flex items-center gap-2">
+                      <img src={getChainIcon(fromChain)} className="w-5 h-5 rounded-full" alt="" />
+                      <span className="text-sm font-medium text-slate-900 dark:text-white">{toTitleCase(fromChain)}</span>
+                    </div>
+                 </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">DESTINATION</span>
+                    <div className="flex items-center gap-2">
+                      <img src={getChainIcon(toChain)} className="w-5 h-5 rounded-full" alt="" />
+                      <span className="text-sm font-medium text-slate-900 dark:text-white">{toTitleCase(toChain)}</span>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="flex gap-3">
+                 <button 
+                   onClick={onRetry}
+                   className="flex-1 h-14 bg-[#6366F1] dark:bg-indigo-600 text-white rounded-2xl text-[13px] font-bold uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_12px_24px_-8px_rgba(99,102,241,0.3)]"
+                 >
+                   Retry
+                 </button>
+                 <button 
+                   onClick={onClose}
+                   className="flex-1 h-14 bg-transparent border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl text-[13px] font-bold uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-white/5 active:scale-[0.98] transition-all"
+                 >
+                   Dismiss
+                 </button>
               </div>
             </div>
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
-
-  return createPortal(modalContent, document.body);
 };
 
 export default BridgeFailedModal;

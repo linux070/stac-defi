@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Loader2, MessageCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Loader2, ArrowLeft, MessageSquare } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { useTheme } from '../hooks/useTheme';
 
-const FeedbackButton = ({ isOpen, setIsOpen }) => {
+const FeedbackButton = ({ isOpen, setIsOpen, showTrigger = true, onBack }) => {
     const { t } = useTranslation();
-    const { darkMode } = useTheme();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [iframeLoaded, setIframeLoaded] = useState(false);
 
@@ -18,7 +16,6 @@ const FeedbackButton = ({ isOpen, setIsOpen }) => {
                 setIsSubmitting(true);
                 setTimeout(() => {
                     setIsOpen(false);
-                    // Reset submitting state after modal close
                     setTimeout(() => setIsSubmitting(false), 500);
                 }, 3000);
             }
@@ -42,116 +39,151 @@ const FeedbackButton = ({ isOpen, setIsOpen }) => {
 
     return (
         <>
-            {/* Floating Trigger — Institutional Side Tab on Desktop, Stacked on Mobile */}
-            {!isOpen && createPortal(
-                <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ type: 'spring', damping: 20, stiffness: 200, delay: 0.5 }}
-                    className="feedback-widget z-[9000]"
-                >
-                    <button
-                        onClick={() => setIsOpen(true)}
-                        aria-label={t('Feedback')}
-                        className="feedback-button group relative overflow-hidden"
-                    >
-                        {/* Vertical Text Tab (Visible on Desktop via CSS) */}
-                        <div className="tracking-[0.2em] font-bold text-[11px] hidden md:block">
-                            {t('Feedback')}
-                        </div>
-                        {/* Icon for Mobile FAB */}
-                        <div className="md:hidden">
-                            <MessageCircle size={24} strokeWidth={2.5} />
-                        </div>
-                    </button>
-                </motion.div>,
+            {/* Floating Trigger — Nested Island Architecture (Desktop Only) */}
+            {createPortal(
+                <AnimatePresence>
+                    {(!isOpen && showTrigger) && (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                            className="fixed bottom-10 right-10 z-[8000] hidden md:block"
+                        >
+                            {/* Outer Shell */}
+                            <div className="p-1.5 rounded-[2rem] bg-white/5 dark:bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                                <button
+                                    onClick={() => setIsOpen(true)}
+                                    className="px-6 py-3 rounded-[calc(2rem-0.375rem)] bg-white dark:bg-page-dark flex items-center gap-3 group transition-all active:scale-[0.98] border border-slate-100 dark:border-white/5"
+                                >
+                                    <MessageSquare size={18} strokeWidth={2.5} className="text-brand transition-transform group-hover:scale-110" />
+                                    <span className="text-[14px] font-bold tracking-tight text-slate-900 dark:text-white">{t("Feedback")}</span>
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
                 document.body
             )}
 
-            {/* Modal Portal — TRULY ALWAYS MOUNTED FOR INSTANT LOADING */}
-            {
-                createPortal(
-                    <div
-                        className={`fixed inset-0 z-[100000] flex items-center justify-center p-0 sm:p-6 md:p-10 overflow-hidden transition-all duration-300 ${isOpen ? 'visible' : 'invisible pointer-events-none'}`}
-                    >
-                        {/* Backdrop */}
-                        <div
-                            className={`absolute inset-0 bg-black/40 dark:bg-black/98 sm:dark:bg-black/80 backdrop-blur-md transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-                            onClick={() => !isSubmitting && setIsOpen(false)}
-                        />
+            {/* Modal Portal — Double-Bezel & Soft Structuralism */}
+            {createPortal(
+                <AnimatePresence>
+                    {isOpen && (
+                        <div className="fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden p-0 sm:p-6 md:p-12">
+                            {/* Backdrop — Cinematic Depth */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.5 }}
+                                className="absolute inset-0 bg-[#F7F6F3]/80 dark:bg-black/95 backdrop-blur-2xl"
+                                onClick={() => !isSubmitting && setIsOpen(false)}
+                            />
 
-                        {/* Modal Container */}
-                        <div
-                            className={`relative w-full h-[100dvh] sm:h-auto sm:max-w-[920px] bg-white dark:bg-black sm:rounded-[28px] shadow-[0_32px_128px_rgba(0,0,0,0.15)] dark:shadow-[0_48px_160px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden border-t sm:border border-slate-200/80 dark:border-white/[0.08] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isOpen ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-12 opacity-0 scale-95'}`}
-                            style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth < 768 ? '100dvh' : 'min(720px, 92vh)' }}
-                        >
-                            {/* Header — MATCHES CHANGE LOG STYLE */}
-                            <div className="flex items-center justify-between px-6 sm:px-8 py-5 bg-white dark:bg-black border-b border-slate-100 dark:border-white/[0.08] sticky top-0 z-50">
-                                <div className="flex items-center">
-                                    <h2 className="text-[18px] font-normal text-slate-800 dark:text-slate-200 tracking-tight leading-none">
-                                        {t('Feedback')}
-                                    </h2>
-                                </div>
-                                <button
-                                    onClick={() => !isSubmitting && setIsOpen(false)}
-                                    className="p-2 rounded-xl text-slate-400 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all active:scale-90"
-                                >
-                                    <X size={20} strokeWidth={2.5} />
-                                </button>
-                            </div>
-
-                            {/* Form Content — Background Pre-loaded Logic */}
-                            <div className="flex-grow relative bg-white dark:bg-black overflow-y-auto no-scrollbar touch-pan-y">
-                                {/* Loader ONLY shown during form submission - removed the connection/hydration overlay */}
-                                {isSubmitting && (
-                                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white dark:bg-black">
-                                        <div className="relative">
-                                            <Loader2 size={32} className="text-black dark:text-white animate-spin" />
-                                            <div className="absolute inset-0 blur-xl bg-black dark:bg-white animate-pulse"></div>
+                            {/* Modal Architecture — The Double-Bezel Shell */}
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.96, y: 30 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.96, y: 30 }}
+                                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                                className="relative w-full h-[100dvh] sm:h-auto sm:max-w-[760px] p-2 bg-black/5 dark:bg-white/5 rounded-[2.5rem] border border-black/5 dark:border-white/10 shadow-[0_48px_140px_rgba(0,0,0,0.1)] dark:shadow-[0_48px_140px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden"
+                                style={{ maxHeight: 'min(820px, 94vh)' }}
+                            >
+                                {/* Inner Core — Refractive Liquid Glass Core */}
+                                <div className="w-full h-full bg-white dark:bg-page-dark rounded-[calc(2.5rem-0.5rem)] flex flex-col overflow-hidden border border-white/10 relative shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+                                    
+                                    {/* Header — Editorial Luxury Architecture */}
+                                    <div className="flex items-center justify-between px-10 py-7 bg-white/50 dark:bg-page-dark/50 backdrop-blur-md border-b border-slate-100 dark:border-white/5 sticky top-0 z-[60]">
+                                        <div className="flex-1 flex justify-start">
+                                            <button 
+                                                onClick={() => { 
+                                                    setIsOpen(false); 
+                                                    if (onBack) onBack(); 
+                                                }} 
+                                                className="flex items-center gap-2.5 group/back active:scale-95 transition-all"
+                                            >
+                                                <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center group-hover/back:bg-slate-200 dark:group-hover/back:bg-white/10 transition-all">
+                                                    <ArrowLeft size={18} strokeWidth={2.5} className="text-slate-600 dark:text-slate-300" />
+                                                </div>
+                                                <span className="text-[15px] font-medium tracking-tight text-slate-500 dark:text-slate-400 group-hover/back:text-slate-900 dark:group-hover/back:text-white transition-colors">{t('Back')}</span>
+                                            </button>
                                         </div>
-                                        <span className="mt-4 text-[11px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-[0.2em] animate-pulse">
-                                            {t('Sending...')}
-                                        </span>
+                                        <div className="flex-1 flex justify-center">
+                                            <h2 className="text-[20px] font-semibold text-slate-900 dark:text-white tracking-tight leading-none font-['Satoshi','Plus_Jakarta_Sans',sans-serif]">
+                                                {t("Feedback")}
+                                            </h2>
+                                        </div>
+                                        <div className="flex-1 flex justify-end" />
                                     </div>
-                                )}
 
-                                {/* The iframe is ALWAYS mounted and begins loading immediately */}
-                                <div className={`w-full min-h-full flex flex-col transition-opacity duration-300 ${iframeLoaded ? 'opacity-100' : 'opacity-0'}`}
-                                    style={{
-                                        filter: darkMode ? 'invert(1) hue-rotate(180deg) brightness(1.05) contrast(1.05)' : 'none',
-                                        background: darkMode ? '#ffffff' : 'transparent'
-                                    }}
-                                >
-                                    <iframe
-                                        src="https://tally.so/embed/7RLbaA?alignLeft=1&hideTitle=1&transparentBackground=1"
-                                        loading="eager"
-                                        width="100%"
-                                        height="100%"
-                                        frameBorder="0"
-                                        marginHeight="0"
-                                        marginWidth="0"
-                                        title="Feedback Form"
-                                        onLoad={() => setIframeLoaded(true)}
-                                        style={{ border: 'none', background: 'transparent', minHeight: '600px', pointerEvents: isOpen ? 'auto' : 'none' }}
-                                        className="flex-grow"
-                                    ></iframe>
+                                    {/* Document Content Area */}
+                                    <div className="flex-grow relative overflow-y-auto no-scrollbar bg-slate-50/30 dark:bg-black/20">
+                                        {/* Submitting Overlay */}
+                                        {isSubmitting && (
+                                            <motion.div 
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                className="absolute inset-0 z-[70] flex flex-col items-center justify-center bg-white/90 dark:bg-page-dark/95 backdrop-blur-md"
+                                            >
+                                                <div className="relative">
+                                                    <Loader2 size={42} className="text-brand animate-spin" strokeWidth={2.5} />
+                                                    <div className="absolute inset-0 blur-2xl bg-brand/20 animate-pulse" />
+                                                </div>
+                                                <span className="mt-6 text-[11px] font-black text-brand uppercase tracking-[0.4em]">
+                                                    {t('Submitting...')}
+                                                </span>
+                                            </motion.div>
+                                        )}
+
+                                        {/* Iframe Viewport — Precision Engineering */}
+                                        <div className={`w-full min-h-full flex flex-col transition-all duration-700 ${iframeLoaded ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-[0.99]'}`}>
+                                            <iframe
+                                                src="https://tally.so/embed/7RLbaA?alignLeft=1&hideTitle=1&transparentBackground=1"
+                                                loading="eager"
+                                                width="100%"
+                                                height="100%"
+                                                frameBorder="0"
+                                                marginHeight="0"
+                                                marginWidth="0"
+                                                title="Feedback Form"
+                                                onLoad={() => setIframeLoaded(true)}
+                                                style={{ border: 'none', background: 'transparent', minHeight: '620px', pointerEvents: isOpen ? 'auto' : 'none' }}
+                                                className="flex-grow"
+                                            ></iframe>
+                                        </div>
+
+                                        {/* Editorial Skeleton — Pure Vector Aesthetics */}
+                                        {!iframeLoaded && (
+                                            <div className="absolute inset-0 flex flex-col gap-8 p-12">
+                                                <div className="h-6 w-48 rounded skeleton" />
+                                                <div className="h-16 w-full rounded-2xl skeleton" />
+                                                <div className="h-6 w-64 rounded skeleton" />
+                                                <div className="h-40 w-full rounded-2xl skeleton" />
+                                                <div className="h-6 w-40 rounded skeleton" />
+                                                <div className="flex-1" />
+                                                <div className="h-14 w-48 rounded-2xl skeleton" />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Action Island — Trailing Icon Pattern */}
+                                    <div className="px-10 py-8 border-t border-slate-100 dark:border-white/5 bg-white/50 dark:bg-page-dark/50 backdrop-blur-md flex items-center justify-center sticky bottom-0 z-[60]">
+                                        <button
+                                            onClick={() => setIsOpen(false)}
+                                            className="group relative px-12 py-4 bg-brand text-white text-[13px] font-black uppercase tracking-[0.2em] rounded-full shadow-2xl shadow-brand/20 active:scale-[0.96] transition-all overflow-hidden"
+                                        >
+                                            <span className="relative z-10">{t("Close")}</span>
+                                            <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-
-                            {/* Footer Decoration */}
-                            <div className="px-6 sm:px-8 py-4 border-t border-slate-100 dark:border-white/[0.08] bg-slate-50/50 dark:bg-black/90 flex items-center justify-end sticky bottom-0 z-50">
-                                <button
-                                    onClick={() => setIsOpen(false)}
-                                    className="w-full sm:w-auto px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] text-slate-600 dark:text-slate-300 text-[12px] font-bold rounded-full transition-all active:scale-95 border border-transparent dark:border-white/[0.05]"
-                                >
-                                    {t("Close")}
-                                </button>
-                            </div>
+                            </motion.div>
                         </div>
-                    </div>,
-                    document.body
-                )
-            }
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </>
     );
 };

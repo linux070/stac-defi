@@ -13,10 +13,12 @@ export const TOKENS = {
     BALL: "0x779665f58a31faD7D7E3700700026053Aea7276C", // BALL Address
     MTB: "0x138f4ffa41dADB7860f429c1d1c2FF04736665e9", // MTB Address
     ECR: "0x39a319F0B9D122ad4F4B714A2e1ebc204AB3Bc43", // ECR Address
+    EURC: "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a", // EURC Address
 };
 
 export const DECIMALS = {
     USDC: 6,
+    EURC: 6,
     OTHERS: 18,
 };
 

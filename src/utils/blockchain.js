@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import { TOKENS, TOKEN_PRICES } from '../config/networks';
+import { logger } from './logger';
 
 // Sanitize numeric input with comprehensive validation
 export const sanitizeInput = (value) => {
@@ -61,12 +62,20 @@ export const validateAmount = (amount, balance = null, minAmount = 0.000001) => 
   return true;
 };
 
-// Format currency with dollar sign
-export const formatCurrency = (value, decimals = 2) => {
+// Format currency with dollar sign and optional compact notation (K, M, B)
+export const formatCurrency = (value, decimals = 2, compact = true) => {
   if (value === null || value === undefined) return '$0.00';
 
   const num = parseFloat(value);
   if (isNaN(num)) return '$0.00';
+
+  if (compact && num >= 1000) {
+    return '$' + new Intl.NumberFormat('en-US', {
+      notation: 'compact',
+      compactDisplay: 'short',
+      maximumFractionDigits: 1
+    }).format(num);
+  }
 
   return '$' + num.toLocaleString(undefined, {
     minimumFractionDigits: decimals,
@@ -186,9 +195,22 @@ export const formatAddress = (address) => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
 
-// Format number with commas
-export const formatNumber = (num) => {
-  return new Intl.NumberFormat('en-US').format(num);
+// Format number with commas or compact notation
+export const formatNumber = (num, compact = true) => {
+  if (num === null || num === undefined) return '0';
+  
+  const val = parseFloat(num);
+  if (isNaN(val)) return '0';
+
+  if (compact && val >= 1000) {
+    return new Intl.NumberFormat('en-US', {
+      notation: 'compact',
+      compactDisplay: 'short',
+      maximumFractionDigits: 1
+    }).format(val);
+  }
+
+  return new Intl.NumberFormat('en-US').format(val);
 };
 
 // Copy to clipboard
@@ -197,7 +219,7 @@ export const copyToClipboard = async (text) => {
     await navigator.clipboard.writeText(text);
     return true;
   } catch (err) {
-    console.error('Failed to copy:', err);
+    logger.error('Failed to copy:', err);
     return false;
   }
 };
@@ -232,7 +254,7 @@ export const getTokenBalance = async (provider, tokenAddress, walletAddress) => 
       return ethers.formatUnits(balance, decimals);
     }
   } catch (err) {
-    console.error('Error fetching token balance:', err);
+    logger.error('Error fetching token balance:', err);
     return '0';
   }
 };
@@ -261,7 +283,7 @@ export const approveToken = async (signer, tokenAddress, spenderAddress, amount)
     await tx.wait();
     return tx.hash;
   } catch (err) {
-    console.error('Error approving token:', err);
+    logger.error('Error approving token:', err);
     throw err;
   }
 };
@@ -308,7 +330,7 @@ export const getExplorerUrl = (hash, chainId, type = 'tx') => {
   }
 
   // Normalize to lowercase for comparison
-  const normalizedChainId = chainIdHex?.toLowerCase();
+  const normalizedChainId = String(chainIdHex || '').toLowerCase();
 
   const explorers = {
     '0x4cef52': 'https://testnet.arcscan.app', // Arc Testnet (5042002)

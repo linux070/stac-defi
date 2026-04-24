@@ -8,6 +8,27 @@ export default {
   theme: {
     extend: {
       colors: {
+        // ── 60-30-10 Brand Palette ──────────────────────────
+        brand: {
+          DEFAULT: '#6366F1', // Premium Indigo
+          hover: '#4F46E5',
+          glow: 'rgba(99, 102, 241, 0.25)',
+          muted: 'rgba(99, 102, 241, 0.08)',
+          border: 'rgba(99, 102, 241, 0.12)',
+        },
+        success: {
+          DEFAULT: '#2DD4BF',
+        },
+        secondary: {
+          DEFAULT: '#94A3B8',
+        },
+        // 60% — Deep navy page background
+        'page-dark': '#0B0F1A',
+        // 30% — Surface / card colour
+        'surface-dark': '#161B2A',
+        // Elevated surface
+        'surface-dark-hover': '#1C2333',
+
         // CSS Variable support for theme tokens
         theme: {
           primary: 'var(--theme-primary)',
@@ -36,7 +57,7 @@ export default {
         },
         arc: {
           white: '#ffffff',
-          dark: '#0f172a',
+          dark: '#0B0F1A',
         },
         // Enhanced dark mode colors for better contrast
         dark: {
@@ -50,23 +71,24 @@ export default {
           700: '#334155',
           800: '#1e293b',
           900: '#0f172a',
-          950: '#020617',
+          950: '#0B0F1A',
         }
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-arc': 'linear-gradient(135deg, #111827 0%, #374151 100%)',
+        'gradient-arc': 'linear-gradient(135deg, #0B0F1A 0%, #161B2A 100%)',
         'gradient-error': 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
+        'gradient-brand': 'linear-gradient(135deg, #7C6FFF 0%, #6B5CF7 100%)',
       },
       animation: {
-        'pulse-slow': 'pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'pulse-slow': 'pulse 12s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'bounce-slow': 'bounce 5s infinite',
         'fade-in': 'fadeIn 2s ease-in',
         'slide-up': 'slideUp 1.5s ease-out',
         'slide-down': 'slideDown 1.5s ease-out',
         'text-shimmer': 'text-shimmer 2s ease-in-out infinite alternate',
         'float': 'float 3s ease-in-out infinite',
-        'blob': 'blob 7s infinite',
+        'blob': 'blob 20s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -104,6 +126,11 @@ export default {
             transform: 'translate(0px, 0px) scale(1)',
           },
         },
+      },
+      fontFamily: {
+        sans: ['Plus Jakarta Sans', 'Outfit', 'Inter', 'sans-serif'],
+        display: ['Instrument Serif', 'serif'],
+        mono: ['DM Mono', 'monospace'],
       },
     },
   },

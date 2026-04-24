@@ -1,65 +1,38 @@
 // =============================================================================
-// SWAP PAGE
-// This is the main swap screen where users trade one token for another.
-// For example: swap USDC → STC, or STC → BALL, etc.
+// SWAP PAGE — PREMIUM UTILITARIAN MINIMALISM
+// Double-Bezel / Ethereal Glass / Left-Aligned Wells
 // =============================================================================
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../hooks/useWallet';
 import { useAccount } from 'wagmi';
-import { ArrowDownUp, Loader, Wallet, X, ChevronDown, Search } from 'lucide-react';
+import { ArrowDownUp, Loader, Wallet, X, ChevronDown, Check, Info, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TOKENS } from '../config/networks';
+import { TOKENS, TOKEN_PRICES } from '../config/networks';
+
 import { sanitizeInput, getFilteredTokens } from '../utils/blockchain';
 import { CHAINS } from '../config/constants';
-import useTokenBalance from '../hooks/useTokenBalance';
+
 import useMultiChainBalances from '../hooks/useMultiChainBalances';
 import Toast from '../components/Toast';
 import { useSwap } from '../hooks/useSwap';
 import { getItem, setItem } from '../utils/indexedDB';
-import SwapModal from '../components/SwapModal';
 import SwapSuccessModal from '../components/SwapSuccessModal';
 import SwapFailedModal from '../components/SwapFailedModal';
 import SwapRejectedModal from '../components/SwapRejectedModal';
-import '../styles/swap-styles.css';
+import '../styles/bridge-styles.css';
 import { useModal } from '../contexts/ModalContext';
+import { logger } from '../utils/logger';
 
 
 // =============================================================================
-// FAUCET ICON
-// A small water-drop icon used on the "Get tokens from faucet" button.
-// =============================================================================
-const FaucetIcon = ({ size = 16, className = '' }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    {/* Water droplet shape */}
-    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-  </svg>
-);
-
-
-// =============================================================================
-// GET TOKEN ICON
-// Returns the image path for a token's logo based on its symbol.
-// If no image is found, we'll fall back to showing the first letter of the token.
+// TOKEN ICON HELPER
 // =============================================================================
 const getTokenIcon = (symbol) => {
   if (!symbol) return null;
-
   const s = String(symbol).toUpperCase();
-
-  // Icon file paths for each supported token
   const iconMap = {
     USDC: '/icons/usdc.png',
     STC: '/icons/stc.png',
@@ -70,249 +43,49 @@ const getTokenIcon = (symbol) => {
     EURC: '/icons/eurc.png',
     ETH: '/icons/eth.png',
   };
-
-  // Special handling for tokens that share an icon
   if (s.includes('MTB')) return '/icons/mtb.png';
   if (s.includes('STC') || s.includes('STAC')) return '/icons/stc.png';
-
   return iconMap[s] || null;
 };
 
 
 // =============================================================================
-// TOKEN ROW
-// A single row in the token selection list (inside the token picker modal).
-// Shows the token's icon, name, symbol, and the user's current balance.
+// WHITELISTED SWAP TOKENS — Only USDC and EURC for now
 // =============================================================================
-const TokenRow = ({ token, selectedToken, exclude, onSelect, onClose, isConnected, t }) => {
-  // Fetch the user's balance for this token
-  const { balance: tokenBalance, loading: tokenLoading } = useTokenBalance(token.symbol);
+const SWAP_TOKENS = [
+  { symbol: 'USDC', name: 'USD Coin' },
+  { symbol: 'EURC', name: 'EUR Coin' },
+];
 
-  const isSelected = token.symbol === selectedToken; // Highlight if this is already chosen
-  const isExcluded = token.symbol === exclude;       // Dim if already used on the other side
 
+// =============================================================================
+// SLIPPAGE PRESETS
+// =============================================================================
+const SLIPPAGE_PRESETS = [0.1, 0.5, 1.0];
+
+
+// =============================================================================
+// TOKEN PILL (Static Badge)
+// =============================================================================
+const TokenPill = ({ symbol }) => {
+  const icon = getTokenIcon(symbol);
   return (
-    <button
-      disabled={isExcluded}
-      onClick={() => {
-        onSelect(token.symbol);
-        onClose();
-      }}
-      className={`swap-token-selector-list-item ${isSelected ? 'selected' : ''} ${isExcluded ? 'disabled' : ''}`}
-    >
-      {/* Left side: icon + name */}
-      <div className="swap-token-selector-list-item-content">
-        <div className="swap-token-selector-list-icon">
-          {getTokenIcon(token.symbol) ? (
-            <img src={getTokenIcon(token.symbol)} alt={token.symbol} className="w-full h-full object-cover" />
-          ) : (
-            // Fallback: show first letter of token symbol
-            <span className="flex items-center justify-center w-full h-full text-sm font-medium uppercase">
-              {token.symbol?.charAt(0)}
-            </span>
-          )}
-        </div>
-        <div className="swap-token-selector-list-info">
-          <p className="swap-token-selector-list-symbol">{token.symbol || t('Unknown')}</p>
-          <p className="swap-token-selector-list-name">{token.name || t('Token')}</p>
-        </div>
-      </div>
-
-      {/* Right side: user's balance (only shown if wallet is connected) */}
-      <div className="flex items-center gap-2">
-        {isConnected && (
-          <div className="swap-token-selector-list-balance">
-            <p className="swap-token-selector-list-balance-amount">
-              {tokenLoading ? (
-                <div className="skeleton w-12 h-4 rounded-md mb-1" />
-              ) : (
-                tokenBalance || '0.00'
-              )}
-            </p>
-            <p className="swap-token-selector-list-balance-label">{t('Balance')}</p>
-          </div>
+    <div className="shrink-0 flex items-center gap-2 pl-2 pr-3 py-1.5 bg-white dark:bg-white/[0.06] rounded-full border border-slate-200/80 dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+      <div className="w-6 h-6 rounded-full bg-slate-50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/[0.06] flex items-center justify-center overflow-hidden">
+        {icon ? (
+          <img src={icon} alt={symbol} className="w-4 h-4 object-contain" />
+        ) : (
+          <span className="text-[9px] font-bold font-mono">{symbol?.charAt(0)}</span>
         )}
       </div>
-    </button>
+      <span className="text-[13px] font-geist font-semibold text-slate-900 dark:text-white tracking-tight">{symbol}</span>
+    </div>
   );
 };
 
 
 // =============================================================================
-// TOKEN SELECTOR MODAL
-// The popup panel that lets users search and pick a token.
-// Renders as a portal (floating above everything) using React's createPortal.
-// =============================================================================
-const TokenSelector = ({ isOpen, onClose, selectedToken, onSelect, exclude, tokenList, t, isConnected }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const selectorRef = useRef(null);
-
-  // Wait 400ms after the user stops typing before filtering results.
-  // This prevents flickering with every keystroke.
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // Filter the full token list based on what the user typed.
-  // Matches on symbol, name, or contract address.
-  const filteredTokens = useMemo(() => {
-    if (!debouncedSearch) return tokenList;
-
-    const query = debouncedSearch.toLowerCase();
-    return tokenList.filter(token =>
-      token?.symbol &&
-      typeof token.symbol === 'string' &&
-      (
-        token.symbol.toLowerCase().includes(query) ||
-        (token.name && typeof token.name === 'string' && token.name.toLowerCase().includes(query)) ||
-        (token.address && typeof token.address === 'string' && token.address.toLowerCase().includes(query)) ||
-        (token.address && typeof token.address === 'object' &&
-          Object.values(token.address).some(addr => typeof addr === 'string' && addr.toLowerCase().includes(query)))
-      )
-    );
-  }, [debouncedSearch, tokenList]);
-
-  // These are the "pinned" tokens shown at the top for quick access.
-  const popularTokens = useMemo(() =>
-    tokenList.filter(token =>
-      token?.symbol &&
-      typeof token.symbol === 'string' &&
-      ['USDC', 'STC', 'BALL', 'MTB', 'ECR'].includes(token.symbol)
-    ),
-    [tokenList]
-  );
-
-  // Close the modal when the user presses the Escape key
-  useEffect(() => {
-    const handleEsc = (e) => { if (e.keyCode === 27) onClose(); };
-    if (isOpen) document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
-  }, [isOpen, onClose]);
-
-  // Render the modal into the <body> element so it floats above all other content
-  return createPortal(
-    <AnimatePresence>
-      {isOpen && (
-        // Backdrop (dimmed background overlay)
-        <motion.div
-          className="swap-token-selector-modal-backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          onClick={onClose}
-          style={{ zIndex: 100000 }}
-        >
-          {/* Modal card — stop click from bubbling to backdrop */}
-          <motion.div
-            ref={selectorRef}
-            className="swap-token-selector-modal"
-            initial={{ scale: 0.9, opacity: 0, y: 10 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 10 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal header */}
-            <div className="swap-token-selector-header">
-              <h3 className="swap-token-selector-title">{t('Select Token')}</h3>
-              <button onClick={onClose} className="swap-token-selector-close-button">
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Search bar */}
-            <div className="px-5 py-4">
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-slate-800 dark:group-focus-within:text-white transition-colors duration-200">
-                  <Search size={16} />
-                </div>
-                <input
-                  type="text"
-                  placeholder={t('Search name or paste address')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 rounded-2xl pl-11 pr-4 py-3 text-[14px] outline-none group-hover:bg-white dark:group-hover:bg-white/[0.04] focus:bg-white dark:focus:bg-white/[0.06] focus:border-black/20 dark:focus:border-white/20 focus:ring-4 focus:ring-black/5 dark:focus:ring-white/5 transition-all duration-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
-                />
-              </div>
-            </div>
-
-            {/* Quick-pick / popular tokens row */}
-            <div className="swap-token-selector-popular-section">
-              <h4 className="swap-token-selector-popular-label">{t('Your Tokens')}</h4>
-              <div className="swap-token-selector-popular-tokens">
-                {popularTokens.map((token) => {
-                  if (!token?.symbol || typeof token.symbol !== 'string') return null;
-
-                  const isExcluded = token.symbol === exclude;
-                  const isSelected = token.symbol === selectedToken;
-
-                  return (
-                    <button
-                      key={`popular-${token.symbol}`}
-                      onClick={() => { onSelect(token.symbol); onClose(); }}
-                      className={`swap-token-selector-popular-button ${isSelected ? 'active' : ''} ${isExcluded ? 'disabled' : ''}`}
-                    >
-                      {getTokenIcon(token.symbol) ? (
-                        <img
-                          src={getTokenIcon(token.symbol)}
-                          alt={token.symbol}
-                          loading="lazy"
-                          decoding="async"
-                          className="swap-token-selector-popular-icon"
-                        />
-                      ) : (
-                        <div className="swap-token-selector-popular-icon" style={{ background: 'var(--swap-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 500 }}>
-                            {token.symbol?.length > 0 ? token.symbol.charAt(0) : '?'}
-                          </span>
-                        </div>
-                      )}
-                      <span className="swap-token-selector-popular-symbol">{token.symbol}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Full scrollable token list */}
-            <div className="swap-token-selector-list">
-              {filteredTokens.map((token) => (
-                <TokenRow
-                  key={token.symbol}
-                  token={token}
-                  selectedToken={selectedToken}
-                  exclude={exclude}
-                  onSelect={onSelect}
-                  onClose={onClose}
-                  isConnected={isConnected}
-                  t={t}
-                />
-              ))}
-
-              {/* "No results" message when search has no matches */}
-              {filteredTokens.length === 0 && searchQuery && (
-                <div className="swap-token-selector-empty">
-                  <p>{t('noTokensFound')}</p>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>,
-    document.body
-  );
-};
-
-
-// =============================================================================
-// SWAP PAGE — MAIN COMPONENT
-// This is the heart of the swap feature. It manages all state for the swap
-// interface: which tokens are selected, how much to swap, and what modals
-// are open. It calls the useSwap hook to get price quotes and execute trades.
+// MAIN SWAP COMPONENT
 // =============================================================================
 const Swap = () => {
   const { t } = useTranslation();
@@ -320,204 +93,175 @@ const Swap = () => {
   const { address } = useAccount();
   const { setIsFocusedModalOpen } = useModal();
 
-  // ─── Ghost-state protection ───────────────────────────────────────────────
-  // On page refresh, wagmi briefly reports "disconnected" before it finishes
-  // reconnecting. We capture the true connected-state on first load (from
-  // localStorage) so the UI never flashes "Connect Wallet" for returning users.
   const wasConnectedRef = useRef(
     typeof window !== 'undefined' ? localStorage.getItem('walletConnected') === 'true' : false
   );
   const wasConnected = wasConnectedRef.current;
 
+  // ── Token State ──
+  const [fromToken, setFromToken] = useState('USDC');
+  const [toToken, setToToken] = useState('EURC');
 
-  // ─── Which tokens the user has selected ───────────────────────────────────
-  const [fromToken, setFromToken] = useState('USDC'); // Token the user is swapping FROM
-  const [toToken, setToToken] = useState('STC');  // Token the user is swapping TO
-
-
-  // ─── Amount fields ─────────────────────────────────────────────────────────
+  // ── Amount State ──
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
-  const [lastEditedField, setLastEditedField] = useState('from'); // which input the user last typed in
-  const [debouncedFromAmount, setDebouncedFromAmount] = useState('');  // delayed fromAmount (avoids too many RPC calls)
+  const [lastEditedField, setLastEditedField] = useState('from');
+  const [debouncedFromAmount, setDebouncedFromAmount] = useState('');
+  const [slippage, setSlippage] = useState(0.5);
 
-  // Wait 500ms after the user stops typing before recalculating the swap quote.
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedFromAmount(fromAmount), 500);
+    const timer = setTimeout(() => {
+      setDebouncedFromAmount(fromAmount);
+      // Immediately clear both sides if fromAmount is empty
+      if (!fromAmount || fromAmount === '') {
+        setToAmount('');
+      }
+    }, 100);
     return () => clearTimeout(timer);
   }, [fromAmount]);
 
 
-  // ─── Slippage ──────────────────────────────────────────────────────────────
-  // Slippage is the max % price movement the user will accept during the swap.
-  // E.g. 0.5 means they'll accept a price up to 0.5% worse than the quoted price.
-  const [slippage, setSlippage] = useState(0.5);
-
-
-  // ─── Token Selector modals ─────────────────────────────────────────────────
-  const [showFromSelector, setShowFromSelector] = useState(false); // "pick token to send"
-  const [showToSelector, setShowToSelector] = useState(false); // "pick token to receive"
-
-
-  // ─── Transaction modal states ──────────────────────────────────────────────
-  // These control which confirmation/result popup is currently visible.
-  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false); // Swap confirmation
-  const [showSwapSuccessModal, setShowSwapSuccessModal] = useState(false); // ✅ Success
-  const [showSwapFailedModal, setShowSwapFailedModal] = useState(false); // ❌ Failed
-  const [showSwapRejectedModal, setShowSwapRejectedModal] = useState(false); // 🚫 User rejected
-  const [lastSwapTxHash, setLastSwapTxHash] = useState(null);  // transaction hash to show in success modal
-  const [swapError, setSwapError] = useState(null);  // error message to show in failed modal
-  const [frozenSwapData, setFrozenSwapData] = useState(null);  // snapshot of swap details at the moment of success
-
-
-  // ─── Toast notifications ───────────────────────────────────────────────────
-  // A small banner that pops up at the bottom for warnings/errors.
+  // ── UI State ──
+  const [showSlippage, setShowSlippage] = useState(false);
+  const [showQuoteDetails, setShowQuoteDetails] = useState(false);
+  const [showSwapSuccessModal, setShowSwapSuccessModal] = useState(false);
+  const [showSwapFailedModal, setShowSwapFailedModal] = useState(false);
+  const [showSwapRejectedModal, setShowSwapRejectedModal] = useState(false);
+  const [lastSwapTxHash, setLastSwapTxHash] = useState(null);
+  const [swapError, setSwapError] = useState(null);
+  const [frozenSwapData, setFrozenSwapData] = useState(null);
   const [toast, setToast] = useState({ visible: false, type: 'info', message: '' });
+  const savedHashesRef = useRef(new Set());
 
-  // Helper to show a toast and auto-dismiss it after 3 seconds
+
   const showToast = (type, message, duration = 3000) => {
     setToast({ visible: true, type, message });
     setTimeout(() => setToast({ visible: false, type: 'info', message: '' }), duration);
   };
 
-
-  // ─── Tell the layout when a focused modal is open ─────────────────────────
-  // The layout uses this to hide/show certain elements while modals are active.
+  // ── Focused Modal Sync ──
   useEffect(() => {
-    const anyModalOpen =
-      isSwapModalOpen ||
-      showFromSelector ||
-      showToSelector ||
-      showSwapSuccessModal ||
-      showSwapFailedModal ||
-      showSwapRejectedModal;
-
-    setIsFocusedModalOpen(anyModalOpen);
-
-    // Always clean up when this component unmounts
+    const anyOpen = showSwapSuccessModal || showSwapFailedModal || showSwapRejectedModal || showQuoteDetails;
+    setIsFocusedModalOpen(anyOpen);
     return () => setIsFocusedModalOpen(false);
-  }, [
-    isSwapModalOpen,
-    showFromSelector,
-    showToSelector,
-    showSwapSuccessModal,
-    showSwapFailedModal,
-    showSwapRejectedModal,
-    setIsFocusedModalOpen,
-  ]);
+  }, [showSwapSuccessModal, showSwapFailedModal, showSwapRejectedModal, showQuoteDetails, setIsFocusedModalOpen]);
 
+  // ── Slippage Click-Away ──
+  useEffect(() => {
+    if (!showSlippage) return;
+    const handleGlobalClick = () => setShowSlippage(false);
+    document.addEventListener('click', handleGlobalClick);
+    return () => document.removeEventListener('click', handleGlobalClick);
+  }, [showSlippage]);
 
-  // ─── Token objects ─────────────────────────────────────────────────────────
-  // Convert the selected symbol strings ("USDC", "STC"…) into full token data objects.
+  // ── Quote Details Click-Away ──
+  useEffect(() => {
+    if (!showQuoteDetails) return;
+    const handleGlobalClick = () => setShowQuoteDetails(false);
+    document.addEventListener('click', handleGlobalClick);
+    return () => document.removeEventListener('click', handleGlobalClick);
+  }, [showQuoteDetails]);
+
+  // ── Token Objects ──
   const fromTokenObj = useMemo(() => TOKENS[fromToken], [fromToken]);
   const toTokenObj = useMemo(() => TOKENS[toToken], [toToken]);
 
-
-  // ─── Swap hook ─────────────────────────────────────────────────────────────
-  // This hook does all the heavy lifting: getting price quotes from the DEX
-  // contract, handling approvals, and executing the actual swap transaction.
+  // ── Unified Swap & Quote ──
   const swapState = useSwap(fromToken, toToken, debouncedFromAmount, slippage);
+  const { bestQuote, isQuoting } = swapState;
 
-
-  // ─── Button refs ───────────────────────────────────────────────────────────
-  // Used internally to attach the token selector popup to the right button.
-  const fromTokenTriggerRef = useRef(null);
-  const toTokenTriggerRef = useRef(null);
-
-
-  // ─── Balances ──────────────────────────────────────────────────────────────
-  // USDC is a special case: its balance is fetched per-chain (Arc / Sepolia / Base Sepolia).
-  // All other tokens use a simpler single-chain balance hook.
+  // ── Balance Hooks ──
   const { balances: multiChainBalances } = useMultiChainBalances(address, isConnected);
-  const { balance: fromBalanceRegular, loading: fromLoadingRegular } = useTokenBalance(fromToken === 'USDC' ? null : fromToken);
-  const { balance: toBalanceRegular, loading: toLoadingRegular } = useTokenBalance(toToken === 'USDC' ? null : toToken);
 
-  // Returns the balance + loading state for the "From" token on the correct chain
-  const getFromBalance = () => {
-    if (fromToken === 'USDC') {
-      const chainIdNum = chainId ? parseInt(chainId, 16) : null;
-      const key = 'usdc';
-      if (chainIdNum === 5042002) return { balance: multiChainBalances?.arcTestnet?.[key] || '0.00', loading: multiChainBalances?.arcTestnet?.loading || false };
-      if (chainIdNum === 11155111) return { balance: multiChainBalances?.sepolia?.[key] || '0.00', loading: multiChainBalances?.sepolia?.loading || false };
-      if (chainIdNum === 84532) return { balance: multiChainBalances?.baseSepolia?.[key] || '0.00', loading: multiChainBalances?.baseSepolia?.loading || false };
-      return { balance: '0.00', loading: false };
+  const getFullBalanceData = (symbol) => {
+    const cidNum = chainId ? (typeof chainId === 'string' ? parseInt(chainId, 16) : chainId) : null;
+    const isArc = cidNum === 5042002;
+
+    if (symbol === 'USDC') {
+      if (isArc) return { balance: multiChainBalances?.arcTestnet?.usdc || '0.00', loading: multiChainBalances?.arcTestnet?.loading || false };
+      if (cidNum === 11155111) return { balance: multiChainBalances?.sepolia?.usdc || '0.00', loading: multiChainBalances?.sepolia?.loading || false };
+      if (cidNum === 84532) return { balance: multiChainBalances?.baseSepolia?.usdc || '0.00', loading: multiChainBalances?.baseSepolia?.loading || false };
     }
-    return { balance: fromBalanceRegular || '0.00', loading: fromLoadingRegular || false };
+
+    if (symbol === 'EURC' && isArc) {
+      return { balance: multiChainBalances?.arcTestnet?.eurc || '0.00', loading: multiChainBalances?.arcTestnet?.loading || false };
+    }
+
+    return { balance: '0.00', loading: false };
   };
 
-  // Returns the balance + loading state for the "To" token on the correct chain
-  const getToBalance = () => {
-    if (toToken === 'USDC') {
-      const chainIdNum = chainId ? parseInt(chainId, 16) : null;
-      const key = 'usdc';
-      if (chainIdNum === 5042002) return { balance: multiChainBalances?.arcTestnet?.[key] || '0.00', loading: multiChainBalances?.arcTestnet?.loading || false };
-      if (chainIdNum === 11155111) return { balance: multiChainBalances?.sepolia?.[key] || '0.00', loading: multiChainBalances?.sepolia?.loading || false };
-      if (chainIdNum === 84532) return { balance: multiChainBalances?.baseSepolia?.[key] || '0.00', loading: multiChainBalances?.baseSepolia?.loading || false };
-      return { balance: '0.00', loading: false };
-    }
-    return { balance: toBalanceRegular || '0.00', loading: toLoadingRegular || false };
-  };
+  const fromBalanceData = getFullBalanceData(fromToken);
+  const toBalanceData = getFullBalanceData(toToken);
 
-  const { balance: fromBalance, loading: fromLoading } = getFromBalance();
-  const { balance: toBalance, loading: toLoading } = getToBalance();
+  const fromBalance = fromBalanceData.balance;
+  const fromLoading = fromBalanceData.loading;
+  const toBalance = toBalanceData.balance;
+  const toLoading = toBalanceData.loading;
 
-
-  // ─── Available token list ──────────────────────────────────────────────────
-  // Filters the full token registry down to only the tokens supported on the
-  // user's current chain, and removes any tokens with missing data.
+  // ── Token List (kept for compatibility) ──
   const tokenList = useMemo(() => {
     try {
       const allTokens = Object.values(TOKENS);
       const filtered = getFilteredTokens(allTokens, chainId);
-      return Array.isArray(filtered)
-        ? filtered.filter(t => t && typeof t === 'object' && t.symbol && typeof t.symbol === 'string' && t.symbol.length > 0)
-        : [];
-    } catch (err) {
-      console.error('Error building token list:', err);
-      return [];
-    }
+      return Array.isArray(filtered) ? filtered.filter(t => t?.symbol) : [];
+    } catch (err) { return []; }
   }, [chainId]);
 
-
-  // ─── Reset tokens when switching chains ───────────────────────────────────
-  // ETH is not available on Arc Testnet or Sepolia — reset to USDC if selected.
+  // ── Reset tokens on chain switch ──
   useEffect(() => {
-    const networksWithoutETH = [
-      '0x4cef52', // Arc Testnet (chain ID 5042002)
-      '0xaa36a7', // Sepolia     (chain ID 11155111)
-    ];
-    if (networksWithoutETH.includes(chainId)) {
+    const noETHChains = ['0x4cef52', '0xaa36a7'];
+    if (noETHChains.includes(chainId)) {
       if (fromToken === 'ETH') setFromToken('USDC');
       if (toToken === 'ETH') setToToken('USDC');
     }
   }, [chainId, fromToken, toToken]);
 
-
-  // ─── Sync "To" amount when swap quote updates ─────────────────────────────
-  // When the user types a "From" amount and the DEX hook returns a quote,
-  // automatically fill in the estimated "To" amount.
+  // ── Sync "To" amount from swap quote ──
   useEffect(() => {
-    if (fromAmount && parseFloat(fromAmount) > 0) {
-      if (swapState.expectedOut && swapState.expectedOut !== '0' && lastEditedField === 'from') {
-        setToAmount(parseFloat(swapState.expectedOut).toFixed(2));
+    // Sync toAmount when expectedOut changes from hook
+    const isFromEmpty = !fromAmount || fromAmount === '';
+
+    // Prevent flickering: wait until debounced amount catches up with user typing
+    if (fromAmount !== debouncedFromAmount) return;
+
+    if (!swapState.isLoading && lastEditedField === 'from') {
+      if (!isFromEmpty && swapState.expectedOut && swapState.expectedOut !== '0' && swapState.expectedOut !== '0.00' && swapState.expectedOut !== '0.0000') {
+        // Use 4 decimal places for precision visibility
+        const val = parseFloat(swapState.expectedOut).toFixed(4);
+        if (val !== parseFloat(toAmount || 0).toFixed(4)) {
+          setToAmount(val);
+        }
+      } else if (isFromEmpty) {
+        // Force clear toAmount if fromAmount is empty
+        if (toAmount !== '') setToAmount('');
       }
     }
-  }, [fromAmount, toAmount, swapState.expectedOut, swapState.price, lastEditedField]);
-
+  }, [swapState.expectedOut, swapState.isLoading, fromAmount, debouncedFromAmount, lastEditedField, toAmount]);
 
   // =============================================================================
   // EVENT HANDLERS
   // =============================================================================
-
-  // Called every time the user types in the "From" input
   const handleFromAmountChange = (val) => {
+    const sanitized = sanitizeInput(val);
     setLastEditedField('from');
-    setFromAmount(val);
-    if (!val || parseFloat(val) <= 0) setToAmount('');
+    setFromAmount(sanitized);
+
+    // FAST-PATH: Calculate Circle fee instantly in UI for smoothness
+    if (sanitized && parseFloat(sanitized) > 0) {
+      const amount = parseFloat(sanitized);
+      const isCirclePair = (fromToken === 'USDC' && toToken === 'EURC') || (fromToken === 'EURC' && toToken === 'USDC');
+
+      if (isCirclePair) {
+        // Official Arc Provider Fee: 0.02% (2 basis points)
+        const result = (amount * 0.9998).toFixed(4);
+        setToAmount(result);
+      }
+    } else {
+      setToAmount('');
+    }
   };
 
-  // Called every time the user types in the "To" input.
-  // We reverse-calculate what the "From" amount should be based on current price.
+
   const handleToAmountChange = (val) => {
     const sanitized = sanitizeInput(val);
     setLastEditedField('to');
@@ -525,82 +269,99 @@ const Swap = () => {
 
     if (sanitized && parseFloat(sanitized) > 0 && swapState.price && parseFloat(swapState.price) > 0) {
       const price = parseFloat(swapState.price);
-      const isBuying = fromToken === 'USDC'; // buying means paying USDC to get another token
+      const isBuying = fromToken === 'USDC';
       const calcFrom = isBuying
-        ? (parseFloat(sanitized) * price).toFixed(2)   // how much USDC to spend
-        : (parseFloat(sanitized) / price).toFixed(2);  // how much token to spend
+        ? (parseFloat(sanitized) * price).toFixed(4)
+        : (parseFloat(sanitized) / price).toFixed(4);
       setFromAmount(calcFrom);
     } else {
       setFromAmount('');
     }
   };
 
-  // Swap the two tokens (flip "From" ↔ "To") and also flip their amounts
   const handleSwitch = () => {
-    // Animate the switch button with a quick CSS rotation
-    const btn = document.querySelector('.switch-button');
-    if (btn) {
-      btn.classList.add('rotate-180');
-      setTimeout(() => btn.classList.remove('rotate-180'), 300);
+    const newFromToken = toToken;
+    const newToToken = fromToken;
+    const newFromAmount = toAmount;
+
+    setFromToken(newFromToken);
+    setToToken(newToToken);
+    setFromAmount(newFromAmount);
+
+    // Re-calculate instantly on switch
+    if (newFromAmount && parseFloat(newFromAmount) > 0) {
+      const amount = parseFloat(newFromAmount);
+      const isCirclePair = (newFromToken === 'USDC' && newToToken === 'EURC') || (newFromToken === 'EURC' && newToToken === 'USDC');
+      if (isCirclePair) {
+        // Apply 0.02% provider fee and 4 decimals
+        setToAmount((amount * 0.9998).toFixed(4));
+      }
+    } else {
+      setToAmount('');
     }
-    setFromToken(toToken);
-    setToToken(fromToken);
-    setFromAmount(toAmount);
-    setToAmount(fromAmount);
   };
 
-  // Fill the "From" field with the user's entire balance (minus a gas buffer on Arc)
-  const handleMaxClick = () => {
-    if (!fromBalance || parseFloat(fromBalance) === 0) {
+  // ... (keeping other handlers same but ensuring 2dp) 
+
+  // Updating specific lines in render for rounding:
+  // Line 609: {fromLoading ? '...' : Number(fromBalance || 0).toFixed(2)}
+  // Line 661: {toLoading ? '...' : Number(toBalance || 0).toFixed(2)}
+  // Line 676: {swapState.isAppKitRoute ? '0.02%' : '0.02%'}
+  // Line 685: 0.00%
+
+
+  const handleMaxClick = (side = 'from') => {
+    const bal = side === 'from' ? fromBalance : toBalance;
+    if (!bal || parseFloat(bal) === 0) {
       showToast('warning', t('No balance available'));
       return;
     }
 
-    // Arc Testnet uses USDC for gas fees. If the user is swapping USDC on Arc,
-    // we automatically reserve 1.5 USDC so the transaction doesn't fail.
-    const chainIdNum = chainId ? (typeof chainId === 'string' ? parseInt(chainId, 16) : chainId) : null;
-    if (chainIdNum === CHAINS.ARC_TESTNET && fromToken === 'USDC') {
-      const balance = parseFloat(fromBalance);
-      const buffer = 1.5; // USDC reserved for gas
-
-      if (balance <= buffer) {
-        showToast('error', `Insufficient balance for gas. Keep at least ${buffer} USDC for Arc fees.`);
-        return;
+    if (side === 'from') {
+      const cidNum = chainId ? (typeof chainId === 'string' ? parseInt(chainId, 16) : chainId) : null;
+      if (cidNum === CHAINS.ARC_TESTNET && fromToken === 'USDC') {
+        const balance = parseFloat(bal);
+        const buffer = 1.5;
+        if (balance <= buffer) {
+          showToast('error', `Insufficient balance for gas. Keep at least ${buffer} USDC for Arc fees.`);
+          return;
+        }
+        setFromAmount((balance - buffer).toFixed(2));
+      } else {
+        setFromAmount(parseFloat(bal).toFixed(2));
       }
-      // Set the max amount with the gas buffer already deducted (no notification needed)
-      setFromAmount((balance - buffer).toFixed(2));
     } else {
-      // On all other chains/tokens, use the full balance
-      setFromAmount(fromBalance);
+      handleToAmountChange(bal);
     }
   };
 
-  // Open Circle's faucet in a new tab so the user can get testnet tokens
+  const handlePercentClick = (percent, side = 'from') => {
+    const bal = side === 'from' ? fromBalance : toBalance;
+    if (!bal || parseFloat(bal) === 0) return;
+    const b = parseFloat(bal);
+    if (percent === 'MAX') {
+      handleMaxClick(side);
+    } else {
+      const pct = parseInt(percent) / 100;
+      const val = (b * pct).toFixed(2);
+      if (side === 'from') {
+        setLastEditedField('from');
+        setFromAmount(val);
+      } else {
+        handleToAmountChange(val);
+      }
+    }
+  };
+
   const handleFaucetClick = (e) => {
     e.preventDefault();
     window.open('https://faucet.circle.com/', '_blank');
   };
 
-  // Called when the user clicks the main "Swap" button
-  const handleSwapClick = () => {
-    if (!isConnected) {
-      showToast('error', t('connectWalletFirst'));
-      return;
-    }
-    if (!fromAmount || parseFloat(fromAmount) <= 0) {
-      showToast('error', t('Please enter a valid amount'));
-      return;
-    }
-    // Open the confirmation modal — it handles approvals + execution
-    setIsSwapModalOpen(true);
-  };
-
-  // Called when the swap confirmation modal reports an error
-  const handleSwapError = (error) => {
+  const handleSwapError = useCallback((error) => {
     const errorMsg = swapState.error || error?.message || error?.toString() || '';
     const lower = errorMsg.toLowerCase();
 
-    // Detect if the user deliberately rejected the wallet prompt
     const isRejection =
       lower.includes('user rejected') ||
       lower.includes('user denied') ||
@@ -611,41 +372,38 @@ const Swap = () => {
       error?.code === 4001;
 
     setSwapError(errorMsg);
-    setIsSwapModalOpen(false);
 
     if (isRejection) {
-      setShowSwapRejectedModal(true); // Show "you cancelled" modal
+      setShowSwapRejectedModal(true);
     } else {
-      setShowSwapFailedModal(true);   // Show "something went wrong" modal
+      setShowSwapFailedModal(true);
     }
 
     if (swapState.reset) swapState.reset();
-  };
+  }, [swapState.error, swapState.reset]);
 
-  // Called when the swap confirmation modal reports a successful transaction
-  const handleSwapSuccess = (txHash) => {
-    // Snapshot the swap details so the success modal shows correct info
-    // even after the user clears the fields
+  const handleSwapSuccess = useCallback((txHash) => {
+    if (!txHash || savedHashesRef.current.has(txHash)) return;
+
     const frozen = {
       fromToken: fromTokenObj,
       toToken: toTokenObj,
       fromAmount,
-      toAmount: swapState.expectedOut || toAmount,
+      toAmount: swapState.actualAmountOut || swapState.expectedOut || toAmount,
     };
 
     setLastSwapTxHash(txHash);
     setFrozenSwapData(frozen);
-    setIsSwapModalOpen(false);
     setShowSwapSuccessModal(true);
 
-    // Clear the swap inputs for the next trade
     setFromAmount('');
     setToAmount('');
 
-    // Save this transaction to the local history (stored in IndexedDB)
     if (txHash && address) {
       const logTransaction = async () => {
         try {
+          // Double-lock: session & persistent
+          savedHashesRef.current.add(txHash);
           const history = await getItem('myTransactions') || [];
           const alreadySaved = history.some(tx => tx.hash === txHash);
 
@@ -662,326 +420,403 @@ const Swap = () => {
               address: address.toLowerCase(),
               chainId,
             };
-            // Keep only the last 100 transactions
             await setItem('myTransactions', [newTx, ...history].slice(0, 100));
-            // Notify the Transactions page that new data is available
             window.dispatchEvent(new CustomEvent('swapTransactionSaved'));
           }
         } catch (err) {
-          console.error('Failed to save swap transaction to history:', err);
+          logger.error('Failed to save swap transaction to history:', err);
         }
       };
       logTransaction();
     }
 
     if (swapState.reset) swapState.reset();
+  }, [fromTokenObj, toTokenObj, fromAmount, swapState, toAmount, address, chainId]);
+
+  const handleSwapClick = async () => {
+    if (!isConnected) {
+      showToast('error', t('connectWalletFirst'));
+      return;
+    }
+    if (!fromAmount || parseFloat(fromAmount) <= 0) {
+      showToast('error', t('Please enter a valid amount'));
+      return;
+    }
+
+    try {
+      if (swapState.needsApproval) {
+        await swapState.handleApprove();
+      } else {
+        await swapState.handleSwap();
+      }
+    } catch (err) {
+      handleSwapError(err);
+    }
   };
+
+  useEffect(() => {
+    if (swapState.swapSuccess && swapState.txHash) {
+      handleSwapSuccess(swapState.txHash);
+    }
+  }, [swapState.swapSuccess, swapState.txHash, handleSwapSuccess]);
+
+
+
+  useEffect(() => {
+    if (swapState.error) {
+      handleSwapError(swapState.error);
+    }
+  }, [swapState.error, handleSwapError]);
 
 
   // =============================================================================
   // RENDER
   // =============================================================================
   return (
-    <div className="max-w-2xl mx-auto w-full">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="swap-container group"
-      >
-        {/* Subtle corner glow effect — desktop only, invisible in light mode */}
-        <div className="hidden md:block absolute -top-20    -left-20  w-48 h-48 bg-gradient-to-br from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full" />
-        <div className="hidden md:block absolute -top-20    -right-20 w-48 h-48 bg-gradient-to-bl from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full" />
-        <div className="hidden md:block absolute -bottom-20 -left-20  w-48 h-48 bg-gradient-to-tr from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full" />
-        <div className="hidden md:block absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full" />
+    <div className="fixed inset-0 top-[64px] flex flex-col items-center justify-start overflow-y-auto overflow-x-hidden bg-transparent custom-scrollbar pb-10 pt-4 sm:pt-12 md:pt-16">
+      <div className="w-full max-w-lg px-2 sm:px-4">
 
-        <div className="relative z-10">
-
-          {/* ── Header ─────────────────────────────────────────────────────── */}
-          <div className="swap-header">
-            <h2 className="swap-header-title">{t('Swap Tokens')}</h2>
-            <div className="swap-header-actions">
-              {/* Link to Circle's testnet faucet for getting test tokens */}
-              <button onClick={handleFaucetClick} className="swap-faucet-button-premium group/faucet">
-                <FaucetIcon size={14} className="text-black dark:text-white transition-colors" />
-                <span>{t('Faucet')}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* ── "From" Token Input ─────────────────────────────────────────── */}
-          <div className="swap-input-group">
-            <div className="swap-input-header">
-              <div className="swap-input-label">{t('From')}</div>
-              {/* Show the user's balance of the "from" token */}
-              {isConnected && (
-                <div className="swap-balance-text">
-                  {fromLoading
-                    ? <div className="skeleton w-16 h-4 rounded-md" />
-                    : <span><span className="font-medium">{fromBalance || '0.00'}</span></span>
-                  }
-                </div>
-              )}
-            </div>
-
-            <div className="swap-input-row">
-              {/* Amount the user wants to send */}
-              <input
-                type="text"
-                inputMode="decimal"
-                value={fromAmount}
-                onChange={(e) => handleFromAmountChange(sanitizeInput(e.target.value))}
-                placeholder="0.0"
-                className="swap-amount-input"
-              />
-              {/* Token picker button */}
-              <button
-                ref={fromTokenTriggerRef}
-                onClick={() => setShowFromSelector(true)}
-                className="swap-token-selector"
-              >
-                <div className="swap-token-icon">
-                  {getTokenIcon(fromToken) ? (
-                    <img src={getTokenIcon(fromToken)} alt={fromToken} className="w-full h-full rounded-full" />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                      <span className="text-[10px] font-bold">{fromToken}</span>
-                    </div>
-                  )}
-                </div>
-                <span className="swap-token-symbol">{fromToken}</span>
-                <ChevronDown size={16} className="swap-token-chevron" />
-              </button>
-            </div>
-
-            {/* "Max" button — fills in the user's full sendable balance */}
-            {isConnected && (
-              <div className="flex items-center justify-end mt-2">
-                <button onClick={handleMaxClick} className="max-button">{t('Max')}</button>
-              </div>
-            )}
-          </div>
-
-          {/* ── Switch Button (flip From ↔ To) ─────────────────────────────── */}
-          <div className="swap-direction-container">
-            <button onClick={handleSwitch} className="swap-direction-button">
-              <ArrowDownUp size={18} />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+          className="bg-white/95 dark:bg-[#0B0F1A]/95 backdrop-blur-2xl border border-[#EAEAEA] dark:border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)] rounded-[1.75rem] sm:rounded-[2.5rem] overflow-hidden"
+        >
+          {/* ── HEADER ── */}
+          <div className="px-5 sm:px-8 pt-6 sm:pt-8 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
+            <h2 className="text-xl sm:text-2xl font-geist font-semibold text-slate-900 dark:text-white tracking-tight leading-none">{t('Swap Assets')}</h2>
+            {/* Faucet */}
+            <button
+              onClick={handleFaucetClick}
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] sm:text-[11px] items-center gap-2 group transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-slate-100 dark:hover:bg-white/10 flex text-slate-500 dark:text-slate-400 font-mono"
+            >
+              <Info size={12} strokeWidth={1.5} className="group-hover:translate-x-0.5 transition-transform" />
+              <span>{t('Faucet')}</span>
             </button>
           </div>
 
-          {/* ── "To" Token Input ───────────────────────────────────────────── */}
-          <div className="swap-input-group">
-            <div className="swap-input-header">
-              <div className="swap-input-label">{t('To')}</div>
-              {/* Show the user's balance of the "to" token */}
-              {isConnected && (
-                <div className="swap-balance-text">
-                  {toLoading
-                    ? <div className="skeleton w-16 h-4 rounded-md" />
-                    : <span><span className="font-medium">{toBalance || '0.00'}</span></span>
-                  }
+          {/* ── BODY ── */}
+          <div className="p-5 sm:p-8 pt-4 sm:pt-6 space-y-4 sm:space-y-5">
+
+            {/* SELL ASSET WELL */}
+            <div className="space-y-2">
+              <div className="flex items-center px-1">
+                <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400">{t('Sell Asset')}</label>
+              </div>
+
+              <div className="p-4 sm:p-5 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-[1.25rem] sm:rounded-[2rem] space-y-3 sm:space-y-4">
+                <div className="flex items-end justify-between gap-3 sm:gap-4">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={fromAmount}
+                    onChange={(e) => handleFromAmountChange(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full min-w-0 bg-transparent text-3xl sm:text-5xl font-geist font-semibold leading-none text-slate-900 dark:text-white outline-none placeholder:text-slate-200 dark:placeholder:text-white/5 tracking-tight"
+                  />
+                  <TokenPill symbol={fromToken} />
                 </div>
-              )}
+
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <div className="flex gap-1.5 sm:gap-2">
+                    {['25%', '50%', 'MAX'].map(p => (
+                      <button
+                        key={p}
+                        onClick={() => handlePercentClick(p, 'from')}
+                        className="flex-1 sm:flex-none px-2.5 sm:px-4 py-1.5 font-mono text-[9px] sm:text-[10px] tracking-widest uppercase border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1.5 font-mono text-[9px] sm:text-[10px] text-slate-400">
+                    <span>BAL</span>
+                    <span className="text-slate-900 dark:text-slate-200">
+                      {fromLoading ? '...' : Number(fromBalance || 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="swap-input-row">
-              {/* Estimated amount the user will receive */}
-              <input
-                type="text"
-                inputMode="decimal"
-                value={toAmount}
-                onChange={(e) => handleToAmountChange(e.target.value)}
-                placeholder="0.0"
-                className="swap-amount-input"
-              />
-              {/* Token picker button */}
+            {/* SWITCH BUTTON */}
+            <div className="flex justify-center -my-2 relative z-10">
               <button
-                ref={toTokenTriggerRef}
-                onClick={() => setShowToSelector(true)}
-                className="swap-token-selector"
+                onClick={handleSwitch}
+                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-white dark:bg-[#0B0F1A] border border-slate-200 dark:border-white/10 text-slate-400 shadow-[0_2px_8px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-colors"
+                title={t('Switch Tokens')}
               >
-                <div className="swap-token-icon">
-                  {getTokenIcon(toToken) ? (
-                    <img src={getTokenIcon(toToken)} alt={toToken} className="w-full h-full rounded-full" />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                      <span className="text-[10px] font-bold">{toToken}</span>
-                    </div>
-                  )}
-                </div>
-                <span className="swap-token-symbol">{toToken}</span>
-                <ChevronDown size={16} className="swap-token-chevron" />
+                <ArrowDownUp size={13} strokeWidth={1.5} />
               </button>
             </div>
 
-            {/* "Max" button for the "To" field — reverse-calculates the required "From" amount */}
-            {isConnected && (
-              <div className="flex items-center justify-end mt-2">
+            {/* BUY ASSET WELL */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400">
+                    {swapState.actualAmountOut ? t('Asset Received') : t('Buy Asset')}
+                  </label>
+                  {!swapState.actualAmountOut && parseFloat(fromAmount) > 0 && (
+                    <span className="text-[9px] font-mono text-slate-300 dark:text-white/20 italic">(Estimate)</span>
+                  )}
+                  {swapState.actualAmountOut && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="w-3.5 h-3.5 rounded-full bg-emerald-500/10 flex items-center justify-center"
+                    >
+                      <Check size={8} className="text-emerald-500" strokeWidth={3} />
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-5 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-[1.25rem] sm:rounded-[2rem] space-y-3 sm:space-y-4">
+                <div className="flex items-end justify-between gap-3 sm:gap-4">
+                  <input
+                    type="text"
+                    readOnly
+                    value={(swapState.actualAmountOut || toAmount) ? parseFloat(swapState.actualAmountOut || toAmount).toFixed(4) : ''}
+                    placeholder="0.00"
+                    className="w-full min-w-0 bg-transparent text-3xl sm:text-5xl font-geist font-semibold leading-none text-slate-900 dark:text-white outline-none placeholder:text-slate-200 dark:placeholder:text-white/5 tracking-tight"
+                  />
+                  <TokenPill symbol={toToken} />
+                </div>
+
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <div className="flex gap-1.5 sm:gap-2">
+                    {['25%', '50%', 'MAX'].map(p => (
+                      <button
+                        key={p}
+                        onClick={() => handlePercentClick(p, 'to')}
+                        className="flex-1 sm:flex-none px-2.5 sm:px-4 py-1.5 font-mono text-[9px] sm:text-[10px] tracking-widest uppercase border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1.5 font-mono text-[9px] sm:text-[10px] text-slate-400">
+                    <span>BAL</span>
+                    <span className="text-slate-900 dark:text-slate-200">
+                      {toLoading ? '...' : Number(toBalance || 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* COMPACT QUOTE DETAILS (Integrated Position) */}
+            {bestQuote && parseFloat(fromAmount) > 0 && (
+              <div className="px-1">
                 <button
-                  className="max-button"
-                  onClick={() => {
-                    if (!toBalance || parseFloat(toBalance) === 0) {
-                      showToast('warning', t('No balance available'));
-                      return;
-                    }
-                    setToAmount(toBalance);
-
-                    // Calculate how much "From" token is needed to receive the full "To" balance
-                    if (swapState.price && parseFloat(swapState.price) > 0) {
-                      const price = parseFloat(swapState.price);
-                      const isBuying = fromToken === 'USDC';
-                      const calcFrom = isBuying
-                        ? (parseFloat(toBalance) * price).toFixed(6)
-                        : (parseFloat(toBalance) / price).toFixed(6);
-                      setFromAmount(calcFrom);
-                    }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowQuoteDetails(!showQuoteDetails);
                   }}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors font-geist text-[12px] text-slate-500 dark:text-slate-400 group"
                 >
-                  {t('Max')}
+                  <div className="flex items-center gap-2">
+                    <Info size={14} className="opacity-70 group-hover:opacity-100 transition-opacity" />
+                    <span>Swap Details</span>
+                  </div>
+                  <ChevronDown size={14} className={`transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${showQuoteDetails ? 'rotate-180' : ''}`} />
                 </button>
+
+                <AnimatePresence>
+                  {showQuoteDetails && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-3 pb-5 px-4 space-y-4">
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                          <span className="font-geist">Circle Fee</span>
+                          <span className="font-mono text-slate-700 dark:text-white">{swapState.isAppKitRoute ? '0.02%' : '0.02%'}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                          <span className="font-geist">Stac Fee</span>
+                          <span className="font-mono text-slate-700 dark:text-white">$0.00 <span className="opacity-50">(Free)</span></span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                          <span className="font-geist">Price Impact</span>
+                          <span className={`font-mono ${parseFloat(swapState.priceImpact) > 2 ? 'text-amber-500' : 'text-slate-700 dark:text-white'}`}>
+                            {swapState.priceImpact || '< 0.01'}%
+                          </span>
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 relative">
+                          <span className="font-geist">Slippage Tolerance</span>
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowSlippage(!showSlippage);
+                              }}
+                              className="flex items-center gap-1 pl-2.5 pr-2 py-1 bg-slate-50 dark:bg-white/[0.04] rounded-lg border border-slate-200/80 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/15 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-all duration-200 font-mono text-[11px] text-slate-700 dark:text-slate-200 group"
+                            >
+                              {slippage}%
+                              <ChevronDown size={12} className={`text-slate-400 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${showSlippage ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            <AnimatePresence>
+                              {showSlippage && (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.98, y: 5 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.98, y: 5 }}
+                                  transition={{ duration: 0.15 }}
+                                  className="absolute right-0 bottom-full mb-2 z-[101] w-56 bg-white dark:bg-[#0B0F1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl p-3 space-y-3"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <div className="grid grid-cols-3 gap-1.5">
+                                    {[0.1, 0.5, 1.0].map((val) => (
+                                      <button
+                                        key={val}
+                                        onClick={() => {
+                                          setSlippage(val);
+                                          setShowSlippage(false);
+                                        }}
+                                        className={`py-1.5 rounded-lg text-[10.5px] font-mono transition-colors ${slippage === val
+                                          ? 'bg-[#6366F1] text-white shadow-sm'
+                                          : 'bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-100 dark:border-white/[0.02]'
+                                          }`}
+                                      >
+                                        {val}%
+                                      </button>
+                                    ))}
+                                  </div>
+
+                                  <div className="space-y-0 text-left">
+                                    <div className="relative group/slip">
+                                      <input
+                                        type="text"
+                                        inputMode="decimal"
+                                        placeholder="Custom"
+                                        onChange={(e) => {
+                                          const val = e.target.value.replace(/[^0-9.]/g, '');
+                                          const num = parseFloat(val);
+                                          if (!isNaN(num) && num >= 0 && num <= 50) setSlippage(num);
+                                        }}
+                                        className={`w-full bg-slate-50 dark:bg-black/40 border rounded-xl pl-3 py-2 text-[12px] font-mono outline-none transition-all text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 ${parseFloat(slippage) > 1.0 ? 'pr-12 border-amber-500/50 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10' : 'pr-8 border-slate-200 dark:border-white/10 focus:border-[#6366F1] dark:focus:border-indigo-500 focus:ring-2 focus:ring-[#6366F1]/10 dark:focus:ring-indigo-500/10'}`}
+                                      />
+                                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                                        <AnimatePresence>
+                                          {parseFloat(slippage) > 1.0 && (
+                                            <div className="relative flex items-center">
+                                              <AlertTriangle size={14} strokeWidth={2.5} className="text-amber-500" />
+                                              <motion.div
+                                                initial={{ opacity: 0, scale: 0.9, y: -5 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.9, y: -5 }}
+                                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                                className="absolute w-[200px] right-[-12px] top-full mt-[14px] bg-amber-50 dark:bg-[#1a1306] text-amber-900 dark:text-amber-500 border border-amber-500/30 rounded-xl p-3 text-[11px] font-geist font-medium leading-[1.35] shadow-[0_20px_40px_-15px_rgba(245,158,11,0.2)] dark:shadow-[0_20px_40px_-15px_rgba(245,158,11,0.1)] z-50 pointer-events-none"
+                                              >
+                                                Caution: High slippage increases your risk of frontrunning and unfavorable rates.
+                                                <div className="absolute bottom-full right-4 -mb-[5px] w-2.5 h-2.5 bg-amber-50 dark:bg-[#1a1306] border-t border-l border-amber-500/30 rotate-45 transform"></div>
+                                              </motion.div>
+                                            </div>
+                                          )}
+                                        </AnimatePresence>
+                                        <span className={`text-[11px] font-mono transition-colors ${parseFloat(slippage) > 1.0 ? 'text-amber-500' : 'text-slate-400 group-focus-within/slip:text-[#6366F1]'}`}>%</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
+
+            {/* ACTION BUTTON */}
+            <div className="pt-2">
+              <button
+                onClick={handleSwapClick}
+                disabled={
+                  (status === 'disconnected' && !wasConnected) ||
+                  !fromAmount ||
+                  parseFloat(fromAmount) <= 0 ||
+                  parseFloat(fromAmount) > parseFloat(fromBalance) ||
+                  swapState.isLoading ||
+                  status === 'reconnecting' ||
+                  status === 'connecting'
+                }
+                className={`w-full h-12 sm:h-14 rounded-2xl text-[15px] sm:text-[16px] font-bold tracking-tight transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] relative overflow-hidden group active:scale-[0.98] flex items-center justify-center gap-2.5 ${((!fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance)) && !swapState.isLoading)
+                  ? 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-white/10'
+                  : 'bg-[#6366F1] dark:bg-indigo-600 text-white hover:brightness-110'
+                  }`}
+              >
+                <div className="relative z-10 flex items-center justify-center gap-2.5">
+                  {(status === 'reconnecting' || status === 'connecting' || wasConnected) && !isConnected ? (
+                    <span>{t('Swap')}</span>
+                  ) : status === 'disconnected' ? (
+                    <><Wallet size={16} strokeWidth={1.5} /><span>{t('Connect Wallet')}</span></>
+                  ) : parseFloat(fromAmount) > parseFloat(fromBalance) && !swapState.isLoading ? (
+                    <span>{t('Insufficient Balance')}</span>
+                  ) : swapState.isLoading ? (
+                    <div className="flex items-center gap-3">
+                      <span className="font-geist">{swapState.isApproving ? 'Approving' : 'Swapping'}</span>
+                      <div className="flex gap-1">
+                        <motion.div animate={{ opacity: [0.2, 1, 0.2] }} transition={{ repeat: Infinity, duration: 0.8, times: [0, 0.5, 1] }} className="w-1.5 h-1.5 rounded-full bg-white" />
+                        <motion.div animate={{ opacity: [0.2, 1, 0.2] }} transition={{ repeat: Infinity, duration: 0.8, times: [0, 0.5, 1], delay: 0.15 }} className="w-1.5 h-1.5 rounded-full bg-white" />
+                        <motion.div animate={{ opacity: [0.2, 1, 0.2] }} transition={{ repeat: Infinity, duration: 0.8, times: [0, 0.5, 1], delay: 0.3 }} className="w-1.5 h-1.5 rounded-full bg-white" />
+                      </div>
+                    </div>
+                  ) : swapState.needsApproval ? (
+
+                    <span>{t('Approve')} {fromToken}</span>
+                  ) : (
+                    <span>{t('Swap')}</span>
+                  )}
+                </div>
+              </button>
+            </div>
           </div>
+        </motion.div>
+      </div>
 
-
-          {/* ── Main Swap / Connect Button ─────────────────────────────────── */}
-          {/*
-            Button states (in priority order):
-            1. Reconnecting to wallet → show "Swap" (disabled, waiting)
-            2. Wallet not connected   → show "Connect Wallet"
-            3. Insufficient balance   → show "Insufficient Balance" in red
-            4. Swap is executing      → show spinner + "Swapping..." or "Approving..."
-            5. Token approval needed  → show "Approve [token]"
-            6. Ready to swap          → show "Swap"
-          */}
-          <button
-            onClick={handleSwapClick}
-            className={`swap-button ${(isConnected && parseFloat(fromAmount) > parseFloat(fromBalance)) ? 'swap-button-failed' : ''}`}
-            disabled={
-              (status === 'disconnected' && !wasConnected) ||
-              !fromAmount ||
-              parseFloat(fromAmount) <= 0 ||
-              parseFloat(fromAmount) > parseFloat(fromBalance) ||
-              swapState.isLoading ||
-              status === 'reconnecting' ||
-              status === 'connecting'
-            }
-          >
-            {(status === 'reconnecting' || status === 'connecting' || wasConnected) && !isConnected ? (
-              // Wallet is in the process of reconnecting (e.g. after page refresh)
-              <div className="flex items-center justify-center"><span>{t('Swap')}</span></div>
-            ) : status === 'disconnected' ? (
-              // No wallet connected at all
-              <><Wallet size={18} className="inline mr-2" /><span>{t('Connect Wallet')}</span></>
-            ) : parseFloat(fromAmount) > parseFloat(fromBalance) ? (
-              // User typed more than they have
-              <span>{t('Insufficient Balance')}</span>
-            ) : swapState.isLoading ? (
-              // Swap transaction is in flight
-              <div className="flex items-center justify-center gap-2">
-                <Loader className="animate-spin" size={18} />
-                <span>{swapState.isApproving ? t('Approving...') : t('Swapping...')}</span>
-              </div>
-            ) : swapState.needsApproval ? (
-              // Token allowance must be set before swapping
-              <span>{t('Approve')} {fromToken}</span>
-            ) : (
-              // All good — ready to swap
-              <span>{t('Swap')}</span>
-            )}
-          </button>
-
-
-          {/* ── Modals ─────────────────────────────────────────────────────── */}
-
-          {/* Swap confirmation + execution modal */}
-          <SwapModal
-            isOpen={isSwapModalOpen}
-            onClose={() => {
-              setIsSwapModalOpen(false);
-              if (swapState.isSuccess) { setFromAmount(''); setToAmount(''); }
-            }}
-            onError={handleSwapError}
-            onSuccess={handleSwapSuccess}
-            fromToken={TOKENS[fromToken]}
-            toToken={TOKENS[toToken]}
-            fromAmount={fromAmount}
-            toAmount={toAmount}
-            swapState={swapState}
-            slippage={slippage}
-            setSlippage={setSlippage}
-          />
-
-          {/* ✅ Success modal */}
-          <SwapSuccessModal
-            isOpen={showSwapSuccessModal}
-            onClose={() => setShowSwapSuccessModal(false)}
-            fromToken={frozenSwapData?.fromToken}
-            toToken={frozenSwapData?.toToken}
-            fromAmount={frozenSwapData?.fromAmount}
-            toAmount={frozenSwapData?.toAmount}
-            txHash={lastSwapTxHash}
-          />
-
-          {/* ❌ Failed modal */}
-          <SwapFailedModal
-            isOpen={showSwapFailedModal}
-            onClose={() => setShowSwapFailedModal(false)}
-            error={swapError}
-            fromToken={fromTokenObj}
-            toToken={toTokenObj}
-          />
-        </div>
-      </motion.div>
-
-
-      {/* ── Token Selector Popups ───────────────────────────────────────────── */}
-
-      {/* "From" token picker */}
-      <TokenSelector
-        isOpen={showFromSelector}
-        onClose={() => setShowFromSelector(false)}
-        selectedToken={fromToken}
-        onSelect={(token) => {
-          // If the user picks the same token as "To", just swap them
-          if (token === toToken) handleSwitch();
-          else setFromToken(token);
-        }}
-        exclude={toToken}
-        tokenList={tokenList}
-        t={t}
-        isConnected={isConnected}
+      {/* ── MODALS ── */}
+      <SwapSuccessModal
+        isOpen={showSwapSuccessModal}
+        onClose={() => setShowSwapSuccessModal(false)}
+        fromToken={frozenSwapData?.fromToken}
+        toToken={frozenSwapData?.toToken}
+        fromAmount={frozenSwapData?.fromAmount}
+        toAmount={frozenSwapData?.toAmount}
+        actualAmount={swapState.actualAmountOut}
+        txHash={lastSwapTxHash}
       />
 
-      {/* "To" token picker */}
-      <TokenSelector
-        isOpen={showToSelector}
-        onClose={() => setShowToSelector(false)}
-        selectedToken={toToken}
-        onSelect={(token) => {
-          if (token === fromToken) handleSwitch();
-          else setToToken(token);
-        }}
-        exclude={fromToken}
-        tokenList={tokenList}
-        t={t}
-        isConnected={isConnected}
+      <SwapFailedModal
+        isOpen={showSwapFailedModal}
+        onClose={() => setShowSwapFailedModal(false)}
+        error={swapError}
+        fromToken={fromTokenObj}
+        toToken={toTokenObj}
       />
 
-
-      {/* ── Toast Notifications ─────────────────────────────────────────────── */}
-      <Toast
-        type={toast.type}
-        message={toast.message}
-        visible={toast.visible}
-        onClose={() => setToast({ ...toast, visible: false })}
-      />
-
-      {/* 🚫 User rejected modal */}
       <SwapRejectedModal
         isOpen={showSwapRejectedModal}
         onClose={() => setShowSwapRejectedModal(false)}
         fromToken={frozenSwapData?.fromToken || fromTokenObj}
         toToken={frozenSwapData?.toToken || toTokenObj}
+      />
+
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        visible={toast.visible}
+        onClose={() => setToast({ ...toast, visible: false })}
       />
     </div>
   );

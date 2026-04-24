@@ -16,15 +16,14 @@ export function useActiveUsers() {
   const { data, isLoading } = useQuery({
     queryKey: ['activeUsers'],
     queryFn: async () => {
-      const [personalTxs, globalTxs] = await Promise.all([
-        getItem('myTransactions'),
-        getItem('globalTransactions')
-      ]);
-
-      const allTxs = [...(Array.isArray(personalTxs) ? personalTxs : []), ...(Array.isArray(globalTxs) ? globalTxs : [])];
+      // Strictly reading from local dApp records to ensure accuracy with user's activity
+      const personalTxs = await getItem('myTransactions');
+      const allTxs = Array.isArray(personalTxs) ? personalTxs : [];
+      
       const uniqueAddresses = new Set();
       
       allTxs.forEach(tx => {
+        if (!tx || typeof tx !== 'object') return;
         if (tx.status === 'success' && (tx.address || tx.from || tx.to)) {
           const addr = tx.address || tx.from || tx.to;
           if (addr && typeof addr === 'string') {
@@ -59,10 +58,13 @@ export function useActiveUsers() {
   useEffect(() => {
     const invalidate = () => queryClient.invalidateQueries({ queryKey: ['activeUsers'] });
     window.addEventListener('transactionSaved', invalidate);
-    window.addEventListener('globalStatsUpdated', invalidate);
+    window.addEventListener('bridgeTransactionSaved', invalidate);
+    window.addEventListener('swapTransactionSaved', invalidate);
+    
     return () => {
       window.removeEventListener('transactionSaved', invalidate);
-      window.removeEventListener('globalStatsUpdated', invalidate);
+      window.removeEventListener('bridgeTransactionSaved', invalidate);
+      window.removeEventListener('swapTransactionSaved', invalidate);
     };
   }, [queryClient]);
 

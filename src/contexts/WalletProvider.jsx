@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import { isNetworkSupported } from '../config/networks';
 import { useAccount, useDisconnect, useBalance, useSwitchChain, usePublicClient, useWalletClient } from 'wagmi';
 import { WalletContext } from './wallet-context';
+import { logger } from '../utils/logger';
 
 export const WalletProvider = ({ children }) => {
     const { address, isConnected, chainId: wagmiChainId, status } = useAccount();
@@ -25,19 +26,17 @@ export const WalletProvider = ({ children }) => {
             hasBeenConnectedRef.current = true;
             localStorage.setItem('walletConnected', 'true');
             localStorage.setItem('lastAddress', address);
-            // Cache a friendly display name (short address)
             localStorage.setItem('lastDisplayName', `${address.slice(0, 6)}...${address.slice(-4)}`);
             if (wagmiChainId) {
                 localStorage.setItem('lastChainId', wagmiChainId.toString());
             }
-        } else if (status === 'disconnected' && hasBeenConnectedRef.current) {
-            // Only clear localStorage if the wallet was connected at least once
-            // in this session — meaning this is a real disconnect, not a page-refresh
-            // transient state where wagmi hasn't started reconnecting yet.
+        } else if (status === 'disconnected' && hasBeenConnectedRef.current && !isConnected) {
+            // Real disconnect confirmed
             localStorage.removeItem('walletConnected');
             localStorage.removeItem('lastAddress');
             localStorage.removeItem('lastDisplayName');
             localStorage.removeItem('lastChainId');
+            hasBeenConnectedRef.current = false;
         }
     }, [isConnected, address, wagmiChainId, status]);
 
@@ -50,7 +49,7 @@ export const WalletProvider = ({ children }) => {
                 setIsConnecting(false);
             }, 1000);
         } catch (err) {
-            console.error('Error connecting wallet:', err);
+            logger.error('Error connecting wallet:', err);
             setError(err.message);
             setIsConnecting(false);
             throw err;
@@ -58,7 +57,12 @@ export const WalletProvider = ({ children }) => {
     };
 
     const disconnect = () => {
-        wagmiDisconnect();
+        try {
+            wagmiDisconnect();
+        } catch (e) {
+            logger.warn('Wagmi disconnect failed:', e);
+        }
+        hasBeenConnectedRef.current = false;
         localStorage.removeItem('walletConnected');
         localStorage.removeItem('walletType');
         localStorage.removeItem('lastAddress');
@@ -75,13 +79,13 @@ export const WalletProvider = ({ children }) => {
             const chainIdDecimal = parseInt(networkConfig.chainId, 16);
             switchChain({ chainId: chainIdDecimal });
         } catch (err) {
-            console.error('Error switching network:', err);
+            logger.error('Error switching network:', err);
             throw err;
         }
     };
 
     const sendTransaction = async () => {
-        console.warn('Use wagmi hooks for transaction sending in RainbowKit integration');
+        logger.warn('Use wagmi hooks for transaction sending in RainbowKit integration');
         return Promise.resolve();
     };
 

@@ -24,65 +24,80 @@
     --theme-border-soft: rgba(226, 232, 240, 0.6);
     --theme-border-medium: #e2e8f0;
 
-    --theme-accent-primary: #000000;
+    --theme-accent-primary: #7C6FFF;
     --theme-accent-secondary: #374151;
 
     --theme-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --theme-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     --theme-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
     --gradient-error: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+
+    /* Brand Palette */
+    --color-brand: #7C6FFF;
+    --color-brand-hover: #6B5CF7;
+    --color-brand-glow: rgba(124, 111, 255, 0.25);
+    --color-success: #2DD4BF;
+    --color-lavender: #7C6FFF;
   }
 
   .dark {
 
-    /* Dark Mode - Deep Midnight Palette */
-    --theme-bg-page: #020617;
-    --theme-bg-card: rgba(15, 23, 42, 0.6);
-    --theme-bg-surface: #0f172a;
+    /* Dark Mode — 60-30-10 Palette
+       60% = #0B0F1A  (Deep navy-black — page background, large surfaces)
+       30% = #161B2A  (Surface/card — containers, dropdowns, modals)
+       10% = #7C6FFF  (Brand accent — buttons, highlights, active states)
+    */
+    --theme-bg-page: #0B0F1A;
+    --theme-bg-card: #161B2A;
+    --theme-bg-surface: #161B2A;
 
-    --theme-text-primary: #f8fafc;
-    --theme-text-secondary: #94a3b8;
-    --theme-text-muted: #475569;
+    --theme-text-primary: #f1f5f9;
+    --theme-text-secondary: #94A3B8;
+    --theme-text-muted: #64748b;
 
-    --theme-border-soft: rgba(30, 41, 59, 0.6);
-    --theme-border-medium: #1e2b44;
+    --theme-border-soft: rgba(124, 111, 255, 0.08);
+    --theme-border-medium: rgba(124, 111, 255, 0.12);
 
-    --theme-accent-primary: #ffffff;
-    --theme-accent-secondary: #d1d5db;
+    --theme-accent-primary: #7C6FFF;
+    --theme-accent-secondary: #94A3B8;
 
-    --theme-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --theme-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-    --theme-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    --theme-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --theme-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --theme-shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 4px 10px -2px rgba(0, 0, 0, 0.4);
   }
 
-  /* Instant theme changes for html and body - no transition delay */
+  /* theme changes for html and body - no transition delay for colors */
   html,
   body {
     background-color: var(--theme-bg-page);
     color: var(--theme-text-primary);
     font-family: var(--theme-font);
-    transition: none !important;
     margin: 0;
     padding: 0;
     line-height: 1.5;
     overflow-x: hidden;
     width: 100%;
-    /* Use dvh for mobile viewport height stability in wallet browsers */
     min-height: 100dvh;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
+    transition: background-color 0s, color 0s, border-color 0s !important;
   }
 
-  /* Custom dark mode background color defined in tailwind.config.js */
-  html.dark {
-    @apply bg-black;
+  /* Ensure dark mode class on html applies correctly to the whole document */
+  html.dark,
+  html.dark body {
+    color-scheme: dark !important;
+    background-color: #0B0F1A !important;
   }
 
   html {
-    @apply bg-white dark:bg-black;
-    /* Disable transitions for theme changes */
+    background-color: #ffffff;
     transition: none !important;
+  }
+
+  html.dark {
+    background-color: #0B0F1A !important;
   }
 
   /* Instant theme property changes - no transitions for colors, smooth for other properties */
@@ -105,18 +120,35 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-black dark:bg-white text-white dark:text-black font-semibold py-2 px-6 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: var(--color-brand);
+    @apply text-white font-semibold py-2 px-6 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
     /* Instant theme changes, smooth transitions for hover/opacity */
     transition: opacity 0.2s ease, transform 0.2s ease;
     transition-property: opacity, transform;
   }
 
+  .btn-primary:hover {
+    background-color: var(--color-brand-hover);
+  }
+
   /* Custom colors defined in tailwind.config.js */
   .btn-secondary {
-    @apply bg-white dark:bg-gray-800 text-black dark:text-white border-2 border-black dark:border-white font-semibold py-2 px-6 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700;
+    @apply bg-white text-black border-2 font-semibold py-2 px-6 rounded-lg hover:bg-gray-100;
+    border-color: var(--color-brand);
     /* Instant theme changes, smooth transitions for hover */
     transition: opacity 0.2s ease, transform 0.2s ease;
     transition-property: opacity, transform;
+  }
+
+  .dark .btn-secondary {
+    background-color: #161B2A;
+    color: #f1f5f9;
+    border-color: rgba(124, 111, 255, 0.3);
+  }
+
+  .dark .btn-secondary:hover {
+    background-color: rgba(124, 111, 255, 0.08);
+    border-color: var(--color-brand);
   }
 
   .btn-danger {
@@ -138,20 +170,35 @@
 
   .card:hover {
     box-shadow: var(--theme-shadow-lg);
-    border-color: var(--theme-accent-primary);
+    border-color: var(--color-brand);
     transform: translateY(-2px);
   }
 
   .input-field {
-    @apply w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white dark:text-white;
+    @apply w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2;
     /* Instant theme changes, smooth transitions for focus states */
     transition: box-shadow 0.2s ease, outline 0.2s ease;
     transition-property: box-shadow, outline;
   }
 
+  .input-field:focus {
+    --tw-ring-color: var(--color-brand);
+  }
+
+  .dark .input-field {
+    background-color: #161B2A;
+    border-color: rgba(124, 111, 255, 0.12);
+    color: #f1f5f9;
+  }
+
+  .dark .input-field:focus {
+    --tw-ring-color: var(--color-brand);
+  }
+
   /* Custom gradient defined in tailwind.config.js */
   .gradient-text {
-    @apply text-black dark:text-white font-bold;
+    @apply font-bold;
+    color: var(--color-brand);
   }
 
   /* Responsive token selector container */
@@ -161,7 +208,16 @@
 
   /* Responsive token selector button */
   .token-selector-button {
-    @apply flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[120px] w-auto flex-shrink-0;
+    @apply flex items-center space-x-2 px-3 py-2 bg-white rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md self-end min-w-[120px] w-auto flex-shrink-0;
+  }
+
+  .dark .token-selector-button {
+    background-color: #161B2A;
+  }
+
+  .dark .token-selector-button:hover {
+    background-color: rgba(124, 111, 255, 0.08);
+    border-color: rgba(124, 111, 255, 0.2);
   }
 
   /* Responsive token selector text */
@@ -176,12 +232,26 @@
 
   /* Responsive token selector description */
   .token-selector-description {
-    @apply text-xs text-gray-500 dark:text-gray-400 truncate;
+    @apply text-xs text-gray-500 truncate;
+  }
+
+  .dark .token-selector-description {
+    color: #94A3B8;
   }
 
   /* Switch button for bridge/swap */
   .switch-button {
-    @apply p-4 bg-white dark:bg-gray-800 border-4 border-gray-100 dark:border-gray-900 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110;
+    @apply p-4 bg-white border-4 border-gray-100 rounded-2xl hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 shadow-xl hover:shadow-2xl hover:scale-110;
+  }
+
+  .dark .switch-button {
+    background-color: #161B2A;
+    border-color: #0B0F1A;
+  }
+
+  .dark .switch-button:hover {
+    background-color: rgba(124, 111, 255, 0.08);
+    border-color: var(--color-brand);
   }
 }
 
@@ -201,16 +271,21 @@
 
   /* Custom glass effect with dark mode support defined in tailwind.config.js */
   .glass-effect {
-    @apply bg-white/10 dark:bg-dark-900/30 backdrop-blur-lg border border-white/20 dark:border-dark-700/50;
+    @apply bg-white/10 backdrop-blur-lg border border-white/20;
     /* Instant theme changes, smooth transitions for other effects */
     transition: opacity 0.2s ease, transform 0.2s ease;
     transition-property: opacity, transform;
   }
 
+  .dark .glass-effect {
+    background: rgba(22, 27, 42, 0.7);
+    border-color: rgba(124, 111, 255, 0.1);
+  }
+
   /* Neon glow effects for dark mode */
   .neon-icon-container {
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 15px var(--color-brand-glow);
+    border: 1px solid rgba(124, 111, 255, 0.15);
   }
 
   /* Enhanced dark mode utility classes */
@@ -239,15 +314,15 @@
   }
 
   .dark .hero-blueprint-grid {
-    background-color: #020617;
-    background-image: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.05) 0%, transparent 40%),
-                      radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.03) 0%, transparent 40%);
+    background-color: #0B0F1A;
+    background-image: radial-gradient(circle at 20% 30%, rgba(124, 111, 255, 0.06) 0%, transparent 40%),
+                      radial-gradient(circle at 80% 70%, rgba(124, 111, 255, 0.03) 0%, transparent 40%);
   }
 
   .dark .grid-background {
     background-image: 
-      linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      linear-gradient(to right, rgba(124, 111, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(124, 111, 255, 0.03) 1px, transparent 1px);
   }
 
   /* Custom scrollbar utility for code blocks */
@@ -257,7 +332,22 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+    @apply bg-slate-300 rounded-full;
+  }
+
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(124, 111, 255, 0.2);
+  }
+
+  /* Stats Section Typography */
+  .text-stat-value {
+    color: var(--color-brand);
+    @apply text-5xl md:text-7xl font-semibold tracking-tight;
+  }
+
+  .text-stat-label {
+    color: var(--theme-text-secondary);
+    @apply text-sm md:text-base font-medium tracking-normal;
   }
 }
 
@@ -277,7 +367,6 @@
   /* Mobile-specific: prevent backdrop-blur from causing theme switch delays */
   [class*="backdrop-blur"],
   [class*="bg-white/80"],
-  [class*="dark:bg-\[#131720\]/80"],
   header,
   nav {
     transition: background-color 0s,
@@ -293,7 +382,7 @@
   }
 
   html.dark footer {
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);
   }
 
   footer p {
@@ -302,7 +391,7 @@
   }
 
   footer a {
-    font-weight: 600 !important;
+    font-weight: 500 !important;
     text-decoration: none !important;
     cursor: pointer !important;
   }
@@ -426,15 +515,28 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-white dark:bg-dark-900 transition-colors duration-500;
+  background: #ffffff;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #0B0F1A;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-dark-400 dark:bg-dark-700 rounded-full transition-colors duration-500;
+  @apply rounded-full;
+  background: #cbd5e1;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(124, 111, 255, 0.2);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-dark-500 dark:bg-dark-600;
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 111, 255, 0.35);
 }
 
 /* Feedback Button Styling */
@@ -469,16 +571,16 @@
   display: flex !important;
   align-items: center;
   justify-content: center;
-  background: #000000;
+  background: var(--color-brand);
   color: white;
   text-decoration: none;
   font-weight: 600;
   transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 15px var(--color-brand-glow);
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(124, 111, 255, 0.3);
 }
 
 @media (min-width: 768px) {
@@ -493,20 +595,20 @@
     letter-spacing: 2px;
     font-size: 11px;
     transform: translateX(4px);
-    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.3);
+    box-shadow: -2px 0 12px var(--color-brand-glow);
   }
 
   .feedback-button:hover {
     transform: translateX(0px);
-    background: #000000;
+    background: var(--color-brand-hover);
     color: #ffffff;
-    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2);
+    box-shadow: -8px 0 24px var(--color-brand-glow);
   }
 
   html.dark .feedback-button:hover {
-    background: #ffffff;
-    color: #000000;
-    box-shadow: -8px 0 24px rgba(255, 255, 255, 0.1);
+    background: var(--color-brand-hover);
+    color: #ffffff;
+    box-shadow: -8px 0 24px var(--color-brand-glow);
   }
 }
 
@@ -515,9 +617,9 @@
 }
 
 html.dark .feedback-button {
-  background: rgba(19, 23, 32, 0.95);
+  background: var(--color-brand);
   backdrop-filter: blur(12px);
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(124, 111, 255, 0.3);
 }
 
 /* Pulse animation for mobile FAB */
@@ -550,8 +652,8 @@ html.dark .feedback-button {
 }
 
 @keyframes fab-glow {
-  0%, 100% { box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05); }
-  50% { box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.15); }
+  0%, 100% { box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(124, 111, 255, 0.08); }
+  50% { box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(124, 111, 255, 0.2); }
 }
 
 @keyframes fab-pulse {
@@ -598,9 +700,9 @@ button[aria-haspopup="dialog"] {
 
 .skeleton {
   background: linear-gradient(90deg,
-      rgba(255, 255, 255, 0.03) 25%,
-      rgba(255, 255, 255, 0.08) 37%,
-      rgba(255, 255, 255, 0.03) 63%);
+      rgba(124, 111, 255, 0.03) 25%,
+      rgba(124, 111, 255, 0.08) 37%,
+      rgba(124, 111, 255, 0.03) 63%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 2s infinite ease-in-out;
   border-radius: 4px;

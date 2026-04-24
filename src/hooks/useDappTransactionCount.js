@@ -3,6 +3,8 @@ import { useEffect } from 'react';
 import { getItem, setItem } from '../utils/indexedDB';
 
 const CACHE_KEY = 'dapp_transaction_count';
+const VERSION_KEY = 'dapp_stat_version';
+const CURRENT_VERSION = 'v1.3_strict_local';
 
 const calculatePercentageChange = (current, previous) => {
     if (!previous || previous === 0) return null;
@@ -10,23 +12,37 @@ const calculatePercentageChange = (current, previous) => {
     return parseFloat(change.toFixed(1));
 };
 
+/**
+ * useDappTransactionCount
+ * Returns the total count of unique successful transactions performed through this dApp.
+ * Strictly reads from the local 'myTransactions' ledger to ensure absolute accuracy 
+ * with the user's recorded history, as requested.
+ */
 export function useDappTransactionCount() {
     const queryClient = useQueryClient();
 
     const { data, isLoading } = useQuery({
         queryKey: ['dappTransactionCount'],
         queryFn: async () => {
-            const [personalTxs, globalTxs] = await Promise.all([
-                getItem('myTransactions'),
-                getItem('globalTransactions')
-            ]);
+            // Self-healing: Reset if version changed
+            const version = await getItem(VERSION_KEY);
+            if (version !== CURRENT_VERSION) {
+                await setItem(CACHE_KEY, { value: 0, timestamp: Date.now() });
+                await setItem(VERSION_KEY, CURRENT_VERSION);
+            }
 
-            const allTxs = [...(Array.isArray(personalTxs) ? personalTxs : []), ...(Array.isArray(globalTxs) ? globalTxs : [])];
+            // Strictly reading 'myTransactions' as it is the source of truth for dApp-originated activity
+            const personalTxs = await getItem('myTransactions');
+            const allTxs = Array.isArray(personalTxs) ? personalTxs : [];
+            
             const uniqueHashes = new Set();
-
             allTxs.forEach(tx => {
-                if (tx.hash && tx.status === 'success') {
-                    uniqueHashes.add(tx.hash);
+                if (!tx || typeof tx !== 'object') return;
+                const txHash = tx.hash || tx.transactionHash || tx.id;
+                const txStatus = tx.status || 'success';
+
+                if (txHash && txStatus === 'success') {
+                    uniqueHashes.add(txHash.toLowerCase());
                 }
             });
 
@@ -46,25 +62,24 @@ export function useDappTransactionCount() {
             }
 
             await setItem(CACHE_KEY, { value: currentCount, timestamp: Date.now() });
-
             return { transactionCount: currentCount, change, trend };
         },
-        staleTime: 60000,
+        staleTime: 10000, // Faster refresh for better UX feel during testing
         refetchInterval: 30000,
     });
 
     useEffect(() => {
         const invalidate = () => queryClient.invalidateQueries({ queryKey: ['dappTransactionCount'] });
+        
+        // Listen specifically to events that indicate a new transaction was stored
         window.addEventListener('transactionSaved', invalidate);
         window.addEventListener('bridgeTransactionSaved', invalidate);
         window.addEventListener('swapTransactionSaved', invalidate);
-        window.addEventListener('globalStatsUpdated', invalidate);
 
         return () => {
             window.removeEventListener('transactionSaved', invalidate);
             window.removeEventListener('bridgeTransactionSaved', invalidate);
             window.removeEventListener('swapTransactionSaved', invalidate);
-            window.removeEventListener('globalStatsUpdated', invalidate);
         };
     }, [queryClient]);
 

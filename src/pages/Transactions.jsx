@@ -1,846 +1,278 @@
-// =============================================================================
-// TRANSACTIONS PAGE
-// Shows the user's full transaction history (swaps + bridges).
-// Data comes from two places:
-//   1. IndexedDB (browser storage) — transactions the user initiated from this dApp
-//   2. Blockchain — on-chain history fetched via useTransactionHistory hook
-// Both sources are merged, deduplicated, and displayed in a unified table.
-// Supports filtering by status, date range, and free-text search.
-// Paginated: 10 rows per page on desktop, card list on mobile.
-// =============================================================================
-
-import { useState, useEffect, useMemo, useRef, memo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../hooks/useWallet';
-import { Copy, ExternalLink, Check, Clock, XCircle, X, ArrowLeftRight, Layers, History, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Calendar, TrendingUp } from 'lucide-react';
+import { 
+  Search, 
+  ChevronDown, 
+  ChevronLeft, 
+  ChevronRight, 
+  CheckCircle2,
+  Check,
+  Copy,
+  Clock,
+  Inbox
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { timeAgo, formatAddress, copyToClipboard, getExplorerUrl } from '../utils/blockchain';
-import { useTransactionHistory } from '../hooks/useTransactionHistory';
 import { getItem, setItem } from '../utils/indexedDB';
-import { NETWORKS } from '../config/networks';
-import { useTotalVolume } from '../hooks/useTotalVolume';
-import { useTotalBridgeVolume } from '../hooks/useTotalBridgeVolume';
 import { useDappTransactionCount } from '../hooks/useDappTransactionCount';
+import { useTransactionHistory } from '../hooks/useTransactionHistory';
 import '../styles/transactions-styles.css';
 
 // =============================================================================
-// PURE HELPER FUNCTIONS (outside the component for performance)
+// STAC-TIER IDENTITY STACK [NON-REDUNDANT REFACTOR]
 // =============================================================================
 
-// Convert a numeric or hex chainId → human-readable network name ("Arc Testnet" etc.)
-const getNetworkName = (chainId) => {
-  if (!chainId) return null;
+const StacAssetIdentity = memo(({ tokenSymbol, chainName, amount, isToAmount }) => {
+  const tokenSrc = getTokenLogo(tokenSymbol);
+  const chainSrc = getChainIcon(chainName);
+  const fullName = getTokenName(tokenSymbol);
 
-  // Handle both hex and decimal chainId
-  const chainIdNum = typeof chainId === 'string' && chainId.startsWith('0x')
-    ? parseInt(chainId, 16)
-    : parseInt(chainId);
+  const formattedAmount = useMemo(() => {
+    if (!amount || amount === '0.00') return null;
+    const num = parseFloat(String(amount).replace(/[^-0-9.]/g, ''));
+    if (isNaN(num)) return amount;
+    
+    if (isToAmount) {
+      return num.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+    }
+    return num % 1 === 0 ? num.toString() : num.toLocaleString(undefined, { maximumFractionDigits: 6 });
+  }, [amount, isToAmount]);
 
-  // Match chainId to network
-  if (chainIdNum === NETWORKS.ARC_TESTNET.id || chainId === NETWORKS.ARC_TESTNET.chainId) {
-    return 'Arc Testnet';
-  } else if (chainIdNum === NETWORKS.ETHEREUM_SEPOLIA.id || chainId === NETWORKS.ETHEREUM_SEPOLIA.chainId) {
-    return 'Sepolia';
-  } else if (chainIdNum === NETWORKS.BASE_SEPOLIA.id || chainId === NETWORKS.BASE_SEPOLIA.chainId) {
-    return 'Base Sepolia';
-  }
-
-  return null;
-};
-
-// Return the local icon path for a given chain name
-const getChainIcon = (chainName) => {
-  if (!chainName) return null;
-  const name = chainName.toLowerCase();
-
-  if (name.includes('arc')) return '/icons/arc.png';
-  if (name.includes('base')) return '/icons/base.png';
-  if (name.includes('sepolia') || name.includes('eth')) return '/icons/eth.png';
-
-  return null;
-};
-
-// Return the local icon path for a given token symbol
-const getTokenLogo = (symbol) => {
-  if (!symbol) return null;
-  const s = String(symbol).toUpperCase();
-  if (s.includes('USDC')) return '/icons/usdc.png';
-  if (s.includes('STC') || s.includes('STAC')) return '/icons/stc.png';
-  if (s.includes('BALL')) return '/icons/ball.png';
-  if (s.includes('MTB')) return '/icons/mtb.png';
-  if (s.includes('ECR')) return '/icons/ecr.png';
-  if (s.includes('ETH')) return '/icons/eth.png';
-  if (s.includes('EURC')) return '/icons/eurc.png';
-  return null;
-};
-
-// Shown when there are no transactions to display (empty state)
-const EmptyActivityState = () => {
-  const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center justify-center py-16 md:py-24 px-6 overflow-hidden text-center">
-      <div className="relative mb-14 md:mb-16 flex items-center justify-center scale-90 md:scale-100">
-        <div className="absolute w-44 h-44 rounded-full border border-slate-200/60 dark:border-slate-700/40 animate-pulse" />
-        <div className="absolute w-32 h-32 rounded-full border border-slate-300/40 dark:border-slate-600/25" />
-        <div className="relative z-10 w-20 h-20 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-200/80 dark:border-slate-700/50 shadow-lg transition-all duration-300">
-          <History size={36} className="text-slate-500 dark:text-slate-400" strokeWidth={1.5} />
+    <div className="asset-group-stac">
+      <div className="asset-badge-wrapper">
+        <div className="main-token-icon">
+          <img src={tokenSrc} alt={tokenSymbol || 'token'} />
+        </div>
+        <div className="chain-badge-overlay">
+          <img src={chainSrc} alt={chainName || 'chain'} />
         </div>
       </div>
-      <div className="max-w-[280px] md:max-w-md mx-auto">
-        <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base font-semibold tracking-tight leading-relaxed transition-colors duration-300">
-          {t('This account has no recent activity...')}
-        </p>
+      <div className="asset-details-stac">
+        <div className="asset-header-row">
+          <span className="asset-name-stac">{fullName}</span>
+        </div>
+        {formattedAmount && (
+          <span className="asset-amount-stac">
+            <strong>{formattedAmount}</strong> {tokenSymbol}
+          </span>
+        )}
       </div>
     </div>
   );
+});
+
+StacAssetIdentity.displayName = 'StacAssetIdentity';
+
+// =============================================================================
+// DATA HELPERS
+// =============================================================================
+
+const getTokenName = (symbol) => {
+  if (!symbol) return 'Unknown Token';
+  const s = String(symbol).toUpperCase();
+  if (s.includes('USDC')) return 'USD Coin';
+  if (s.includes('EURC')) return 'Euro Coin';
+  if (s.includes('STC') || s.includes('STAC')) return 'Stac Token';
+  if (s.includes('ETH')) return 'Ethereum';
+  return s;
 };
 
-// Loading skeleton for the summary stat cards (shown while data is fetching)
-const SkeletonCard = () => (
-  <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-3.5 min-w-[170px]">
-    <div className="skeleton w-20 h-2.5 mb-3 rounded-full opacity-50" />
-    <div className="skeleton w-28 h-7 mb-2 rounded-lg" />
-    <div className="skeleton w-24 h-2.5 rounded-full opacity-30" />
-  </div>
-);
+const getChainIcon = (chainName) => {
+  if (!chainName) return '/icons/eth.png';
+  const name = String(chainName).toLowerCase();
+  if (name.includes('arc') || name.includes('5042002') || name.includes('4cef52')) return '/icons/arc.png';
+  if (name.includes('base') || name.includes('84532') || name.includes('8453')) return '/icons/base.png';
+  if (name.includes('eth') || name.includes('sepolia') || name.includes('11155111')) return '/icons/eth.png';
+  return '/icons/eth.png';
+};
 
-// Loading skeleton for desktop table rows
-const SkeletonRow = () => (
-  <tr className="border-b border-slate-200/40 dark:border-white/[0.05]">
-    <td className="p-[1.25rem]"><div className="skeleton w-24 h-5 rounded-lg" /></td>
-    <td className="p-[1.25rem]"><div className="skeleton w-32 h-5 rounded-lg" /></td>
-    <td className="p-[1.25rem]"><div className="skeleton w-32 h-5 rounded-lg" /></td>
-    <td className="p-[1.25rem]"><div className="skeleton w-20 h-5 rounded-lg" /></td>
-    <td className="p-[1.25rem]"><div className="skeleton w-16 h-4 rounded-lg" /></td>
-    <td className="p-[1.25rem]">
-      <div className="flex items-center gap-2">
-        <div className="skeleton w-4 h-4 rounded-full opacity-60" />
-        <div className="skeleton w-12 h-4 rounded-md opacity-40" />
-      </div>
-    </td>
-    <td className="p-[1.25rem]"><div className="skeleton w-40 h-4 rounded-lg" /></td>
-  </tr>
-);
+const getTokenLogo = (symbol) => {
+  if (!symbol) return '/icons/stc.png';
+  const s = String(symbol).toUpperCase();
+  if (s.includes('USDC')) return '/icons/usdc.png';
+  if (s.includes('EURC')) return '/icons/eurc.png';
+  if (s.includes('STC') || s.includes('STAC')) return '/icons/stc.png';
+  if (s.includes('ETH')) return '/icons/eth.png';
+  return '/icons/stc.png';
+};
 
-// Loading skeleton for mobile transaction cards
-const SkeletonMobileCard = () => (
-  <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-4 space-y-3.5">
-    <div className="flex justify-between items-start">
-      <div className="space-y-2">
-        <div className="skeleton w-20 h-4 rounded-lg" />
-        <div className="skeleton w-24 h-3.5 rounded-full opacity-40" />
-      </div>
-      <div className="skeleton w-16 h-3 rounded-lg opacity-40" />
-    </div>
-    <div className="flex justify-center">
-      <div className="skeleton w-28 h-7 rounded-full opacity-60" />
-    </div>
-    <div className="flex gap-3 justify-between items-center py-1">
-      <div className="flex-1">
-        <div className="skeleton w-full h-8 rounded-xl opacity-50" />
-      </div>
-      <div className="skeleton w-6 h-[2px] rounded-full opacity-20" />
-      <div className="flex-1">
-        <div className="skeleton w-full h-8 rounded-xl opacity-50" />
-      </div>
-    </div>
-    <div className="pt-2 border-t border-slate-100 dark:border-slate-800/50">
-      <div className="skeleton w-full h-9 rounded-lg opacity-30" />
-    </div>
-  </div>
-);
+const getSwapFromToken = (tx) => {
+  if (!tx) return '';
+  if (tx.type !== 'Swap') return tx.fromToken || (tx.from && tx.from.includes(' ') ? tx.from.split(' ').pop() : (tx.from || ''));
+  const fromStr = String(tx.from || '').trim();
+  return fromStr.includes(' ') ? fromStr.split(' ').pop() : fromStr;
+};
 
 // =============================================================================
-// TRANSACTIONS COMPONENT
+// MAIN ARCHITECTURE - LOCAL-ONLY "SITE INTEGRATED" LEDGER
 // =============================================================================
+
 const Transactions = () => {
   const { t } = useTranslation();
-  const { isConnected, walletAddress, chainId } = useWallet();
-
-  // Track which hash is currently showing the "Copied!" tooltip
-  const [copiedHash, setCopiedHash] = useState(null);
-  const prevWalletRef = useRef(null); // Tracks previous wallet address to detect account switches
-
-  // Live blockchain transactions — auto-refreshes every 30s
-  // blockchainTransactions = user's own txs | globalTransactions = all dApp txs
-  const { transactions: blockchainTransactions, globalTransactions, loading: transactionsLoading } = useTransactionHistory();
-
-  // Transactions saved locally in the browser's IndexedDB (our dApp-written records)
-  const [myTransactions, setMyTransactions] = useState([]);
-  // 'my' = only the connected wallet's txs | 'all' = every dApp transaction
-  const [activeActivityTab, setActiveActivityTab] = useState('my');
-
-  // Auto-switch to "All" tab when wallet disconnects (can't show "My" with no wallet)
-  useEffect(() => {
-    if (!isConnected && activeActivityTab === 'my') setActiveActivityTab('all');
-  }, [isConnected, activeActivityTab]);
-
-  // ─── Filter state ────────────────────────────────────────────────────────
+  const { isConnected, walletAddress, chainId: activeChainId } = useWallet();
+  const [tooltipHash, setTooltipHash] = useState(null);
+  
+  // USE THE UNIFIED HOOK FOR REAL-TIME SYNC
+  const { transactions: hookTransactions, globalTransactions, loading: hookLoading, refetch } = useTransactionHistory();
+  
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'success' | 'pending' | 'failed'
-  const [dateRangeFilter, setDateRangeFilter] = useState('all'); // 'all' | '24h' | '7d' | '30d'
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateRangeFilter, setDateRangeFilter] = useState('all');
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
+  const [hoveredHash, setHoveredHash] = useState(null);
 
-  // Total dApp transaction count (shown in the "All Transactions" sub-heading)
-  const { transactionCount, loading: txCountLoading } = useDappTransactionCount();
-
-  // Volume hooks: pass the wallet address when on "My Activity" to scope USD volumes per wallet
-  const walletFilterForVolume = activeActivityTab === 'my' && walletAddress ? walletAddress : null;
-  const { totalVolume: swapVolume, loading: swapVolumeLoading } = useTotalVolume(walletFilterForVolume);
-  const { totalVolume: bridgeVolume, loading: bridgeVolumeLoading } = useTotalBridgeVolume(walletFilterForVolume);
-
-  // Count of successful swap transactions (used in the "X swaps completed" card stat)
-  const swapCount = useMemo(() => {
-    const txs = activeActivityTab === 'my' ? myTransactions : blockchainTransactions;
-    if (!txs || !Array.isArray(txs)) return 0;
-    return txs.filter(tx => tx.type === 'Swap' && tx.status === 'success').length;
-  }, [activeActivityTab, myTransactions, blockchainTransactions]);
-
-  // ─── Session storage helpers ─────────────────────────────────────────────
-  // IndexedDB can occasionally be wiped by the browser (e.g. private mode timeout).
-  // We keep a sessionStorage copy as a short-lived fallback so users don't lose
-  // their transaction history within a single browser session.
-
-  // Write a wallet's transactions to sessionStorage
-  const backupToSessionStorage = (address, transactions) => {
-    try {
-      if (address && transactions && transactions.length > 0) {
-        const key = `stac_tx_backup_${address.toLowerCase()}`;
-        sessionStorage.setItem(key, JSON.stringify(transactions));
-      }
-    } catch {
-      // Silently fail
-    }
-  };
-
-  // Read from sessionStorage — returns null if nothing is found
-  const recoverFromSessionStorage = (address) => {
-    try {
-      if (address) {
-        const key = `stac_tx_backup_${address.toLowerCase()}`;
-        const data = sessionStorage.getItem(key);
-        return data ? JSON.parse(data) : null;
-      }
-    } catch {
-      return null;
-    }
-    return null;
-  };
-
-  // ─── Load local transactions when the wallet address changes ────────────
-  // On first load and on every wallet switch: pull ALL transactions from IndexedDB,
-  // then filter them in the UI. We don't store per-wallet siloed data — one shared
-  // store keeps data available for the "All Activity" tab too.
-  useEffect(() => {
-    const loadTransactions = async () => {
-      try {
-        prevWalletRef.current = walletAddress;
-
-        // Load ALL transactions from IndexedDB (shared across wallets for "All Activity")
-        const allSaved = await getItem('myTransactions');
-
-        if (allSaved && Array.isArray(allSaved)) {
-          setMyTransactions(allSaved);
-
-          if (walletAddress) {
-            const walletAddressLower = walletAddress.toLowerCase();
-            const walletOnly = allSaved.filter(tx => tx.address?.toLowerCase() === walletAddressLower);
-            backupToSessionStorage(walletAddress, walletOnly);
-          }
-        } else {
-          // No data in IndexedDB, try sessionStorage recovery if wallet is connected
-          if (walletAddress) {
-            const recovered = recoverFromSessionStorage(walletAddress);
-            if (recovered && recovered.length > 0) {
-              setMyTransactions(recovered);
-              await setItem('myTransactions', recovered);
-            } else {
-              setMyTransactions([]);
-            }
-          } else {
-            setMyTransactions([]);
-          }
-        }
-      } catch (err) {
-        console.error('Error loading transactions:', err);
-        setMyTransactions([]);
-      }
-    };
-
-    loadTransactions();
-  }, [walletAddress]); // Reload when wallet address changes
-
-  // ─── Merge local + blockchain transactions ────────────────────────────────
-  // Strategy:
-  //   1. Local (IndexedDB) transactions win — they have the correct from/to chain labels
-  //      that the user selected, not just raw chain IDs from the blockchain.
-  //   2. Blockchain transactions fill in any gaps (txs the user made outside this dApp).
-  //   3. Adjacent swap legs (Token → USDC → Token) are grouped into a single "Direct Swap" row.
-  // The result is sorted by timestamp (newest first).
-  const mergedTransactions = useMemo(() => {
-    // Basic wallet filter
-    const walletAddressLower = walletAddress?.toLowerCase();
-
-    // 1. Get filtered blockchain transactions (if My Activity, only user's; if All, all of them)
-    // For now, use globalTransactions for All Activity tab
-    const sourceTxs = activeActivityTab === 'my' ? blockchainTransactions : (globalTransactions || []);
-    const filteredBlockchain = sourceTxs.filter(tx => {
-      if (activeActivityTab === 'my') {
-        if (!walletAddressLower) return false;
-        if (tx.from && tx.from.toLowerCase() === walletAddressLower) return true;
-        if (tx.to && tx.to.toLowerCase() === walletAddressLower) return true;
-        if (tx.address && tx.address.toLowerCase() === walletAddressLower) return true;
-        return false;
-      }
-      return true; // Show all for "All Activity"
-    });
-
-    // 2. Load all local transactions from IndexedDB state (filtered by tab)
-    const filteredLocal = myTransactions.filter(tx => {
-      // Basic cleanup for blockchain-fetched bridge transactions
-      if (tx.type === 'Bridge' && tx.isOutgoing !== undefined) {
-        return false;
-      }
-
-      if (activeActivityTab === 'my') {
-        if (!walletAddressLower) return false;
-        return tx.address?.toLowerCase() === walletAddressLower;
-      }
-      return true; // Show all for "All Activity"
-    });
-
-    // Build set of local transaction hashes for deduplication
-    const localSet = new Set(filteredLocal.map(tx => tx.hash));
-
-    // 3. Add blockchain transactions that don't exist in local storage
-    const blockchainOnly = filteredBlockchain.filter(tx => {
-      // Deduplicate against local storage
-      if (localSet.has(tx.hash)) return false;
-
-      // We allow Bridge/Transfer transactions from the blockchain as a fallback
-      // useTransactionHistory already attempts to format them correctly
-      return true;
-    });
-
-    // Combine: local first (accurate user data), then blockchain-only
-    const merged = [...filteredLocal, ...blockchainOnly].sort((a, b) => {
-      const timeA = a.timestamp || 0;
-      const timeB = b.timestamp || 0;
-      return timeB - timeA;
-    });
-
-    // 4. Group adjacent swap legs into a single transaction (TokenA -> USDC -> TokenB)
-    const grouped = [];
-    const processedHashes = new Set();
-
-    for (let i = 0; i < merged.length; i++) {
-      const tx = merged[i];
-      if (processedHashes.has(tx.hash)) continue;
-
-      // Try to merge if it's a Swap involving USDC
-      const fromTokenStr = getSwapFromToken(tx);
-      const toTokenStr = getSwapToToken(tx);
-
-      if (tx.type === 'Swap' && (fromTokenStr === 'USDC' || toTokenStr === 'USDC')) {
-        // Find partner leg (within 60s window for testnet)
-        const partnerIndex = merged.findIndex((other, idx) => {
-          if (idx <= i || processedHashes.has(other.hash)) return false;
-          if (other.type !== 'Swap') return false;
-
-          const timeDiff = Math.abs((tx.timestamp || 0) - (other.timestamp || 0));
-          if (timeDiff > 60000) return false;
-
-          const otherFromToken = getSwapFromToken(other);
-          const otherToToken = getSwapToToken(other);
-
-          // Pattern: User sent TokenA, received USDC (Leg 1) AND User sent USDC, received TokenB (Leg 2)
-          const isMatchingPair = (
-            (fromTokenStr !== 'USDC' && toTokenStr === 'USDC' && otherFromToken === 'USDC' && otherToToken !== 'USDC') ||
-            (fromTokenStr === 'USDC' && toTokenStr !== 'USDC' && otherFromToken !== 'USDC' && otherToToken === 'USDC')
-          );
-
-          return isMatchingPair;
-        });
-
-        if (partnerIndex !== -1) {
-          const partner = merged[partnerIndex];
-          processedHashes.add(partner.hash);
-
-          // Logic: 
-          // Leg 1 is Token -> USDC
-          // Leg 2 is USDC -> Token
-          const leg1 = toTokenStr === 'USDC' ? tx : partner;
-          const leg2 = fromTokenStr === 'USDC' ? tx : partner;
-
-          const tokenA = getSwapFromToken(leg1);
-          const tokenB = getSwapToToken(leg2);
-          const amountA = getSwapAmount(leg1);
-          const amountB = getSwapToAmount(leg2) || getSwapAmount(leg2);
-
-          // Merge into a "Direct" swap row
-          grouped.push({
-            ...leg2, // Use final hash
-            from: `${amountA} ${tokenA}`,
-            to: `${amountB} ${tokenB}`,
-            amount: `${amountA} ${tokenA} → ${amountB} ${tokenB}`,
-            id: `merged-${leg1.hash}-${leg2.hash}`,
-          });
-          continue;
-        }
-      }
-      grouped.push(tx);
-    }
-
-    return grouped;
-  }, [blockchainTransactions, globalTransactions, myTransactions, walletAddress, activeActivityTab]);
-
-  // ─── Apply UI filters ──────────────────────────────────────────────────────
-  // Runs after merge — filters by free-text search, status badge, and date range.
-  // This does NOT modify what's stored in IndexedDB; it only changes what's displayed.
-  const filteredTransactions = useMemo(() => {
-    let filtered = [...mergedTransactions];
-
-    // Search filter - match hash, tokens, type, amount, or wallet address
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(tx => {
-        // Match transaction hash
-        if (tx.hash && tx.hash.toLowerCase().includes(query)) return true;
-        // Match from field (token or chain)
-        if (tx.from && String(tx.from).toLowerCase().includes(query)) return true;
-        // Match to field (token or chain)
-        if (tx.to && String(tx.to).toLowerCase().includes(query)) return true;
-        // Match type
-        if (tx.type && tx.type.toLowerCase().includes(query)) return true;
-        // Match amount
-        if (tx.amount && String(tx.amount).toLowerCase().includes(query)) return true;
-        // Match wallet address (useful for All Activity tab)
-        if (tx.address && tx.address.toLowerCase().includes(query)) return true;
-        return false;
-      });
-    }
-
-    // Status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(tx => tx.status === statusFilter);
-    }
-
-    // Date range filter
-    if (dateRangeFilter !== 'all') {
-      const now = Date.now();
-      let cutoff = 0;
-
-      switch (dateRangeFilter) {
-        case '24h':
-          cutoff = now - (24 * 60 * 60 * 1000); // 24 hours
-          break;
-        case '7d':
-          cutoff = now - (7 * 24 * 60 * 60 * 1000); // 7 days
-          break;
-        case '30d':
-          cutoff = now - (30 * 24 * 60 * 60 * 1000); // 30 days
-          break;
-        default:
-          cutoff = 0;
-      }
-
-      if (cutoff > 0) {
-        filtered = filtered.filter(tx => {
-          const txTime = tx.timestamp || 0;
-          return txTime >= cutoff;
-        });
-      }
-    }
-
-    return filtered;
-  }, [mergedTransactions, searchQuery, statusFilter, dateRangeFilter]);
-
-  // ─── Pagination ────────────────────────────────────────────────────────────
-  // 10 rows per page. Resets to page 1 whenever filters or wallet change.
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 10;
 
-  // Calculate pagination based on filtered transactions
-  const totalPages = Math.ceil(filteredTransactions.length / transactionsPerPage);
-  const startIndex = (currentPage - 1) * transactionsPerPage;
-  const endIndex = startIndex + transactionsPerPage;
-  const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
-
-  // Reset to page 1 when wallet or filters change
+  // Sync session event listeners
   useEffect(() => {
-    setCurrentPage(1);
-  }, [walletAddress, searchQuery, statusFilter, dateRangeFilter]);
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (showStatusDropdown || showDateDropdown) {
-        const target = event.target;
-        // Specifically allow hamburger menu button to trigger its own events without dropdown interference
-        if (!target.closest('.relative') || target.closest('button[aria-label]')) {
-          setShowStatusDropdown(false);
-          setShowDateDropdown(false);
-        }
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [showStatusDropdown, showDateDropdown]);
-
-  // Note: We don't save filtered transactions back to IndexedDB
-  // The original transactions with all wallet addresses are kept in storage
-  // We only filter when displaying. This preserves data for all wallets.
-
-  // ─── Live update listener ──────────────────────────────────────────────────
-  // When Swap.jsx or Bridge.jsx successfully completes a transaction, they fire
-  // a custom browser event. We listen here and reload IndexedDB so the new
-  // transaction appears immediately without a full page refresh.
-  useEffect(() => {
-    const handleTransactionSaved = async () => {
-      console.log('🔄 Transaction saved event received, reloading all local activity...');
-      try {
-        const saved = await getItem('myTransactions');
-        if (saved && Array.isArray(saved)) {
-          setMyTransactions(saved);
-        }
-      } catch (err) {
-        console.error('Error reloading transactions:', err);
-      }
-    };
-
-    window.addEventListener('bridgeTransactionSaved', handleTransactionSaved);
-    window.addEventListener('swapTransactionSaved', handleTransactionSaved);
-    window.addEventListener('lpTransactionSaved', handleTransactionSaved);
-
+    const handleSync = () => { if (typeof refetch === 'function') refetch(); };
+    window.addEventListener('bridgeTransactionSaved', handleSync);
+    window.addEventListener('swapTransactionSaved', handleSync);
+    window.addEventListener('lpTransactionSaved', handleSync);
     return () => {
-      window.removeEventListener('bridgeTransactionSaved', handleTransactionSaved);
-      window.removeEventListener('swapTransactionSaved', handleTransactionSaved);
-      window.removeEventListener('lpTransactionSaved', handleTransactionSaved);
+      window.removeEventListener('bridgeTransactionSaved', handleSync);
+      window.removeEventListener('swapTransactionSaved', handleSync);
+      window.removeEventListener('lpTransactionSaved', handleSync);
     };
-  }, []); // Reload on event
+  }, [refetch]);
 
-  // Copy a transaction hash to the clipboard and show a brief "Copied!" tooltip
-  const handleCopyHash = async (hash) => {
-    const success = await copyToClipboard(hash);
-    if (success) {
-      setCopiedHash(hash);
-      setTimeout(() => {
-        setCopiedHash(null);
-      }, 2500);
-    }
-  };
-  // =============================================================================
-  // TRANSACTION DATA FORMATTERS
-  // Transactions come in inconsistent formats from the blockchain and IndexedDB.
-  // These helpers normalise them into clean, display-ready strings.
-  // =============================================================================
+  // COMBINE AND DEDUPLICATE WITH MAXIMUM SAFETY
+  const localTransactions = useMemo(() => {
+    try {
+      const personal = Array.isArray(hookTransactions) ? hookTransactions : [];
+      const globalList = Array.isArray(globalTransactions) ? globalTransactions : [];
+      const combined = [...personal, ...globalList];
+      
+      const seen = new Set();
+      const result = [];
+      
+      for (const tx of combined) {
+        if (!tx) continue;
+        const hash = tx.hash || tx.id;
+        if (!hash || seen.has(hash)) continue;
+        
+        // ONLY SHOW DAPP TRANSACTIONS: check flag or type
+        if (!tx.isStacTx && tx.type !== 'Swap' && tx.type !== 'Bridge') continue;
 
-  // Extract only the "from" token symbol (e.g. "1.0 USDC" → "USDC")
-  const getSwapFromToken = (tx) => {
-    if (tx.type !== 'Swap') return tx.from || '';
-    if (!tx.from) return '';
-
-    const fromStr = String(tx.from).trim();
-
-    // If it's already just a token symbol (no spaces, no numbers), return it
-    if (!fromStr.includes(' ') && !/^\d/.test(fromStr)) return fromStr;
-
-    // Extract token symbol from formats like "1.0 USDC", "1 EURC", etc.
-    // Split by space and get the last part (token symbol)
-    const parts = fromStr.split(/\s+/).filter(p => p.length > 0);
-    if (parts.length > 1) {
-      // Return the last part which should be the token symbol
-      return parts[parts.length - 1];
-    }
-
-    // If only one part, check if it's a token (contains letters) or a number
-    if (/[A-Za-z]/.test(parts[0])) {
-      return parts[0];
-    }
-
-    return fromStr;
-  };
-
-  // Extract only the "to" token symbol (e.g. "1.096700 USDC" → "USDC")
-  const getSwapToToken = (tx) => {
-    if (tx.type !== 'Swap') return tx.to || '';
-    if (!tx.to) return '';
-
-    const toStr = String(tx.to).trim();
-
-    // If it's already just a token symbol (no spaces, no numbers at start), return it
-    if (!toStr.includes(' ') && !/^\d/.test(toStr)) return toStr;
-
-    // Extract token symbol from formats like "1.096700 USDC", "1.1 EURC", etc.
-    // Split by space and get the last part (token symbol)
-    const parts = toStr.split(/\s+/).filter(p => p && p.length > 0);
-    if (parts.length > 1) {
-      // Return the last part which should be the token symbol
-      const token = parts[parts.length - 1];
-      return token || toStr;
-    }
-
-    // If only one part, check if it's a token (contains letters) or a number
-    if (parts.length > 0 && /[A-Za-z]/.test(parts[0])) {
-      return parts[0];
-    }
-
-    return toStr;
-  };
-
-  // Extract the numeric amount from the "from" side of a swap (rounded to 2dp)
-  const getSwapAmount = (tx) => {
-    if (tx.type !== 'Swap') return tx.amount || '';
-    if (!tx.amount) return '';
-
-    const amountStr = String(tx.amount).trim();
-
-    // If it's already just a number (no arrow, no letters), parse and round
-    const cleanNumber = parseFloat(amountStr);
-    if (!isNaN(cleanNumber) && !amountStr.includes('→') && !/[a-zA-Z]/.test(amountStr)) {
-      return cleanNumber.toFixed(2);
-    }
-
-    // If it contains an arrow, extract the first number before the arrow
-    if (amountStr.includes('→')) {
-      // Format: "1 EURC → 1.096700 USDC" - extract first number
-      const parts = amountStr.split('→');
-      const firstPart = parts[0].trim();
-      const numberMatch = firstPart.match(/^([\d.]+)/);
-      if (numberMatch && numberMatch[1]) {
-        return parseFloat(numberMatch[1]).toFixed(2);
+        seen.add(hash);
+        result.push(tx);
       }
+      
+      return result.sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
+    } catch (e) {
+      console.error("Error memoizing transactions:", e);
+      return [];
     }
+  }, [hookTransactions, globalTransactions]);
 
-    // Otherwise, extract the first number from the string
-    // Format: "1 EURC" or "1.096700 USDC" - extract number
-    const numberMatch = amountStr.match(/^([\d.]+)/);
-    if (numberMatch && numberMatch[1]) {
-      return parseFloat(numberMatch[1]).toFixed(2);
-    }
+  const filteredTxs = useMemo(() => {
+    try {
+      let filtered = [...localTransactions];
 
-    return amountStr;
-  };
-
-  // Extract the numeric amount from the "to" side of a swap (rounded to 2dp)
-  const getSwapToAmount = (tx) => {
-    if (tx.type !== 'Swap') return '';
-
-    let rawAmount = '';
-
-    // First try to extract from tx.to
-    if (tx.to) {
-      const toStr = String(tx.to).trim();
-      const numberMatch = toStr.match(/^([\d.]+)/);
-      if (numberMatch && numberMatch[1]) {
-        rawAmount = numberMatch[1];
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter(tx => (tx?.status || 'success').toLowerCase() === statusFilter);
       }
-    }
 
-    // If tx.amount contains arrow format, extract the second number
-    if (!rawAmount && tx.amount && String(tx.amount).includes('→')) {
-      const amountStr = String(tx.amount).trim();
-      const parts = amountStr.split('→');
-      if (parts.length > 1) {
-        const secondPart = parts[1].trim();
-        const numberMatch = secondPart.match(/^([\d.]+)/);
-        if (numberMatch && numberMatch[1]) {
-          rawAmount = numberMatch[1];
-        }
+      const q = searchQuery?.toLowerCase().trim() || '';
+      if (q) {
+        filtered = filtered.filter(tx => 
+          (tx?.hash?.toLowerCase().includes(q)) ||
+          (getTokenName(getSwapFromToken(tx)).toLowerCase().includes(q)) ||
+          (tx?.from?.toLowerCase().includes(q)) ||
+          (tx?.to?.toLowerCase().includes(q))
+        );
       }
+
+      if (dateRangeFilter !== 'all') {
+        const now = Date.now();
+        const oneDay = 24 * 60 * 60 * 1000;
+        const sevenDays = 7 * oneDay;
+        const thirtyDays = 30 * oneDay;
+
+        filtered = filtered.filter(tx => {
+          if (!tx?.timestamp) return false;
+          const ts = new Date(tx.timestamp).getTime();
+          if (isNaN(ts)) return false;
+
+          const age = now - ts;
+
+          if (dateRangeFilter === '24h') {
+            return age >= 0 && age <= oneDay;
+          }
+          if (dateRangeFilter === '7d') {
+            // "Not 7 days old" implies it MUST be at least 24h old but within 7d
+            return age > oneDay && age <= sevenDays;
+          }
+          if (dateRangeFilter === '30d') {
+            // Bucket for older transactions
+            return age > sevenDays && age <= thirtyDays;
+          }
+          return true;
+        });
+      }
+
+      return filtered;
+    } catch (e) {
+      console.error("Error filtering transactions:", e);
+      return [];
     }
+  }, [localTransactions, searchQuery, statusFilter, dateRangeFilter]);
 
-    if (!rawAmount) return '';
+  const paginatedTxs = useMemo(() => {
+    const start = (currentPage - 1) * transactionsPerPage;
+    return filteredTxs.slice(start, start + transactionsPerPage);
+  }, [filteredTxs, currentPage]);
 
-    // Round to 2 decimal places for clean display
-    const num = parseFloat(rawAmount);
-    return num.toFixed(2);
+  const totalPages = Math.ceil(filteredTxs.length / transactionsPerPage);
+
+  const handleCopyText = async (text, hashKey) => {
+    if (await copyToClipboard(text)) {
+      setTooltipHash(hashKey);
+      setTimeout(() => setTooltipHash(null), 1500);
+    }
   };
 
   return (
-    <div className="transactions-container font-['Inter','Satoshi','General_Sans',sans-serif]">
-      {/* Header Section */}
-      <div className="transactions-header">
+    <div className="transactions-container">
+      <header className="transactions-header">
         <div className="transactions-title-section">
-          <div className="flex flex-col mb-4">
-            <h1 className="!mb-0 text-slate-500 dark:text-slate-500">{t('Transactions')}</h1>
-            <span className="text-sm font-medium text-black dark:text-white mt-1">
-              {activeActivityTab === 'all'
-                ? (txCountLoading ? '...' : `${transactionCount?.toLocaleString() || '0'} ${t('total transactions')}`)
-                : (isConnected ? `${myTransactions?.length.toLocaleString()} ${t('total transactions')}` : `0 ${t('total transactions')}`)
-              }
-            </span>
-          </div>
-
-          {/* Tab Selector */}
-          <div className="activity-tabs">
-            {['my', 'all']
-              .filter(tab => tab === 'all' || isConnected)
-              .map((tab) => (
-                <button
-                  key={tab}
-                  className={`activity-tab ${activeActivityTab === tab ? 'active' : ''}`}
-                  onClick={() => setActiveActivityTab(tab)}
-                >
-                  {activeActivityTab === tab && (
-                    <motion.div
-                      layoutId="activeTabPill"
-                      className="absolute inset-0 bg-black dark:bg-white rounded-[10px] shadow-sm"
-                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                  <span className={`relative z-10 ${activeActivityTab === tab ? 'text-white dark:text-black' : 'text-slate-500 dark:text-slate-400'}`}>
-                    {tab === 'my' ? t('My Transactions') : t('All Transactions')}
-                  </span>
-                </button>
-              ))}
+          <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>{t('Transactions')}</motion.h1>
+          <div className="flex items-center gap-3">
+             <motion.p className="transactions-subtitle">
+              {`${filteredTxs.length} ${t('transactions')}`}
+            </motion.p>
           </div>
         </div>
+      </header>
 
-        {/* Stats Cards Row - Only visible on My Activity tab */}
-        {activeActivityTab === 'my' && (
-          <div className="stats-grid">
-            {swapVolumeLoading ? <SkeletonCard /> : (
-              <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-3.5 min-w-[170px] shadow-sm hover:border-black dark:border-white transition-all duration-300 group">
-                <svg className="absolute -right-2 -bottom-2 w-20 h-12 opacity-[0.08] dark:opacity-[0.15] transition-opacity group-hover:opacity-20" viewBox="0 0 60 30" fill="none">
-                  <path d="M0 25 Q10 20 15 22 T30 15 T45 18 T60 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" className="text-black dark:text-white" />
-                </svg>
-
-                <div className="relative z-10">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-black dark:text-white dark:text-black dark:text-white opacity-80">{activeActivityTab === 'my' ? t('My Swap Volume') : t('Total Swap Volume')}</span>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-xl font-bold text-slate-800 dark:text-white tabular-nums">
-                      {`$${(activeActivityTab === 'my' && !isConnected) ? '0' : swapVolume.toLocaleString()}`}
-                    </span>
-                    <TrendingUp size={14} className="text-slate-500" />
-                  </div>
-                  <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-500/80 mt-1 flex items-center gap-1">
-                    {swapCount} {swapCount === 1 ? t('swap completed') : t('swaps completed')}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {bridgeVolumeLoading ? <SkeletonCard /> : (
-              <div className="relative overflow-hidden rounded-2xl bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/10 p-3.5 min-w-[170px] shadow-sm hover:border-black dark:border-white transition-all duration-300 group">
-                <div className="absolute -right-2 -top-1 opacity-[0.06] dark:opacity-[0.1] group-hover:opacity-[0.12] transition-opacity rotate-12">
-                  <Layers className="w-16 h-16 text-black dark:text-white" strokeWidth={1} />
-                </div>
-
-                <div className="relative z-10">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-black dark:text-white dark:text-black dark:text-white opacity-80">{activeActivityTab === 'my' ? t('My Bridge Volume') : t('Total Bridge Volume')}</span>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-xl font-bold text-slate-800 dark:text-white tabular-nums">
-                      {`$${(activeActivityTab === 'my' && !isConnected) ? '0' : bridgeVolume.toLocaleString()}`}
-                    </span>
-                    <Layers size={14} className="text-black dark:text-white" strokeWidth={2.5} />
-                  </div>
-                  <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-1">
-                    {t('Across 3 networks')}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Search and Filters Bar */}
-      <div className="flex flex-col md:flex-row gap-3 mb-6">
-        {/* Search Input */}
-        <div className="flex-1 relative">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+      {/* SYNCED DASHBOARD TOOLBAR */}
+      <div className="filter-bar">
+        <div className="search-input-wrapper">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
+            placeholder={t('Search by hash, token, or wallet ...')}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={activeActivityTab === 'all' ? t('Search by hash, token, or wallet address...') : t('Search by transaction hash or token symbol...')}
-            className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0d0d0d] text-black dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-black dark:ring-white focus:border-black dark:border-white transition-all text-sm"
+            onChange={(e) => {setSearchQuery(e.target.value); setCurrentPage(1);}}
           />
         </div>
 
-        {/* Filter Buttons */}
-        <div className="flex gap-2 flex-wrap">
-          {/* Status Dropdown */}
+        <div className="filter-group">
           <div className="relative">
-            <button
-              onClick={() => {
-                setShowStatusDropdown(!showStatusDropdown);
-                setShowDateDropdown(false);
-              }}
-              className="flex items-center justify-between gap-2 px-4 py-3 min-w-[145px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0d0d0d] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm font-medium"
-            >
-              <div className="flex items-center gap-2">
-                {statusFilter === 'success' && (
-                  <div className="flex items-center justify-center w-4 h-4 rounded-full bg-slate-500 shadow-sm mr-0.5">
-                    <Check className="text-white" size={10} strokeWidth={4} />
-                  </div>
-                )}
-                {statusFilter === 'pending' && (
-                  <div className="flex items-center justify-center w-5 h-5 mr-0.5">
-                    <Clock className="text-amber-500" size={16} strokeWidth={3} />
-                  </div>
-                )}
-                {statusFilter === 'failed' && (
-                  <div className="flex items-center justify-center w-5 h-5 mr-0.5">
-                    <X className="text-red-500" size={16} strokeWidth={3} />
-                  </div>
-                )}
-                {statusFilter === 'all' && <SlidersHorizontal size={16} className="mr-0.5" />}
-                <span>
-                  {statusFilter === 'all' ? t('All Status') : statusFilter === 'success' ? t('Success') : statusFilter === 'pending' ? t('Pending') : t('Failed')}
-                </span>
-              </div>
-              <ChevronDown size={14} className={`transition-transform ${showStatusDropdown ? 'rotate-180' : ''} opacity-50 flex-shrink-0`} />
+            <button onClick={() => { setShowStatusDropdown(!showStatusDropdown); setShowDateDropdown(false); }} className={`filter-dropdown-btn ${showStatusDropdown || statusFilter !== 'all' ? 'active' : ''}`}>
+              <span className="flex-1 text-left">{statusFilter === 'all' ? t('All Status') : t(statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1))}</span>
+              <ChevronDown size={14} className={showStatusDropdown ? 'rotate-180' : ''} strokeWidth={3.5} />
             </button>
             <AnimatePresence>
               {showStatusDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute top-full mt-2 right-0 md:left-auto left-0 w-full md:w-44 bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-xl shadow-xl z-50 overflow-hidden backdrop-blur-xl"
-                >
-                  {[
-                    { value: 'all', label: t('All Status'), icon: null },
-                    {
-                      value: 'success', label: t('Success'), icon: (
-                        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-slate-500 shadow-sm">
-                          <Check className="text-white" size={10} strokeWidth={4} />
-                        </div>
-                      )
-                    },
-                    {
-                      value: 'pending', label: t('Pending'), icon: (
-                        <div className="flex items-center justify-center w-5 h-5">
-                          <Clock className="text-amber-500" size={16} strokeWidth={3} />
-                        </div>
-                      )
-                    },
-                    {
-                      value: 'failed', label: t('Failed'), icon: (
-                        <div className="flex items-center justify-center w-5 h-5">
-                          <X className="text-red-500" size={16} strokeWidth={3} />
-                        </div>
-                      )
-                    }
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setStatusFilter(option.value);
-                        setShowStatusDropdown(false);
-                      }}
-                      className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors flex items-center gap-3 ${statusFilter === option.value
-                        ? 'text-black dark:text-white dark:text-black dark:text-white'
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-gray-800/50'
-                        }`}
-                    >
-                      {option.icon}
-                      {option.label}
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="dropdown-menu-vanguard">
+                  {['all', 'success', 'pending', 'failed'].map(s => (
+                    <button key={s} onClick={() => { setStatusFilter(s); setShowStatusDropdown(false); setCurrentPage(1); }} className={`dropdown-item-vanguard ${statusFilter === s ? 'selected' : ''}`}>
+                      {s === 'all' ? t('All Status') : t(s.charAt(0).toUpperCase() + s.slice(1))}
                     </button>
                   ))}
                 </motion.div>
@@ -848,51 +280,17 @@ const Transactions = () => {
             </AnimatePresence>
           </div>
 
-          {/* Date Range Dropdown */}
           <div className="relative">
-            <button
-              onClick={() => {
-                setShowDateDropdown(!showDateDropdown);
-                setShowStatusDropdown(false);
-              }}
-              className={`flex items-center justify-between gap-2 px-4 py-3 min-w-[145px] rounded-xl border transition-colors text-sm font-medium ${dateRangeFilter !== 'all'
-                ? 'bg-slate-50 dark:bg-black dark:bg-black dark:bg-white border-slate-200 dark:border-slate-700 dark:border-black dark:border-white text-black dark:text-white dark:text-black dark:text-white'
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0d0d0d] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-            >
-              <div className="flex items-center gap-2">
-                <Calendar size={16} />
-                <span>{dateRangeFilter === 'all' ? t('All Time') : dateRangeFilter === '24h' ? t('Last 24h') : dateRangeFilter === '7d' ? t('Last 7 Days') : t('Last 30 Days')}</span>
-              </div>
-              <ChevronDown size={14} className={`transition-transform ${showDateDropdown ? 'rotate-180' : ''} opacity-50 flex-shrink-0`} />
+            <button onClick={() => { setShowDateDropdown(!showDateDropdown); setShowStatusDropdown(false); }} className={`filter-dropdown-btn ${showDateDropdown || dateRangeFilter !== 'all' ? 'active' : ''}`}>
+              <span className="flex-1 text-left">{dateRangeFilter === 'all' ? t('All Time') : t(dateRangeFilter.toUpperCase())}</span>
+              <ChevronDown size={14} className={showDateDropdown ? 'rotate-180' : ''} strokeWidth={3.5} />
             </button>
             <AnimatePresence>
               {showDateDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute top-full mt-2 right-0 md:left-auto left-0 w-full md:w-40 bg-white dark:bg-black border border-slate-200 dark:border-gray-800 rounded-xl shadow-xl z-50 overflow-hidden backdrop-blur-xl"
-                >
-                  {[
-                    { value: 'all', label: t('All Time') },
-                    { value: '24h', label: t('Last 24h') },
-                    { value: '7d', label: t('Last 7 Days') },
-                    { value: '30d', label: t('Last 30 Days') }
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setDateRangeFilter(option.value);
-                        setShowDateDropdown(false);
-                      }}
-                      className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors ${dateRangeFilter === option.value
-                        ? 'bg-slate-50 dark:bg-black dark:bg-black dark:bg-white text-black dark:text-white dark:text-black dark:text-white'
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-gray-800/50'
-                        }`}
-                    >
-                      {option.label}
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="dropdown-menu-vanguard">
+                  {['all', '24h', '7d', '30d'].map(d => (
+                    <button key={d} onClick={() => { setDateRangeFilter(d); setShowDateDropdown(false); setCurrentPage(1); }} className={`dropdown-item-vanguard ${dateRangeFilter === d ? 'selected' : ''}`}>
+                      {d === 'all' ? t('All Time') : t(d.toUpperCase())}
                     </button>
                   ))}
                 </motion.div>
@@ -902,362 +300,204 @@ const Transactions = () => {
         </div>
       </div>
 
-      {/* Transactions Table - Premium Desktop View */}
-      <div className="hidden md:block">
-        <div className="transactions-table-container flex flex-col">
-          {transactionsLoading ? (
-            <table className="tx-table">
+      <div className="transactions-table-container">
+        <AnimatePresence mode="wait">
+          {filteredTxs.length > 0 ? (
+            <motion.table key="results-table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="tx-table">
               <thead>
                 <tr>
-                  <th>{t('Type')}</th>
-                  <th>{t('From')}</th>
-                  <th>{t('To')}</th>
-                  <th>{t('Amount')}</th>
-                  <th>{t('Time')}</th>
-                  <th className="w-[92px] min-w-[92px]">{t('Status')}</th>
-                  <th>{t('Transaction Hash')}</th>
+                  <th className="col-type">{t('Type')}</th>
+                  <th className="col-from">{t('From')}</th>
+                  <th className="col-to">{t('To')}</th>
+                  <th className="col-status">{t('Status')}</th>
+                  <th className="col-time">{t('Time')}</th>
+                  <th className="col-hash">{t('Transaction Hash')}</th>
                 </tr>
               </thead>
               <tbody>
-                {[...Array(transactionsPerPage)].map((_, i) => <SkeletonRow key={i} />)}
-              </tbody>
-            </table>
-          ) : filteredTransactions.length > 0 ? (
-            <>
-              <table className="tx-table">
-                <thead>
-                  <tr>
-                    <th>{t('Type')}</th>
-                    <th>{t('From')}</th>
-                    <th>{t('To')}</th>
-                    <th>{t('Amount')}</th>
-                    <th>{t('Time')}</th>
-                    <th className="w-[92px] min-w-[92px]">{t('Status')}</th>
-                    <th>{t('Transaction Hash')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedTransactions.map((tx, index) => (
-                    <tr key={tx.id || tx.hash || `tx-${index}`} className="group">
-                      <td>
-                        <div className="type-cell">
-                          <span className="type-label">{tx.type}</span>
-                          {tx.type === 'Swap' && getNetworkName(tx.chainId) && (
-                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 dark:bg-black dark:bg-white text-black dark:text-white dark:text-black dark:text-white w-fit">
-                              <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3 h-3 object-contain" />
-                              <span className="text-[10px] font-medium uppercase tracking-wider">
-                                {t(getNetworkName(tx.chainId))}
-                              </span>
-                            </div>
-                          )}
-                          {tx.type === 'Bridge' && (
-                            <span className="type-badge bridge">{t('Cross-Chain')}</span>
-                          )}
+                {paginatedTxs.map((tx) => {
+                  if (!tx) return null;
+                  const isBridge = tx.type === 'Bridge';
+                  let fromToken, toToken, fromChain, toChain, fromAmount, toAmount;
+
+                  if (isBridge) {
+                    fromToken = tx.fromToken || 'USDC';
+                    toToken = tx.toToken || 'USDC';
+                    fromChain = tx.from;
+                    toChain = tx.to;
+                    fromAmount = tx.amount;
+                    // Use receiveAmount if saved, otherwise fallback to amount minus estimate fee
+                    if (tx.receiveAmount) {
+                      toAmount = tx.receiveAmount;
+                    } else {
+                      const fee = toChain?.toLowerCase().includes('sepolia') ? 1.25 : 0.20;
+                      toAmount = Math.max(0, (parseFloat(tx.amount) || 0) - fee).toFixed(2);
+                    }
+                  } else {
+                    const fromParts = String(tx.from || '').split(' ');
+                    fromAmount = fromParts[0];
+                    fromToken = fromParts[1] || 'USDC';
+                    
+                    const toParts = String(tx.to || '').split(' ');
+                    toAmount = toParts[0];
+                    toToken = toParts[1] || 'EURC';
+                    
+                    fromChain = 'Arc';
+                    toChain = 'Arc';
+                  }
+
+                  const txStatus = tx.status || 'success';
+
+                  return (
+                    <tr key={tx.hash || tx.id}>
+                      <td className="col-type">
+                        <div className="type-column-stack">
+                          <span className="type-main-txt">{t(tx.type || 'Transaction')}</span>
+                          <span className="type-sub-addr">{formatAddress(tx.address || walletAddress)}</span>
                         </div>
                       </td>
-                      <td>
-                        <div className="entity-cell">
-                          {tx.type === 'Bridge' ? (
-                            (() => {
-                              const chainKey = String(tx.from || '').toLowerCase();
-                              if (chainKey.includes('arc')) return <div className="entity-icon bg-black shadow-md"><img src="/icons/arc.png" alt="Arc" /></div>;
-                              if (chainKey.includes('base')) return <div className="entity-icon bg-white shadow-md"><img src="/icons/base.png" alt="Base" /></div>;
-                              if (chainKey.includes('sepolia')) return <div className="entity-icon bg-white shadow-md"><img src="/icons/eth.png" alt="ETH" /></div>;
-                              return <div className="entity-icon"><img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" /></div>;
-                            })()
-                          ) : (
-                            <div className="entity-icon">
-                              <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/stc.png'} alt="" />
-                            </div>
-                          )}
-                          <span className="entity-name uppercase">{tx.type === 'Bridge' ? t(tx.from) : getSwapFromToken(tx)}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="entity-cell">
-                          {tx.type === 'Bridge' ? (
-                            <div className="entity-icon">
-                              <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" />
-                            </div>
-                          ) : (
-                            <div className="entity-icon">
-                              <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" />
-                            </div>
-                          )}
-                          <span className="entity-name uppercase">{tx.type === 'Bridge' ? t(tx.to) : getSwapToToken(tx)}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="amount-cell tabular-nums">
-                          {tx.type === 'Swap' ? (getSwapToAmount(tx) || getSwapAmount(tx)) : getSwapAmount(tx)}
-                        </div>
-                      </td>
-                      <td>
-                        <span className="text-slate-500 dark:text-slate-400 whitespace-nowrap font-medium">{timeAgo(tx.timestamp)}</span>
-                      </td>
-                      <td className="w-[92px] min-w-[92px]">
-                        <div className="flex items-center gap-2.5 whitespace-nowrap">
-                          {tx.status === 'success' ? (
-                            <div className="flex items-center justify-center w-4 h-4 rounded-full bg-slate-500 shadow-sm flex-shrink-0">
-                              <Check className="text-white" size={10} strokeWidth={4} />
-                            </div>
-                          ) : tx.status === 'failed' ? (
-                            <XCircle className="text-red-500" size={16} />
-                          ) : (
-                            <Clock className="text-amber-500" size={16} />
-                          )}
-                          <span className={`font-normal text-[15px] ${tx.status === 'success' ? 'text-slate-500' : tx.status === 'failed' ? 'text-red-500' : 'text-amber-500'}`}>
-                            {tx.status === 'success' ? t('Success') : tx.status === 'failed' ? t('Failed') : t('Pending')}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => handleCopyHash(tx.hash)}
-                            className="hash-link group/hash flex items-center gap-1.5 transition-colors relative"
-                          >
-                            <span className="opacity-80 group-hover/hash:opacity-100">{formatAddress(tx.hash)}</span>
-                            <Copy size={14} className="opacity-40 group-hover/hash:opacity-100 transition-all" />
-                            <AnimatePresence>
-                              {copiedHash === tx.hash && (
-                                <motion.span
-                                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                                  exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                                  className="absolute -top-10 left-0 bg-slate-950 text-white text-[10px] px-2 py-1 rounded-md shadow-xl border border-white/10 z-50 whitespace-nowrap"
+                      <td className="col-from"><StacAssetIdentity tokenSymbol={fromToken} chainName={fromChain} amount={fromAmount} isToAmount={false} /></td>
+                      <td className="col-to"><StacAssetIdentity tokenSymbol={toToken} chainName={toChain} amount={toAmount} isToAmount={true} /></td>
+                    <td className="col-status">
+                      <div className={`status-pill ${txStatus}`}>
+                        {txStatus === 'success' ? (
+                          <div className="status-icon-filled"><Check size={10} /></div>
+                        ) : (
+                          <div className="status-icon-pending"><Clock size={12} strokeWidth={3} /></div>
+                        )}
+                        {t(txStatus.charAt(0).toUpperCase() + txStatus.slice(1))}
+                      </div>
+                    </td>
+                    <td className="col-time"><span className="time-txt">{timeAgo(tx.timestamp)}</span></td>
+                    <td className="col-hash">
+                        {isBridge ? (
+                          <div className="tx-hash-stack is-bridge">
+                            <div className="tx-hash-box">
+                              <span className="hash-label">SRC</span>
+                              <div className="chain-mini-icon mr-2">
+                                <img src={getChainIcon(tx.fromChainId || tx.chainId)} alt="" />
+                              </div>
+                              <a href={getExplorerUrl(tx.hash, tx.fromChainId || tx.chainId || activeChainId)} target="_blank" rel="noopener" className="hash-link">
+                                {formatAddress(tx.hash)}
+                              </a>
+                              <div className="relative inline-flex items-center">
+                                <button 
+                                  onClick={() => handleCopyText(tx.hash, `src-${tx.hash}`)} 
+                                  onMouseEnter={() => setHoveredHash(`src-${tx.hash}`)}
+                                  onMouseLeave={() => setHoveredHash(null)}
+                                  className="copy-button-minimal"
                                 >
-                                  {t('copied')}
-                                </motion.span>
+                                  <Copy size={12} strokeWidth={2} />
+                                </button>
+                                <AnimatePresence>
+                                  {(tooltipHash === `src-${tx.hash}` || hoveredHash === `src-${tx.hash}`) && (
+                                    <motion.div 
+                                      initial={{ opacity: 0, y: 10, scale: 0.95 }} 
+                                      animate={{ opacity: 1, y: 0, scale: 1 }} 
+                                      exit={{ opacity: 0, y: 10, scale: 0.95 }} 
+                                      className="copy-tooltip-stac"
+                                    >
+                                      {tooltipHash === `src-${tx.hash}` ? t('Copied') : t('Copy Hash')}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            </div>
+
+                            <div className="tx-hash-box dest">
+                              <span className="hash-label">DST</span>
+                              <div className="chain-mini-icon mr-2">
+                                <img src={getChainIcon(tx.toChainId || activeChainId)} alt="" />
+                              </div>
+                              {tx.destHash ? (
+                                <>
+                                  <a href={getExplorerUrl(tx.destHash, tx.toChainId || activeChainId)} target="_blank" rel="noopener" className="hash-link">
+                                    {formatAddress(tx.destHash)}
+                                  </a>
+                                  <div className="relative inline-flex items-center ml-1">
+                                    <button 
+                                      onClick={() => handleCopyText(tx.destHash, `dest-${tx.hash}`)} 
+                                      onMouseEnter={() => setHoveredHash(`dest-${tx.hash}`)}
+                                      onMouseLeave={() => setHoveredHash(null)}
+                                      className="copy-button-minimal"
+                                    >
+                                      <Copy size={12} strokeWidth={2} />
+                                    </button>
+                                    <AnimatePresence>
+                                      {(tooltipHash === `dest-${tx.hash}` || hoveredHash === `dest-${tx.hash}`) && (
+                                        <motion.div 
+                                          initial={{ opacity: 0, y: 10, scale: 0.95 }} 
+                                          animate={{ opacity: 1, y: 0, scale: 1 }} 
+                                          exit={{ opacity: 0, y: 10, scale: 0.95 }} 
+                                          className="copy-tooltip-stac"
+                                        >
+                                          {tooltipHash === `dest-${tx.hash}` ? t('Copied') : t('Copy Hash')}
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="hash-pending">{t('Relaying')}...</span>
                               )}
-                            </AnimatePresence>
-                          </button>
-                          <a
-                            href={getExplorerUrl(tx.hash, tx.chainId || chainId || 11155111)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 rounded-lg bg-slate-100 dark:bg-white/[0.05] text-slate-400 hover:text-black dark:text-white dark:hover:text-black dark:text-white hover:bg-slate-50 dark:bg-black dark:hover:bg-black dark:bg-white transition-all"
-                          >
-                            <ExternalLink size={14} />
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="table-footer mt-auto">
-                <div className="pagination-info">
-                  {t('Showing')} {startIndex + 1}-{Math.min(endIndex, filteredTransactions.length)} {t('of')} {filteredTransactions.length} {t('transactions')}
-                </div>
-                <div className="pagination-controls">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="pagination-btn"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="pagination-btn"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-              </div>
-            </>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="swap-hash-container">
+                            <div className="tx-hash-box swap-hash-centered">
+                              <a href={getExplorerUrl(tx.hash, tx.fromChainId || tx.chainId || activeChainId)} target="_blank" rel="noopener" className="hash-link">
+                                {formatAddress(tx.hash)}
+                              </a>
+                              <div className="relative inline-flex items-center">
+                                <button 
+                                  onClick={() => handleCopyText(tx.hash, tx.hash)} 
+                                  onMouseEnter={() => setHoveredHash(tx.hash)}
+                                  onMouseLeave={() => setHoveredHash(null)}
+                                  className="copy-button-minimal"
+                                >
+                                  <Copy size={12} strokeWidth={2} />
+                                </button>
+                                <AnimatePresence>
+                                  {(tooltipHash === tx.hash || hoveredHash === tx.hash) && (
+                                    <motion.div 
+                                      initial={{ opacity: 0, y: 10, scale: 0.95 }} 
+                                      animate={{ opacity: 1, y: 0, scale: 1 }} 
+                                      exit={{ opacity: 0, y: 10, scale: 0.95 }} 
+                                      className="copy-tooltip-stac"
+                                    >
+                                      {tooltipHash === tx.hash ? t('Copied') : t('Copy Hash')}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                    </td>
+                  </tr>
+                  );
+                })}
+              </tbody>
+            </motion.table>
           ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <EmptyActivityState />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-4 min-h-[500px]">
-        {transactionsLoading ? (
-          <div className="space-y-4 px-4">
-            {[...Array(3)].map((_, i) => <SkeletonMobileCard key={i} />)}
-          </div>
-        ) : filteredTransactions.length > 0 ? (
-          paginatedTransactions.map((tx, index) => (
-            <motion.div
-              key={tx.id || tx.hash || `tx-${index}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className={`card p-4 space-y-3.5 touch-manipulation ${tx.type === 'Swap'
-                ? 'border border-slate-200 dark:border-slate-700 dark:border-black dark:border-white bg-gradient-to-b from-white to-slate-100 dark:to-slate-800 dark:from-gray-900 dark:to-slate-950/15'
-                : 'border border-slate-100 dark:border-slate-800'
-                }`}
-            >
-              {/* Header Row - Type and Time */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-sm font-bold text-black dark:text-white uppercase tracking-wider">{tx.type}</span>
-                  {tx.type === 'Swap' && getNetworkName(tx.chainId) && (
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 dark:bg-black dark:bg-white text-black dark:text-white dark:text-black dark:text-white w-fit">
-                      <img src={getChainIcon(getNetworkName(tx.chainId))} alt="" className="w-3.5 h-3.5 object-contain" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">
-                        {t(getNetworkName(tx.chainId))}
-                      </span>
-                    </div>
-                  )}
-                  {tx.type === 'Bridge' && (
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-100/50 dark:bg-slate-500/30 text-slate-500 dark:text-slate-500 w-fit">
-                      <ArrowLeftRight size={10} />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">{t('Cross-Chain')}</span>
-                    </div>
-                  )}
-                </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap flex-shrink-0 font-bold bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-lg tabular-nums">{timeAgo(tx.timestamp)}</span>
-              </div>
-
-              {/* Centered Status */}
-              <div className="flex justify-center py-1">
-                {tx.status === 'success' ? (
-                  <div className="inline-flex items-center gap-2.5">
-                    <div className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-slate-500 shadow-sm">
-                      <Check className="text-white" size={11} strokeWidth={4} />
-                    </div>
-                    <span className="text-[15px] font-normal text-slate-500">{t('Success')}</span>
-                  </div>
-                ) : tx.status === 'pending' ? (
-                  <div className="inline-flex items-center gap-2.5">
-                    <Clock className="text-amber-500" size={16} strokeWidth={2.5} />
-                    <span className="text-[15px] font-normal text-amber-500">{t('Pending')}</span>
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center gap-2.5">
-                    <XCircle className="text-red-500" size={16} />
-                    <span className="text-[15px] font-normal text-red-500">{t('Failed')}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Transactions Entities */}
-              <div className="flex items-center py-3 px-1">
-                <div className="flex-1 min-w-0">
-                  <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">
-                    {tx.type === 'Swap' ? t('You Pay') : t('From')}
-                  </div>
-                  <div className="flex items-center gap-2 min-w-0">
-                    {tx.type === 'Bridge' ? (
-                      (() => {
-                        const chainKey = String(tx.from || '').toLowerCase();
-                        if (chainKey.includes('arc')) return <img src="/icons/arc.png" alt="Arc" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover bg-black" />;
-                        if (chainKey.includes('base')) return <img src="/icons/base.png" alt="Base" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover bg-white shadow-sm" />;
-                        if (chainKey.includes('sepolia')) return <img src="/icons/eth.png" alt="ETH" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover bg-white shadow-sm" />;
-                        return <img src={getChainIcon(tx.from) || '/icons/eth.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover" />;
-                      })()
-                    ) : (
-                      <>
-                        <img src={getTokenLogo(getSwapFromToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover shadow-sm" />
-                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate uppercase">{getSwapFromToken(tx)}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center justify-center gap-1.5 px-3">
-                  <ArrowLeftRight size={14} className="text-black dark:text-white dark:text-black dark:text-white opacity-80" />
-                </div>
-
-                <div className="flex-1 min-w-0 text-right">
-                  <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">
-                    {tx.type === 'Swap' ? t('You Receive') : t('To')}
-                  </div>
-                  <div className="flex items-center justify-end gap-2 min-w-0">
-                    {tx.type === 'Bridge' ? (
-                      <>
-                        <img src={getChainIcon(tx.to) || '/icons/eth.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover shadow-sm" />
-                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate">{t(tx.to)}</span>
-                      </>
-                    ) : (
-                      <>
-                        <img src={getTokenLogo(getSwapToToken(tx)) || '/icons/stc.png'} alt="" loading="lazy" decoding="async" className="w-5 h-5 rounded-full object-cover drop-shadow-[0_4px_8px_rgba(128, 128, 128,0.25)]" />
-                        <span className="text-sm font-bold text-slate-800 dark:text-white truncate uppercase">{getSwapToToken(tx)}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Amount Row */}
-              <div className="flex items-center justify-between py-3 bg-slate-50/50 dark:bg-white/[0.03] rounded-xl px-4 border border-slate-200/50 dark:border-white/5">
-                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{t('Amount')}</span>
-                <span className="text-base font-bold text-black dark:text-white tabular-nums tracking-tight">
-                  {tx.type === 'Swap' ? (getSwapToAmount(tx) || getSwapAmount(tx)) : getSwapAmount(tx)}
-                </span>
-              </div>
-
-              {/* Transaction Actions */}
-              <div className="pt-3.5 border-t border-slate-100 dark:border-white/5 flex gap-2">
-                <button
-                  onClick={() => handleCopyHash(tx.hash)}
-                  className="flex-1 flex items-center justify-between px-4 py-3 bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/10 rounded-xl text-slate-600 dark:text-slate-400 hover:text-black dark:text-white dark:hover:text-black dark:text-white transition-all font-bold text-xs relative"
-                >
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <Copy size={14} className="opacity-60 flex-shrink-0" />
-                    <span className="truncate tabular-nums opacity-80">{formatAddress(tx.hash)}</span>
-                  </div>
-                  <AnimatePresence>
-                    {copiedHash === tx.hash && (
-                      <motion.span
-                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                        className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-bold shadow-xl border border-white/10 whitespace-nowrap z-50 capitalize"
-                      >
-                        {t('copied')}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </button>
-                <a
-                  href={getExplorerUrl(tx.hash, tx.chainId || chainId || 11155111)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center p-3 bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/10 rounded-xl text-slate-400 hover:text-black dark:text-white dark:hover:text-black dark:text-white transition-all"
-                >
-                  <ExternalLink size={18} />
-                </a>
-              </div>
+            <motion.div key="empty-state" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="empty-state-vanguard">
+              <Inbox size={48} strokeWidth={1.5} className="text-slate-400 mb-2" />
+              <h2>{t('No Activity Found')}</h2>
+              <p>{t('tryAdjustingFilters')}</p>
             </motion.div>
-          ))
-        ) : (
-          <EmptyActivityState />
-        )}
-      </div>
+          )}
+        </AnimatePresence>
 
-      {/* Mobile-only pagination footer */}
-      <div className="md:hidden">
-        {filteredTransactions.length > transactionsPerPage && (
-          <div className="flex items-center justify-center gap-4 mt-6 pb-10">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="pagination-btn"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <div className="text-sm font-bold text-slate-500">
-              {currentPage} / {totalPages}
+        {filteredTxs.length > 0 && (
+          <footer className="pagination-footer">
+            <span className="pagination-info">{t('Showing')} {Math.min(filteredTxs.length, (currentPage - 1) * transactionsPerPage + 1)}–{Math.min(filteredTxs.length, currentPage * transactionsPerPage)} {t('of')} {filteredTxs.length}</span>
+            <div className="pagination-btns flex gap-3">
+              <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="pagination-btn"><ChevronLeft size={16} strokeWidth={2} /></button>
+              <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="pagination-btn"><ChevronRight size={16} strokeWidth={2} /></button>
             </div>
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="pagination-btn"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
+          </footer>
         )}
       </div>
-
     </div>
   );
 };

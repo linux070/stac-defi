@@ -11,18 +11,18 @@ export function useTotalValueProcessed() {
     const { data, isLoading } = useQuery({
         queryKey: ['totalValueProcessed'],
         queryFn: async () => {
-            const [personalTxs, globalTxs] = await Promise.all([
-                getItem('myTransactions'),
-                getItem('globalTransactions')
-            ]);
-
-            const allTransactions = [...(Array.isArray(personalTxs) ? personalTxs : []), ...(Array.isArray(globalTxs) ? globalTxs : [])];
+            // Strictly reading 'myTransactions' as the source of truth for total dApp volume
+            const personalTxs = await getItem('myTransactions');
+            const allTransactions = Array.isArray(personalTxs) ? personalTxs : [];
+            
             let totalUSD = 0;
             const processedHashes = new Set();
 
             allTransactions.forEach(tx => {
-                if (!tx.hash || processedHashes.has(tx.hash) || tx.status !== 'success' || !tx.amount) return;
-                processedHashes.add(tx.hash);
+                if (!tx || typeof tx !== 'object') return;
+                const txHash = tx.hash || tx.transactionHash || tx.id;
+                if (!txHash || processedHashes.has(txHash.toLowerCase()) || tx.status !== 'success' || !tx.amount) return;
+                processedHashes.add(txHash.toLowerCase());
 
                 let amount = 0;
                 let tokenSymbol = 'USDC';
@@ -45,9 +45,6 @@ export function useTotalValueProcessed() {
                 } else if (tx.type === 'Liquidity' || tx.type === 'LP') {
                     amount = parseFloat(amountStr);
                     tokenSymbol = tx.token || 'USDC';
-                } else if (tx.isGlobal) {
-                    amount = parseFloat(amountStr);
-                    tokenSymbol = 'USDC';
                 }
 
                 if (!isNaN(amount) && amount > 0) {
@@ -70,12 +67,11 @@ export function useTotalValueProcessed() {
         window.addEventListener('transactionSaved', invalidate);
         window.addEventListener('bridgeTransactionSaved', invalidate);
         window.addEventListener('swapTransactionSaved', invalidate);
-        window.addEventListener('globalStatsUpdated', invalidate);
+        
         return () => {
             window.removeEventListener('transactionSaved', invalidate);
             window.removeEventListener('bridgeTransactionSaved', invalidate);
             window.removeEventListener('swapTransactionSaved', invalidate);
-            window.removeEventListener('globalStatsUpdated', invalidate);
         };
     }, [queryClient]);
 

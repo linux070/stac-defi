@@ -119,12 +119,22 @@ export const TOKENS = {
     },
     logo: 'landmark',
   },
+  EURC: {
+    symbol: 'EURC',
+    name: 'EURC Stablecoin',
+    decimals: 6,
+    address: {
+      [NETWORKS.ARC_TESTNET.chainId]: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a', // Official EURC on Arc Testnet
+      [NETWORKS.ETHEREUM_SEPOLIA.chainId]: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Ensure to update to true EURC contract if needed
+    },
+    logo: 'euro-sign',
+  },
 };
 
 // Mock token prices (would be fetched from oracles in production)
 export const TOKEN_PRICES = {
   USDC: 1,
-  // EUR: 1.1,
+  EURC: 1.08,
   STC: 0.72,
   BALL: 0.22,
   MTB: 0.17,

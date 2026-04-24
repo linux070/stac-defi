@@ -17,7 +17,7 @@ const Liquidity = lazy(() => import('./pages/Liquidity'));
 
 // Production loading state - Minimalist
 const PageLoader = ({ name }) => (
-  <div className="flex items-center justify-center min-h-[60dvh] w-full bg-white dark:bg-black">
+  <div className="flex items-center justify-center min-h-[60dvh] w-full bg-white dark:bg-page-dark">
     <span className="text-[11px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-[0.5em] animate-pulse">
       {name || 'Loading'}. . .
     </span>

@@ -1,3 +1,4 @@
+﻿import { logger } from './logger';
 // IndexedDB utility for persistent storage (web3-native approach)
 // More resilient than localStorage - survives cookie/localStorage clearing
 
@@ -15,7 +16,7 @@ const initDB = () => {
 
   initPromise = new Promise((resolve) => {
     if (typeof window === 'undefined' || !window.indexedDB) {
-      console.warn('IndexedDB not available, falling back to localStorage');
+      logger.warn('IndexedDB not available, falling back to localStorage');
       resolve(null);
       return;
     }
@@ -23,7 +24,7 @@ const initDB = () => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => {
-      console.error('IndexedDB error:', request.error);
+      logger.error('IndexedDB error:', request.error);
       resolve(null); // Fallback to localStorage
     };
 
@@ -32,11 +33,11 @@ const initDB = () => {
 
       // Handle database close/error events
       dbInstance.onerror = (event) => {
-        console.error('IndexedDB database error:', event);
+        logger.error('IndexedDB database error:', event);
       };
 
       dbInstance.onclose = () => {
-        console.warn('IndexedDB database closed, will reinitialize on next access');
+        logger.warn('IndexedDB database closed, will reinitialize on next access');
         dbInstance = null;
         initPromise = null; // Reset so it can be reinitialized
       };
@@ -58,7 +59,7 @@ const initDB = () => {
     };
 
     request.onblocked = () => {
-      console.warn('IndexedDB upgrade blocked - another tab may have the database open');
+      logger.warn('IndexedDB upgrade blocked - another tab may have the database open');
     };
   });
 
@@ -99,7 +100,7 @@ const migrateFromLocalStorage = async () => {
     }
     migrationDone = true;
   } catch (err) {
-    console.error('Error migrating from localStorage:', err);
+    logger.error('Error migrating from localStorage:', err);
     migrationDone = true;
   }
 };
@@ -134,27 +135,27 @@ export const getItem = async (key) => {
         };
 
         request.onerror = () => {
-          console.error('Error reading from IndexedDB:', request.error);
+          logger.error('Error reading from IndexedDB:', request.error);
           // Fallback to localStorage
           const value = localStorage.getItem(key);
           resolve(value ? JSON.parse(value) : null);
         };
 
         transaction.onerror = () => {
-          console.error('Transaction error:', transaction.error);
+          logger.error('Transaction error:', transaction.error);
           // Fallback to localStorage
           const value = localStorage.getItem(key);
           resolve(value ? JSON.parse(value) : null);
         };
       } catch (err) {
-        console.error('Error creating transaction:', err);
+        logger.error('Error creating transaction:', err);
         // Fallback to localStorage
         const value = localStorage.getItem(key);
         resolve(value ? JSON.parse(value) : null);
       }
     });
   } catch (err) {
-    console.error('Error getting item from IndexedDB:', err);
+    logger.error('Error getting item from IndexedDB:', err);
     // Fallback to localStorage
     try {
       const value = localStorage.getItem(key);
@@ -176,7 +177,7 @@ export const setItem = async (key, value) => {
       try {
         localStorage.setItem(key, JSON.stringify(value));
       } catch (e) {
-        console.error('Error saving to localStorage:', e);
+        logger.error('Error saving to localStorage:', e);
       }
       return;
     }
@@ -193,50 +194,50 @@ export const setItem = async (key, value) => {
             localStorage.setItem(key, JSON.stringify(value));
           } catch (e) {
             // Ignore localStorage errors (quota exceeded, etc.)
-            console.warn('Could not backup to localStorage:', e);
+            logger.warn('Could not backup to localStorage:', e);
           }
           resolve();
         };
 
         request.onerror = () => {
-          console.error('Error writing to IndexedDB:', request.error);
+          logger.error('Error writing to IndexedDB:', request.error);
           // Fallback to localStorage
           try {
             localStorage.setItem(key, JSON.stringify(value));
           } catch (e) {
-            console.error('Error saving to localStorage fallback:', e);
+            logger.error('Error saving to localStorage fallback:', e);
           }
           resolve();
         };
 
         transaction.onerror = () => {
-          console.error('Transaction error:', transaction.error);
+          logger.error('Transaction error:', transaction.error);
           // Fallback to localStorage
           try {
             localStorage.setItem(key, JSON.stringify(value));
           } catch (e) {
-            console.error('Error saving to localStorage fallback:', e);
+            logger.error('Error saving to localStorage fallback:', e);
           }
           resolve();
         };
       } catch (err) {
-        console.error('Error creating transaction:', err);
+        logger.error('Error creating transaction:', err);
         // Fallback to localStorage
         try {
           localStorage.setItem(key, JSON.stringify(value));
         } catch (e) {
-          console.error('Error saving to localStorage fallback:', e);
+          logger.error('Error saving to localStorage fallback:', e);
         }
         resolve();
       }
     });
   } catch (err) {
-    console.error('Error setting item in IndexedDB:', err);
+    logger.error('Error setting item in IndexedDB:', err);
     // Fallback to localStorage
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (e) {
-      console.error('Error saving to localStorage fallback:', e);
+      logger.error('Error saving to localStorage fallback:', e);
     }
   }
 };
@@ -272,7 +273,7 @@ export const removeItem = async (key) => {
       }
     });
   } catch (err) {
-    console.error('Error removing item from IndexedDB:', err);
+    logger.error('Error removing item from IndexedDB:', err);
     localStorage.removeItem(key);
   }
 };

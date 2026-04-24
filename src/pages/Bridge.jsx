@@ -1,16 +1,9 @@
-// =============================================================================
-// BRIDGE PAGE
-// This page lets users move USDC from one blockchain network to another.
-// For example: from Sepolia (Ethereum testnet) → Arc Testnet, or vice versa.
-// It uses Circle's CCTP (Cross-Chain Transfer Protocol) under the hood.
-// =============================================================================
-
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../hooks/useWallet';
-import { useSwitchChain, useChains } from 'wagmi';
-import { ArrowRight, Loader, Wallet, X, ChevronDown, Search, Check } from 'lucide-react';
+import { useSwitchChain } from 'wagmi';
+import { ArrowRight, Loader, Wallet, X, ChevronDown, Search, Check, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NETWORKS } from '../config/networks';
 import { sanitizeInput } from '../utils/blockchain';
@@ -22,166 +15,138 @@ import BridgeSuccessModal from '../components/BridgeSuccessModal';
 import BridgeRejectedModal from '../components/BridgeRejectedModal';
 import BridgeCancelledModal from '../components/BridgeCancelledModal';
 import '../styles/bridge-styles.css';
-import { useModal } from '../contexts/ModalContext';
+import { logger } from '../utils/logger';
 
-
-// =============================================================================
-// CHAIN SELECTOR MODAL
-// The popup that lets users pick a source or destination blockchain network.
-// Supports search so users can quickly find a specific chain by name.
-// =============================================================================
+// --- Chain Selector Modal ---
 const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) => {
   const { t } = useTranslation();
-  const selectorRef = useRef(null);
-  const inputRef = useRef(null);
-  const chains = useChains(); // All chains registered in wagmi config
+  const chainSearchRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  // Wait 400ms after typing before filtering — avoids flicker on every keystroke
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // When the modal opens, clear the search field and auto-focus the input
   useEffect(() => {
     if (isOpen) {
       setSearchQuery('');
-      setDebouncedSearch('');
-      const timer = setTimeout(() => inputRef.current?.focus(), 100);
-      return () => clearTimeout(timer);
+      setTimeout(() => chainSearchRef.current?.focus(), 150);
     }
   }, [isOpen]);
 
-  // Close the modal when the user presses the Escape key
-  useEffect(() => {
-    const handleEsc = (e) => { if (e?.key === 'Escape') onClose(); };
-    if (isOpen) document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
-  }, [isOpen, onClose]);
-
-  // The three supported networks for bridging
   const chainList = ['Arc Testnet', 'Sepolia', 'Base Sepolia'];
+  const filteredChains = chainList.filter(chain => chain.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  // Filter by what the user typed in the search box
-  const filteredChains = chainList.filter(chain =>
-    chain.toLowerCase().includes(debouncedSearch.toLowerCase())
-  );
+  if (typeof document === 'undefined') return null;
 
-  // Render the modal into <body> so it floats above all other content
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        // Backdrop
         <motion.div
-          className="bridge-selector-modal-backdrop"
+          className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          style={{ zIndex: 100000 }}
         >
-          {/* Modal card */}
           <motion.div
-            ref={selectorRef}
-            className="bridge-selector-modal border border-slate-200/50 dark:border-white/10"
-            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+            className="w-full max-w-[420px] bg-white dark:bg-[#0B0F1A] rounded-[28px] overflow-hidden border border-slate-200 dark:border-white/10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)]"
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+            exit={{ scale: 0.95, opacity: 0, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal header */}
-            <div className="bridge-selector-header">
-              <h3 className="bridge-selector-title">{t('Select Network')}</h3>
-              <button onClick={onClose} className="bridge-selector-close-button transition-all hover:rotate-90">
+            {/* HEADER */}
+            <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
+              <h3 className="text-[17px] font-semibold text-slate-900 dark:text-white font-geist tracking-tight">
+                {t('Select Network')}
+              </h3>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 active:scale-95 transition-all"
+              >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Search bar */}
-            <div className="px-5 py-4">
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-slate-800 dark:group-focus-within:text-white transition-colors duration-200">
-                  <Search size={16} />
-                </div>
+            {/* SEARCH */}
+            <div className="px-5 pt-4 pb-2">
+              <div className="relative">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 dark:text-white/20" />
                 <input
-                  ref={inputRef}
+                  ref={chainSearchRef}
                   type="text"
-                  placeholder={t('Search network name or paste address')}
+                  placeholder={t('Search networks...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50/50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 rounded-2xl pl-11 pr-4 py-3 text-[14px] outline-none group-hover:bg-white dark:group-hover:bg-white/[0.04] focus:bg-white dark:focus:bg-white/[0.06] focus:border-black/20 dark:focus:border-white/20 focus:ring-4 focus:ring-black/5 dark:focus:ring-white/5 transition-all duration-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
+                  className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/30 dark:focus:border-indigo-500/20 transition-colors font-mono placeholder:text-slate-400 dark:placeholder:text-white/15"
                 />
               </div>
             </div>
 
-            {/* Scrollable list of networks */}
-            <div className="bridge-selector-list overflow-y-auto" style={{ maxHeight: '42vh' }}>
-              <div className="space-y-1">
-                {filteredChains.map((chainName) => {
-                  const isExcluded = chainName === exclude;   // Can't pick the same chain as the other side
-                  const isSelected = chainName === selectedChain;
-
-                  // Try to find a matching chain from wagmi's registered list to get its icon
-                  const chainObj = chains.find(c => {
-                    const name = (c.name || '').toLowerCase();
-                    if (chainName === 'Arc Testnet') return c.id === 5042002 || name.includes('arc');
-                    if (chainName === 'Sepolia') return c.id === 11155111 || (name.includes('sepolia') && !name.includes('base'));
-                    if (chainName === 'Base Sepolia') return c.id === 84532 || (name.includes('base') && name.includes('sepolia'));
-                    return false;
-                  });
-
-                  // Prefer icon from our NETWORKS config (more reliable than wagmi's)
-                  let iconUrl = chainObj?.iconUrl;
-                  if (chainName === 'Arc Testnet') iconUrl = NETWORKS.ARC_TESTNET.iconUrl;
-                  if (chainName === 'Sepolia') iconUrl = NETWORKS.ETHEREUM_SEPOLIA.iconUrl;
-                  if (chainName === 'Base Sepolia') iconUrl = NETWORKS.BASE_SEPOLIA.iconUrl;
+            {/* NETWORK LIST */}
+            <div className="px-3 pb-4 pt-1">
+              <div className="space-y-0.5">
+                {filteredChains.map((name, i) => {
+                  const isExcluded = name === exclude;
+                  const isSelected = name === selectedChain;
+                  const chainCfg = Object.values(NETWORKS).find(n =>
+                    n.chainName === name || n.chainName.includes(name)
+                  );
 
                   return (
-                    <button
-                      key={chainName}
+                    <motion.button
+                      key={name}
                       disabled={isExcluded}
-                      onClick={() => { if (!isExcluded) { onSelect(chainName); onClose(); } }}
-                      className={`bridge-selector-item ${isSelected ? 'selected' : ''} ${isExcluded ? 'disabled' : ''}`}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        delay: 0.05 + (i * 0.04),
+                        type: 'spring',
+                        damping: 22,
+                        stiffness: 350
+                      }}
+                      onClick={() => !isExcluded && (onSelect(name), onClose())}
+                      className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all duration-150 ${
+                        isSelected
+                          ? 'bg-indigo-50/60 dark:bg-indigo-500/10 ring-1 ring-inset ring-indigo-500/20'
+                          : isExcluded
+                            ? 'opacity-35 cursor-not-allowed'
+                            : 'hover:bg-slate-50 dark:hover:bg-white/[0.03] active:scale-[0.99]'
+                      }`}
                     >
-                      <div className="bridge-selector-item-content">
-                        {/* Chain icon */}
-                        <div className="bridge-selector-item-icon" style={{ background: chainName.includes('Arc') ? '#000' : '#fff' }}>
-                          {iconUrl ? (
-                            <img src={iconUrl} alt={chainName} className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-sm font-medium text-gray-600">{chainName.substring(0, 1)}</span>
-                          )}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden ${
+                          isSelected
+                            ? 'bg-white dark:bg-white/10 border border-indigo-200 dark:border-indigo-500/30'
+                            : 'bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10'
+                        }`}>
+                          <img
+                            src={chainCfg?.iconUrl}
+                            alt={name}
+                            className="w-5 h-5 object-contain"
+                          />
                         </div>
-                        {/* Chain name */}
-                        <div className="bridge-selector-item-info text-left">
-                          <p>{chainName}</p>
-                          <p className="text-left w-full text-[11px] opacity-60">Testnet</p>
+                        <div className="text-left min-w-0">
+                          <p className={`text-[14px] font-geist font-medium tracking-tight truncate ${
+                            isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-900 dark:text-white'
+                          }`}>
+                            {name}
+                          </p>
+                          <p className="text-[9px] text-slate-400 font-mono uppercase tracking-[0.15em] mt-0.5">
+                            {chainCfg?.isMainnet ? 'Mainnet' : 'Testnet'}
+                          </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2" />
-                    </button>
+
+                      {/* RIGHT INDICATOR */}
+                      {isSelected ? (
+                        <Check size={16} className="text-indigo-500 shrink-0" strokeWidth={2.5} />
+                      ) : isExcluded ? (
+                        <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest shrink-0">
+                          {t('Active')}
+                        </span>
+                      ) : null}
+                    </motion.button>
                   );
                 })}
-
-                {/* "No results" message */}
-                {filteredChains.length === 0 && (
-                  <div className="py-10 text-center text-gray-400 text-sm italic">
-                    {t('No networks found')}
-                  </div>
-                )}
-              </div>
-
-              {/* Small note reminding users that source and destination must differ */}
-              <div className="mt-5 pt-4 border-t border-gray-100 dark:border-white/5 mx-1">
-                <div className="flex items-center gap-3">
-                  <div className="w-0.5 h-6 rounded-full bg-amber-500 flex-shrink-0 opacity-80 shadow-[0_0_8px_rgba(245,158,11,0.3)]" />
-                  <p className="text-[12px] text-gray-500 dark:text-gray-400 leading-tight">
-                    <span className="font-medium text-gray-800 dark:text-gray-200">{t('Note')}:</span> Source and destination networks must be different.
-                  </p>
-                </div>
               </div>
             </div>
           </motion.div>
@@ -192,841 +157,388 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
   );
 };
 
-
-// =============================================================================
-// BRIDGE PAGE — MAIN COMPONENT
-// This component manages everything related to a bridge transaction:
-// - Picking source and destination chains
-// - Entering the USDC amount
-// - Switching the user's wallet to the correct network
-// - Starting the bridge via the useBridge hook
-// - Handling success, failure, rejection, and cancellation states
-// =============================================================================
+// --- Main Bridge Component ---
 const Bridge = () => {
   const { t } = useTranslation();
-  const { isConnected, walletAddress, chainId, status } = useWallet();
-  const { setIsFocusedModalOpen } = useModal();
+  const { isConnected, walletAddress, status } = useWallet();
   const { switchChainAsync } = useSwitchChain();
+  const { bridge, claim, state, reset, tokenBalance, isLoadingBalance, refreshBalances } = useBridge();
 
-  // ─── Ghost-state protection ───────────────────────────────────────────────
-  // On page refresh, wagmi briefly reports "disconnected" before it reconnects.
-  // We snapshot the true connection state from localStorage so the button never
-  // briefly flashes "Connect Wallet" for a returning connected user.
-  const wasConnectedRef = useRef(
-    typeof window !== 'undefined' ? localStorage.getItem('walletConnected') === 'true' : false
-  );
-  const wasConnected = wasConnectedRef.current;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
+  // Selected Chains
+  const [fromChain, setFromChain] = useState('Sepolia');
+  const [toChain, setToChain] = useState('Arc Testnet');
+  const [amount, setAmount] = useState('');
 
-  // ─── Chain selection ───────────────────────────────────────────────────────
-  const [fromChain, setFromChain] = useState('Sepolia');     // Where the USDC is coming from
-  const [toChain, setToChain] = useState('Arc Testnet'); // Where the USDC is going to
-
-
-  // ─── Amount ────────────────────────────────────────────────────────────────
-  const [amount, setAmount] = useState(''); // How many USDC to bridge (minimum 1)
-
-
-  // ─── UI state ──────────────────────────────────────────────────────────────
+  // UI States
   const [bridgeLoading, setBridgeLoading] = useState(false);
-  const [showChainSelector, setShowChainSelector] = useState(null);   // 'from' | 'to' | null
-  const [bridgeButtonText, setBridgeButtonText] = useState('Bridge');
-  const [showNetworkSuccess, setShowNetworkSuccess] = useState(false);  // "Arc added ✓" tooltip
-
-
-  // ─── Modal visibility ──────────────────────────────────────────────────────
+  const [showChainSelector, setShowChainSelector] = useState(null);
   const [showBridgingModal, setShowBridgingModal] = useState(false);
   const [showBridgeFailedModal, setShowBridgeFailedModal] = useState(false);
   const [showBridgeSuccessModal, setShowBridgeSuccessModal] = useState(false);
   const [showBridgeRejectedModal, setShowBridgeRejectedModal] = useState(false);
   const [showBridgeCancelledModal, setShowBridgeCancelledModal] = useState(false);
-
-
-  // ─── Bridge result data ────────────────────────────────────────────────────
+  const [bridgeStartTime, setBridgeStartTime] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [stopTimer, setStopTimer] = useState(true);
   const [bridgeError, setBridgeError] = useState({ title: 'Error Details', message: '' });
-  const [bridgeFinalTime, setBridgeFinalTime] = useState(null); // How long the bridge took (e.g. "45s")
-  const [sourceTxHash, setSourceTxHash] = useState(null);  // Transaction hash shown on success
+  const [bridgeFinalTime, setBridgeFinalTime] = useState(null);
+  const [sourceTxHash, setSourceTxHash] = useState(null);
 
+  const bridgeInitiatedRef = useRef(false);
+  const initialFromChainRef = useRef(null);
+  const initialToChainRef = useRef(null);
+  const savedHashesRef = useRef(new Set());
 
-  // ─── Timer ─────────────────────────────────────────────────────────────────
-  const [bridgeStartTime, setBridgeStartTime] = useState(null); // Timestamp when bridge started
-  const [stopTimer, setStopTimer] = useState(false); // Signal to stop the progress timer
+  const isBridgeInProgress = bridgeLoading || state.isLoading || (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
 
+  // HELPERS
+  const getChainIdByName = useCallback((n) => ({ 'Arc Testnet': 5042002, 'Sepolia': 11155111, 'Base Sepolia': 84532 }[n]), []);
 
-  // ─── Refs for internal tracking ────────────────────────────────────────────
-  const timeoutIdRef = useRef(null);  // Global timeout (6-min guard for the full bridge flow)
-  const balanceIntervalRef = useRef(null);  // Interval for periodic balance refresh (every 30s)
-  const bridgeInitiatedRef = useRef(false); // Prevent chain UI updates once bridge starts
-  const initialFromChainRef = useRef(null);  // Snapshot of fromChain when bridge started
-  const initialToChainRef = useRef(null);  // Snapshot of toChain when bridge started
+  const saveBridgeTransaction = useCallback(async (hash, status, destHash = null) => {
+    if (!hash || savedHashesRef.current.has(hash)) return;
 
-  // Trigger button refs (used for positioning the chain selector popup)
-  const fromChainTriggerRef = useRef(null);
-  const toChainTriggerRef = useRef(null);
+    try {
+      // Session lock immediately to prevent race conditions
+      savedHashesRef.current.add(hash);
 
+      const saved = await getItem('myTransactions') || [];
+      // Persistent deduplication: check if hash already exists in DB
+      const exists = saved.some(tx => tx.hash === hash);
+      if (exists) return;
 
-  // ─── Bridge hook ───────────────────────────────────────────────────────────
-  // This hook handles: approval, burn on source chain, waiting for Circle's attestation,
-  // and minting on the destination chain.
-  const { bridge, state, reset, fetchTokenBalance, tokenBalance, isLoadingBalance, balanceError, clearBalance } = useBridge();
+      const tx = {
+        id: hash || `bridge-${Date.now()}`,
+        type: 'Bridge',
+        from: fromChain,
+        to: toChain,
+        amount: amount || '0',
+        timestamp: Date.now(),
+        status,
+        hash,
+        destHash, // Add destHash to storage
+        fromChainId: getChainIdByName(fromChain), // Save chain IDs as well for explorer links
+        toChainId: getChainIdByName(toChain),
+        address: walletAddress?.toLowerCase(),
+      };
 
+      await setItem('myTransactions', [tx, ...saved].slice(0, 50));
+      window.dispatchEvent(new CustomEvent('bridgeTransactionSaved'));
+      logger.info(`[Bridge] Transaction ${hash} saved successfully.`);
+    } catch (e) {
+      logger.warn('Save failed', e);
+      // Re-allow retry on failure? Actually status 'success' is solid
+    }
+  }, [fromChain, toChain, amount, walletAddress]);
 
-  // ─── Tell the layout when a focused modal is open ─────────────────────────
-  useEffect(() => {
-    const anyModalOpen =
-      showChainSelector !== null ||
-      showBridgingModal ||
-      showBridgeFailedModal ||
-      showBridgeSuccessModal ||
-      showBridgeRejectedModal ||
-      showBridgeCancelledModal;
-
-    setIsFocusedModalOpen(anyModalOpen);
-    return () => setIsFocusedModalOpen(false);
-  }, [
-    showChainSelector, showBridgingModal, showBridgeFailedModal,
-    showBridgeSuccessModal, showBridgeRejectedModal, showBridgeCancelledModal,
-    setIsFocusedModalOpen,
-  ]);
-
-
-  // ─── Format balance for display ───────────────────────────────────────────
-  // Always shows two decimal places (e.g. "10.50" instead of "10.5")
-  const formatBalance = (value) => {
-    const n = typeof value === 'number' ? value : Number(value);
-    return Number.isFinite(n) ? n.toFixed(2) : '0.00';
+  const handleNetworkChange = async (n) => {
+    if (isBridgeInProgress) return;
+    const cid = getChainIdByName(n);
+    if (isConnected && cid) {
+      try { await switchChainAsync({ chainId: cid }); setFromChain(n); } catch (e) { logger.warn('Switch rejected', e); }
+    } else setFromChain(n);
   };
 
-
-  // ─── Clean up balance interval when component unmounts ────────────────────
-  useEffect(() => {
-    return () => {
-      if (balanceIntervalRef.current) {
-        clearInterval(balanceIntervalRef.current);
-        balanceIntervalRef.current = null;
-      }
-    };
-  }, []);
-
-
-  // ─── Listen for wallet rejection or disconnect events mid-bridge ──────────
-  // If the user rejects in MetaMask or disconnects their wallet while bridging,
-  // we catch it here and show the appropriate modal.
-  useEffect(() => {
-    if (!window?.ethereum) return;
-
-    const stopBridgeWithRejection = () => {
-      if (showBridgingModal || bridgeLoading || state.step === 'approving') {
-        setStopTimer(true);
-        if (timeoutIdRef.current) { clearTimeout(timeoutIdRef.current); timeoutIdRef.current = null; }
-        setShowBridgingModal(false);
-        setShowBridgeRejectedModal(true);
-        setShowBridgeFailedModal(false);
-        setBridgeButtonText('Bridge');
-        setBridgeLoading(false);
-        reset();
-      }
-    };
-
-    const handleAccountsChanged = (accounts) => {
-      // User removed their wallet account (disconnected)
-      if (accounts.length === 0 && (showBridgingModal || state.step === 'approving' || bridgeLoading)) {
-        setStopTimer(true);
-        if (timeoutIdRef.current) { clearTimeout(timeoutIdRef.current); timeoutIdRef.current = null; }
-        setShowBridgingModal(false);
-        setBridgeError({ title: 'Error Details', message: 'Transaction cancelled: Wallet disconnected during bridging.' });
-        setShowBridgeFailedModal(true);
-        setShowBridgeRejectedModal(false);
-        setBridgeButtonText('Bridge Failed');
-        setBridgeLoading(false);
-        reset();
-      }
-    };
-
-    const handleDisconnect = () => {
-      if (showBridgingModal || state.step === 'approving' || bridgeLoading) {
-        setStopTimer(true);
-        if (timeoutIdRef.current) { clearTimeout(timeoutIdRef.current); timeoutIdRef.current = null; }
-        setShowBridgingModal(false);
-        setBridgeError({ title: 'Error Details', message: 'Transaction cancelled: Wallet disconnected.' });
-        setShowBridgeFailedModal(true);
-        setBridgeButtonText('Bridge Failed');
-        setBridgeLoading(false);
-        reset();
-      }
-    };
-
-    // Also watch for postMessage events indicating rejection (some wallets use this)
-    const handleMessage = (event) => {
-      if (event.data && typeof event.data === 'object') {
-        const msg = JSON.stringify(event.data).toLowerCase();
-        if (msg.includes('reject') || msg.includes('cancel') || msg.includes('deny')) {
-          stopBridgeWithRejection();
-        }
-      }
-    };
-
-    window.ethereum.on('accountsChanged', handleAccountsChanged);
-    window.ethereum.on('disconnect', handleDisconnect);
-    window.addEventListener('message', handleMessage);
-
-    return () => {
-      if (window.ethereum) {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum.removeListener('disconnect', handleDisconnect);
-      }
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [state.step, showBridgingModal, bridgeLoading, reset]);
-
-
-  // ─── Fetch USDC balance when wallet connects or chain changes ──────────────
-  useEffect(() => {
-    // Clear any existing polling interval first (prevents duplicates)
-    if (balanceIntervalRef.current) {
-      clearInterval(balanceIntervalRef.current);
-      balanceIntervalRef.current = null;
-    }
-
-    if (!isConnected) {
-      // Wallet disconnected — wipe displayed balance
-      clearBalance();
-    } else if (isConnected && chainId) {
-      const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
-
-      // Fetch immediately on connect / chain switch
-      fetchTokenBalance('USDC', chainIdDecimal);
-
-      // Then keep refreshing in the background every 30 seconds (only if tab is visible)
-      balanceIntervalRef.current = setInterval(() => {
-        try {
-          if (isConnected && chainId && document.visibilityState === 'visible') {
-            fetchTokenBalance('USDC', typeof chainId === 'string' ? parseInt(chainId, 16) : chainId);
-          }
-        } catch { /* ignore polling errors */ }
-      }, 30000);
-
-      return () => {
-        if (balanceIntervalRef.current) {
-          clearInterval(balanceIntervalRef.current);
-          balanceIntervalRef.current = null;
-        }
-      };
-    }
-  }, [isConnected, chainId, clearBalance, fetchTokenBalance]);
-
-
-  // ─── Auto-sync chain selectors with the user's current wallet network ─────
-  // When the user's wallet is on Arc → set "From" to Arc.
-  // When on Sepolia → set "From" to Sepolia. Etc.
-  // This is DISABLED while a bridge is in progress to keep the UI stable.
-  useEffect(() => {
-    if (!chainId) return;
-
-    const isBridgeInProgress = bridgeLoading || state.isLoading ||
-      (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
-
-    // During a bridge, only refresh the balance — don't touch the chain dropdowns
-    if (isBridgeInProgress || bridgeInitiatedRef.current) {
-      try {
-        const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
-        if (isConnected) fetchTokenBalance('USDC', chainIdDecimal);
-      } catch { /* ignore */ }
-      return;
-    }
-
-    try {
-      const chainIdDecimal = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
-      const arcId = parseInt(NETWORKS.ARC_TESTNET.chainId, 16);
-      const sepoliaId = parseInt(NETWORKS.ETHEREUM_SEPOLIA.chainId, 16);
-      const baseSepoliaId = parseInt(NETWORKS.BASE_SEPOLIA.chainId, 16);
-
-      // Match the wallet's current chain to the "From" selector
-      if (chainIdDecimal === arcId) {
-        setFromChain(prev => prev !== 'Arc Testnet' ? 'Arc Testnet' : prev);
-        setToChain(prev => prev === 'Arc Testnet' ? 'Sepolia' : prev);
-      } else if (chainIdDecimal === sepoliaId) {
-        setFromChain(prev => prev !== 'Sepolia' ? 'Sepolia' : prev);
-        setToChain(prev => prev === 'Sepolia' ? 'Arc Testnet' : prev);
-      } else if (chainIdDecimal === baseSepoliaId) {
-        setFromChain(prev => prev !== 'Base Sepolia' ? 'Base Sepolia' : prev);
-        setToChain(prev => prev === 'Base Sepolia' ? 'Sepolia' : prev);
-      }
-
-      if (isConnected) fetchTokenBalance('USDC', chainIdDecimal);
-    } catch { /* ignore */ }
-  }, [chainId, isConnected, fetchTokenBalance, bridgeLoading, state.isLoading, state.step]);
-
-
-  // ─── On bridge success: update UI, save transaction, refresh balance ───────
-  useEffect(() => {
-    if (state.step === 'success' && state.sourceTxHash) {
-      setSourceTxHash(state.sourceTxHash);
-
-      // Calculate total time the bridge took
-      if (bridgeStartTime) {
-        const secs = (Date.now() - bridgeStartTime) / 1000;
-        const mins = Math.floor(secs / 60);
-        setBridgeFinalTime(mins > 0 ? `${mins}m ${Math.floor(secs % 60)}s` : `${Math.floor(secs)}s`);
-      }
-
-      setShowBridgingModal(false);
-      setShowBridgeSuccessModal(true);
-      saveBridgeTransaction(state.sourceTxHash || state.receiveTxHash, 'success');
-
-      // Refresh balance immediately, and again a few seconds later (Circle takes a moment to mint)
-      if (chainId && isConnected) {
-        const dec = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
-        fetchTokenBalance('USDC', dec);
-        const t1 = setTimeout(() => fetchTokenBalance('USDC', dec), 3000);
-        const t2 = setTimeout(() => fetchTokenBalance('USDC', dec), 8000);
-        return () => { clearTimeout(t1); clearTimeout(t2); };
-      }
-    }
-  }, [state.step, state.sourceTxHash, state.receiveTxHash, chainId, fetchTokenBalance, isConnected, bridgeStartTime]); // eslint-disable-line
-
-  // ─── On bridge error: refresh balance to show the un-spent amount ──────────
-  useEffect(() => {
-    if (state.step === 'error' && isConnected && chainId) {
-      const dec = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
-      fetchTokenBalance('USDC', dec);
-      const timer = setTimeout(() => fetchTokenBalance('USDC', dec), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [state.step, chainId, fetchTokenBalance, isConnected]);
-
-  // Reset timer tracking when bridge finishes (success or error)
-  useEffect(() => {
-    if (state.step === 'success' || state.step === 'error') setBridgeStartTime(null);
-  }, [state.step]);
-
-  // ─── Detect when useBridge hook reports an error ───────────────────────────
-  useEffect(() => {
-    if (state.step === 'error' && state.error) {
-      if (state.sourceTxHash || state.receiveTxHash) {
-        saveBridgeTransaction(state.sourceTxHash || state.receiveTxHash, 'failed');
-      }
-      setShowBridgingModal(false);
-      setBridgeError({ title: 'Error Details', message: state.error });
-      setShowBridgeFailedModal(true);
-      setBridgeButtonText('Bridge Failed');
-      setBridgeLoading(false);
-    }
-  }, [state]); // eslint-disable-line
-
-
-  // =============================================================================
-  // HELPERS
-  // =============================================================================
-
-  // Converts a chain name ("Arc Testnet") to its numeric chain ID (5042002)
-  const getChainIdByName = useCallback((chainName) => {
-    switch (chainName) {
-      case 'Arc Testnet': return parseInt(NETWORKS.ARC_TESTNET.chainId, 16);
-      case 'Sepolia':
-      case 'Sepolia Testnet':
-      case 'Ethereum Sepolia':
-      case 'Sepolia Testnet (ETH)': return parseInt(NETWORKS.ETHEREUM_SEPOLIA.chainId, 16);
-      case 'Base Sepolia': return parseInt(NETWORKS.BASE_SEPOLIA.chainId, 16);
-      default: return null;
-    }
-  }, []);
-
-  // Saves a bridge transaction record to IndexedDB (local browser storage)
-  // so it shows up in the Transactions history page.
-  const saveBridgeTransaction = useCallback(async (txHash, txStatus = 'success') => {
-    try {
-      const saved = await getItem('myTransactions');
-      const existing = saved && Array.isArray(saved) ? saved : [];
-
-      if (!existing.some(tx => tx.hash === txHash) && txHash) {
-        const bridgeTx = {
-          id: txHash || `bridge-${Date.now()}`,
-          type: 'Bridge',
-          from: fromChain,
-          to: toChain,
-          amount: amount || '0.00',
-          timestamp: Date.now(),
-          status: txStatus,
-          hash: txHash,
-          chainId: getChainIdByName(fromChain),
-          address: walletAddress?.toLowerCase(),
-          initiatedBy: 'StacDApp',
-        };
-
-        const trimmed = [bridgeTx, ...existing].slice(0, 100); // Keep last 100
-        await setItem('myTransactions', trimmed);
-
-        // Also back up to sessionStorage per wallet address
-        try {
-          if (walletAddress) {
-            const key = `stac_tx_backup_${walletAddress.toLowerCase()}`;
-            sessionStorage.setItem(key, JSON.stringify(
-              trimmed.filter(tx => tx.address?.toLowerCase() === walletAddress.toLowerCase())
-            ));
-          }
-        } catch { /* sessionStorage backup is optional — ignore errors */ }
-
-        // Notify the Transactions page that new data is available
-        window.dispatchEvent(new CustomEvent('bridgeTransactionSaved'));
-      }
-    } catch { /* ignore save errors */ }
-  }, [fromChain, toChain, amount, walletAddress, getChainIdByName]);
-
-
-  // =============================================================================
-  // EVENT HANDLERS
-  // =============================================================================
-
-  // One-click button to add the Arc Testnet to the user's MetaMask
-  const addArcNetwork = useCallback(async () => {
-    if (!window?.ethereum) return;
-    try {
-      await window.ethereum.request({
-        method: 'wallet_addEthereumChain',
-        params: [{
-          chainId: '0x4cef52',
-          chainName: 'Arc Testnet',
-          rpcUrls: ['https://rpc.testnet.arc.network'],
-          nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
-          blockExplorerUrls: ['https://testnet.arcscan.app'],
-        }],
-      });
-      // Show a brief "Added ✓" tooltip
-      setShowNetworkSuccess(true);
-      setTimeout(() => setShowNetworkSuccess(false), 3000);
-    } catch (err) {
-      if (err?.code !== 4001) console.error('Error adding Arc Testnet:', err);
-    }
-  }, []);
-
-  // Called when the user picks a new "From" chain.
-  // Also switches the wallet to that chain if one is connected.
-  const handleNetworkChange = useCallback(async (newChain) => {
-    const isBridgeInProgress = bridgeLoading || state.isLoading ||
-      (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
-    if (isBridgeInProgress) return;
-
-    // Reset bridge-lock so chain selectors are interactive again
-    bridgeInitiatedRef.current = false;
-    initialFromChainRef.current = null;
-    initialToChainRef.current = null;
-
-    if (!isConnected) { setFromChain(newChain); return; }
-
-    try {
-      const newChainId = getChainIdByName(newChain);
-      if (newChainId) {
-        await switchChainAsync({ chainId: newChainId });
-        setFromChain(newChain);
-        fetchTokenBalance('USDC', newChainId);
-      }
-    } catch (err) {
-      // If the network doesn't exist in the wallet yet, try to add it first
-      if ((err?.code === 4902 || err?.message?.includes('wallet_addEthereumChain')) && window?.ethereum) {
-        try {
-          const network = newChain === 'Arc Testnet' ? NETWORKS.ARC_TESTNET :
-            newChain === 'Sepolia' ? NETWORKS.ETHEREUM_SEPOLIA :
-              NETWORKS.BASE_SEPOLIA;
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{ chainId: network.chainId, chainName: network.chainName, nativeCurrency: network.nativeCurrency, rpcUrls: network.rpcUrls, blockExplorerUrls: network.blockExplorerUrls }],
-          });
-          const newChainId = getChainIdByName(newChain);
-          if (newChainId) {
-            await switchChainAsync({ chainId: newChainId });
-            setFromChain(newChain);
-            fetchTokenBalance('USDC', newChainId);
-          }
-        } catch { /* ignore */ }
-      }
-      setFromChain(newChain);
-    }
-  }, [bridgeLoading, state.isLoading, state.step, isConnected, getChainIdByName, switchChainAsync, fetchTokenBalance]);
-
-  // Called when the user picks a new "To" chain — doesn't switch the wallet network
-  const handleToNetworkChange = useCallback((newChain) => {
-    const isBridgeInProgress = bridgeLoading || state.isLoading ||
-      (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
-    if (isBridgeInProgress) return;
-
-    bridgeInitiatedRef.current = false;
-    initialFromChainRef.current = null;
-    initialToChainRef.current = null;
-    setToChain(newChain);
-  }, [bridgeLoading, state.isLoading, state.step]);
-
-  // Called when the user clicks the main "Bridge" button
   const handleBridge = useCallback(async () => {
-    // Validation checks before starting
-    if (!isConnected) {
-      setBridgeError({ title: 'Error Details', message: 'Please connect your wallet first.' });
-      setShowBridgeFailedModal(true);
-      return;
-    }
-    const amountFloat = parseFloat(amount);
-    if (!amount || isNaN(amountFloat) || amountFloat < 1) {
-      setBridgeError({ title: 'Error Details', message: amountFloat < 1 ? 'Minimum bridge amount is 1 USDC.' : 'Invalid amount.' });
-      setShowBridgeFailedModal(true);
-      return;
-    }
-    if (amountFloat > parseFloat(tokenBalance || '0')) {
-      setBridgeError({ title: 'Error Details', message: 'Insufficient balance.' });
-      setShowBridgeFailedModal(true);
-      return;
-    }
+    if (!isConnected) { setBridgeError({ title: 'Wallet Required', message: 'Please connect your wallet to bridge.' }); setShowBridgeFailedModal(true); return; }
+    if (!amount || parseFloat(amount) < 1) { setBridgeError({ title: 'Invalid Amount', message: 'Minimum bridge amount is 1 USDC.' }); setShowBridgeFailedModal(true); return; }
 
-    // Lock in the chain selection so UI stays stable during the transaction
+    setBridgeLoading(true);
+    setBridgeStartTime(Date.now());
     setStopTimer(false);
+    bridgeInitiatedRef.current = true;
     initialFromChainRef.current = fromChain;
     initialToChainRef.current = toChain;
-    bridgeInitiatedRef.current = true;
-
-    // Show the progress modal and start the timer
-    setBridgeStartTime(Date.now());
     setShowBridgingModal(true);
-    setBridgeLoading(true);
-    setBridgeButtonText('Bridging...');
 
-    // Safety timeout: if the bridge takes longer than 6 minutes, show an error.
-    // (The burn may have still succeeded — Circle auto-mints when ready.)
-    timeoutIdRef.current = setTimeout(() => {
-      if (state.step !== 'success' && state.step !== 'error' && state.step !== 'idle') {
-        setStopTimer(true);
-        setShowBridgingModal(false);
-        setBridgeError({ title: 'Error Details', message: 'Bridge transaction timeout. The burn may still have succeeded — Circle will auto-mint when ready.' });
-        setShowBridgeFailedModal(true);
-        setBridgeButtonText('Bridge Failed');
-        setBridgeLoading(false);
-        reset();
-      }
-    }, 360000); // 6 minutes
+    const dirMap = {
+      'Sepolia': { 'Arc Testnet': 'sepolia-to-arc', 'Base Sepolia': 'sepolia-to-base' },
+      'Arc Testnet': { 'Sepolia': 'arc-to-sepolia', 'Base Sepolia': 'arc-to-base' },
+      'Base Sepolia': { 'Sepolia': 'base-to-sepolia', 'Arc Testnet': 'base-to-arc' }
+    };
 
     try {
-      // Determine the direction string expected by the useBridge hook
-      let direction;
-      if (fromChain === 'Sepolia') direction = toChain === 'Arc Testnet' ? 'sepolia-to-arc' : 'sepolia-to-base';
-      else if (fromChain === 'Arc Testnet') direction = toChain === 'Sepolia' ? 'arc-to-sepolia' : 'arc-to-base';
-      else if (fromChain === 'Base Sepolia') direction = toChain === 'Sepolia' ? 'base-to-sepolia' : 'base-to-arc';
-
-      const result = await bridge('USDC', amount, direction);
-      if (timeoutIdRef.current) { clearTimeout(timeoutIdRef.current); timeoutIdRef.current = null; }
-
-      if (result.step === 'error') {
-        setStopTimer(true);
-        const failedHash = result.sourceTxHash || result.receiveTxHash || result.transaction?.hash || result.hash;
-        if (failedHash) saveBridgeTransaction(failedHash, 'failed');
-        setShowBridgingModal(false);
-        setBridgeLoading(false);
-        setBridgeError({ title: 'Error Details', message: result.error || 'Transaction failed.' });
-        setShowBridgeFailedModal(true);
-        setBridgeButtonText('Bridge Failed');
-        reset();
-      }
-    } catch (err) {
-      setStopTimer(true);
-      if (timeoutIdRef.current) { clearTimeout(timeoutIdRef.current); timeoutIdRef.current = null; }
-      setShowBridgingModal(false);
-      setBridgeError({ title: 'Error Details', message: err.message || 'An unexpected error occurred.' });
-      setShowBridgeFailedModal(true);
-      setBridgeButtonText('Bridge Failed');
-    } finally {
+      const direction = dirMap[fromChain][toChain];
+      await bridge('USDC', amount, direction);
+    } catch (e) {
       setBridgeLoading(false);
+      setShowBridgingModal(false);
+      setBridgeError({ title: 'Execution Error', message: e.message });
+      setShowBridgeFailedModal(true);
     }
-  }, [isConnected, amount, tokenBalance, fromChain, toChain, state.step, bridge, reset, saveBridgeTransaction]);
+  }, [isConnected, amount, fromChain, toChain, bridge]);
 
-  // Resets all bridge state back to zero — called after any modal closes
-  const handleReset = useCallback(() => {
+  const handleReset = (clear = true) => {
+    if (clear) setAmount('');
     setShowBridgingModal(false);
     setShowBridgeSuccessModal(false);
     setShowBridgeFailedModal(false);
     setShowBridgeRejectedModal(false);
     setShowBridgeCancelledModal(false);
-    setAmount('');
-    setBridgeButtonText('Bridge');
     setBridgeLoading(false);
-    setBridgeStartTime(null);
-    setStopTimer(true);
-    reset();
     bridgeInitiatedRef.current = false;
-    initialFromChainRef.current = null;
-    initialToChainRef.current = null;
-    if (timeoutIdRef.current) { clearTimeout(timeoutIdRef.current); timeoutIdRef.current = null; }
-  }, [reset]);
+    reset();
+  };
 
-  // Handles the user closing the "Bridging in progress" modal early (= cancellation)
-  const closeBridgingModal = useCallback(() => {
-    if (state.step !== 'success' && bridgeLoading) {
-      handleReset();
-      setShowBridgeCancelledModal(true);
-      return;
+  // TIMER
+  useEffect(() => {
+    let timer;
+    if (isBridgeInProgress && !stopTimer) {
+      timer = setInterval(() => {
+        const start = bridgeStartTime || Date.now();
+        setElapsedTime(Math.floor((Date.now() - start) / 1000));
+      }, 1000);
+    } else {
+      clearInterval(timer);
     }
-    handleReset();
-  }, [state.step, bridgeLoading, handleReset]);
+    return () => clearInterval(timer);
+  }, [isBridgeInProgress, stopTimer, bridgeStartTime]);
 
-  const closeBridgeFailedModal = useCallback(() => handleReset(), [handleReset]);
+  // SUCCESS HANDLER
+  useEffect(() => {
+    if (state.step === 'success' && state.sourceTxHash) {
+      setSourceTxHash(state.sourceTxHash);
+      if (bridgeStartTime) {
+        const s = (Date.now() - bridgeStartTime) / 1000;
+        setBridgeFinalTime(s > 60 ? `${Math.floor(s / 60)}m ${Math.floor(s % 60)}s` : `${Math.floor(s)}s`);
+      }
+      setShowBridgingModal(false);
+      setShowBridgeSuccessModal(true);
 
-  // Helper: true if a bridge transaction is actively in progress
-  const isBridgeInProgress = bridgeLoading || state.isLoading ||
-    (state.step !== 'idle' && state.step !== 'success' && state.step !== 'error');
+      // Force saving with receiveTxHash if available, otherwise just use sourceTxHash
+      saveBridgeTransaction(state.sourceTxHash, 'success', state.receiveTxHash);
+      setBridgeStartTime(null);
+      refreshBalances();
+    }
+  }, [state.step, state.sourceTxHash, state.receiveTxHash, bridgeStartTime, refreshBalances, saveBridgeTransaction]);
 
-  // The chain names to display (locked to initial values once bridge starts)
-  const displayFromChain = bridgeInitiatedRef.current && initialFromChainRef.current ? initialFromChainRef.current : fromChain;
-  const displayToChain = bridgeInitiatedRef.current && initialToChainRef.current ? initialToChainRef.current : toChain;
+  // COMPLEMENTARY SYNC: Update destHash if it becomes available later
+  useEffect(() => {
+    const updateDestHash = async () => {
+      if (state.receiveTxHash && sourceTxHash) {
+        const saved = await getItem('myTransactions') || [];
+        const idx = saved.findIndex(tx => tx.hash === sourceTxHash);
+        if (idx !== -1 && !saved[idx].destHash) {
+          saved[idx].destHash = state.receiveTxHash;
+          await setItem('myTransactions', saved);
+          window.dispatchEvent(new CustomEvent('bridgeTransactionSaved'));
+        }
+      }
+    };
+    updateDestHash();
+  }, [state.receiveTxHash, sourceTxHash]);
 
+  // ERROR HANDLER
+  useEffect(() => {
+    if (state.step === 'error' && state.error) {
+      setShowBridgingModal(false);
+      setBridgeError({ title: 'Transfer Failed', message: state.error });
+      setShowBridgeFailedModal(true);
+      setBridgeLoading(false);
+      setBridgeStartTime(null);
+    }
+  }, [state]);
 
-  // =============================================================================
-  // RENDER
-  // =============================================================================
+  const formatTime = (s) => s > 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
+
+  const forwardingFee = toChain === 'Sepolia' ? 1.25 : 0.20;
+  const receiveAmount = Math.max(0, (parseFloat(amount) || 0) - forwardingFee).toFixed(2);
+
+  if (!mounted) return null;
+
   return (
-    <div className="max-w-2xl mx-auto w-full">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bridge-container group"
-      >
-        {/* Subtle corner glow — desktop only, invisible in light mode */}
-        <div className="hidden md:block absolute -top-20    -left-20  w-48 h-48 bg-gradient-to-br from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full" />
-        <div className="hidden md:block absolute -top-20    -right-20 w-48 h-48 bg-gradient-to-bl from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full" />
-        <div className="hidden md:block absolute -bottom-20 -left-20  w-48 h-48 bg-gradient-to-tr from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full" />
-        <div className="hidden md:block absolute -bottom-20 -right-20 w-48 h-48 bg-gradient-to-tl from-slate-300 to-slate-400 opacity-0 dark:opacity-[0.1] blur-[60px] rounded-full" />
+    <div className="fixed inset-0 top-[64px] flex flex-col items-center justify-start sm:justify-start overflow-y-auto overflow-x-hidden bg-transparent custom-scrollbar pb-10 pt-4 sm:pt-12 md:pt-16">
+      <div className="w-full max-w-[540px] px-2 sm:px-4">
 
-        {/* ── Header ─────────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="bridge-title">{t('Bridge Assets')}</h1>
-
-          {/* "Add Arc" button — adds Arc Testnet to the user's MetaMask */}
-          <button
-            onClick={addArcNetwork}
-            className="add-arc-button group relative flex items-center gap-2"
-            aria-label={t('Add Arc Testnet to Wallet')}
-          >
-            <Wallet size={14} className="text-black dark:text-white transition-colors" />
-            <span>{t('Add Arc')}</span>
-
-            {/* Success tooltip: "Network added successfully ✓" */}
-            <AnimatePresence>
-              {showNetworkSuccess && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute bottom-[calc(100%+14px)] right-0 bg-slate-50 dark:bg-black px-3.5 py-2.5 rounded-xl shadow-[0_12px_28px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_28px_rgba(255,255,255,0.08)] flex items-center gap-2.5 z-50 border border-slate-200 dark:border-white/10 min-w-max backdrop-blur-md"
-                >
-                  <div className="flex-shrink-0 w-5 h-5 rounded-lg bg-emerald-500 flex items-center justify-center shadow-[0_2px_8px_rgba(16,185,129,0.3)] border border-emerald-400/20">
-                    <Check size={13} className="text-white stroke-[4]" />
-                  </div>
-                  <span className="text-[12px] font-bold text-black dark:text-white tracking-tight leading-none whitespace-nowrap">
-                    {t('Network added successfully')}
-                  </span>
-                  {/* Tooltip arrow (border layer) */}
-                  <div className="absolute top-full right-4 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[7px] border-t-slate-200 dark:border-t-white/10" />
-                  <div className="absolute top-[calc(100%-1.5px)] right-4 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[7px] border-t-slate-50 dark:border-t-black" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </button>
-        </div>
-
-        {/* ── Chain Selection Row ─────────────────────────────────────────── */}
-        {/* FROM chain → arrow → TO chain */}
-        <div className="w-full mb-6 relative z-10">
-          <div className="flex items-center gap-2 sm:gap-3 w-full">
-
-            {/* FROM selector */}
-            <div className="flex-1 min-w-0">
-              <button
-                ref={fromChainTriggerRef}
-                onClick={() => { if (!isBridgeInProgress) setShowChainSelector('from'); }}
-                disabled={isBridgeInProgress}
-                className="w-full h-12 md:h-14 px-2 sm:px-4 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 flex items-center justify-between gap-2 transition-all hover:bg-slate-100 dark:hover:bg-white/[0.08] disabled:opacity-50 min-w-0 active:scale-[0.98] shadow-sm"
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="h-6 w-6 shrink-0 rounded-full overflow-hidden bg-white dark:bg-white/10 shadow-sm border border-slate-200/50 dark:border-white/10">
-                    {/* Chain icon */}
-                    {displayFromChain.toLowerCase().includes('arc') && <img src="/icons/arc.png" alt={t('Arc')} className="w-full h-full object-cover bg-black" />}
-                    {displayFromChain.toLowerCase().includes('base') && <img src="/icons/base.png" alt={t('Base')} className="w-full h-full object-cover bg-white" />}
-                    {displayFromChain.toLowerCase().includes('sepolia') && !displayFromChain.toLowerCase().includes('base') && <img src="/icons/eth.png" alt={t('ETH')} className="w-full h-full object-cover bg-white" />}
-                  </div>
-                  <span className="truncate text-xs sm:text-sm font-bold text-slate-800 dark:text-white">
-                    {/* On small screens, abbreviate "Base Sepolia" → "Base Sep.." */}
-                    <span className="sm:hidden">
-                      {displayFromChain === 'Base Sepolia' ? t('Base Sep..') : displayFromChain}
-                    </span>
-                    <span className="hidden sm:inline">{displayFromChain}</span>
-                  </span>
-                </div>
-                <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-              </button>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          className="bg-white/95 dark:bg-[#0B0F1A]/95 backdrop-blur-2xl border border-[#EAEAEA] dark:border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)] rounded-[1.75rem] sm:rounded-[2.5rem] overflow-hidden"
+        >
+          {/* COMPACT INTERACTIVE HEADER */}
+          <div className="px-5 sm:px-8 pt-6 sm:pt-8 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
+            <div className="space-y-1">
+              <h2 className="text-xl sm:text-2xl font-geist font-semibold text-slate-900 dark:text-white tracking-tight leading-none">{t('Bridge Assets')}</h2>
             </div>
-
-            {/* ↔ Swap chains button */}
-            <div className="flex-shrink-0">
-              <button
-                onClick={() => {
-                  if (isBridgeInProgress) return;
-                  const tempFrom = fromChain;
-                  const tempTo = toChain;
-                  bridgeInitiatedRef.current = false;
-                  initialFromChainRef.current = null;
-                  initialToChainRef.current = null;
-                  setFromChain(tempTo);
-                  setToChain(tempFrom);
-
-                  if (isConnected) {
-                    const newFromChainId = getChainIdByName(tempTo);
-                    if (newFromChainId) {
-                      switchChainAsync({ chainId: newFromChainId }).catch(err => console.warn('Network switch failed:', err));
-                      fetchTokenBalance('USDC', newFromChainId);
-                    }
-                  }
-                }}
-                disabled={isBridgeInProgress}
-                aria-label={t('Switch Networks')}
-                className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0 flex items-center justify-center bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 rounded-xl text-slate-600 dark:text-slate-400 transition-all hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 active:scale-90 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-              >
-                <ArrowRight size={18} />
-              </button>
-            </div>
-
-            {/* TO selector */}
-            <div className="flex-1 min-w-0">
-              <button
-                ref={toChainTriggerRef}
-                onClick={() => { if (!isBridgeInProgress) setShowChainSelector('to'); }}
-                disabled={isBridgeInProgress}
-                className="w-full h-12 md:h-14 px-2 sm:px-4 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 flex items-center justify-between gap-2 transition-all hover:bg-slate-100 dark:hover:bg-white/[0.08] disabled:opacity-50 min-w-0 active:scale-[0.98] shadow-sm"
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="h-6 w-6 shrink-0 rounded-full overflow-hidden bg-white dark:bg-white/10 shadow-sm border border-slate-200/50 dark:border-white/10">
-                    {displayToChain.toLowerCase().includes('arc') && <img src="/icons/arc.png" alt={t('Arc')} className="w-full h-full object-cover bg-black" />}
-                    {displayToChain.toLowerCase().includes('base') && <img src="/icons/base.png" alt={t('Base')} className="w-full h-full object-cover bg-white" />}
-                    {displayToChain.toLowerCase().includes('sepolia') && !displayToChain.toLowerCase().includes('base') && <img src="/icons/eth.png" alt={t('ETH')} className="w-full h-full object-cover bg-white" />}
-                  </div>
-                  <span className="truncate text-xs sm:text-sm font-bold text-slate-800 dark:text-white">
-                    <span className="sm:hidden">
-                      {displayToChain === 'Base Sepolia' ? t('Base Sep..') : displayToChain}
-                    </span>
-                    <span className="hidden sm:inline">{displayToChain}</span>
-                  </span>
-                </div>
-                <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* ── USDC Amount Input ───────────────────────────────────────────── */}
-        <div className="input-group">
-          <div className="input-header">
-            <p className="input-label">{t('You send')}</p>
-            {/* Show the user's current USDC balance on the selected source chain */}
-            <div className="flex items-center text-[12px] font-medium text-slate-500 dark:text-slate-400">
-              <span className="mr-1 opacity-60">Bal:</span>
-              <span className="text-slate-700 dark:text-slate-200 font-medium tabular-nums">
-                {isLoadingBalance ? (
-                  <div className="skeleton w-16 h-4 rounded-md ml-1" />
-                ) : balanceError ? (
-                  <span className="text-red-400">{t('Error')}</span>
-                ) : (
-                  formatBalance(tokenBalance || 0)
-                )}
-              </span>
-            </div>
-          </div>
-
-          <div className="input-row">
-            <input
-              type="text"
-              inputMode="decimal"
-              value={amount}
-              onChange={(e) => setAmount(sanitizeInput(e.target.value))}
-              placeholder="0.0"
-              className="amount-input"
-              style={{ WebkitAppearance: 'none', touchAction: 'manipulation' }}
-            />
-            {/* Token pill — always USDC for bridging */}
-            <div className="token-selector">
-              <div className="token-icon">
-                <img src="/icons/usdc.png" alt="USDC" className="w-full h-full object-contain" />
-              </div>
-              <span className="token-symbol">USDC</span>
-            </div>
-          </div>
-
-          <div className="input-footer">
-            <div />
-            {/* "Max" button — fills in the user's full balance */}
             <button
-              onClick={() => { if (tokenBalance && parseFloat(tokenBalance) > 0) setAmount(tokenBalance); }}
-              className="max-button"
+              onClick={() => switchChainAsync({ chainId: 5042002 })}
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] sm:text-[11px] items-center gap-2 group transition-all hover:bg-slate-100 dark:hover:bg-white/10 flex text-slate-500 dark:text-slate-400 font-mono"
             >
-              {t('Max')}
+              <Wallet size={12} className="group-hover:translate-x-0.5 transition-transform" />
+              <span>Add Arc</span>
             </button>
           </div>
-        </div>
 
-        {/* ── Insufficient balance warning ────────────────────────────────── */}
-        {isConnected && amount && parseFloat(amount) > parseFloat(tokenBalance) && (
-          <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="mt-4 flex items-center gap-3">
-            <div className="w-0.5 h-6 rounded-full bg-amber-500 flex-shrink-0 opacity-80 shadow-[0_0_8px_rgba(245,158,11,0.3)]" />
-            <p className="text-[12px] text-slate-600 dark:text-gray-400 leading-tight">
-              <span className="font-bold text-amber-600 dark:text-amber-400">{t('Error')}:</span> {t('Insufficient USDC balance to complete this bridge')}
-            </p>
-          </motion.div>
-        )}
+          <div className="p-5 sm:p-8 pt-4 sm:pt-6 space-y-6 sm:space-y-8">
+            {/* DUAL-INPUT DESIGN */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-[1fr,32px,1fr] sm:grid-cols-[1fr,40px,1fr] items-center gap-2 sm:gap-3 relative">
+                <div className="space-y-1.5">
+                  <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400 px-1">{t('Source')}</label>
+                  <button
+                    onClick={() => !isBridgeInProgress && setShowChainSelector('from')}
+                    className="w-full flex items-center justify-between px-2.5 sm:px-3.5 py-2.5 sm:py-3 group bg-slate-50/50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all active:scale-[0.98] focus:ring-1 focus:ring-indigo-500/50 outline-none"
+                  >
+                    <div className="flex items-center gap-2 sm:gap-2.5 overflow-hidden">
+                      <img
+                        src={Object.values(NETWORKS).find(n => n.chainName === fromChain || n.chainName.includes(fromChain))?.iconUrl}
+                        className="w-3.5 sm:w-4 h-3.5 sm:h-4 object-contain shrink-0"
+                        alt=""
+                      />
+                      <span className="text-[13px] sm:text-sm font-geist text-slate-900 dark:text-white truncate">{fromChain}</span>
+                    </div>
+                    <ChevronDown size={10} className="text-slate-400 group-hover:text-indigo-500 transition-colors shrink-0" />
+                  </button>
+                </div>
 
-        {/* ── Irreversible transfer warning ───────────────────────────────── */}
-        <div className="mt-4 mb-4 pt-4 border-t border-slate-200 dark:border-white/[0.06]">
-          <div className="flex items-center gap-3">
-            <div className="w-0.5 h-6 rounded-full bg-orange-500 flex-shrink-0 opacity-80 shadow-[0_0_8px_rgba(249,115,22,0.3)]" />
-            <p className="text-[12px] text-slate-600 dark:text-gray-400 font-medium leading-tight">
-              <span className="font-bold text-slate-800 dark:text-slate-200">{t('Note')}:</span> {t('Note: Cross chain transfers are irreversible. Please verify all details before confirming the transaction.')}
-            </p>
+                <div className="flex justify-center pt-5 sm:pt-6">
+                  <button
+                    onClick={async () => {
+                      if (isBridgeInProgress) return;
+                      const f = fromChain;
+                      const t = toChain;
+                      if (isConnected) {
+                        try {
+                          await switchChainAsync({ chainId: getChainIdByName(t) });
+                          setFromChain(t);
+                          setToChain(f);
+                        } catch (e) {
+                          logger.warn('Swap rejected', e);
+                        }
+                      } else {
+                        setFromChain(t);
+                        setToChain(f);
+                      }
+                    }}
+                    disabled={isBridgeInProgress}
+                    className="w-8 sm:w-10 h-8 sm:h-10 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all active:scale-90"
+                  >
+                    <ArrowRight size={12} sm:size={14} />
+                  </button>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400 px-1">{t('Destination')}</label>
+                  <button
+                    onClick={() => !isBridgeInProgress && setShowChainSelector('to')}
+                    className="w-full flex items-center justify-between px-2.5 sm:px-3.5 py-2.5 sm:py-3 group bg-slate-50/50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all active:scale-[0.98] focus:ring-1 focus:ring-indigo-500/50 outline-none"
+                  >
+                    <div className="flex items-center gap-2 sm:gap-2.5 overflow-hidden">
+                      <img
+                        src={Object.values(NETWORKS).find(n => n.chainName === toChain || n.chainName.includes(toChain))?.iconUrl}
+                        className="w-3.5 sm:w-4 h-3.5 sm:h-4 object-contain shrink-0"
+                        alt=""
+                      />
+                      <span className="text-[13px] sm:text-sm font-geist text-slate-900 dark:text-white truncate">{toChain}</span>
+                    </div>
+                    <ChevronDown size={10} className="text-slate-400 group-hover:text-indigo-500 transition-colors shrink-0" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* AMOUNT CARD */}
+            <div className="p-4 sm:p-6 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-[1.25rem] sm:rounded-[2rem] space-y-3 sm:space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400">{t('Amount')}</label>
+              </div>
+
+              <div className="flex items-end justify-between gap-2 sm:gap-4">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(e) => setAmount(sanitizeInput(e.target.value))}
+                  placeholder="0.00"
+                  className="w-full bg-transparent text-3xl sm:text-5xl font-geist font-semibold leading-none text-slate-900 dark:text-white outline-none placeholder:text-slate-200 dark:placeholder:text-white/5 tracking-tight"
+                />
+                <div className="shrink-0 flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-3 py-1.5 sm:py-1.5 bg-white dark:bg-white/10 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+                  <img src="/icons/usdc.png" className="w-4 h-4 sm:w-5 sm:h-5" alt="USDC" />
+                  <span className="text-[11px] sm:text-[13px] font-bold text-slate-900 dark:text-white tracking-tight">USDC</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 pt-1">
+                <div className="flex gap-1.5 sm:gap-2">
+                  {['25%', '50%', 'MAX'].map(p => (
+                    <button
+                      key={p}
+                      onClick={() => {
+                        if (!tokenBalance) return;
+                        const bal = parseFloat(tokenBalance);
+                        if (p === 'MAX') setAmount(Math.max(0, bal - 0.01).toFixed(2));
+                        else setAmount((bal * parseInt(p) / 100).toFixed(2));
+                      }}
+                      className="flex-1 sm:flex-none px-2.5 sm:px-4 py-1.5 font-mono text-[9px] sm:text-[10px] tracking-widest uppercase border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1.5 font-mono text-[9px] sm:text-[10px] text-slate-400">
+                  <span>BAL</span>
+                  <span className="text-slate-900 dark:text-slate-200">
+                    {isLoadingBalance ? '...' : Number(tokenBalance || 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* TRANSFER SUMMARY */}
+            <div className="space-y-3 px-1 pt-1 sm:pt-2">
+              <div className="flex items-center justify-between text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-1.5">
+                  <Info size={11} sm:size={12} className="text-slate-300" />
+                  <span className="font-geist">Relayer Execution Fee</span>
+                </div>
+                <span className="font-mono text-slate-600 dark:text-slate-300">{forwardingFee.toFixed(2)} USDC</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-1.5">
+                  <Info size={11} sm:size={12} className="text-slate-300" />
+                  <span className="font-geist">Est. Confirmation Time</span>
+                </div>
+                <span className="font-mono text-slate-600 dark:text-slate-300">~18s</span>
+              </div>
+              <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-slate-100 dark:border-white/5">
+                <span className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400">{t('Est. Received')}</span>
+                <span className="text-sm sm:text-base font-mono text-slate-700 dark:text-slate-200 tracking-tight">
+                  {receiveAmount} USDC
+                </span>
+              </div>
+            </div>
+
+            {/* ACTION BUTTON — FLAT BRAND STYLE */}
+            <div className="pt-2">
+              <button
+                onClick={handleBridge}
+                disabled={!amount || isBridgeInProgress || (parseFloat(amount) > parseFloat(tokenBalance || '0'))}
+                className={`w-full h-12 sm:h-14 rounded-2xl text-[15px] sm:text-[16px] font-bold tracking-tight transition-all relative overflow-hidden group active:scale-95 flex items-center justify-center gap-2.5 ${!amount
+                    ? 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-white/10'
+                    : isBridgeInProgress
+                      ? 'bg-indigo-500/10 dark:bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
+                      : 'bg-[#6366F1] dark:bg-indigo-600 text-white hover:brightness-110 active:scale-[0.98]'
+                  }`}
+              >
+                <div className="relative z-10 flex items-center justify-center gap-2.5">
+                  {status === 'disconnected' ? (
+                    <><Wallet size={16} sm:size={18} /><span>Connect Wallet</span></>
+                  ) : bridgeLoading || isBridgeInProgress ? (
+                    <><Loader size={16} sm:size={18} className="animate-spin text-indigo-500 shadow-brand" /><span>{t('Bridging')}...</span></>
+                  ) : (
+                    <span>Bridge</span>
+                  )}
+                </div>
+              </button>
+            </div>
           </div>
-        </div>
-
-        {/* ── Main Bridge Button ──────────────────────────────────────────── */}
-        {/*
-          Button states (in priority order):
-          1. Bridge is executing           → spinner + "Bridging..."
-          2. Reconnecting to wallet        → show "Bridge" (disabled, waiting)
-          3. Wallet not connected          → show "Connect Wallet"
-          4. Ready to bridge               → show current button text ("Bridge" or "Bridge Failed")
-        */}
-        <button
-          onClick={handleBridge}
-          disabled={
-            !amount ||
-            bridgeLoading ||
-            (status === 'disconnected' && !wasConnected) ||
-            state.isLoading ||
-            bridgeButtonText === 'Bridge Failed' ||
-            (isConnected && amount && parseFloat(amount) > parseFloat(tokenBalance || '0')) ||
-            status === 'reconnecting' ||
-            status === 'connecting'
-          }
-          className={`bridge-button ${(bridgeButtonText === 'Bridge Failed' || (isConnected && amount && parseFloat(amount) > parseFloat(tokenBalance || '0'))) ? 'bridge-button-failed' : ''} flex items-center justify-center gap-2`}
-        >
-          {bridgeLoading || state.isLoading ? (
-            <><Loader className="animate-spin" size={20} /><span>{t('Bridging')}...</span></>
-          ) : (status === 'reconnecting' || status === 'connecting' || wasConnected) && !isConnected ? (
-            <span>{t('Bridge')}</span>
-          ) : status === 'disconnected' ? (
-            <><Wallet size={20} /><span>{t('Connect Wallet')}</span></>
-          ) : (
-            <span>{t(bridgeButtonText)}</span>
-          )}
-        </button>
-
-        {/* "Powered by Circle CCTP" attribution */}
-        <div className="powered-by-badge-bottom">
-          <span>{t('Powered by Circle CCTP')}</span>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
 
-      {/* ── Chain Selector Popups ────────────────────────────────────────────── */}
+
       <ChainSelector
         isOpen={showChainSelector === 'from'}
         onClose={() => setShowChainSelector(null)}
@@ -1038,66 +550,27 @@ const Bridge = () => {
         isOpen={showChainSelector === 'to'}
         onClose={() => setShowChainSelector(null)}
         selectedChain={toChain}
-        onSelect={handleToNetworkChange}
+        onSelect={(n) => !isBridgeInProgress && setToChain(n)}
         exclude={fromChain}
       />
 
-
-      {/* ── Result Modals ──────────────────────────────────────────────────────
-          Only one of these is visible at a time, controlled by the show* states. */}
-
-      {/* In-progress / loading modal */}
-      <BridgingModal
-        isOpen={showBridgingModal}
-        onClose={closeBridgingModal}
-        fromChain={displayFromChain}
-        toChain={displayToChain}
-        amount={amount}
-        startTime={bridgeStartTime}
-        state={state}
-        stopTimer={stopTimer}
-      />
-
-      {/* ❌ Failed */}
-      <BridgeFailedModal
-        isOpen={showBridgeFailedModal}
-        onClose={closeBridgeFailedModal}
-        fromChain={fromChain}
-        toChain={toChain}
-        errorTitle={bridgeError.title}
-        errorMessage={bridgeError.message}
-      />
-
-      {/* ✅ Success */}
+      {/* MODALS TRANSFERRED FROM PREVIOUS VERSION */}
+      <BridgingModal isOpen={showBridgingModal} onClose={() => setShowBridgingModal(false)} fromChain={initialFromChainRef.current || fromChain} toChain={initialToChainRef.current || toChain} amount={amount} startTime={bridgeStartTime} state={state} stopTimer={stopTimer} onClaim={claim} />
+      <BridgeFailedModal isOpen={showBridgeFailedModal} onClose={() => handleReset(false)} onRetry={handleBridge} fromChain={fromChain} toChain={toChain} errorTitle={bridgeError.title} errorMessage={bridgeError.message} state={state} />
       <BridgeSuccessModal
         isOpen={showBridgeSuccessModal}
-        onClose={handleReset}
+        onClose={() => handleReset(true)}
         fromChain={fromChain}
         toChain={toChain}
         amount={state.result?.amount || amount}
         timeTaken={bridgeFinalTime}
-        txHash={sourceTxHash}
+        sourceTxHash={sourceTxHash}
+        destTxHash={state.receiveTxHash}
       />
-
-      {/* 🚫 User rejected in wallet */}
-      <BridgeRejectedModal
-        isOpen={showBridgeRejectedModal}
-        onClose={handleReset}
-        fromChain={fromChain}
-        toChain={toChain}
-      />
-
-      {/* 🛑 User cancelled mid-bridge */}
-      <BridgeCancelledModal
-        isOpen={showBridgeCancelledModal}
-        onClose={handleReset}
-        fromChain={fromChain}
-        toChain={toChain}
-      />
+      <BridgeRejectedModal isOpen={showBridgeRejectedModal} onClose={() => handleReset(false)} fromChain={fromChain} toChain={toChain} />
+      <BridgeCancelledModal isOpen={showBridgeCancelledModal} onClose={() => handleReset(false)} fromChain={fromChain} toChain={toChain} />
     </div>
   );
 };
 
-// memo() prevents unnecessary re-renders when parent components re-render
-// but Bridge's own props haven't changed.
 export default memo(Bridge);

@@ -13,6 +13,9 @@ const TOKEN_CONTRACTS = {
   USDC: {
     [SEPOLIA_CHAIN_ID]: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Official Circle USDC on Sepolia
     [BASE_SEPOLIA_CHAIN_ID]: '0x036CbD53842c5426634e7929541eC2318f3dCF7e', // Official Circle USDC on Base Sepolia
+  },
+  EURC: {
+    [ARC_CHAIN_ID]: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a', // Official EURC on Arc Testnet
   }
 };
 
@@ -34,9 +37,11 @@ const ARC_RPC_URLS = [
 const BASE_SEPOLIA_RPC_URLS = [
   import.meta.env.VITE_QUICKNODE_BASE_URL,
   import.meta.env.VITE_BASE_SEPOLIA_RPC_URL,
-  'https://sepolia.base.org',
+  'https://base-sepolia.blockpi.network/v1/rpc/public',
   'https://base-sepolia-rpc.publicnode.com',
+  'https://gateway.tenderly.co/public/base-sepolia',
 ].filter(Boolean);
+
 
 // Shared transport configuration helper
 const createFallbackTransport = (urls) => {
@@ -45,14 +50,15 @@ const createFallbackTransport = (urls) => {
   }
   return fallback(
     urls.map(url => http(url, {
-      timeout: 15000,
-      retryCount: 2,
+      timeout: 10000,
+      retryCount: 1,
     })),
     {
       rank: true,
-      retryCount: 2,
-      retryDelay: 500,
+      retryCount: 1,
+      retryDelay: 1000,
     }
+
   );
 };
 
@@ -127,9 +133,46 @@ const useMultiChainBalances = (address, isConnected) => {
     }
   };
 
+  const fetchTokenBalance = async (chainId, tokenSymbol) => {
+    if (!address) return '0.00';
+    let rpcUrls = chainId === ARC_CHAIN_ID ? ARC_RPC_URLS : [];
+    let chainConfig = {
+      id: ARC_CHAIN_ID,
+      name: 'Arc Testnet',
+      network: 'arc-testnet',
+      nativeCurrency: { decimals: 18, name: 'USDC', symbol: 'USDC' },
+      testnet: true,
+      rpcUrls: { default: { http: rpcUrls } }
+    };
+
+    const publicClient = createPublicClient({
+      chain: chainConfig,
+      transport: createFallbackTransport(rpcUrls),
+    });
+
+    const tokenAddress = TOKEN_CONTRACTS[tokenSymbol][chainId];
+    const balance = await publicClient.readContract({
+      address: tokenAddress,
+      abi: ERC20_ABI,
+      functionName: 'balanceOf',
+      args: [address],
+    });
+    return parseFloat(formatUnits(balance, 6)).toFixed(2);
+  };
+
   const arcQuery = useQuery({
-    queryKey: ['balance', address, ARC_CHAIN_ID],
+    queryKey: ['balance', address, ARC_CHAIN_ID, 'USDC'],
     queryFn: () => fetchChainBalance(ARC_CHAIN_ID),
+    enabled: !!address && isConnected,
+    staleTime: 30000,
+    gcTime: 1000 * 60 * 10,
+    refetchInterval: 60000,
+    placeholderData: '0.00'
+  });
+
+  const arcEurcQuery = useQuery({
+    queryKey: ['balance', address, ARC_CHAIN_ID, 'EURC'],
+    queryFn: () => fetchTokenBalance(ARC_CHAIN_ID, 'EURC'),
     enabled: !!address && isConnected,
     staleTime: 30000,
     gcTime: 1000 * 60 * 10,
@@ -173,7 +216,11 @@ const useMultiChainBalances = (address, isConnected) => {
   }, [address, queryClient]);
 
   const balances = {
-    arcTestnet: { usdc: arcQuery.data || '0.00', loading: arcQuery.isLoading && arcQuery.isFetching },
+    arcTestnet: { 
+      usdc: arcQuery.data || '0.00', 
+      eurc: arcEurcQuery.data || '0.00',
+      loading: (arcQuery.isLoading && arcQuery.isFetching) || (arcEurcQuery.isLoading && arcEurcQuery.isFetching) 
+    },
     sepolia: { usdc: sepoliaQuery.data || '0.00', loading: sepoliaQuery.isLoading && sepoliaQuery.isFetching },
     baseSepolia: { usdc: baseQuery.data || '0.00', loading: baseQuery.isLoading && baseQuery.isFetching },
   };

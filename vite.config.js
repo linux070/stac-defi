@@ -13,7 +13,7 @@ export default defineConfig({
   server: {
     port: 5173,       // This forces the port to be 5173
     strictPort: true, // This stops it from switching to 5174/5175 if busy
-    host: true  // Optional: Helpful if you want to test on mobile via LAN
+    host: true,       // Helpful if you want to test on mobile via LAN
   }
 
 

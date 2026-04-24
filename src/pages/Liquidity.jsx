@@ -1,98 +1,90 @@
 // =============================================================================
-// LIQUIDITY PAGE (Coming Soon)
-// This is a placeholder page shown while the Liquidity Pools feature is
-// being built. It displays a branded "Coming Soon" card with an animated
-// icon and a preview of the four upcoming Liquidity features:
-// Yield, Liquidity, Farming, and Governance.
-// No wallet connection is needed; this page has no functional logic.
+// LIQUIDITY PAGE (Modern & Minimalist Redesign)
 // =============================================================================
 
 import { useTranslation } from 'react-i18next';
-import { LucideClock } from 'lucide-react';
+import { LucideZap, LucideWaves, LucideSprout, LucideCrown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const containerVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.8,
+      ease: [0.16, 1, 0.3, 1],
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
+};
 
 const Liquidity = () => {
   const { t } = useTranslation();
 
-  return (
-    // Full-height centred layout — looks great on both mobile and desktop
-    <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 flex items-center justify-center py-10 md:py-20 min-h-[100dvh]">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="w-full relative group"
-      >
-        {/* Main card */}
-        <div className="relative z-10 bg-white/80 dark:bg-[#0f1729]/80 border border-slate-200/60 dark:border-white/[0.12] rounded-[32px] p-8 md:p-12 text-center shadow-md dark:shadow-[0_8px_40px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.05)_inset] overflow-hidden font-['Inter','Satoshi','General_Sans',sans-serif]">
+  const features = [
+    { label: t('Yield'), icon: LucideZap, color: 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400' },
+    { label: t('Liquidity'), icon: LucideWaves, color: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' },
+    { label: t('Farming'), icon: LucideSprout, color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' },
+    { label: t('Governance'), icon: LucideCrown, color: 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400' },
+  ];
 
-          {/* Top decorative border sweep line */}
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-black dark:via-white dark:via-black dark:via-white to-transparent" />
-          {/* Subtle inner top glow — dark mode only */}
-          <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black dark:from-white/[0.04] to-transparent pointer-events-none hidden dark:block" />
+  return (
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 py-12 md:py-24 relative overflow-hidden">
+      
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="max-w-4xl w-full z-10"
+      >
+        {/* Main Card */}
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-white dark:bg-surface-dark p-8 md:p-16 border border-slate-200/60 dark:border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+          
+          {/* Subtle top-highlight for depth */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-white/10 to-transparent" />
 
           <div className="flex flex-col items-center">
-
-            {/* ── Animated Icon ─────────────────────────────────────────────
-                The clock icon rotates 12° at rest and slides to 0° on hover.
-                A pulsing blur blob sits behind it for a glow effect.
-            ────────────────────────────────────────────────────────────── */}
-            <div className="relative mb-8 md:mb-12">
-              {/* Ambient glow blob */}
-              <motion.div
-                animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.35, 0.15] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute inset-0 bg-black dark:bg-black dark:bg-white blur-3xl rounded-full"
-              />
-
-              {/* Icon container — rotates on hover */}
-              <div className="relative w-20 h-20 bg-gradient-to-br from-[#111827] to-[#9ca3af] dark:from-[#ffffff] dark:to-[#d1d5db] rounded-2xl flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-500 shadow-2xl dark:shadow-[0_8px_30px_rgba(255,255,255,0.15)] overflow-hidden">
-                <LucideClock size={36} className="text-white" strokeWidth={2} />
-                {/* Gloss overlay on the icon */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-50" />
-              </div>
-            </div>
-
-            {/* ── "Coming Soon" label and description ─────────────────────── */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.4 }}
-              className="space-y-6"
+            {/* ── TYPOGRAPHY ── */}
+            <motion.h1 
+              variants={itemVariants}
+              className="text-3xl md:text-5xl font-['Outfit'] font-bold tracking-tighter text-slate-900 dark:text-white text-center mb-6 max-w-lg leading-[1.1]"
             >
-              {/* Decorative divider lines around the label */}
-              <div className="flex items-center justify-center gap-3 md:gap-4">
-                <div className="h-px w-6 md:w-12 bg-gradient-to-r from-transparent to-black dark:to-white dark:to-black dark:to-white" />
-                <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] text-black dark:text-white dark:text-slate-500 dark:text-slate-400">
-                  {t('Coming Soon')}
-                </span>
-                <div className="h-px w-6 md:w-12 bg-gradient-to-l from-transparent to-black dark:to-white dark:to-black dark:to-white" />
-              </div>
+              {t('liquidity.poolsLaunchingSoon')}
+            </motion.h1>
 
-              <p className="text-lg md:text-xl text-slate-800 dark:text-white max-w-md mx-auto leading-relaxed font-bold tracking-tight">
-                {t('liquidity.poolsLaunchingSoon')}
-              </p>
-            </motion.div>
 
-            {/* ── Feature preview grid ──────────────────────────────────────
-                Shows what's coming: Yield, Liquidity, Farming, Governance.
-                Fades in more visibly on hover to tease upcoming features.
-            ────────────────────────────────────────────────────────────── */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 mt-12 md:mt-16 w-full border-t border-slate-200/50 dark:border-white/[0.08] pt-10">
-              {[
-                { label: t('Yield') },
-                { label: t('Liquidity') },
-                { label: t('Farming') },
-                { label: t('Governance') },
-              ].map((item, i) => (
-                <div key={i} className="flex flex-col items-center gap-2.5 opacity-60 group-hover:opacity-100 transition-all duration-300">
-                  {/* Dot indicator */}
-                  <div className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white shadow-[0_0_8px_rgba(128,128,128,0.6)] dark:shadow-[0_0_10px_rgba(128,128,128,0.7)]" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    {item.label}
-                  </span>
-                </div>
+
+            {/* ── BENTO FEATURE GRID ── */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full pt-12 border-t border-slate-100 dark:border-white/5">
+              {features.map((item, i) => (
+                <motion.div 
+                  key={item.label}
+                  custom={i}
+                  variants={itemVariants}
+                  className="flex flex-col items-center gap-4 group/item"
+                >
+                  <div className={`p-4 rounded-2xl ${item.color} ring-1 ring-black/[0.03] dark:ring-white/5 transition-all duration-500 group-hover/item:scale-110 group-hover/item:-translate-y-1`}>
+                    <item.icon size={22} strokeWidth={2} />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 group-hover/item:text-brand transition-colors duration-300">
+                      {item.label}
+                    </span>
+                  </div>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -103,3 +95,4 @@ const Liquidity = () => {
 };
 
 export default Liquidity;
+
