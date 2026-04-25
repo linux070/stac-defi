@@ -374,12 +374,12 @@ const Bridge = () => {
           <div className="p-5 sm:p-8 pt-4 sm:pt-6 space-y-6 sm:space-y-8">
             {/* DUAL-INPUT DESIGN */}
             <div className="space-y-4">
-              <div className="grid grid-cols-[1fr,32px,1fr] sm:grid-cols-[1fr,40px,1fr] items-center gap-2 sm:gap-3 relative">
+              <div className="grid grid-cols-[1fr,42px,1fr] sm:grid-cols-[1fr,48px,1fr] items-end gap-2 sm:gap-3 relative">
                 <div className="space-y-1.5">
                   <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400 px-1">{t('Source')}</label>
                   <button
                     onClick={() => !isBridgeInProgress && setShowChainSelector('from')}
-                    className="w-full flex items-center justify-between px-2.5 sm:px-3.5 py-2.5 sm:py-3 group bg-slate-50/50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all active:scale-[0.98] focus:ring-1 focus:ring-indigo-500/50 outline-none"
+                    className="w-full flex items-center justify-between px-2.5 sm:px-3.5 py-2.5 sm:py-3 group bg-slate-50/50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all active:scale-[0.98] focus:ring-1 focus:ring-indigo-500/50 outline-none h-11 sm:h-12"
                   >
                     <div className="flex items-center gap-2 sm:gap-2.5 overflow-hidden">
                       <img
@@ -393,7 +393,7 @@ const Bridge = () => {
                   </button>
                 </div>
 
-                <div className="flex justify-center pt-5 sm:pt-6">
+                <div className="flex justify-center">
                   <button
                     onClick={async () => {
                       if (isBridgeInProgress) return;
@@ -413,9 +413,9 @@ const Bridge = () => {
                       }
                     }}
                     disabled={isBridgeInProgress}
-                    className="w-8 sm:w-10 h-8 sm:h-10 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all active:scale-90"
+                    className="w-10 sm:w-12 h-11 sm:h-12 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all active:scale-90 shadow-sm dark:shadow-none"
                   >
-                    <ArrowRight size={12} sm:size={14} />
+                    <ArrowRight size={16} sm:size={18} strokeWidth={2.5} />
                   </button>
                 </div>
 

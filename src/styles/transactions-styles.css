@@ -412,6 +412,93 @@
 
 .status-pill.pending { background: rgba(99, 102, 241, 0.08); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.15); }
 
+/* RESPONSIVE RECALIBRATION */
+@media (max-width: 1024px) {
+  .transactions-container { padding: 40px 24px; }
+  .transactions-title-section h1 { font-size: 42px; }
+  .filter-bar { flex-direction: column; align-items: stretch; gap: 16px; }
+  .search-input-wrapper { min-width: 0; }
+  .filter-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .filter-dropdown-btn { width: 100%; }
+}
+
+@media (max-width: 768px) {
+  .transactions-container { padding: 24px 16px; }
+  .transactions-title-section h1 { font-size: 32px; letter-spacing: -0.04em; }
+  .transactions-table-container { border: none; background: transparent; }
+  
+  .tx-table, .tx-table thead, .tx-table tbody, .tx-table th, .tx-table td, .tx-table tr { 
+    display: block; 
+  }
+  
+  .tx-table thead { display: none; }
+  
+  .tx-table tr {
+    background: var(--tx-surface);
+    border: 1px solid var(--tx-border);
+    border-radius: 20px;
+    margin-bottom: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  }
+
+  .dark .tx-table tr {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .tx-table td {
+    padding: 10px 0 !important;
+    border-bottom: 1px solid var(--tx-border);
+    width: 100% !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .tx-table td:last-child { border-bottom: none; }
+
+  /* Labels for mobile cards */
+  .tx-table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--tx-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .col-type, .col-from, .col-to, .col-status, .col-time, .col-hash {
+    width: 100% !important;
+    padding: 12px 0 !important;
+  }
+
+  .type-column-stack { align-items: flex-end; text-align: right; }
+  .asset-group-stac { flex-direction: row-reverse; }
+  .asset-details-stac { align-items: flex-end; text-align: right; }
+  .status-pill { margin-left: 0; }
+  
+  .tx-hash-stack { align-items: flex-end; }
+  .tx-hash-box { justify-content: flex-end; }
+  .swap-hash-container { min-height: 0; padding: 0; }
+  .swap-hash-centered { justify-content: flex-end; }
+
+  .pagination-footer {
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px 16px;
+    background: transparent;
+    border: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .transactions-title-section h1 { font-size: 28px; }
+  .filter-group { grid-template-columns: 1fr; }
+  .asset-name-stac { font-size: 13px; }
+  .asset-amount-stac { font-size: 12px; }
+  .hash-link { font-size: 11px; }
+}
+
 .pagination-footer { padding: 18px 32px; display: flex; justify-content: space-between; align-items: center; background: var(--tx-surface-muted); margin-top: auto; border-top: 1px solid var(--tx-border); }
 .pagination-btn { 
   width: 40px; 

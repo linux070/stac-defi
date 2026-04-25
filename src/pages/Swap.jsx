@@ -540,13 +540,13 @@ const Swap = () => {
             </div>
 
             {/* SWITCH BUTTON */}
-            <div className="flex justify-center -my-2 relative z-10">
+            <div className="flex justify-center -my-2.5 relative z-10">
               <button
                 onClick={handleSwitch}
-                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-white dark:bg-[#0B0F1A] border border-slate-200 dark:border-white/10 text-slate-400 shadow-[0_2px_8px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-colors"
+                className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-white dark:bg-[#0B0F1A] border border-slate-200 dark:border-white/10 text-slate-400 shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-all active:scale-90"
                 title={t('Switch Tokens')}
               >
-                <ArrowDownUp size={13} strokeWidth={1.5} />
+                <ArrowDownUp size={16} sm:size={18} strokeWidth={2.5} />
               </button>
             </div>
 

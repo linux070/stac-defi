@@ -204,11 +204,9 @@ const Transactions = () => {
             return age >= 0 && age <= oneDay;
           }
           if (dateRangeFilter === '7d') {
-            // "Not 7 days old" implies it MUST be at least 24h old but within 7d
             return age > oneDay && age <= sevenDays;
           }
           if (dateRangeFilter === '30d') {
-            // Bucket for older transactions
             return age > sevenDays && age <= thirtyDays;
           }
           return true;
@@ -326,7 +324,6 @@ const Transactions = () => {
                     fromChain = tx.from;
                     toChain = tx.to;
                     fromAmount = tx.amount;
-                    // Use receiveAmount if saved, otherwise fallback to amount minus estimate fee
                     if (tx.receiveAmount) {
                       toAmount = tx.receiveAmount;
                     } else {
@@ -350,15 +347,15 @@ const Transactions = () => {
 
                   return (
                     <tr key={tx.hash || tx.id}>
-                      <td className="col-type">
+                      <td className="col-type" data-label={t('Type')}>
                         <div className="type-column-stack">
                           <span className="type-main-txt">{t(tx.type || 'Transaction')}</span>
                           <span className="type-sub-addr">{formatAddress(tx.address || walletAddress)}</span>
                         </div>
                       </td>
-                      <td className="col-from"><StacAssetIdentity tokenSymbol={fromToken} chainName={fromChain} amount={fromAmount} isToAmount={false} /></td>
-                      <td className="col-to"><StacAssetIdentity tokenSymbol={toToken} chainName={toChain} amount={toAmount} isToAmount={true} /></td>
-                    <td className="col-status">
+                      <td className="col-from" data-label={t('From')}><StacAssetIdentity tokenSymbol={fromToken} chainName={fromChain} amount={fromAmount} isToAmount={false} /></td>
+                      <td className="col-to" data-label={t('To')}><StacAssetIdentity tokenSymbol={toToken} chainName={toChain} amount={toAmount} isToAmount={true} /></td>
+                    <td className="col-status" data-label={t('Status')}>
                       <div className={`status-pill ${txStatus}`}>
                         {txStatus === 'success' ? (
                           <div className="status-icon-filled"><Check size={10} /></div>
@@ -368,8 +365,8 @@ const Transactions = () => {
                         {t(txStatus.charAt(0).toUpperCase() + txStatus.slice(1))}
                       </div>
                     </td>
-                    <td className="col-time"><span className="time-txt">{timeAgo(tx.timestamp)}</span></td>
-                    <td className="col-hash">
+                    <td className="col-time" data-label={t('Time')}><span className="time-txt">{timeAgo(tx.timestamp)}</span></td>
+                    <td className="col-hash" data-label={t('Hash')}>
                         {isBridge ? (
                           <div className="tx-hash-stack is-bridge">
                             <div className="tx-hash-box">
