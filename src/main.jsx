@@ -111,7 +111,7 @@ if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <GlobalErrorBoundary>
-        <WagmiProvider config={config}>
+        <WagmiProvider config={config} reconnectOnMount={false}>
           <QueryClientProvider client={queryClient}>
             <TransactionProvider>
               <RainbowKitProvider avatar={CustomAvatar}>
