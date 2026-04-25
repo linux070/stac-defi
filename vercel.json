@@ -1,5 +1,4 @@
 {
-    "installCommand": "npm cache clean --force && npm install --legacy-peer-deps",
     "rewrites": [
         {
             "source": "/api/:path*",
