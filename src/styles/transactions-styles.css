@@ -493,7 +493,17 @@
 
 @media (max-width: 480px) {
   .transactions-title-section h1 { font-size: 28px; }
-  .filter-group { grid-template-columns: 1fr; }
+  .filter-group { 
+    grid-template-columns: 1fr 1fr; 
+    gap: 8px; 
+    width: 100%;
+  }
+  .filter-dropdown-btn { 
+    height: 40px; 
+    padding: 0 10px; 
+    font-size: 12px;
+    width: 100%;
+  }
   .asset-name-stac { font-size: 13px; }
   .asset-amount-stac { font-size: 12px; }
   .hash-link { font-size: 11px; }
