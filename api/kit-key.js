@@ -16,7 +16,8 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://stac-defi.vercel.app',
-  // Add your production domain(s) here
+  'https://stacdefi.app',
+  'https://www.stacdefi.app',
 ];
 
 export default function handler(req, res) {

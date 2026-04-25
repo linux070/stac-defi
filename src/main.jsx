@@ -31,11 +31,11 @@ const arcTestnet = {
   rpcUrls: {
     default: {
       http: [import.meta.env.VITE_ARC_RPC_URL],
-      iconUrls: ['https://stac-defi.vercel.app/icons/arc.png'] // Absolute URL preferred for wallets
+      iconUrls: ['https://stacdefi.app/icons/arc.png'] // Absolute URL preferred for wallets
     },
     public: {
       http: [import.meta.env.VITE_ARC_RPC_URL],
-      iconUrls: ['https://stac-defi.vercel.app/icons/arc.png']
+      iconUrls: ['https://stacdefi.app/icons/arc.png']
     },
   },
   blockExplorers: {
