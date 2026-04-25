@@ -142,6 +142,16 @@ const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
   const timestamp = block?.timestamp ? Number(block.timestamp) * 1000 : Date.now();
   const type = determineTransactionType(tx, receipt?.logs, chainId);
   const userAddr = address?.toLowerCase();
+  const bridgeMessenger = TOKEN_MESSENGER[chainId]?.toLowerCase();
+  
+  // Identify if this is a transaction originating from or interacting with Stac protocols
+  const isStacTx = 
+    tx.to?.toLowerCase() === DEX_ADDRESS.toLowerCase() ||
+    tx.to?.toLowerCase() === bridgeMessenger ||
+    receipt?.logs?.some(log => 
+      log.address?.toLowerCase() === DEX_ADDRESS.toLowerCase() || 
+      log.address?.toLowerCase() === bridgeMessenger
+    );
 
   let amount = '0.00';
   let isOutgoing = true;
@@ -237,7 +247,7 @@ const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
     chainName,
     address: userAddr,
     isOutgoing,
-    isStacTx, // Identified earlier
+    isStacTx,
   };
 };
 
@@ -442,25 +452,42 @@ export function useTransactionHistory() {
 
   const fetchGlobalStats = useCallback(async () => {
     const now = Date.now();
-    if (globalIsFetchingStats || (now - lastStatsFetchTime < 30000)) return;
+    if (globalIsFetchingStats || (now - lastStatsFetchTime < 15000)) return;
 
     globalIsFetchingStats = true;
     lastStatsFetchTime = now;
     try {
-      const arcClient = createArcClient(); const sepoliaClient = createSepoliaClient(); const baseSepoliaClient = createBaseSepoliaClient();
-      const [arcTxs, sepoliaTxs, baseSepoliaTxs] = await Promise.all([
-        arcClient ? fetchChainTransactions(ARC_CHAIN_ID, 'Arc Testnet', arcClient, DEX_ADDRESS) : [],
-        sepoliaClient ? fetchChainTransactions(SEPOLIA_CHAIN_ID, 'Sepolia', sepoliaClient, DEX_ADDRESS) : [],
-        baseSepoliaClient ? fetchChainTransactions(BASE_SEPOLIA_CHAIN_ID, 'Base Sepolia', baseSepoliaClient, DEX_ADDRESS) : [],
-      ]);
-      const globalTxs = [...arcTxs, ...sepoliaTxs, ...baseSepoliaTxs];
-      const existing = await getItem(GLOBAL_TX_KEY) || [];
-      const seenHashes = new Set(existing.map(tx => tx.hash || tx.id));
-      const uniqueNewTxs = globalTxs.filter(tx => (tx.hash || tx.id) && !seenHashes.has(tx.hash || tx.id));
-      const newGlobalTxs = [...uniqueNewTxs, ...existing].slice(0, 200);
-      await setItem(GLOBAL_TX_KEY, newGlobalTxs);
-      setGlobalTransactions(newGlobalTxs);
-    } catch { /* ignore */ } finally {
+      const arcClient = createArcClient(); 
+      const sepoliaClient = createSepoliaClient(); 
+      const baseSepoliaClient = createBaseSepoliaClient();
+      
+      const fetchJobs = [
+        arcClient ? fetchChainTransactions(ARC_CHAIN_ID, 'Arc Testnet', arcClient, DEX_ADDRESS) : Promise.resolve([]),
+        arcClient ? fetchChainTransactions(ARC_CHAIN_ID, 'Arc Testnet', arcClient, TOKEN_MESSENGER[ARC_CHAIN_ID]) : Promise.resolve([]),
+        sepoliaClient ? fetchChainTransactions(SEPOLIA_CHAIN_ID, 'Sepolia', sepoliaClient, DEX_ADDRESS) : Promise.resolve([]),
+        sepoliaClient ? fetchChainTransactions(SEPOLIA_CHAIN_ID, 'Sepolia', sepoliaClient, TOKEN_MESSENGER[SEPOLIA_CHAIN_ID]) : Promise.resolve([]),
+        baseSepoliaClient ? fetchChainTransactions(BASE_SEPOLIA_CHAIN_ID, 'Base Sepolia', baseSepoliaClient, DEX_ADDRESS) : Promise.resolve([]),
+        baseSepoliaClient ? fetchChainTransactions(BASE_SEPOLIA_CHAIN_ID, 'Base Sepolia', baseSepoliaClient, TOKEN_MESSENGER[BASE_SEPOLIA_CHAIN_ID]) : Promise.resolve([]),
+      ];
+
+      const results = await Promise.all(fetchJobs);
+      const globalTxs = results.flat().filter(Boolean);
+      
+      if (globalTxs.length > 0) {
+        const existing = await getItem(GLOBAL_TX_KEY) || [];
+        const seenHashes = new Set(existing.map(tx => tx.hash || tx.id));
+        const uniqueNewTxs = globalTxs.filter(tx => (tx.hash || tx.id) && !seenHashes.has(tx.hash || tx.id));
+        
+        const newGlobalTxs = [...uniqueNewTxs, ...existing]
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .slice(0, 300);
+          
+        await setItem(GLOBAL_TX_KEY, newGlobalTxs);
+        setGlobalTransactions(newGlobalTxs);
+      }
+    } catch (err) {
+      console.warn("[useTransactionHistory] Global fetch error:", err);
+    } finally {
       globalIsFetchingStats = false;
     }
   }, [fetchChainTransactions]);
@@ -487,7 +514,7 @@ export function useTransactionHistory() {
     fetchGlobalStats();
     if (!isConnected || !address) return;
     const t = setTimeout(fetchTransactions, 1000);
-    const i = setInterval(() => { fetchTransactions(); fetchGlobalStats(); }, 45000);
+    const i = setInterval(() => { fetchTransactions(); fetchGlobalStats(); }, 20000);
     return () => { clearTimeout(t); clearInterval(i); };
   }, [isConnected, address, fetchTransactions, fetchGlobalStats]);
 
