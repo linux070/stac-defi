@@ -22,12 +22,12 @@ export default {
         secondary: {
           DEFAULT: '#94A3B8',
         },
-        // 60% — Deep navy page background
+        // 60% — Institutional grey page background
         'page-dark': '#0B0F1A',
-        // 30% — Surface / card colour
-        'surface-dark': '#161B2A',
-        // Elevated surface
-        'surface-dark-hover': '#1C2333',
+        // 30% — Black container / card surface
+        'surface-dark': '#000000',
+        // Elevated surface (slightly lifted black)
+        'surface-dark-hover': '#0a0a0a',
 
         // CSS Variable support for theme tokens
         theme: {

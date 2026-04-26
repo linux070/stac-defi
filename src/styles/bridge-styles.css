@@ -23,7 +23,7 @@
 }
 
 .dark {
-    --stac-bone: #0B0F1A;
+    --stac-bone: #000000;
     --stac-bone-hover: #131723;
     --stac-black: #FFFFFF;
     --stac-black-soft: #F9F9F9;
@@ -54,9 +54,9 @@
 }
 
 .dark .bridge-container {
-    background: #0B0F1A;
-    border-color: #2D3548;
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4);
+    background: #000000;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
 }
 
 /* --- Input Groups --- */
@@ -137,7 +137,7 @@
 }
 
 .dark .chain-badge {
-    background: #161B2A;
+    background: #000000;
     border-color: #2D3548;
 }
 
@@ -308,7 +308,7 @@ html.dark .bridging-modal-details-new,
 
 html.dark .bridging-modal-arrow-container-new,
 .dark .bridging-modal-arrow-container-new {
-    background: #161B2A;
+    background: #000000;
     border-color: rgba(124, 111, 255, 0.15);
     color: #94a3b8;
 }
@@ -348,8 +348,8 @@ html.dark .bridging-modal-arrow-container-new,
 
 html.dark .bridging-modal-token-icon-small,
 .dark .bridging-modal-token-icon-small {
-    background: #0B0F1A;
-    border: 1px solid rgba(124, 111, 255, 0.12);
+    background: var(--stac-bone);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 

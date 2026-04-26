@@ -46,7 +46,7 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
           onClick={onClose}
         >
           <motion.div
-            className="w-full max-w-[420px] bg-white dark:bg-[#0B0F1A] rounded-[28px] overflow-hidden border border-slate-200 dark:border-white/10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)]"
+            className="w-full max-w-[420px] bg-white dark:bg-surface-dark rounded-[28px] overflow-hidden border border-slate-200 dark:border-white/10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)]"
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -55,12 +55,12 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
           >
             {/* HEADER */}
             <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
-              <h3 className="text-[17px] font-semibold text-slate-900 dark:text-white font-geist tracking-tight">
+              <h3 className="text-[17px] font-semibold text-slate-900 dark:text-white font-['Satoshi','Inter',sans-serif] tracking-tight">
                 {t('Select Network')}
               </h3>
               <button
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 active:scale-95 transition-all"
+                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 active:scale-95 transition-all"
               >
                 <X size={18} />
               </button>
@@ -76,7 +76,7 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
                   placeholder={t('Search networks...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/30 dark:focus:border-indigo-500/20 transition-colors font-mono placeholder:text-slate-400 dark:placeholder:text-white/15"
+                  className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/30 dark:focus:border-indigo-500/20 transition-colors font-mono placeholder:text-slate-300 dark:placeholder:text-white/15"
                 />
               </div>
             </div>
@@ -125,12 +125,12 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
                           />
                         </div>
                         <div className="text-left min-w-0">
-                          <p className={`text-[14px] font-geist font-medium tracking-tight truncate ${
+                          <p className={`text-[14px] font-['Satoshi','Inter',sans-serif] font-medium tracking-tight truncate ${
                             isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-900 dark:text-white'
                           }`}>
                             {name}
                           </p>
-                          <p className="text-[9px] text-slate-400 font-mono uppercase tracking-[0.15em] mt-0.5">
+                          <p className="text-[9px] text-slate-300 font-mono uppercase tracking-[0.15em] mt-0.5">
                             {chainCfg?.isMainnet ? 'Mainnet' : 'Testnet'}
                           </p>
                         </div>
@@ -140,7 +140,7 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
                       {isSelected ? (
                         <Check size={16} className="text-indigo-500 shrink-0" strokeWidth={2.5} />
                       ) : isExcluded ? (
-                        <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest shrink-0">
+                        <span className="text-[9px] font-mono text-slate-300 uppercase tracking-widest shrink-0">
                           {t('Active')}
                         </span>
                       ) : null}
@@ -239,6 +239,10 @@ const Bridge = () => {
     if (isConnected && cid) {
       try { await switchChainAsync({ chainId: cid }); setFromChain(n); } catch (e) { logger.warn('Switch rejected', e); }
     } else setFromChain(n);
+  };
+
+  const handleAmountChange = (val) => {
+    setAmount(sanitizeInput(val));
   };
 
   const handleBridge = useCallback(async () => {
@@ -349,25 +353,25 @@ const Bridge = () => {
   if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 top-[64px] flex flex-col items-center justify-start sm:justify-start overflow-y-auto overflow-x-hidden bg-transparent custom-scrollbar pb-10 pt-4 sm:pt-12 md:pt-16">
-      <div className="w-full max-w-[540px] px-2 sm:px-4">
+    <div className="fixed inset-0 top-[64px] flex flex-col items-center justify-start overflow-y-auto overflow-x-hidden bg-transparent custom-scrollbar pb-10 pt-4 sm:pt-12 md:pt-16">
+      <div className="w-full max-w-lg">
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.98, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="bg-white/95 dark:bg-[#0B0F1A]/95 backdrop-blur-2xl border border-[#EAEAEA] dark:border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)] rounded-[1.75rem] sm:rounded-[2.5rem] overflow-hidden"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
+          className="bg-white dark:bg-surface-dark border border-slate-200/60 dark:border-white/10 shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] rounded-[2.5rem] overflow-hidden shelf-inner"
         >
           {/* COMPACT INTERACTIVE HEADER */}
           <div className="px-5 sm:px-8 pt-6 sm:pt-8 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
             <div className="space-y-1">
-              <h2 className="text-xl sm:text-2xl font-geist font-semibold text-slate-900 dark:text-white tracking-tight leading-none">{t('Bridge Assets')}</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none font-['Satoshi','Inter',sans-serif]">{t('Bridge Assets')}</h2>
             </div>
             <button
               onClick={() => switchChainAsync({ chainId: 5042002 })}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] sm:text-[11px] items-center gap-2 group transition-all hover:bg-slate-100 dark:hover:bg-white/10 flex text-slate-500 dark:text-slate-400 font-mono"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] sm:text-[11px] items-center gap-2 group transition-all hover:bg-slate-100 dark:hover:bg-white/10 flex text-slate-500 dark:text-slate-300 font-mono"
             >
               <Wallet size={12} className="group-hover:translate-x-0.5 transition-transform" />
-              <span>Add Arc</span>
+              <span>{t('Add Arc')}</span>
             </button>
           </div>
 
@@ -376,10 +380,10 @@ const Bridge = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-[1fr,42px,1fr] sm:grid-cols-[1fr,48px,1fr] items-end gap-2 sm:gap-3 relative">
                 <div className="space-y-1.5">
-                  <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400 px-1">{t('Source')}</label>
+                  <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-500 dark:text-slate-300 px-1">{t('Source')}</label>
                   <button
                     onClick={() => !isBridgeInProgress && setShowChainSelector('from')}
-                    className="w-full flex items-center justify-between px-2.5 sm:px-3.5 py-2.5 sm:py-3 group bg-slate-50/50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all active:scale-[0.98] focus:ring-1 focus:ring-indigo-500/50 outline-none h-11 sm:h-12"
+                    className="w-full flex items-center justify-between px-3.5 sm:px-4.5 py-3 sm:py-3.5 group bg-slate-50/50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all active:scale-[0.98] focus:ring-1 focus:ring-indigo-500/50 outline-none h-11 sm:h-12"
                   >
                     <div className="flex items-center gap-2 sm:gap-2.5 overflow-hidden">
                       <img
@@ -387,9 +391,9 @@ const Bridge = () => {
                         className="w-3.5 sm:w-4 h-3.5 sm:h-4 object-contain shrink-0"
                         alt=""
                       />
-                      <span className="text-[13px] sm:text-sm font-geist text-slate-900 dark:text-white truncate">{fromChain}</span>
+                      <span className="text-[13px] sm:text-sm font-['Satoshi','Inter',sans-serif] text-slate-900 dark:text-white truncate">{fromChain}</span>
                     </div>
-                    <ChevronDown size={10} className="text-slate-400 group-hover:text-indigo-500 transition-colors shrink-0" />
+                    <ChevronDown size={10} className="text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0" />
                   </button>
                 </div>
 
@@ -413,17 +417,17 @@ const Bridge = () => {
                       }
                     }}
                     disabled={isBridgeInProgress}
-                    className="w-10 sm:w-12 h-11 sm:h-12 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all active:scale-90 shadow-sm dark:shadow-none"
+                    className="w-10 sm:w-12 h-11 sm:h-12 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all active:scale-90 shadow-sm dark:shadow-none"
                   >
                     <ArrowRight size={16} sm:size={18} strokeWidth={2.5} />
                   </button>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400 px-1">{t('Destination')}</label>
+                  <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-500 dark:text-slate-300 px-1">{t('Destination')}</label>
                   <button
                     onClick={() => !isBridgeInProgress && setShowChainSelector('to')}
-                    className="w-full flex items-center justify-between px-2.5 sm:px-3.5 py-2.5 sm:py-3 group bg-slate-50/50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all active:scale-[0.98] focus:ring-1 focus:ring-indigo-500/50 outline-none"
+                    className="w-full flex items-center justify-between px-3.5 sm:px-4.5 py-3 sm:py-3.5 group bg-slate-50/50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all active:scale-[0.98] focus:ring-1 focus:ring-indigo-500/50 outline-none"
                   >
                     <div className="flex items-center gap-2 sm:gap-2.5 overflow-hidden">
                       <img
@@ -431,18 +435,18 @@ const Bridge = () => {
                         className="w-3.5 sm:w-4 h-3.5 sm:h-4 object-contain shrink-0"
                         alt=""
                       />
-                      <span className="text-[13px] sm:text-sm font-geist text-slate-900 dark:text-white truncate">{toChain}</span>
+                      <span className="text-[13px] sm:text-sm font-['Satoshi','Inter',sans-serif] text-slate-900 dark:text-white truncate">{toChain}</span>
                     </div>
-                    <ChevronDown size={10} className="text-slate-400 group-hover:text-indigo-500 transition-colors shrink-0" />
+                    <ChevronDown size={10} className="text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0" />
                   </button>
                 </div>
               </div>
             </div>
 
             {/* AMOUNT CARD */}
-            <div className="p-4 sm:p-6 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-[1.25rem] sm:rounded-[2rem] space-y-3 sm:space-y-4">
+            <div className="p-4 sm:p-6 bg-slate-50/50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/5 rounded-[1.5rem] sm:rounded-[2rem] space-y-3 sm:space-y-4 group/well transition-all duration-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">
               <div className="flex items-center justify-between">
-                <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400">{t('Amount')}</label>
+                <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-500 dark:text-slate-300">{t('Amount')}</label>
               </div>
 
               <div className="flex items-end justify-between gap-2 sm:gap-4">
@@ -450,9 +454,9 @@ const Bridge = () => {
                   type="text"
                   inputMode="decimal"
                   value={amount}
-                  onChange={(e) => setAmount(sanitizeInput(e.target.value))}
+                  onChange={(e) => handleAmountChange(e.target.value)}
                   placeholder="0.00"
-                  className="w-full bg-transparent text-3xl sm:text-5xl font-geist font-semibold leading-none text-slate-900 dark:text-white outline-none placeholder:text-slate-200 dark:placeholder:text-white/5 tracking-tight"
+                  className="w-full min-w-0 bg-transparent text-3xl sm:text-5xl font-['Satoshi','Inter',sans-serif] font-semibold leading-none text-slate-900 dark:text-white outline-none placeholder:text-slate-200 dark:placeholder:text-white/5 tracking-tight"
                 />
                 <div className="shrink-0 flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-3 py-1.5 sm:py-1.5 bg-white dark:bg-white/10 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
                   <img src="/icons/usdc.png" className="w-4 h-4 sm:w-5 sm:h-5" alt="USDC" />
@@ -477,34 +481,38 @@ const Bridge = () => {
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center gap-1.5 font-mono text-[9px] sm:text-[10px] text-slate-400">
-                  <span>BAL</span>
+                <div className="flex items-center gap-1.5 font-mono text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-300">
+                  <span>BAL:</span>
                   <span className="text-slate-900 dark:text-slate-200">
-                    {isLoadingBalance ? '...' : Number(tokenBalance || 0).toFixed(2)}
+                    {isLoadingBalance ? (
+                      <div className="w-10 h-3 bg-slate-200 dark:bg-white/10 rounded-sm animate-pulse" />
+                    ) : (
+                      Number(tokenBalance || 0).toFixed(2)
+                    )}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* TRANSFER SUMMARY */}
-            <div className="space-y-3 px-1 pt-1 sm:pt-2">
-              <div className="flex items-center justify-between text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400">
-                <div className="flex items-center gap-1.5">
-                  <Info size={11} sm:size={12} className="text-slate-300" />
-                  <span className="font-geist">Relayer Execution Fee</span>
+            {/* BRIDGE DETAILS (FLAT LIST) */}
+            <div className="space-y-4 px-1 pt-2 border-t border-slate-100 dark:border-white/5">
+              <div className="flex items-center justify-between text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-300">
+                <div className="flex items-center gap-1.5 font-['Satoshi','Inter',sans-serif]">
+                  <Info size={12} className="opacity-70" />
+                  <span>Relayer Execution Fee</span>
                 </div>
-                <span className="font-mono text-slate-600 dark:text-slate-300">{forwardingFee.toFixed(2)} USDC</span>
+                <span className="font-mono text-slate-700 dark:text-white">{forwardingFee.toFixed(2)} USDC</span>
               </div>
-              <div className="flex items-center justify-between text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400">
-                <div className="flex items-center gap-1.5">
-                  <Info size={11} sm:size={12} className="text-slate-300" />
-                  <span className="font-geist">Est. Confirmation Time</span>
+              <div className="flex items-center justify-between text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-300">
+                <div className="flex items-center gap-1.5 font-['Satoshi','Inter',sans-serif]">
+                  <Info size={12} className="opacity-70" />
+                  <span>Est. Confirmation Time</span>
                 </div>
-                <span className="font-mono text-slate-600 dark:text-slate-300">~18s</span>
+                <span className="font-mono text-slate-700 dark:text-white">~18s</span>
               </div>
-              <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-slate-100 dark:border-white/5">
-                <span className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400">{t('Est. Received')}</span>
-                <span className="text-sm sm:text-base font-mono text-slate-700 dark:text-slate-200 tracking-tight">
+              <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-slate-500 dark:text-slate-300">{t('Est. Received')}</span>
+                <span className="text-sm sm:text-base font-mono text-slate-700 dark:text-white tabular-nums tracking-tight">
                   {receiveAmount} USDC
                 </span>
               </div>
@@ -516,7 +524,7 @@ const Bridge = () => {
                 onClick={handleBridge}
                 disabled={!amount || isBridgeInProgress || (parseFloat(amount) > parseFloat(tokenBalance || '0'))}
                 className={`w-full h-12 sm:h-14 rounded-2xl text-[15px] sm:text-[16px] font-bold tracking-tight transition-all relative overflow-hidden group active:scale-95 flex items-center justify-center gap-2.5 ${!amount
-                    ? 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-white/10'
+                    ? 'bg-slate-100 dark:bg-white/5 text-slate-300 cursor-not-allowed border border-slate-200 dark:border-white/10'
                     : isBridgeInProgress
                       ? 'bg-indigo-500/10 dark:bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
                       : 'bg-[#6366F1] dark:bg-indigo-600 text-white hover:brightness-110 active:scale-[0.98]'

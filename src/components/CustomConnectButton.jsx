@@ -235,7 +235,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                     {/* Account Header - RESTORED SPLIT BACKGROUND COLOR (Light/Dark style) */}
                                                                     <div className="px-6 pt-5 pb-5 border-b border-gray-100/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
                                                                         <div className="flex items-center justify-between mb-5">
-                                                                            <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                                                                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest">
                                                                                 {t('Account details')}
                                                                             </span>
                                                                             <button
@@ -272,7 +272,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                                                 initial={{ opacity: 0, y: 5, scale: 0.9 }}
                                                                                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                                                                                 exit={{ opacity: 0, y: 5, scale: 0.9 }}
-                                                                                                className="absolute -top-11 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-bold shadow-xl border border-white/10 whitespace-nowrap z-50 capitalize"
+                                                                                                className="absolute -top-11 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest shadow-xl border border-white/10 whitespace-nowrap z-50 capitalize"
                                                                                                 style={{ transition: 'none' }}
                                                                                             >
                                                                                                 {t('copied')}
@@ -293,7 +293,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                     {/* Networks - Cleaned area */}
                                                                     <div className="p-2 bg-transparent">
                                                                         <div className="px-6 py-4">
-                                                                            <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                                                                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest">
                                                                                 {t('Select Network')}
                                                                             </span>
                                                                         </div>
@@ -392,7 +392,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                     >
                                                         <div className="p-5 border-b border-gray-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
                                                             <div className="flex items-center justify-between mb-4">
-                                                                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                                                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest">
                                                                     {t('Account details')}
                                                                 </span>
                                                             </div>

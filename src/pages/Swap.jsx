@@ -1,6 +1,6 @@
 // =============================================================================
 // SWAP PAGE — PREMIUM UTILITARIAN MINIMALISM
-// Double-Bezel / Ethereal Glass / Left-Aligned Wells
+// Institutional Standard / Ethereal Glass / Satoshi Font Stack
 // =============================================================================
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -70,7 +70,7 @@ const SLIPPAGE_PRESETS = [0.1, 0.5, 1.0];
 const TokenPill = ({ symbol }) => {
   const icon = getTokenIcon(symbol);
   return (
-    <div className="shrink-0 flex items-center gap-2 pl-2 pr-3 py-1.5 bg-white dark:bg-white/[0.06] rounded-full border border-slate-200/80 dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none">
+    <div className="shrink-0 flex items-center gap-2 pl-2 pr-3 py-1.5 bg-white dark:bg-white/[0.06] rounded-full border border-slate-200/80 dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-none transition-all duration-200">
       <div className="w-6 h-6 rounded-full bg-slate-50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/[0.06] flex items-center justify-center overflow-hidden">
         {icon ? (
           <img src={icon} alt={symbol} className="w-4 h-4 object-contain" />
@@ -78,7 +78,7 @@ const TokenPill = ({ symbol }) => {
           <span className="text-[9px] font-bold font-mono">{symbol?.charAt(0)}</span>
         )}
       </div>
-      <span className="text-[13px] font-geist font-semibold text-slate-900 dark:text-white tracking-tight">{symbol}</span>
+      <span className="text-[13px] font-['Satoshi','Inter',sans-serif] font-semibold text-slate-900 dark:text-white tracking-tight">{symbol}</span>
     </div>
   );
 };
@@ -301,15 +301,6 @@ const Swap = () => {
     }
   };
 
-  // ... (keeping other handlers same but ensuring 2dp) 
-
-  // Updating specific lines in render for rounding:
-  // Line 609: {fromLoading ? '...' : Number(fromBalance || 0).toFixed(2)}
-  // Line 661: {toLoading ? '...' : Number(toBalance || 0).toFixed(2)}
-  // Line 676: {swapState.isAppKitRoute ? '0.02%' : '0.02%'}
-  // Line 685: 0.00%
-
-
   const handleMaxClick = (side = 'from') => {
     const bal = side === 'from' ? fromBalance : toBalance;
     if (!bal || parseFloat(bal) === 0) {
@@ -477,34 +468,33 @@ const Swap = () => {
       <div className="w-full max-w-lg px-2 sm:px-4">
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.98, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
-          className="bg-white/95 dark:bg-[#0B0F1A]/95 backdrop-blur-2xl border border-[#EAEAEA] dark:border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)] rounded-[1.75rem] sm:rounded-[2.5rem] overflow-hidden"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
+          className="bg-white dark:bg-surface-dark backdrop-blur-2xl border border-[#EAEAEA] dark:border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] rounded-[1.75rem] sm:rounded-[2.5rem] overflow-hidden shelf-inner"
         >
           {/* ── HEADER ── */}
           <div className="px-5 sm:px-8 pt-6 sm:pt-8 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
-            <h2 className="text-xl sm:text-2xl font-geist font-semibold text-slate-900 dark:text-white tracking-tight leading-none">{t('Swap Assets')}</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none font-['Satoshi','Inter',sans-serif]">{t('Swap Assets')}</h2>
             {/* Faucet */}
             <button
               onClick={handleFaucetClick}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] sm:text-[11px] items-center gap-2 group transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-slate-100 dark:hover:bg-white/10 flex text-slate-500 dark:text-slate-400 font-mono"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] sm:text-[11px] flex items-center gap-2 group transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 font-mono"
             >
-              <Info size={12} strokeWidth={1.5} className="group-hover:translate-x-0.5 transition-transform" />
+              <Info size={12} strokeWidth={2} className="group-hover:translate-x-0.5 transition-transform text-brand" />
               <span>{t('Faucet')}</span>
             </button>
           </div>
 
           {/* ── BODY ── */}
-          <div className="p-5 sm:p-8 pt-4 sm:pt-6 space-y-4 sm:space-y-5">
+          <div className="p-4 sm:p-6 pt-4 sm:pt-6 space-y-4 sm:space-y-5">
 
             {/* SELL ASSET WELL */}
             <div className="space-y-2">
               <div className="flex items-center px-1">
-                <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400">{t('Sell Asset')}</label>
+                <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-500 dark:text-slate-300">{t('Sell Asset')}</label>
               </div>
 
-              <div className="p-4 sm:p-5 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-[1.25rem] sm:rounded-[2rem] space-y-3 sm:space-y-4">
+              <div className="p-4 sm:p-6 bg-slate-50/50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/5 rounded-[1.5rem] sm:rounded-[2rem] space-y-3 sm:space-y-4 group/well transition-all duration-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">
                 <div className="flex items-end justify-between gap-3 sm:gap-4">
                   <input
                     type="text"
@@ -512,7 +502,7 @@ const Swap = () => {
                     value={fromAmount}
                     onChange={(e) => handleFromAmountChange(e.target.value)}
                     placeholder="0.00"
-                    className="w-full min-w-0 bg-transparent text-3xl sm:text-5xl font-geist font-semibold leading-none text-slate-900 dark:text-white outline-none placeholder:text-slate-200 dark:placeholder:text-white/5 tracking-tight"
+                    className="w-full min-w-0 bg-transparent text-3xl sm:text-5xl font-semibold leading-none text-slate-900 dark:text-white outline-none placeholder:text-slate-200 dark:placeholder:text-white/5 tracking-tight font-['Satoshi','Inter',sans-serif]"
                   />
                   <TokenPill symbol={fromToken} />
                 </div>
@@ -529,10 +519,14 @@ const Swap = () => {
                       </button>
                     ))}
                   </div>
-                  <div className="flex items-center gap-1.5 font-mono text-[9px] sm:text-[10px] text-slate-400">
-                    <span>BAL</span>
+                  <div className="flex items-center gap-1.5 font-mono text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-300">
+                    <span>BAL:</span>
                     <span className="text-slate-900 dark:text-slate-200">
-                      {fromLoading ? '...' : Number(fromBalance || 0).toFixed(2)}
+                      {fromLoading ? (
+                        <div className="w-10 h-3 bg-slate-200 dark:bg-white/10 rounded-sm animate-pulse" />
+                      ) : (
+                        Number(fromBalance || 0).toFixed(2)
+                      )}
                     </span>
                   </div>
                 </div>
@@ -543,7 +537,7 @@ const Swap = () => {
             <div className="flex justify-center -my-2.5 relative z-10">
               <button
                 onClick={handleSwitch}
-                className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-white dark:bg-[#0B0F1A] border border-slate-200 dark:border-white/10 text-slate-400 shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-all active:scale-90"
+                className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-300 shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.8)] transition-all active:scale-95 hover:bg-slate-50 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
                 title={t('Switch Tokens')}
               >
                 <ArrowDownUp size={16} sm:size={18} strokeWidth={2.5} />
@@ -554,11 +548,11 @@ const Swap = () => {
             <div className="space-y-2">
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
-                  <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-400">
+                  <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-500 dark:text-slate-300">
                     {swapState.actualAmountOut ? t('Asset Received') : t('Buy Asset')}
                   </label>
                   {!swapState.actualAmountOut && parseFloat(fromAmount) > 0 && (
-                    <span className="text-[9px] font-mono text-slate-300 dark:text-white/20 italic">(Estimate)</span>
+                    <span className="text-[9px] font-mono text-slate-400 dark:text-slate-400 italic">(Estimate)</span>
                   )}
                   {swapState.actualAmountOut && (
                     <motion.div
@@ -572,14 +566,14 @@ const Swap = () => {
                 </div>
               </div>
 
-              <div className="p-4 sm:p-5 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-[1.25rem] sm:rounded-[2rem] space-y-3 sm:space-y-4">
+              <div className="p-4 sm:p-6 bg-slate-50/50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/5 rounded-[1.5rem] sm:rounded-[2rem] space-y-3 sm:space-y-4 group/well transition-all duration-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">
                 <div className="flex items-end justify-between gap-3 sm:gap-4">
                   <input
                     type="text"
                     readOnly
                     value={(swapState.actualAmountOut || toAmount) ? parseFloat(swapState.actualAmountOut || toAmount).toFixed(4) : ''}
                     placeholder="0.00"
-                    className="w-full min-w-0 bg-transparent text-3xl sm:text-5xl font-geist font-semibold leading-none text-slate-900 dark:text-white outline-none placeholder:text-slate-200 dark:placeholder:text-white/5 tracking-tight"
+                    className="w-full min-w-0 bg-transparent text-3xl sm:text-5xl font-semibold leading-none text-slate-900 dark:text-white outline-none placeholder:text-slate-200 dark:placeholder:text-white/5 tracking-tight font-['Satoshi','Inter',sans-serif]"
                   />
                   <TokenPill symbol={toToken} />
                 </div>
@@ -596,10 +590,14 @@ const Swap = () => {
                       </button>
                     ))}
                   </div>
-                  <div className="flex items-center gap-1.5 font-mono text-[9px] sm:text-[10px] text-slate-400">
-                    <span>BAL</span>
+                  <div className="flex items-center gap-1.5 font-mono text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-300">
+                    <span>BAL:</span>
                     <span className="text-slate-900 dark:text-slate-200">
-                      {toLoading ? '...' : Number(toBalance || 0).toFixed(2)}
+                      {toLoading ? (
+                        <div className="w-10 h-3 bg-slate-200 dark:bg-white/10 rounded-sm animate-pulse" />
+                      ) : (
+                        Number(toBalance || 0).toFixed(2)
+                      )}
                     </span>
                   </div>
                 </div>
@@ -614,7 +612,7 @@ const Swap = () => {
                     e.stopPropagation();
                     setShowQuoteDetails(!showQuoteDetails);
                   }}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors font-geist text-[12px] text-slate-500 dark:text-slate-400 group"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-50/50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/5 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-geist text-[12px] text-slate-500 dark:text-slate-300 group"
                 >
                   <div className="flex items-center gap-2">
                     <Info size={14} className="opacity-70 group-hover:opacity-100 transition-opacity" />
@@ -632,24 +630,24 @@ const Swap = () => {
                       className="overflow-hidden"
                     >
                       <div className="pt-3 pb-5 px-4 space-y-4">
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-300">
                           <span className="font-geist">Circle Fee</span>
                           <span className="font-mono text-slate-700 dark:text-white">{swapState.isAppKitRoute ? '0.02%' : '0.02%'}</span>
                         </div>
 
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-300">
                           <span className="font-geist">Stac Fee</span>
                           <span className="font-mono text-slate-700 dark:text-white">$0.00 <span className="opacity-50">(Free)</span></span>
                         </div>
 
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-300">
                           <span className="font-geist">Price Impact</span>
                           <span className={`font-mono ${parseFloat(swapState.priceImpact) > 2 ? 'text-amber-500' : 'text-slate-700 dark:text-white'}`}>
                             {swapState.priceImpact || '< 0.01'}%
                           </span>
                         </div>
 
-                        <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 relative">
+                        <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-300 relative">
                           <span className="font-geist">Slippage Tolerance</span>
                           <div className="relative">
                             <button
@@ -660,7 +658,7 @@ const Swap = () => {
                               className="flex items-center gap-1 pl-2.5 pr-2 py-1 bg-slate-50 dark:bg-white/[0.04] rounded-lg border border-slate-200/80 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/15 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-all duration-200 font-mono text-[11px] text-slate-700 dark:text-slate-200 group"
                             >
                               {slippage}%
-                              <ChevronDown size={12} className={`text-slate-400 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${showSlippage ? 'rotate-180' : ''}`} />
+                              <ChevronDown size={12} className={`text-slate-300 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${showSlippage ? 'rotate-180' : ''}`} />
                             </button>
 
                             <AnimatePresence>
@@ -670,7 +668,7 @@ const Swap = () => {
                                   animate={{ opacity: 1, scale: 1, y: 0 }}
                                   exit={{ opacity: 0, scale: 0.98, y: 5 }}
                                   transition={{ duration: 0.15 }}
-                                  className="absolute right-0 bottom-full mb-2 z-[101] w-56 bg-white dark:bg-[#0B0F1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl p-3 space-y-3"
+                                  className="absolute right-0 bottom-full mb-2 z-[101] w-56 bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 rounded-xl shadow-xl p-3 space-y-3"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <div className="grid grid-cols-3 gap-1.5">
@@ -702,7 +700,7 @@ const Swap = () => {
                                           const num = parseFloat(val);
                                           if (!isNaN(num) && num >= 0 && num <= 50) setSlippage(num);
                                         }}
-                                        className={`w-full bg-slate-50 dark:bg-black/40 border rounded-xl pl-3 py-2 text-[12px] font-mono outline-none transition-all text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 ${parseFloat(slippage) > 1.0 ? 'pr-12 border-amber-500/50 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10' : 'pr-8 border-slate-200 dark:border-white/10 focus:border-[#6366F1] dark:focus:border-indigo-500 focus:ring-2 focus:ring-[#6366F1]/10 dark:focus:ring-indigo-500/10'}`}
+                                        className={`w-full bg-slate-50 dark:bg-black/40 border rounded-xl pl-3 py-2 text-[12px] font-mono outline-none transition-all text-slate-800 dark:text-slate-200 placeholder:text-slate-300 dark:placeholder:text-slate-600 ${parseFloat(slippage) > 1.0 ? 'pr-12 border-amber-500/50 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10' : 'pr-8 border-slate-200 dark:border-white/10 focus:border-[#6366F1] dark:focus:border-indigo-500 focus:ring-2 focus:ring-[#6366F1]/10 dark:focus:ring-indigo-500/10'}`}
                                       />
                                       <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                                         <AnimatePresence>
@@ -722,7 +720,7 @@ const Swap = () => {
                                             </div>
                                           )}
                                         </AnimatePresence>
-                                        <span className={`text-[11px] font-mono transition-colors ${parseFloat(slippage) > 1.0 ? 'text-amber-500' : 'text-slate-400 group-focus-within/slip:text-[#6366F1]'}`}>%</span>
+                                        <span className={`text-[11px] font-mono transition-colors ${parseFloat(slippage) > 1.0 ? 'text-amber-500' : 'text-slate-300 group-focus-within/slip:text-[#6366F1]'}`}>%</span>
                                       </div>
                                     </div>
                                   </div>
@@ -752,7 +750,7 @@ const Swap = () => {
                   status === 'connecting'
                 }
                 className={`w-full h-12 sm:h-14 rounded-2xl text-[15px] sm:text-[16px] font-bold tracking-tight transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] relative overflow-hidden group active:scale-[0.98] flex items-center justify-center gap-2.5 ${((!fromAmount || parseFloat(fromAmount) <= 0 || parseFloat(fromAmount) > parseFloat(fromBalance)) && !swapState.isLoading)
-                  ? 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-white/10'
+                  ? 'bg-slate-100 dark:bg-white/5 text-slate-300 cursor-not-allowed border border-slate-200 dark:border-white/10'
                   : 'bg-[#6366F1] dark:bg-indigo-600 text-white hover:brightness-110'
                   }`}
               >

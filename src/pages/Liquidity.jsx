@@ -51,16 +51,13 @@ const Liquidity = () => {
         className="max-w-4xl w-full z-10"
       >
         {/* Main Card */}
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-white dark:bg-surface-dark p-8 md:p-16 border border-slate-200/60 dark:border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
-          
-          {/* Subtle top-highlight for depth */}
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-white/10 to-transparent" />
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-white dark:bg-page-dark p-8 md:p-16 border border-slate-200 dark:border-white/5 shadow-sm">
 
           <div className="flex flex-col items-center">
             {/* ── TYPOGRAPHY ── */}
             <motion.h1 
               variants={itemVariants}
-              className="text-3xl md:text-5xl font-['Outfit'] font-bold tracking-tighter text-slate-900 dark:text-white text-center mb-6 max-w-lg leading-[1.1]"
+              className="text-3xl md:text-5xl font-['Satoshi','Inter',sans-serif] font-bold tracking-tighter text-slate-900 dark:text-white text-center mb-6 max-w-lg leading-[1.1]"
             >
               {t('liquidity.poolsLaunchingSoon')}
             </motion.h1>
@@ -80,7 +77,7 @@ const Liquidity = () => {
                     <item.icon size={22} strokeWidth={2} />
                   </div>
                   <div className="flex flex-col items-center">
-                    <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 group-hover/item:text-brand transition-colors duration-300">
+                    <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-400 group-hover/item:text-brand transition-colors duration-300">
                       {item.label}
                     </span>
                   </div>

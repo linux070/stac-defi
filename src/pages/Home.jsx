@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Zap, ArrowRight, Code2, Layers, Droplets, ArrowRightLeft,
-  ArrowUp, RefreshCw, ShieldCheck
+  ArrowUp, RefreshCw, ChevronDown
 } from 'lucide-react';
 import { motion, useMotionValue, useSpring, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { formatCurrency, formatNumber } from '../utils/blockchain';
@@ -74,6 +74,110 @@ const ScrambleText = ({ text, className }) => {
 
 
 // =============================================================================
+// FAQ ACCORDION COMPONENT
+// A clean, accessible accordion with GPU-only animations (transform + opacity).
+// Each item expands to reveal its answer with a smooth height transition.
+// =============================================================================
+const faqData = [
+  {
+    question: 'How long does a bridge or swap take?',
+    answer: "It's nearly instant. Most moves happen in less than a minute. You won't have to sit around refreshing your screen waiting for 'confirmations.'",
+  },
+  {
+    question: 'What are the fees?',
+    answer: "We keep it simple and cheap. Most transactions cost about one cent. Plus, you pay for fees in USDC, so you don't have to worry about the price of a random gas token jumping around.",
+  },
+  {
+    question: 'Is my money safe during the move?',
+    answer: 'Yes. We use professional-grade security (the same tech used by major financial institutions) to ensure your assets are protected every step of the way.',
+  },
+  {
+    question: 'Do I need a special token to pay for gas?',
+    answer: "Nope! That's the best part about Arc. You can use the USDC you already have to pay for your transaction fees. No need to go buy a separate 'gas token' just to move your money.",
+  },
+  {
+    question: 'What happens if my transaction fails?',
+    answer: "Because Arc has 'instant finality,' transactions either work immediately or they don't happen at all. Your money won't get 'stuck' in limbo between networks.",
+  },
+];
+
+const FaqItem = ({ item, index, isOpen, onToggle, t, shouldReduceMotion }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-50px' }}
+      transition={{ delay: index * 0.08, duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+      className="border-b border-slate-200 dark:border-white/10"
+    >
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between py-7 text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 dark:focus-visible:ring-offset-page-dark rounded-lg"
+        aria-expanded={isOpen}
+      >
+        <span className="text-lg sm:text-xl font-medium text-slate-900 dark:text-white pr-8 leading-snug tracking-tight">
+          {t(item.question)}
+        </span>
+        <span
+          className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center transition-colors duration-200 group-hover:bg-slate-200 dark:group-hover:bg-white/10"
+        >
+          <ChevronDown
+            size={20}
+            strokeWidth={2}
+            className={`text-slate-500 dark:text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`}
+            style={{ willChange: 'transform' }}
+          />
+        </span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{
+              height: { duration: shouldReduceMotion ? 0 : 0.3, ease: [0.32, 0.72, 0, 1] },
+              opacity: { duration: shouldReduceMotion ? 0 : 0.2 },
+            }}
+            className="overflow-hidden"
+          >
+            <p className="pb-8 text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl font-normal">
+              {t(item.answer)}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+const FaqAccordion = ({ t, shouldReduceMotion }) => {
+  const [openIndex, setOpenIndex] = useState(null);
+
+  const handleToggle = (index) => {
+    setOpenIndex((prev) => (prev === index ? null : index));
+  };
+
+  return (
+    <div className="w-full">
+      {faqData.map((item, index) => (
+        <FaqItem
+          key={index}
+          item={item}
+          index={index}
+          isOpen={openIndex === index}
+          onToggle={() => handleToggle(index)}
+          t={t}
+          shouldReduceMotion={shouldReduceMotion}
+        />
+      ))}
+    </div>
+  );
+};
+
+
+// =============================================================================
 // HOME COMPONENT
 // =============================================================================
 const Home = ({ setActiveTab }) => {
@@ -107,8 +211,8 @@ const Home = ({ setActiveTab }) => {
 
 
   // ─── Interactive Feature State ──────────────────────────────────────────
-  // Used in the "Why Arc Network" dashboard screen to toggle visualizations.
-
+  // Used in the "Why Arc Network" tabbed feature showcase.
+  const [activeFeature, setActiveFeature] = useState(0);
 
 
   // Navigate to the Swap page when "Get Started" is clicked
@@ -241,7 +345,7 @@ const Home = ({ setActiveTab }) => {
           >
 
             <h1 className="text-4xl sm:text-6xl md:text-[60px] lg:text-[75px] xl:text-[85px] font-normal tracking-tighter text-[#0f172a] dark:text-white leading-[1.1] sm:leading-[0.82] mb-0 md:whitespace-nowrap">
-              {t('Trade. Bridge. ')} <span className="text-brand">{t('Build.')}</span>
+              {t('Swap, Bridge, ')} <span className="text-[#1E293B] dark:text-blue-200">{t('with App Kit.')}</span>
             </h1>
           </motion.div>
 
@@ -249,58 +353,34 @@ const Home = ({ setActiveTab }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.15, ease: 'easeOut', delay: 0.05 }}
-            className="text-base sm:text-lg md:text-xl text-secondary/80 dark:text-secondary mt-6 mb-12 max-w-2xl mx-auto leading-relaxed font-medium"
+            className="text-lg sm:text-xl md:text-2xl text-slate-600 dark:text-slate-400 mt-6 mb-12 max-w-3xl mx-auto leading-relaxed font-normal"
           >
-            {t('Experience direct on-chain interactions, seamless swapping, and cross-chain bridging, all powered by the ')}
-            <span className="font-semibold text-brand/90 dark:text-brand-glow">{t('Arc App Kit')}</span>.
+            {t('Experience direct on-chain interactions, seamless swapping, and cross-chain bridging, all powered by the Arc App Kit.')}
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="flex flex-row items-center justify-center gap-3 sm:gap-5 mb-12 w-full max-w-[400px] sm:max-w-none px-4 sm:px-0"
+            className="flex flex-row items-center justify-center gap-4 mb-16 w-full px-4 sm:px-0"
           >
             <button
               onClick={handleGetStarted}
-              className="w-1/2 sm:w-52 h-14 sm:h-16 bg-brand text-white rounded-2xl font-bold hover:bg-brand-hover active:scale-[0.97] transition-all duration-300 flex items-center justify-center text-[15px] sm:text-lg group relative shadow-[0_1px_2px_rgba(0,0,0,0.1),inset_0_1px_1px_rgba(255,255,255,0.2)] overflow-hidden"
+              className="w-44 sm:w-52 h-14 bg-brand text-white rounded-xl font-medium hover:bg-brand-hover active:scale-[0.98] transition-all duration-200 flex items-center justify-center text-base sm:text-lg shadow-sm"
             >
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <span className="relative z-10">{t('Get Started')}</span>
+              {t('Get Started')}
             </button>
 
             <a
               href="https://www.arc.network/"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-1/2 sm:w-52 h-14 sm:h-16 bg-white dark:bg-surface-dark text-[#0f172a] dark:text-white border-2 border-slate-200 dark:border-brand-border rounded-2xl font-bold hover:bg-slate-50 dark:hover:bg-surface-dark-hover active:scale-[0.98] transition-all duration-300 flex items-center justify-center text-[15px] sm:text-lg shadow-sm"
+              className="w-44 sm:w-52 h-14 bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-white rounded-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-800 active:scale-[0.98] transition-all duration-200 flex items-center justify-center text-base sm:text-lg"
             >
               {t('Learn More')}
             </a>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="flex flex-wrap items-center justify-center gap-x-8 gap-y-8 sm:gap-x-16 sm:gap-y-12"
-          >
-            <div className="flex flex-col items-center">
-              <span className="text-[10px] sm:text-[11px] font-bold text-secondary/60 dark:text-secondary uppercase tracking-[0.2em] sm:tracking-[0.3em]">
-                {t('Sub-second Finality')}
-              </span>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="text-[10px] sm:text-[11px] font-bold text-secondary/60 dark:text-secondary uppercase tracking-[0.2em] sm:tracking-[0.3em]">
-                {t('USDC Gas Fees')}
-              </span>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="text-[10px] sm:text-[11px] font-bold text-secondary/60 dark:text-secondary uppercase tracking-[0.2em] sm:tracking-[0.3em]">
-                {t('Best Execution')}
-              </span>
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -317,7 +397,7 @@ const Home = ({ setActiveTab }) => {
                 className="flex flex-col items-center text-center px-4"
               >
                 <div className="relative mb-3 flex flex-col items-center justify-center">
-                  <div className="text-6xl sm:text-7xl lg:text-8xl font-bold tracking-tight text-brand tabular-nums mb-1 leading-none select-none">
+                  <div className="text-6xl sm:text-7xl lg:text-8xl font-semibold tracking-tight text-brand tabular-nums mb-1 leading-none select-none">
                     <AnimatedNumber value={stat.rawValue} formatFn={stat.formatFn} />
                   </div>
                 </div>
@@ -336,232 +416,321 @@ const Home = ({ setActiveTab }) => {
 
 
       {/* ==================================================================
-          HOW IT WORKS SECTION
-          Three simple cards explaining the core protocol features.
+          HOW STAC WORKS
+          Clean editorial card grid with soft UI styling.
       ================================================================== */}
-      {/* ==================================================================
-          HOW IT WORKS SECTION
-          Refined editorial layout with minimal borders and strong contrast.
-      ================================================================== */}
-      <section className="py-32 px-6 md:px-12 max-w-7xl mx-auto dark:bg-page-dark">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-24 gap-8">
-          <div className="max-w-2xl">
-            <h2 className="text-5xl md:text-7xl font-bold text-[#0f172a] dark:text-white mb-8 tracking-tighter leading-[1] font-['Satoshi','Inter',sans-serif]">
-              {t('How ')} <span className="text-brand">{t('Stac')}</span> {t('Works.')}
-            </h2>
-            <p className="text-lg text-slate-500 dark:text-secondary font-medium leading-relaxed max-w-xl">
-              {t('Getting started with Stac is simple, secure, and designed for speed. Everything you need to manage your assets on Stac in three simple steps.')}
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-slate-200 dark:border-white/10 rounded-[3rem] overflow-hidden">
-          {[
-            {
-              id: '01',
-              title: t('Swap Assets'),
-              desc: t('Exchange digital assets with sub-second finality and the lowest gas fees in the industry using our optimized liquidity routes.'),
-              icon: RefreshCw,
-            },
-            {
-              id: '02',
-              title: t('Bridge Tokens'),
-              desc: t('Seamlessly move your assets across multiple chains with institutional-grade security and minimal friction.'),
-              icon: ArrowRightLeft,
-            },
-            {
-              id: '03',
-              title: t('Provide Liquidity'),
-              desc: t('Earn protocol fees by providing liquidity to the network. Secure, transparent, and built for institutional scale.'),
-              icon: Droplets,
-            },
-          ].map((step, i) => (
-            <div key={i} className={`p-12 md:p-16 flex flex-col items-start transition-colors duration-500 hover:bg-slate-50 dark:hover:bg-white/5 border-b md:border-b-0 ${i < 2 ? 'md:border-r border-slate-200 dark:border-white/10' : ''}`}>
-              <span className="text-6xl font-mono font-black text-brand/30 dark:text-brand/15 mb-10 translate-x-[-4px]">{step.id}</span>
-              <h3 className="text-3xl font-bold text-[#0f172a] dark:text-white mb-6 tracking-tighter font-['Satoshi','Inter',sans-serif]">{step.title}</h3>
-              <p className="text-slate-500 dark:text-secondary leading-relaxed font-medium text-lg max-w-[90%]">{step.desc}</p>
+      <section className="py-40 px-6 md:px-12 bg-slate-50/50 dark:bg-surface-dark/50 border-y border-slate-200/50 dark:border-white/5">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-24 gap-8">
+            <div className="max-w-2xl">
+              <h2 className="text-5xl md:text-7xl font-bold text-[#0f172a] dark:text-white mb-8 tracking-tighter leading-[1.1] font-['Satoshi','Inter',sans-serif]">
+                {t('How ')} <span className="text-brand">{t('Stac')}</span> {t('Works.')}
+              </h2>
+              <p className="text-xl text-slate-500 dark:text-secondary font-medium leading-relaxed max-w-xl">
+                {t('Getting started is simple, fast, and secure. Everything you need to manage your assets on Stac in three simple steps.')}
+              </p>
             </div>
-          ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-slate-200/60 dark:border-white/10 rounded-[3rem] overflow-hidden bg-white dark:bg-black/20 shadow-sm">
+            {[
+              {
+                id: '01',
+                title: t('Swap Assets'),
+                desc: t('Trade faster, Pay less. Experience instant swaps and ultra-low costs on Arc.'),
+                icon: RefreshCw,
+              },
+              {
+                id: '02',
+                title: t('Bridge Assets'),
+                desc: t('Move your assets across networks in seconds. Experience total freedom with top-tier protection and total peace of mind.'),
+                icon: ArrowRightLeft,
+              },
+              {
+                id: '03',
+                title: t('Provide Liquidity'),
+                desc: t('Earn protocol fees by providing liquidity to the network. Secure, transparent, and built for institutional scale.'),
+                icon: Droplets,
+              },
+            ].map((step, i) => (
+              <div key={i} className={`p-12 md:p-16 flex flex-col items-start transition-colors duration-500 hover:bg-slate-50 dark:hover:bg-white/5 ${i < 2 ? 'border-b md:border-b-0 md:border-r border-slate-200 dark:border-white/10' : ''}`}>
+                <span className="text-6xl font-mono font-black text-brand/30 dark:text-brand/15 mb-10 translate-x-[-4px]">{step.id}</span>
+                <h3 className="text-3xl font-bold text-[#0f172a] dark:text-white mb-6 tracking-tighter font-['Satoshi','Inter',sans-serif]">{step.title}</h3>
+                <p className="text-slate-500 dark:text-secondary leading-relaxed font-medium text-lg max-w-[90%]">{step.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ==================================================================
-          WHY ARC NETWORK DASHBOARD
-          A multi-layered, interactive operations center showcasing the protocol's 
-          core infrastructure and institutional-grade features.
+          WHY BUILD ON ARC
+          Relay-style tabbed feature showcase with subtle grey background.
       ================================================================== */}
-      {/* ==================================================================
-          WHY ARC NETWORK BENTO DASHBOARD
-          A multi-dimensional operations center showcasing all protocol advantages
-          simultaneously in a high-fidelity grid system.
-      ================================================================== */}
-      {/* ==================================================================
-          WHY ARC NETWORK BENTO DASHBOARD
-          A multi-dimensional operations center showcasing all protocol advantages
-          simultaneously in a high-fidelity grid system.
-          Refined with a sophisticated Data-Pattern background and Testnet status.
-      ================================================================== */}
-      {/* ==================================================================
-          WHY ARC NETWORK EDITORIAL DASHBOARD
-          Asymmetrical bento-grid with high-end typographic rhythm and haptic details.
-      ================================================================== */}
-      <section className="relative py-40 px-6 overflow-hidden bg-white dark:bg-page-dark flex flex-col items-center">
-        {/* Subtle Ambient Background */}
-        <div className="absolute inset-0 opacity-[0.2] dark:opacity-[0.03] pointer-events-none"
-          style={{ backgroundImage: `radial-gradient(${darkMode ? '#6366F1' : '#CBD5E1'} 0.5px, transparent 0.5px)`, backgroundSize: '32px 32px' }} />
+      <section className="py-20 sm:py-32 lg:py-40 px-6 md:px-12 bg-white dark:bg-page-dark relative overflow-hidden">
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+            <h2 className="text-[clamp(2.25rem,7vw,5.5rem)] font-bold tracking-tighter text-[#0f172a] dark:text-white leading-[1.2] mb-0 font-['Satoshi','Inter',sans-serif]">
+              {t('Why Build on ')} <span className="text-brand">{t('Arc.')}</span>
+            </h2>
+          </div>
 
-        <div className="relative z-10 text-left mb-32 max-w-7xl mx-auto px-6 md:px-12 w-full">
-
-
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="text-5xl md:text-7xl font-bold text-slate-900 dark:text-white mb-10 tracking-tighter leading-[1] font-['Satoshi','Inter',sans-serif]"
-          >
-            {t('Why Build on ')} <span className="text-brand">{t('Arc.')}</span>
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
-            className="text-lg md:text-xl text-slate-500 dark:text-secondary max-w-3xl leading-relaxed font-medium"
-          >
-            {t('Arc is designed for scale and built for stability, Arc provides the robust foundations needed for the future of decentralized capital markets.')}
-          </motion.p>
-        </div>
-
-        <div className="relative w-full max-w-7xl mx-auto z-10 grid grid-cols-1 md:grid-cols-12 gap-6 pb-20">
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="md:col-span-8 group relative rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.02] border border-slate-300 dark:border-white/10 p-10 md:p-12 overflow-hidden flex flex-col justify-between min-h-[500px]"
-          >
-            <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-12 h-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand shadow-sm ring-1 ring-brand/10">
-                  <Zap size={24} strokeWidth={2.5} />
-                </div>
-                <h3 className="text-3xl font-medium text-slate-900 dark:text-white tracking-tight">{t('Lightning Fast')}</h3>
-              </div>
-              <p className="text-lg text-slate-500 dark:text-secondary max-w-md font-medium leading-relaxed">{t('Experience sub-second finality on every transaction with Arc’s proprietary consensus mechanism, optimized for high-frequency trading.')}</p>
-            </div>
-
-          </motion.div>
-
-          {/* Secondary Card: Security (4 cols) */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-            className="md:col-span-4 rounded-[2.5rem] bg-brand border border-white/20 p-10 md:p-12 flex flex-col justify-between overflow-hidden relative group text-white"
-          >
-            <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white shadow-sm ring-1 ring-white/20">
-                  <ShieldCheck size={24} strokeWidth={2.5} />
-                </div>
-                <h3 className="text-3xl font-medium text-white tracking-tight">{t('Institutional Security')}</h3>
-              </div>
-              <p className="text-lg text-white/80 font-medium leading-relaxed">{t('Arc employs a multi-tiered validation layer, ensuring zero-trust protocol integrity for every execution.')}</p>
-            </div>
-
-            <div className="mt-8 space-y-4 relative z-10">
-              <div className="flex justify-between items-center py-3 border-t border-white/10">
-                <span className="text-[10px] uppercase tracking-widest text-white/60 font-mono">{t('Protocol Integrity')}</span>
-                <span className="text-xs font-mono text-emerald-400">{t('Validated')}</span>
-              </div>
-              <div className="flex justify-between items-center py-3 border-t border-white/10">
-                <span className="text-[10px] uppercase tracking-widest text-white/60 font-mono">{t('Consensus Model')}</span>
-                <span className="text-xs font-mono text-white">{t('Deterministic')}</span>
-              </div>
-              <div className="flex justify-between items-center py-3 border-t border-white/10">
-                <span className="text-[10px] uppercase tracking-widest text-white/60 font-mono">{t('Network Architecture')}</span>
-                <span className="text-xs font-mono text-white/70">{t('Sovereign')}</span>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-            className="md:col-span-5 rounded-[2.5rem] bg-brand border border-white/20 p-10 md:p-12 flex flex-col justify-between overflow-hidden relative group text-white"
-          >
-            <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white shadow-sm ring-1 ring-white/20">
-                  <Layers size={24} strokeWidth={2.5} />
-                </div>
-                <h3 className="text-3xl font-medium text-white tracking-tight">{t('Zero Friction')}</h3>
-              </div>
-              <p className="text-lg text-white/80 font-medium leading-relaxed">{t('Abstracting the complexity of blockchain interaction. Pay gas in any asset, with native support for USDC and EURC.')}</p>
-            </div>
-
-          </motion.div>
-
-          {/* Quaternary Card: Developer (7 cols) */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="md:col-span-7 rounded-[2.5rem] bg-slate-50 dark:bg-white/[0.02] p-10 md:p-12 border border-slate-300 dark:border-white/10 overflow-hidden flex flex-col justify-between relative group"
-          >
-            <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-12 h-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand shadow-sm ring-1 ring-brand/5">
-                  <Code2 size={24} strokeWidth={2.5} />
-                </div>
-                <h3 className="text-3xl font-medium text-slate-900 dark:text-white tracking-tight font-['Satoshi','Inter',sans-serif]">{t('Developer Friendly')}</h3>
-              </div>
-              <p className="text-lg text-slate-500 dark:text-secondary font-medium leading-relaxed max-w-xl">
-                {t('Build institutional-grade DeFi apps with our high-performance SDK and comprehensive testing environment.')}
-              </p>
-            </div>
-
-            {/* High-Fidelity Double-Bezel Enclosure (Purged Labels) */}
-            <div className="relative h-[280px] md:h-[320px] mt-12 bg-white/60 dark:bg-black/40 rounded-[2rem] border border-slate-200 dark:border-white/5 p-6 md:p-10 flex flex-col gap-3 overflow-hidden group/bezel">
-              {/* Technical Grid Texture */}
-              <div className="absolute inset-0 opacity-[0.08] dark:opacity-[0.03] pointer-events-none" style={{ backgroundImage: `linear-gradient(#6366F1 1px, transparent 1px), linear-gradient(90deg, #6366F1 1px, transparent 1px)`, backgroundSize: '32px 32px' }} />
-
-              <div className="relative z-10 space-y-4">
-                {/* Console Header */}
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-white/10" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-white/10" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-white/10" />
-                </div>
-
-                {/* Simulated SDK Test Output */}
-                {[
-                  { label: "ARC_PROTO_INIT", status: "DONE", color: "text-brand" },
-                  { label: "RPC_CONSENSUS_SYNC", status: "SYNCED", color: "text-emerald-400" },
-                  { label: "TX_GAS_ESTIMATOR_RELAY", status: "READY", color: "text-brand" },
-                  { label: "SECURITY_VALIDATOR_ACTIVE", status: "OK", color: "text-emerald-400" },
-                  { label: "DAPP_INSTANCE_DEPLOY", status: "WAITING", color: "text-slate-400" },
-                ].map((item, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -10 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.5 + i * 0.15, duration: 0.5 }}
-                    className="flex items-center justify-between font-mono text-[10px] md:text-sm tracking-tight"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-slate-400 dark:text-secondary/30">{`> ${item.label}`}</span>
-                    </div>
-                    <div className={`px-2 py-0.5 rounded-md ${item.color} bg-current/10 font-bold border border-current/20`}>
-                      {item.status}
-                    </div>
-                  </motion.div>
-                ))}
-
-                {/* Pulsing Loading Indicator */}
-                <motion.div 
-                  className="flex items-center gap-2 mt-8 text-brand font-mono text-xs"
-                  animate={{ opacity: [1, 0.4, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+          {/* Pill Tabs */}
+          <div className="flex flex-wrap lg:flex-nowrap items-center justify-center gap-3 sm:gap-4 mb-6 sm:mb-10 lg:mb-14 py-4 px-4 md:px-0">
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mx-auto">
+              {[
+                { label: t('Lightning Fast') },
+                { label: t('Security') },
+                { label: t('Zero Friction') },
+                { label: t('Developer Friendly') },
+              ].map((tab, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveFeature(i)}
+                  className={`flex items-center gap-2 sm:gap-3 px-4 sm:px-8 md:px-10 py-2.5 sm:py-3.5 md:py-4 rounded-full text-[11px] sm:text-sm md:text-lg font-medium transition-all duration-300 border ${activeFeature === i
+                    ? 'bg-[#0f172a] dark:bg-white text-white dark:text-[#0f172a] border-[#0f172a] dark:border-white shadow-xl shadow-slate-200 dark:shadow-none translate-y-[-2px]'
+                    : 'bg-slate-50/80 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                    }`}
                 >
-                  <span className="w-1.5 h-4 bg-brand" />
-                  <span>{t('RUNNING_SUITE_V2.0...')}</span>
-                </motion.div>
-              </div>
-
-              {/* Decorative Accent Glow */}
-              <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-brand/5 dark:bg-brand/10 rounded-full blur-[80px] pointer-events-none" />
+                  {tab.label}
+                </button>
+              ))}
             </div>
-          </motion.div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 lg:gap-20 items-center">
+            {/* Left: Icon Visual */}
+            <div className="relative flex items-center justify-center min-h-[300px] sm:min-h-[350px] md:min-h-[450px] bg-slate-50/50 dark:bg-surface-dark rounded-[2rem] sm:rounded-[2.5rem] lg:rounded-[3rem] border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-inner">
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeFeature}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: [0.32, 0.72, 0, 1] }}
+                  className="relative z-10 w-full h-full flex flex-col items-center justify-center p-8 md:p-12"
+                >
+                  {activeFeature === 0 && (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-12">
+                      <div className="relative">
+                        <motion.div
+                          className="absolute inset-0 bg-brand/20 rounded-full blur-3xl"
+                          animate={{ scale: [1, 1.8, 1], opacity: [0.2, 0.5, 0.2] }}
+                          transition={{ duration: 3, repeat: Infinity }}
+                        />
+                        {/* Lo-Fi Beat Waveform */}
+                        <div className="flex items-end gap-2 h-24 relative z-10">
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((_, idx) => (
+                            <motion.div
+                              key={idx}
+                              className="w-1.5 md:w-2 bg-brand rounded-full"
+                              animate={{ height: [12, 64, 12] }}
+                              transition={{
+                                duration: 0.6 + (idx * 0.05),
+                                repeat: Infinity,
+                                delay: idx * 0.08,
+                                ease: "easeInOut"
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {activeFeature === 1 && (
+                    <div className="flex flex-col items-center gap-8">
+                      <div className="relative flex items-center justify-center">
+                        {/* Outer Glow */}
+                        <motion.div 
+                          className="absolute w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl"
+                          animate={{ scale: [1, 1.4, 1], opacity: [0.2, 0.5, 0.2] }}
+                          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                        
+                        {/* Rotating Orbit */}
+                        <motion.div 
+                          className="absolute w-32 h-32 border border-emerald-500/20 rounded-full"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                        >
+                          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_10px_#10b981]" />
+                        </motion.div>
+
+                        <div className="w-28 h-28 rounded-full bg-white dark:bg-white/5 flex items-center justify-center border border-emerald-500/20 relative z-10 shadow-2xl overflow-hidden">
+                          {/* Scanning Line */}
+                          <motion.div 
+                            className="absolute left-0 right-0 h-[1px] bg-emerald-500/40 z-20"
+                            animate={{ top: ['0%', '100%', '0%'] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                          />
+                          
+                          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 relative z-10">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            <motion.path 
+                              d="m9 12 2 2 4-4" 
+                              initial={{ pathLength: 0 }}
+                              animate={{ pathLength: 1 }}
+                              transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-center text-center">
+                        <span className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('Protocol Security')}</span>
+                        <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('Institutional-grade protocol protection')}</span>
+                      </div>
+                    </div>
+                  )}
+                  {activeFeature === 2 && (
+                    <div className="flex flex-col items-center gap-8">
+                      <motion.div
+                        className="relative"
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                      >
+                        <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-3xl scale-150" />
+                        <div className="w-32 h-32 rounded-full bg-white dark:bg-white/10 p-4 border border-slate-200 dark:border-white/10 flex items-center justify-center relative z-10 shadow-2xl">
+                          <img src="/icons/usdc.png" alt="USDC" className="w-full h-full object-contain" />
+                        </div>
+                      </motion.div>
+                      <div className="flex flex-col items-center text-center">
+                        <span className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('Frictionless Gas')}</span>
+                        <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('Powered by native USDC gas abstraction')}</span>
+                      </div>
+                    </div>
+                  )}
+                  {activeFeature === 3 && (
+                    <div className="w-full h-full flex flex-col pt-4">
+                      {/* Header Window Controls */}
+                      <div className="flex items-center gap-1.5 mb-10">
+                        <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-white/20" />
+                        <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-white/20" />
+                        <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-white/20" />
+                      </div>
+
+                      {/* Full Console Status Log */}
+                      <div className="space-y-6 flex-grow">
+                        {[
+                          { label: "ARC_PROTO_INIT", status: "DONE", color: "text-brand", bgColor: "bg-brand/5" },
+                          { label: "RPC_CONSENSUS_SYNC", status: "SYNCED", color: "text-emerald-500", bgColor: "bg-emerald-500/5" },
+                          { label: "TX_GAS_ESTIMATOR_RELAY", status: "READY", color: "text-brand", bgColor: "bg-brand/5" },
+                          { label: "SECURITY_VALIDATOR_ACTIVE", status: "OK", color: "text-emerald-500", bgColor: "bg-emerald-500/5" },
+                          { label: "DAPP_INSTANCE_DEPLOY", status: "WAITING", color: "text-slate-400", bgColor: "bg-slate-400/5" },
+                        ].map((item, i) => (
+                          <div key={i} className="flex items-center justify-between font-mono text-xs md:text-sm">
+                            <div className="flex items-center gap-4">
+                              <span className="text-slate-300 dark:text-white/10 select-none">{">"}</span>
+                              <span className="text-slate-500 dark:text-slate-400 tracking-tight">{item.label}</span>
+                            </div>
+                            <span className={`px-3 py-1 rounded-md border border-current/10 ${item.color} ${item.bgColor} font-bold text-[10px] tracking-widest uppercase`}>
+                              {item.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Live Footer Status */}
+                      <motion.div
+                        className="flex items-center gap-3 mt-auto pt-8 text-brand font-mono text-xs border-t border-slate-200 dark:border-white/5"
+                        animate={{ opacity: [1, 0.4, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      >
+                        <span className="w-2 h-4 bg-brand" />
+                        <span className="tracking-widest uppercase">{t('RUNNING_SUITE_V2.0...')}</span>
+                      </motion.div>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Right: Description */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeFeature}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.25, ease: [0.32, 0.72, 0, 1] }}
+                className="flex flex-col items-start"
+              >
+                {activeFeature === 0 && (
+                  <>
+                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0f172a] dark:text-white mb-4 sm:mb-6 tracking-tighter leading-tight font-['Satoshi','Inter',sans-serif]">
+                      {t('Sub-second finality. Every transaction.')}
+                    </h3>
+                    <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 leading-relaxed font-normal max-w-lg">
+                      {t('Arc\'s proprietary consensus mechanism delivers instant settlement optimized for high-frequency, real-time execution. No waiting, no uncertainty.')}
+                    </p>
+                  </>
+                )}
+                {activeFeature === 1 && (
+                  <>
+                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0f172a] dark:text-white mb-4 sm:mb-6 tracking-tighter leading-tight font-['Satoshi','Inter',sans-serif]">
+                      {t('Institutional-grade security.')}
+                    </h3>
+                    <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 leading-relaxed font-normal max-w-lg">
+                      {t('Multi-tiered validation ensures zero-trust protocol integrity for every execution. The same security standards used by major financial institutions.')}
+                    </p>
+                  </>
+                )}
+                {activeFeature === 2 && (
+                  <>
+                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0f172a] dark:text-white mb-4 sm:mb-6 tracking-tighter leading-tight font-['Satoshi','Inter',sans-serif]">
+                      {t('One token. Zero friction.')}
+                    </h3>
+                    <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 leading-relaxed font-normal max-w-lg">
+                      {t('Pay gas in any asset with native support for USDC. No need to acquire a separate gas token just to transact.')}
+                    </p>
+                  </>
+                )}
+                {activeFeature === 3 && (
+                  <>
+                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#0f172a] dark:text-white mb-4 sm:mb-6 tracking-tighter leading-tight font-['Satoshi','Inter',sans-serif]">
+                      {t('Ship faster. Build better.')}
+                    </h3>
+                    <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 leading-relaxed font-normal max-w-lg">
+                      {t('Build institutional-grade DeFi applications with a high-performance SDK and comprehensive testing environment. From prototype to production in days.')}
+                    </p>
+                  </>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </section>
+
+
+      {/* ==================================================================
+          FAQ SECTION
+          Clean accordion-style FAQ matching the editorial design language.
+      ================================================================== */}
+      <section className="py-24 px-6 md:px-12 bg-slate-50/50 dark:bg-surface-dark/50 border-y border-slate-200/50 dark:border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-12 gap-8">
+            <div className="max-w-2xl">
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-5xl md:text-7xl font-bold text-[#0f172a] dark:text-white mb-4 tracking-tighter leading-[1.2] font-['Satoshi','Inter',sans-serif]"
+              >
+                {t('Frequently Asked ')} <span className="text-brand">{t('Questions.')}</span>
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-lg text-slate-500 dark:text-secondary font-medium leading-relaxed max-w-xl"
+              >
+                {t('Everything you need to know about using Stac.')}
+              </motion.p>
+            </div>
+          </div>
+
+          <FaqAccordion t={t} shouldReduceMotion={shouldReduceMotion} />
         </div>
       </section>
 

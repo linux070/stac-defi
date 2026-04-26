@@ -26,74 +26,63 @@ const BridgeRejectedModal = ({ isOpen, onClose, fromChain, toChain }) => {
                     onClick={onClose}
                 >
                     <motion.div
-                        className="relative bridging-modal-container"
-                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                        className="w-full max-w-[420px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-surface-dark rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10"
+                        initial={{ scale: 0.95, opacity: 0, y: 30 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                        exit={{ scale: 0.95, opacity: 0, y: 30 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 400 }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <button
-                            onClick={onClose}
-                            className="bridging-modal-close-button-alt"
-                            aria-label="Close"
-                        >
-                            <X size={20} />
-                        </button>
-
-                        <div className="bridging-modal-content">
-                            <div className="bridging-modal-status-card-new">
-                                <div className="bridging-modal-success-icon-wrapper">
-                                    <motion.div
-                                        className="bridging-modal-error-circle"
-                                        style={{ backgroundColor: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.2)' }}
-                                        initial={{ scale: 0, rotate: -45 }}
-                                        animate={{ scale: 1, rotate: 0 }}
-                                        transition={{ delay: 0.2, type: 'spring' }}
-                                    >
-                                        <AlertTriangle size={40} strokeWidth={3} />
-                                    </motion.div>
-                                </div>
-
-                                <h4 className="bridging-modal-status-title-new" style={{ color: '#f59e0b' }}>{t('Transaction Rejected')}</h4>
-                                <p className="bridging-modal-success-summary-text">
-                                    {t('User Rejected Request')}
-                                </p>
-
-                                <p className="text-center text-slate-500 dark:text-slate-400 text-sm px-6 mb-4">
-                                    {t('The transaction was rejected in your wallet. If this was a mistake, please try again.')}
-                                </p>
-
-                                <div className="bridging-modal-success-details mb-8 w-full px-6">
-                                    <div className="bridging-modal-success-info-row flex justify-between items-center w-full mb-2">
-                                        <span className="text-sm text-slate-500">{t('Source')}</span>
-                                        <div className="flex items-center gap-2">
-                                            <div className={`w-5 h-5 ${fromChain?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
-                                                <img src={getChainIcon(fromChain)} alt="" className="w-full h-full object-cover" />
-                                            </div>
-                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{fromChain}</span>
-                                        </div>
-                                    </div>
-                                    <div className="bridging-modal-success-info-row flex justify-between items-center w-full">
-                                        <span className="text-sm text-slate-500">{t('Destination')}</span>
-                                        <div className="flex items-center gap-2">
-                                            <div className={`w-5 h-5 ${toChain?.toLowerCase().includes('base') ? 'base-sepolia-icon-representation' : 'rounded-full overflow-hidden'}`}>
-                                                <img src={getChainIcon(toChain)} alt="" className="w-full h-full object-cover" />
-                                            </div>
-                                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{toChain}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-
-
-                                <button
-                                    onClick={onClose}
-                                    className="bridging-modal-action-button-secondary-new"
-                                >
-                                    {t('Back to Bridge')}
+                        <div className="p-6 sm:p-8 pb-4 text-center">
+                            <div className="flex justify-end -mr-4 -mt-4 mb-2">
+                                <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors text-slate-400">
+                                    <X size={20} />
                                 </button>
                             </div>
+
+                            <div className="flex flex-col items-center mb-6">
+                                <motion.div
+                                    initial={{ scale: 0, rotate: -45 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ type: 'spring', delay: 0.2 }}
+                                    className="w-16 h-16 rounded-full bg-slate-50 dark:bg-white/[0.03] flex items-center justify-center mb-5 border border-slate-200 dark:border-white/5"
+                                >
+                                    <AlertTriangle size={32} className="text-amber-500" strokeWidth={2} />
+                                </motion.div>
+                                <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-slate-900 dark:text-white font-mono">
+                                    Transaction Rejected
+                                </span>
+                            </div>
+
+                            <p className="text-[15px] text-slate-500 dark:text-slate-400 font-medium leading-[1.4] max-w-[280px] mx-auto">
+                                {t('The transaction was rejected in your wallet. If this was a mistake, please try again.')}
+                            </p>
+                        </div>
+
+                        <div className="px-6 sm:px-8 pb-8 sm:pb-10 space-y-4 sm:space-y-6">
+                            <div className="bg-slate-50 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5 rounded-[24px] p-6 space-y-5">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">{t('Source')}</span>
+                                    <div className="flex items-center gap-2">
+                                        <img src={getChainIcon(fromChain)} className="w-5 h-5 rounded-full" alt="" />
+                                        <span className="text-sm font-medium text-slate-900 dark:text-white">{fromChain}</span>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">{t('Destination')}</span>
+                                    <div className="flex items-center gap-2">
+                                        <img src={getChainIcon(toChain)} className="w-5 h-5 rounded-full" alt="" />
+                                        <span className="text-sm font-medium text-slate-900 dark:text-white">{toChain}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={onClose}
+                                className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl text-xs font-bold uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-black/5"
+                            >
+                                {t('Back to Bridge')}
+                            </button>
                         </div>
                     </motion.div>
                 </motion.div>

@@ -58,7 +58,7 @@ const SwapFailedModal = ({ isOpen, onClose, error }) => {
                     onClick={onClose}
                 >
                     <motion.div
-                        className="w-full max-w-[440px] bg-white dark:bg-[#0B0F1A] border border-slate-200 dark:border-white/10 rounded-[32px] overflow-hidden shadow-2xl relative"
+                        className="w-full max-w-[420px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-surface-dark border border-slate-200/60 dark:border-white/10 rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] relative shelf-inner"
                         variants={modalVariants}
                         initial="hidden"
                         animate="visible"
@@ -66,10 +66,10 @@ const SwapFailedModal = ({ isOpen, onClose, error }) => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* High-End Glass Noise Overlay */}
-                        <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] blend-overlay" />
+
 
                         {/* Top Navigation / Close */}
-                        <div className="px-8 pt-8 flex justify-end relative z-10">
+                        <div className="px-6 sm:px-8 pt-6 sm:pt-8 flex justify-end relative z-10">
                             <button
                                 onClick={onClose}
                                 className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors text-slate-400 active:scale-95"
@@ -79,7 +79,7 @@ const SwapFailedModal = ({ isOpen, onClose, error }) => {
                         </div>
 
                         {/* Status Section */}
-                        <div className="px-10 pb-4 text-center relative z-10">
+                        <div className="px-6 sm:px-10 pb-4 text-center relative z-10">
                             <div className="flex flex-col items-center mb-6">
                                 <motion.div 
                                     initial={{ scale: 0, rotate: -45 }}
@@ -89,9 +89,9 @@ const SwapFailedModal = ({ isOpen, onClose, error }) => {
                                 >
                                     <AlertTriangle size={32} className="text-red-500" strokeWidth={2} />
                                 </motion.div>
-                                <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-slate-900 dark:text-white font-mono">
-                                    Transaction Failed
-                                </span>
+                                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-900 dark:text-white font-mono mb-4">
+                                    {t('Transaction Failed')}
+                                </h2>
                             </div>
 
                             <p className="text-[15px] text-slate-500 dark:text-slate-400 font-medium leading-[1.4] max-w-[280px] mx-auto">
@@ -100,7 +100,7 @@ const SwapFailedModal = ({ isOpen, onClose, error }) => {
                         </div>
 
                         {/* Updated Action Suite - Parity with BridgeFailedModal */}
-                        <div className="px-8 pb-10 relative z-10">
+                        <div className="px-6 sm:px-8 pb-8 sm:pb-10 relative z-10">
                             <div className="flex gap-3">
                                 <button
                                     onClick={onClose}

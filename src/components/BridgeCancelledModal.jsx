@@ -26,14 +26,14 @@ const BridgeCancelledModal = ({ isOpen, onClose, fromChain, toChain }) => {
           onClick={onClose}
         >
           <motion.div
-            className="w-full max-w-[440px] bg-white dark:bg-[#0B0F1A] rounded-[24px] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10"
+            className="w-full max-w-[420px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-surface-dark rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10"
             initial={{ scale: 0.95, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 30 }}
             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-8 pb-4">
+            <div className="p-6 sm:p-8 pb-4">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-2">
                    <div className="w-2 h-2 rounded-full bg-slate-400" />
@@ -54,7 +54,7 @@ const BridgeCancelledModal = ({ isOpen, onClose, fromChain, toChain }) => {
               </p>
             </div>
 
-            <div className="p-8 pt-0 space-y-6">
+            <div className="p-6 sm:p-8 pt-0 space-y-4 sm:space-y-6">
               <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-2xl p-6 flex items-start gap-4">
                  <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0">
                     <Info size={18} className="text-slate-400" />
@@ -65,14 +65,14 @@ const BridgeCancelledModal = ({ isOpen, onClose, fromChain, toChain }) => {
               </div>
 
               <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-2xl p-5 space-y-4">
-                 <div className="flex justify-between items-center text-[11px] font-mono uppercase tracking-widest text-slate-400">
+                 <div className="flex justify-between items-center text-[11px] font-mono uppercase tracking-widest text-slate-600 dark:text-slate-300 font-bold">
                     <span>Source</span>
                     <div className="flex items-center gap-2">
                       <img src={getChainIcon(fromChain)} className="w-4 h-4" alt="" />
                       <span className="text-slate-900 dark:text-white">{fromChain}</span>
                     </div>
                  </div>
-                 <div className="flex justify-between items-center text-[11px] font-mono uppercase tracking-widest text-slate-400">
+                 <div className="flex justify-between items-center text-[11px] font-mono uppercase tracking-widest text-slate-600 dark:text-slate-300 font-bold">
                     <span>Target</span>
                     <div className="flex items-center gap-2">
                       <img src={getChainIcon(toChain)} className="w-4 h-4" alt="" />

@@ -35,7 +35,7 @@ const SwapRejectedModal = ({ isOpen, onClose, fromToken, toToken }) => {
                     onClick={onClose}
                 >
                     <motion.div
-                        className="w-full max-w-[440px] bg-white dark:bg-[#0B0F1A] border border-slate-200/60 dark:border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl"
+                        className="w-full max-w-[420px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-surface-dark border border-slate-200/60 dark:border-white/5 rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)]"
                         initial={{ scale: 0.95, opacity: 0, y: 12 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0.95, opacity: 0, y: 12 }}
@@ -43,7 +43,7 @@ const SwapRejectedModal = ({ isOpen, onClose, fromToken, toToken }) => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header Area */}
-                        <div className="relative px-8 pt-10 pb-6 flex flex-col items-center text-center">
+                        <div className="relative px-6 sm:px-8 pt-8 sm:pt-10 pb-6 flex flex-col items-center text-center">
                             <button
                                 onClick={onClose}
                                 className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
@@ -63,7 +63,7 @@ const SwapRejectedModal = ({ isOpen, onClose, fromToken, toToken }) => {
                                 </div>
                             </div>
 
-                            <h2 className="text-[22px] font-geist font-bold text-slate-900 dark:text-white tracking-tight leading-tight mb-1.5">
+                            <h2 className="text-[22px] font-['Satoshi','Inter',sans-serif] font-bold text-slate-900 dark:text-white tracking-tight leading-tight mb-1.5">
                                 Transaction Rejected
                             </h2>
                             <p className="max-w-[85%] text-[13px] font-medium text-slate-500 dark:text-slate-400">
@@ -77,10 +77,10 @@ const SwapRejectedModal = ({ isOpen, onClose, fromToken, toToken }) => {
                                 <div className="bg-white dark:bg-[#0D111C] border border-slate-200/20 dark:border-white/5 rounded-[calc(2.5rem-6px)] p-6 shadow-sm">
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex-1 flex flex-col items-center gap-2 min-w-0">
-                                            <span className="text-[10px] font-mono tracking-widest text-slate-500 dark:text-slate-400 uppercase">Selling</span>
+                                            <span className="text-[10px] font-mono tracking-widest text-slate-600 dark:text-slate-300 font-bold uppercase">Selling</span>
                                             <div className="flex items-center gap-2.5">
                                                 <img src={getTokenIcon(fromToken?.symbol)} alt="" className="w-7 h-7 rounded-full" />
-                                                <span className="text-[17px] font-geist font-bold text-slate-900 dark:text-white">{fromToken?.symbol || 'USDC'}</span>
+                                                <span className="text-[17px] font-['Satoshi','Inter',sans-serif] font-bold text-slate-900 dark:text-white">{fromToken?.symbol || 'USDC'}</span>
                                             </div>
                                         </div>
 
@@ -89,10 +89,10 @@ const SwapRejectedModal = ({ isOpen, onClose, fromToken, toToken }) => {
                                         </div>
 
                                         <div className="flex-1 flex flex-col items-center gap-2 min-w-0">
-                                            <span className="text-[10px] font-mono tracking-widest text-slate-500 dark:text-slate-400 uppercase">Buying</span>
+                                             <span className="text-[10px] font-mono tracking-widest text-slate-600 dark:text-slate-300 font-bold uppercase">Buying</span>
                                             <div className="flex items-center gap-2.5">
                                                 <img src={getTokenIcon(toToken?.symbol)} alt="" className="w-7 h-7 rounded-full" />
-                                                <span className="text-[17px] font-geist font-bold text-slate-900 dark:text-white">{toToken?.symbol || 'EURC'}</span>
+                                                <span className="text-[17px] font-['Satoshi','Inter',sans-serif] font-bold text-slate-900 dark:text-white">{toToken?.symbol || 'EURC'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -101,7 +101,7 @@ const SwapRejectedModal = ({ isOpen, onClose, fromToken, toToken }) => {
                         </div>
 
                         {/* Action Buttons Cluster */}
-                        <div className="px-8 pb-10">
+                        <div className="px-6 sm:px-8 pb-8 sm:pb-10">
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={onClose}

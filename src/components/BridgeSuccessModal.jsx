@@ -34,17 +34,17 @@ const BridgeSuccessModal = ({ isOpen, onClose, fromChain, toChain, amount, timeT
                     exit={{ opacity: 0 }}
                     onClick={onClose}
                 >
-                    <motion.div
-                        className="w-full max-w-[480px] bg-white dark:bg-[#0B0F1A] rounded-[32px] overflow-hidden shadow-[0_32px_80px_-20px_rgba(0,0,0,0.4)] border border-slate-200 dark:border-white/10"
+                     <motion.div
+                        className="w-full max-w-[440px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-surface-dark rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-[0_32px_80px_-20px_rgba(0,0,0,0.4)] dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10"
                         initial={{ scale: 0.95, opacity: 0, y: 30 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0.95, opacity: 0, y: 30 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 350, duration: 0.5 }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="p-8 pb-4 text-center">
+                        <div className="p-6 sm:p-8 pb-4 text-center">
                             <div className="flex justify-end mb-2 -mr-4 -mt-4">
-                                <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors text-slate-400">
+                                <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors text-slate-300">
                                     <X size={20} />
                                 </button>
                             </div>
@@ -63,26 +63,26 @@ const BridgeSuccessModal = ({ isOpen, onClose, fromChain, toChain, amount, timeT
                                 </span>
                             </div>
 
-                            <p className="text-[15px] text-slate-500 dark:text-slate-400 font-medium leading-[1.4] max-w-[280px] mx-auto mt-2">
+                            <p className="text-[15px] text-slate-500 dark:text-slate-300 font-medium leading-[1.4] max-w-[280px] mx-auto mt-2">
                                 Your asset has been successfully bridged to the destination chain
                             </p>
                         </div>
 
-                        <div className="px-8 pb-10 space-y-6">
+                        <div className="px-6 sm:px-8 pb-8 sm:pb-10 space-y-4 sm:space-y-6">
                             <div className="bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 rounded-[24px] p-6 space-y-5">
                                 <div className="flex justify-between items-center">
-                                    <span className="text-[11px] text-slate-400 uppercase tracking-widest">AMOUNT</span>
+                                    <span className="text-[11px] text-slate-600 dark:text-slate-300 uppercase tracking-widest font-bold">AMOUNT</span>
                                     <span className="text-[15px] font-medium text-slate-900 dark:text-white tabular-nums">{amount} USDC</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-[11px] text-slate-400 uppercase tracking-widest">TIME</span>
+                                    <span className="text-[11px] text-slate-600 dark:text-slate-300 uppercase tracking-widest font-bold">TIME</span>
                                     <span className="text-[15px] font-medium text-slate-900 dark:text-white tabular-nums">{timeTaken}</span>
                                 </div>
 
                                 <div className="h-px bg-slate-200/50 dark:bg-white/5 mx-[-1.5rem]" />
 
                                 <div className="space-y-5 pt-1">
-                                    <span className="text-[11px] text-slate-400 uppercase tracking-[0.2em] block">Transaction Hash</span>
+                                    <span className="text-[11px] text-slate-600 dark:text-slate-300 uppercase tracking-[0.2em] block font-bold">Transaction Hash</span>
 
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center group/hash font-mono">
@@ -90,13 +90,13 @@ const BridgeSuccessModal = ({ isOpen, onClose, fromChain, toChain, amount, timeT
                                                 <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 p-0.5 bg-white dark:bg-white/5">
                                                     <img src={getChainIcon(fromChain)} className="w-full h-full" alt="" />
                                                 </div>
-                                                <span className="text-[11px] text-slate-400 uppercase tracking-widest">SOURCE</span>
+                                                <span className="text-[11px] text-slate-600 dark:text-slate-300 font-bold">SOURCE</span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="text-[13px] text-indigo-500/80 font-mono">
                                                     {sourceTxHash?.slice(0, 6)}...{sourceTxHash?.slice(-4)}
                                                 </span>
-                                                <a href={sourceExplorerUrl} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-indigo-500/10 rounded-md transition-colors text-slate-400 hover:text-indigo-500">
+                                                <a href={sourceExplorerUrl} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-indigo-500/10 rounded-md transition-colors text-slate-300 hover:text-indigo-500">
                                                     <ExternalLink size={14} />
                                                 </a>
                                             </div>
@@ -108,13 +108,13 @@ const BridgeSuccessModal = ({ isOpen, onClose, fromChain, toChain, amount, timeT
                                                     <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 p-0.5 bg-white dark:bg-white/5">
                                                         <img src={getChainIcon(toChain)} className="w-full h-full" alt="" />
                                                     </div>
-                                                    <span className="text-[11px] text-slate-400 uppercase tracking-widest">DESTINATION</span>
+                                                    <span className="text-[11px] text-slate-600 dark:text-slate-300 font-bold">DESTINATION</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[13px] text-indigo-500/80 font-mono">
                                                         {destTxHash?.slice(0, 6)}...{destTxHash?.slice(-4)}
                                                     </span>
-                                                    <a href={destExplorerUrl} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-indigo-500/10 rounded-md transition-colors text-slate-400 hover:text-indigo-500">
+                                                    <a href={destExplorerUrl} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-indigo-500/10 rounded-md transition-colors text-slate-300 hover:text-indigo-500">
                                                         <ExternalLink size={14} />
                                                     </a>
                                                 </div>
@@ -135,7 +135,7 @@ const BridgeSuccessModal = ({ isOpen, onClose, fromChain, toChain, amount, timeT
 
                             <div className="flex items-center justify-center gap-2.5 pt-4">
                                 <img src="/icons/arc.png" className="w-4 h-4 rounded-full" alt="" />
-                                <span className="text-[11px] font-bold text-slate-400/80 uppercase tracking-[0.2em]">Powered by App Kit</span>
+                                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-[0.2em]">Powered by App Kit</span>
                             </div>
                         </div>
                     </motion.div>

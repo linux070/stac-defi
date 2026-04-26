@@ -48,14 +48,14 @@ const BridgeFailedModal = ({ isOpen, onClose, onRetry, fromChain, toChain, error
           onClick={onClose}
         >
           <motion.div
-            className="w-full max-w-[440px] bg-white dark:bg-[#0B0F1A] rounded-[32px] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10"
+            className="w-full max-w-[420px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-surface-dark rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10"
             initial={{ scale: 0.95, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 30 }}
             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-8 pb-4 text-center">
+            <div className="p-6 sm:p-8 pb-4 text-center">
               <div className="flex justify-end -mr-4 -mt-4 mb-2">
                 <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors text-slate-400">
                   <X size={20} />
@@ -81,17 +81,17 @@ const BridgeFailedModal = ({ isOpen, onClose, onRetry, fromChain, toChain, error
               </p>
             </div>
 
-            <div className="px-8 pb-10 space-y-6">
+            <div className="px-6 sm:px-8 pb-8 sm:pb-10 space-y-4 sm:space-y-6">
               <div className="bg-slate-50 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5 rounded-[24px] p-6 space-y-5">
                  <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">SOURCE</span>
+                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">SOURCE</span>
                     <div className="flex items-center gap-2">
                       <img src={getChainIcon(fromChain)} className="w-5 h-5 rounded-full" alt="" />
                       <span className="text-sm font-medium text-slate-900 dark:text-white">{toTitleCase(fromChain)}</span>
                     </div>
                  </div>
                  <div className="flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">DESTINATION</span>
+                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">DESTINATION</span>
                     <div className="flex items-center gap-2">
                       <img src={getChainIcon(toChain)} className="w-5 h-5 rounded-full" alt="" />
                       <span className="text-sm font-medium text-slate-900 dark:text-white">{toTitleCase(toChain)}</span>

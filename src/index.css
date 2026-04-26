@@ -48,8 +48,8 @@
        10% = #7C6FFF  (Brand accent — buttons, highlights, active states)
     */
     --theme-bg-page: #0B0F1A;
-    --theme-bg-card: #161B2A;
-    --theme-bg-surface: #161B2A;
+    --theme-bg-card: #000000;
+    --theme-bg-surface: #000000;
 
     --theme-text-primary: #f1f5f9;
     --theme-text-secondary: #94A3B8;
@@ -88,7 +88,7 @@
   html.dark,
   html.dark body {
     color-scheme: dark !important;
-    background-color: #0B0F1A !important;
+    background-color: var(--theme-bg-page) !important;
   }
 
   html {
@@ -260,15 +260,6 @@
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
-  /* Animation delay utilities for blob animations */
-  .animation-delay-2000 {
-    animation-delay: 2s;
-  }
-
-  .animation-delay-4000 {
-    animation-delay: 4s;
-  }
-
   /* Custom glass effect with dark mode support defined in tailwind.config.js */
   .glass-effect {
     @apply bg-white/10 backdrop-blur-lg border border-white/20;
@@ -300,30 +291,6 @@
     min-width: 44px;
   }
 
-  .grid-background {
-    background-size: 30px 30px;
-    background-image: 
-      linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-  }
-
-  /* Dual-level technical grid for Hero section */
-  .hero-blueprint-grid {
-    background-color: #f8fafc;
-    background-image: none;
-  }
-
-  .dark .hero-blueprint-grid {
-    background-color: #0B0F1A;
-    background-image: radial-gradient(circle at 20% 30%, rgba(124, 111, 255, 0.06) 0%, transparent 40%),
-                      radial-gradient(circle at 80% 70%, rgba(124, 111, 255, 0.03) 0%, transparent 40%);
-  }
-
-  .dark .grid-background {
-    background-image: 
-      linear-gradient(to right, rgba(124, 111, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(124, 111, 255, 0.03) 1px, transparent 1px);
-  }
 
   /* Custom scrollbar utility for code blocks */
   .scrollbar-thin::-webkit-scrollbar {

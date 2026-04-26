@@ -235,7 +235,7 @@ const Transactions = () => {
   };
 
   return (
-    <div className="transactions-container">
+    <div className="transactions-container pt-8 md:pt-12">
       <header className="transactions-header">
         <div className="transactions-title-section">
           <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>{t('Transactions')}</motion.h1>

@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import UpdatesModal from './UpdatesModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import BackgroundGradient from './BackgroundGradient';
 import FeedbackButton from './FeedbackButton';
 import CustomConnectButton from './CustomConnectButton';
 import StacLogo from './StacLogo';
@@ -154,12 +153,11 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
   ];
 
   return (
-    <div className={`min-h-[100dvh] flex flex-col bg-white dark:bg-page-dark ${['home', 'swap', 'bridge'].includes(activeTab) ? 'bg-transparent' : ''}`}>
-      {/* Global Background Gradient to fill visual voids */}
-      <BackgroundGradient />
+    <div className={`min-h-[100dvh] flex flex-col bg-white dark:bg-page-dark transition-colors duration-300`}>
+      {/* Primary Content Shell */}
 
       <div className={`fixed top-0 left-0 right-0 ${isMenuOpen ? 'z-[11000]' : 'z-[100]'}`}>
-        <div className="lg:hidden w-full h-[64px] bg-white/80 dark:bg-page-dark/80 backdrop-blur-md border-b border-slate-100 dark:border-white/5 px-5 flex items-center justify-between relative transition-colors duration-300">
+        <div className="lg:hidden w-full h-[64px] bg-white dark:bg-page-dark border-b border-slate-100 dark:border-white/5 px-5 flex items-center justify-between relative transition-colors duration-300">
           <div className="flex items-center cursor-pointer group gap-2" onClick={() => setActiveTab('home')}>
             <StacLogo darkMode={darkMode} className="h-8 w-8 flex-shrink-0" />
             <span className="text-[22px] font-medium tracking-tight text-slate-900 dark:text-white font-sans pt-0.5">STAC</span>
@@ -292,7 +290,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 8, scale: 0.97 }}
                       transition={{ duration: 0.15, ease: 'easeOut' }}
-                      className="absolute top-[calc(100%+12px)] right-0 w-[280px] z-[2000] bg-white/60 dark:bg-zinc-950/60 rounded-[2.5rem] border border-white/20 dark:border-white/[0.05] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)] overflow-hidden origin-top-right backdrop-blur-[24px]"
+                      className="absolute top-[calc(100%+12px)] right-0 w-[280px] z-[2000] bg-white dark:bg-page-dark rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-xl overflow-hidden origin-top-right"
                     >
                       <AnimatePresence mode="wait">
                         {settingsPage === 'main' ? (
@@ -318,7 +316,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                                   setShowUpdates(true);
                                   setIsSettingsOpen(false);
                                 }}
-                                className="w-full px-5 py-4 text-left flex items-center justify-between group/item transition-all duration-300 rounded-[1.5rem] hover:bg-white dark:hover:bg-white/5 active:scale-[0.98] active:-translate-y-[1px]"
+                                className="w-full px-5 py-4 text-left flex items-center justify-between group/item transition-all duration-300 rounded-[1.5rem] hover:bg-slate-50 dark:hover:bg-white/5 active:scale-[0.98] active:-translate-y-[1px]"
                               >
                                 <div className="flex items-center gap-2">
                                   <span className="text-[15px] font-medium text-slate-700 dark:text-slate-300 group-hover/item:text-black dark:group-hover/item:text-white transition-colors tracking-tight font-['Satoshi','Inter',sans-serif]">{t("What's New")}</span>
@@ -333,7 +331,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                               {/* Resources */}
                               <button
                                 onClick={() => setSettingsPage('resources')}
-                                className="w-full px-5 py-4 text-left flex items-center justify-between group/item transition-all duration-300 rounded-[1.5rem] hover:bg-white dark:hover:bg-white/5 active:scale-[0.98] active:-translate-y-[1px]"
+                                className="w-full px-5 py-4 text-left flex items-center justify-between group/item transition-all duration-300 rounded-[1.5rem] hover:bg-slate-50 dark:hover:bg-white/5 active:scale-[0.98] active:-translate-y-[1px]"
                               >
                                 <span className="text-[15px] font-medium text-slate-700 dark:text-slate-300 group-hover/item:text-black dark:group-hover/item:text-white transition-colors tracking-tight font-['Satoshi','Inter',sans-serif]">{t('Resources')}</span>
                                 <ChevronRight size={14} strokeWidth={2.5} className="text-slate-400 group-hover/item:text-brand transition-all" />
@@ -775,7 +773,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         )}
       </AnimatePresence>
 
-      <main className={`flex-grow w-full ${activeTab === 'home' ? 'bg-transparent pt-0 lg:pt-0 pb-0' : ['swap', 'bridge'].includes(activeTab) ? 'bg-transparent pt-20 lg:pt-28 pb-0' : 'bg-white dark:bg-page-dark pt-20 lg:pt-20 pb-12'} text-black dark:text-white overflow-x-hidden relative z-10 flex flex-col`}>
+      <main className={`flex-grow w-full ${activeTab === 'home' ? 'pt-0 pb-0' : 'pt-20 lg:pt-28 pb-12'} text-black dark:text-white overflow-x-hidden relative z-10 flex flex-col`}>
         {children}
       </main>
 

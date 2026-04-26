@@ -74,7 +74,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
           onClick={() => state?.step === 'success' && onClose()}
         >
           <motion.div
-            className="w-full max-w-[440px] bg-white dark:bg-[#0B0F1A] rounded-[24px] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10"
+            className="w-full max-w-[420px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-surface-dark rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10"
             initial={{ scale: 0.95, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 30 }}
@@ -82,9 +82,9 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
             onClick={(e) => e.stopPropagation()}
           >
             {/* PROGRESS HEADER */}
-            <div className="p-8 pb-4 text-center">
+            <div className="p-6 sm:p-8 pb-4 text-center">
               <div className="flex justify-end mb-2 -mr-4 -mt-4">
-                <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors text-slate-400">
+                <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors text-slate-300">
                   <X size={20} />
                 </button>
               </div>
@@ -115,41 +115,41 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
               </div>
 
               {state?.step === 'success' && (
-                <p className="text-[15px] text-slate-500 dark:text-slate-400 leading-[1.5] font-medium max-w-[280px] mx-auto">
+                <p className="text-[15px] text-slate-500 dark:text-slate-300 leading-[1.5] font-medium max-w-[280px] mx-auto">
                   Your asset has been successfully bridged to the destination chain
                 </p>
               )}
             </div>
 
             {/* MAIN CONTENT AREA */}
-            <div className="p-8 pt-0 space-y-6">
+            <div className="p-6 sm:p-8 pt-0 space-y-4 sm:space-y-6">
               {/* CHAIN VISUALIZER */}
               <div className="grid grid-cols-[1fr,40px,1fr] items-center gap-2 py-6 border-y border-slate-100 dark:border-white/5">
                 <div className="flex flex-col items-center gap-2">
                    <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center">
                      <img src={getChainIcon(fromChain)} className="w-6 h-6" alt="" />
                    </div>
-                   <span className="text-[10px] font-mono text-slate-400 uppercase">{fromChain}</span>
+                   <span className="text-[11px] font-mono text-slate-600 dark:text-slate-300 uppercase font-bold tracking-wider">{fromChain}</span>
                 </div>
                 <div className="flex justify-center">
-                   {state?.step === 'success' ? <Check size={20} className="text-emerald-500" /> : <ChevronRight size={22} className="text-slate-300" strokeWidth={3} />}
+                   {state?.step === 'success' ? <Check size={20} className="text-emerald-500" /> : <ChevronRight size={22} className="text-slate-600 dark:text-slate-300" strokeWidth={4} />}
                 </div>
                 <div className="flex flex-col items-center gap-2">
                    <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center">
                      <img src={getChainIcon(toChain)} className="w-6 h-6" alt="" />
                    </div>
-                   <span className="text-[10px] font-mono text-slate-400 uppercase">{toChain}</span>
+                   <span className="text-[11px] font-mono text-slate-600 dark:text-slate-300 uppercase font-bold tracking-wider">{toChain}</span>
                 </div>
               </div>
 
               {/* STATS BENTO */}
               <div className="grid grid-cols-2 gap-3">
                  <div className="bg-slate-50 dark:bg-white/[0.02] p-4 rounded-xl border border-slate-100 dark:border-white/5">
-                    <p className="text-[10px] uppercase tracking-widest font-mono text-slate-400 mb-1">Amount</p>
+                    <p className="text-[10px] uppercase tracking-widest font-mono text-slate-600 dark:text-slate-300 mb-1 font-bold">Amount</p>
                     <p className="text-lg font-instrument text-slate-900 dark:text-white">{amount} USDC</p>
                  </div>
                  <div className="bg-slate-50 dark:bg-white/[0.02] p-4 rounded-xl border border-slate-100 dark:border-white/5">
-                    <p className="text-[10px] uppercase tracking-widest font-mono text-slate-400 mb-1">Time</p>
+                    <p className="text-[10px] uppercase tracking-widest font-mono text-slate-600 dark:text-slate-300 mb-1 font-bold">Time</p>
                     <p className="text-lg font-instrument text-slate-900 dark:text-white">{formatTime(displayTime)}</p>
                  </div>
               </div>
@@ -186,10 +186,10 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
             </div>
 
             {/* FOOTER */}
-            <div className="p-8 pt-0">
+            <div className="p-6 sm:p-8 pt-0">
                <div className="flex items-center justify-center gap-2.5 pt-4">
                   <img src="/icons/arc.png" className="w-4 h-4 rounded-full" alt="" />
-                  <span className="text-[11px] font-bold text-slate-400/80 uppercase tracking-[0.2em]">Powered by App Kit</span>
+                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-[0.2em]">Powered by App Kit</span>
                </div>
             </div>
           </motion.div>
