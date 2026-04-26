@@ -11,9 +11,9 @@ export function useTotalValueProcessed() {
     const { data, isLoading } = useQuery({
         queryKey: ['totalValueProcessed'],
         queryFn: async () => {
-            // Strictly reading 'myTransactions' as the source of truth for total dApp volume
-            const personalTxs = await getItem('myTransactions');
-            const allTransactions = Array.isArray(personalTxs) ? personalTxs : [];
+            // Switched to 'globalTransactions' for dApp-wide volume calculation
+            const globalTxs = await getItem('globalTransactions');
+            const allTransactions = Array.isArray(globalTxs) ? globalTxs : [];
             
             let totalUSD = 0;
             const processedHashes = new Set();
@@ -67,11 +67,13 @@ export function useTotalValueProcessed() {
         window.addEventListener('transactionSaved', invalidate);
         window.addEventListener('bridgeTransactionSaved', invalidate);
         window.addEventListener('swapTransactionSaved', invalidate);
+        window.addEventListener('globalTransactionsSaved', invalidate);
         
         return () => {
             window.removeEventListener('transactionSaved', invalidate);
             window.removeEventListener('bridgeTransactionSaved', invalidate);
             window.removeEventListener('swapTransactionSaved', invalidate);
+            window.removeEventListener('globalTransactionsSaved', invalidate);
         };
     }, [queryClient]);
 

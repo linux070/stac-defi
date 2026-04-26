@@ -192,11 +192,11 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                         animate={{ y: 0, opacity: 1, scale: 1 }}
                         exit={typeof window !== 'undefined' && window.innerWidth < 768 ? { y: '100%' } : { opacity: 0, scale: 0.98, y: 30 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="relative w-full h-full sm:h-auto sm:max-w-[920px] bg-white dark:bg-page-dark sm:rounded-[28px] shadow-[0_32px_128px_rgba(0,0,0,0.15)] dark:shadow-[0_48px_160px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden border-t sm:border border-slate-200/80 dark:border-brand-muted"
-                        style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth < 768 ? '100dvh' : 'min(720px, 90vh)' }}
+                        className="relative w-full h-full sm:h-auto sm:max-w-[1080px] bg-white dark:bg-black sm:rounded-[32px] shadow-[0_32px_128px_rgba(0,0,0,0.15)] dark:shadow-[0_48px_160px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden border-t sm:border border-slate-200/80 dark:border-white/5"
+                        style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth < 768 ? '100dvh' : 'min(820px, 92vh)' }}
                     >
                         {/* Header */}
-                         <div className="flex items-center justify-between px-6 sm:px-10 py-6 bg-white dark:bg-page-dark border-b border-slate-100 dark:border-white/[0.03] sticky top-0 z-50">
+                         <div className="flex items-center justify-between px-6 sm:px-10 py-7 bg-white dark:bg-black border-b border-slate-100 dark:border-white/[0.05] sticky top-0 z-50">
                              <div className="flex-1 flex justify-start">
                                   <button 
                                      onClick={onClose} 
@@ -231,22 +231,22 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                              <button
                                                  key={idx}
                                                  onClick={() => handleVersionSelect(idx)}
-                                                 className={`w-full text-left px-4 py-4 rounded-2xl transition-all duration-300 group flex flex-col relative ${isActive
+                                                 className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-300 group flex flex-col relative ${isActive
                                                      ? 'bg-brand text-white shadow-lg shadow-brand/25 active:scale-[0.98]'
                                                      : 'hover:bg-brand/10 dark:hover:bg-brand/10'
                                                      }`}
                                              >
                                                  <div className="flex items-center justify-between w-full gap-3 mb-1">
-                                                     <span className={`text-[15px] font-semibold tracking-tight ${isActive ? 'text-white' : 'text-slate-800 dark:text-slate-200 group-hover:text-brand'}`}>
+                                                     <span className={`text-[14px] font-semibold tracking-tight ${isActive ? 'text-white' : 'text-slate-800 dark:text-slate-200 group-hover:text-brand'}`}>
                                                          {version.version}
                                                      </span>
                                                      {version.isLatest && (
-                                                         <span className="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest bg-brand text-white shadow-sm shadow-brand/20">
+                                                         <span className="px-1.5 py-0.5 rounded-md text-[7px] font-black uppercase tracking-widest bg-brand text-white shadow-sm shadow-brand/20">
                                                              {t("NEW")}
                                                          </span>
                                                      )}
                                                  </div>
-                                                 <span className={`text-[11px] font-medium transition-colors ${isActive ? 'text-white/60' : 'text-slate-400 dark:text-slate-500 group-hover:text-brand/60'}`}>
+                                                 <span className={`text-[10px] font-medium transition-colors ${isActive ? 'text-white/60' : 'text-slate-400 dark:text-slate-500 group-hover:text-brand/60'}`}>
                                                      {version.date}
                                                  </span>
                                              </button>
@@ -256,7 +256,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                             </div>
 
                             {/* Main Content Area */}
-                            <div className="flex-1 overflow-y-auto no-scrollbar bg-white dark:bg-page-dark/40 scroll-smooth">
+                            <div className="flex-1 overflow-y-auto no-scrollbar bg-white dark:bg-black scroll-smooth">
                                 <div className="flex flex-col md:block">
                                     {updates.map((version, idx) => {
                                         const isActive = selectedIdx === idx;
@@ -264,7 +264,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                             <div
                                                 key={idx}
                                                 id={`version-${idx}`}
-                                                className={`md:p-10 border-b border-slate-50 dark:border-white/[0.03] last:border-0 transition-all duration-300 ${isActive ? 'opacity-100' : 'md:opacity-40'}`}
+                                                className={`md:p-12 border-b border-slate-50 dark:border-white/[0.05] last:border-0 transition-all duration-300 ${isActive ? 'opacity-100' : 'md:opacity-40'}`}
                                             >
                                                 {/* Mobile Accordion Header */}
                                                 <button
@@ -320,7 +320,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                                  <div className="space-y-6">
                                                                      {version.items.map((item, itemIdx) => (
                                                                          <div key={itemIdx} className="flex gap-4 items-start group/item">
-                                                                             <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-white/20 group-hover/item:bg-brand transition-all duration-300" />
+                                                                             <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-white/20 transition-all duration-300" />
                                                                              <div className="flex flex-col text-left">
                                                                                  <h4 className="text-[17px] font-bold text-slate-900 dark:text-white tracking-tight mb-1">
                                                                                      {item.title}
@@ -344,10 +344,10 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                         </div>
 
                         {/* Footer */}
-                        <div className="px-8 sm:px-10 py-6 border-t border-slate-100 dark:border-brand-muted bg-slate-50/50 dark:bg-page-dark/80 flex items-center justify-center sticky bottom-0 z-50">
+                        <div className="px-8 sm:px-10 py-8 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black flex items-center justify-center sticky bottom-0 z-50">
                              <button
                                  onClick={onClose}
-                                 className="px-12 py-3.5 bg-brand text-white hover:bg-brand-hover transition-all active:scale-95 text-[12px] font-bold uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-brand/10"
+                                 className="px-14 py-4 bg-brand text-white hover:bg-brand-hover transition-all active:scale-95 text-[13px] font-bold uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-brand/10"
                              >
                                  {t("Close")}
                              </button>

@@ -382,7 +382,7 @@ export function useTransactionHistory() {
           uniqueTxHashes.add(log.transactionHash);
           txHashesToProcess.push(log.transactionHash);
         }
-        if (txHashesToProcess.length >= 10) break; // Reduced to 10 for better speed/reliability
+        if (txHashesToProcess.length >= 50) break; // Increased to 50 for more comprehensive global stats
       }
 
       const results = await Promise.all(txHashesToProcess.map(async (hash) => {
@@ -484,6 +484,7 @@ export function useTransactionHistory() {
           
         await setItem(GLOBAL_TX_KEY, newGlobalTxs);
         setGlobalTransactions(newGlobalTxs);
+        window.dispatchEvent(new CustomEvent('globalTransactionsSaved'));
       }
     } catch (err) {
       console.warn("[useTransactionHistory] Global fetch error:", err);

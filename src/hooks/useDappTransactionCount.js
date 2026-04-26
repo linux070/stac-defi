@@ -31,9 +31,9 @@ export function useDappTransactionCount() {
                 await setItem(VERSION_KEY, CURRENT_VERSION);
             }
 
-            // Strictly reading 'myTransactions' as it is the source of truth for dApp-originated activity
-            const personalTxs = await getItem('myTransactions');
-            const allTxs = Array.isArray(personalTxs) ? personalTxs : [];
+            // Switched to 'globalTransactions' to show total platform-wide activity
+            const globalTxs = await getItem('globalTransactions');
+            const allTxs = Array.isArray(globalTxs) ? globalTxs : [];
             
             const uniqueHashes = new Set();
             allTxs.forEach(tx => {
@@ -64,22 +64,23 @@ export function useDappTransactionCount() {
             await setItem(CACHE_KEY, { value: currentCount, timestamp: Date.now() });
             return { transactionCount: currentCount, change, trend };
         },
-        staleTime: 10000, // Faster refresh for better UX feel during testing
+        staleTime: 10000, 
         refetchInterval: 30000,
     });
 
     useEffect(() => {
         const invalidate = () => queryClient.invalidateQueries({ queryKey: ['dappTransactionCount'] });
         
-        // Listen specifically to events that indicate a new transaction was stored
         window.addEventListener('transactionSaved', invalidate);
         window.addEventListener('bridgeTransactionSaved', invalidate);
         window.addEventListener('swapTransactionSaved', invalidate);
+        window.addEventListener('globalTransactionsSaved', invalidate);
 
         return () => {
             window.removeEventListener('transactionSaved', invalidate);
             window.removeEventListener('bridgeTransactionSaved', invalidate);
             window.removeEventListener('swapTransactionSaved', invalidate);
+            window.removeEventListener('globalTransactionsSaved', invalidate);
         };
     }, [queryClient]);
 

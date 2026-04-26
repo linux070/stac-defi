@@ -1,46 +1,47 @@
-# Stac | Arc Network dApp
+# Stac | Professional DeFi Portal
 
-A premium, high-performance decentralized application (dApp) for seamless asset management across the Arc Network and surrounding Ethereum ecosystems. Built with a focus on visual excellence, deterministic performance, and a mobile-first user experience.
+Experience direct on-chain interactions, seamless swapping, and cross-chain bridging, all powered by the **AppKit**.
 
-## Overview
-
-Stac serves as the primary interface for the Arc Network, offering users a unified environment for cross-chain bridging, token swapping, and transaction tracking. The dApp is engineered to bridge the gap between complex blockchain protocols and professional-grade user interfaces.
+Stac is a high-performance decentralized application (dApp) engineered for the Arc Network. It provides a unified, institutional-grade interface for managing digital assets with absolute precision, security, and sub-second finality.
 
 ## Core Features
 
-### 1. Cross-Chain Bridge
-* **Circle CCTP Integration**: Secure and efficient bridging of USDC across supported networks (Arc, Sepolia, Base Sepolia).
-* **Real-time Monitoring**: Millisecond-accurate gas estimation and transaction state tracking.
-* **Network Auto-Switch**: Intelligent chain detection that prompts users for necessary network transitions.
+### 1. High-Performance Swapping
+* **Deterministic Execution**: Experience instant asset swaps with ultra-low latency and minimal slippage.
+* **Optimized Costs**: Leverages the Arc Network's efficiency to provide near-zero transaction costs.
+* **Direct Protocol Interaction**: Fully integrated with the **AppKit** for seamless, direct-to-contract execution.
 
-### 2. Universal Swap
-* **Optimized Execution**: Low-latency token swapping with professional-grade slippage controls.
-* **Dynamic Quotes**: Real-time price impact analysis and Liquidity Provider (LP) data visualization.
-* **Premium Input Design**: Refined input groups with tabular number formatting for financial precision.
+### 2. Multi-Chain Bridging
+* **Unified Asset Movement**: Bridge assets across supported networks with a streamlined, secure workflow.
+- **Enterprise-Grade Protection**: Multi-tiered validation and cryptographic integrity for every transfer.
+* **AppKit Powered**: Utilizes the latest **AppKit** architecture for reliable, high-fidelity cross-chain operations.
 
-### 3. Persisted Transaction History
-* **IndexedDB Implementation**: A local-first storage solution ensuring transaction logs are preserved across browser sessions and refreshes.
-* **Global Activity Feed**: Toggle between personal user history and global network activity.
-* **Deduplication Engine**: Merges blockchain-on-chain data with local-state metadata for 100% accuracy.
+### 3. Institutional Liquidity (Coming Soon)
+* **Yield Optimization**: Provide liquidity to the network and earn protocol-level fees.
+* **Transparent Security**: Built on a zero-trust model to ensure liquidity provider safety and protocol stability.
 
-### 4. Professional UI/UX
-* **Theme-Aware Ecosystem**: Seamless transitions between deep midnight dark mode and high-clarity light mode.
-* **Responsive Architecture**: Fully optimized for mobile viewports using Dynamic Viewport Height (dvh) units and fluid grid systems.
-* **Native SVG Animations**: Zero-JS-overhead hero animations for a premium look without sacrificing performance.
+### 4. Advanced Transaction Ledger
+* **Persisted Activity**: Local-first storage utilizing IndexedDB ensures your transaction history remains accessible across sessions.
+* **Global vs. Personal Views**: Toggle between your personal trade history and a real-time global network activity feed.
+* **Resilient Recovery**: Proprietary recovery protocols that reconstruct transaction history from on-chain data in the event of local data loss.
+
+### 5. Premium UI/UX Design
+* **Real-Black Aesthetics**: A curated, high-contrast dark mode designed for professional environments.
+* **Mobile-First Architecture**: Fully responsive and optimized for mobile devices, including thumb-friendly navigation and fluid transitions.
+* **Deterministic Feedback**: Millisecond-accurate UI updates and GPU-accelerated SVG animations.
 
 ## Technology Stack
 
 ### Frontend Architecture
-* **React 18**: Component-based UI logic.
-* **Vite**: Ultra-fast development and build pipeline.
-* **Tailwind CSS**: Utility-first styling with a custom design system.
-* **Framer Motion**: Production-grade micro-interactions and transitions.
+* **React 18**: The foundation for our modular, high-performance UI.
+* **Vite**: Ultra-fast build pipeline for modern web applications.
+* **Tailwind CSS**: A custom-engineered design system for visual consistency.
+* **Framer Motion**: Production-grade micro-interactions and spring-physics animations.
 
-### Blockchain & Integration
-* **Wagmi & Viem**: Type-safe Ethereum hooks and low-level protocol interactions.
-* **RainbowKit / AppKit**: Streamlined wallet connection experience.
-* **Circle Bridge Kit**: Powering the underlying cross-chain USDC transfers.
-* **i18next**: Comprehensive internationalization and translation support.
+### Protocol & Integration
+* **AppKit**: The primary integration engine powering all on-chain interactions and wallet connectivity.
+* **Wagmi & Viem**: Type-safe Ethereum hooks and low-level protocol utilities.
+* **i18next**: Multi-language support for a global user base.
 
 ## Getting Started
 
@@ -61,9 +62,9 @@ Stac serves as the primary interface for the Arc Network, offering users a unifi
    ```
 
 3. Configure Environment:
-   Create a `.env` file in the root directory and add your RPC URLs and Project IDs:
+   Create a `.env` file in the root directory and add your Project ID and RPC URLs:
    ```env
-   VITE_PROJECT_ID=your_reown_project_id
+   VITE_PROJECT_ID=your_appkit_project_id
    VITE_RPC_URL_ARC=your_arc_rpc
    ```
 
@@ -79,12 +80,12 @@ Stac serves as the primary interface for the Arc Network, offering users a unifi
 
 ## Design Philosophy
 
-The Stac platform is built on the principle of **Functional Minimalism**, focusing instead on:
-* **Typography**: Professional slate and blue palettes with high-readability fonts (Inter, Satoshi, Outfit).
-* **Deterministic UI**: Eliminating layout shifts and ensuring instant component feedback.
-* **Native Performance**: Utilizing CSS transitions and SVG animations to keep the main thread unblocked.
+Stac is built on the principle of **Premium Utilitarian Minimalism**. We focus on:
+* **Absolute Clarity**: Using modern typography (Satoshi, Inter) and curated HSL palettes.
+* **Performance First**: Eliminating main-thread blocking and prioritizing layout stability.
+* **Trust & Transparency**: Providing real-time, on-chain data visualization for every action.
 
 ---
 
-Created and maintained by the linux_mode and team.
-[visit site] (https://stacdefi.app)
+Professional DeFi, simplified.
+[Launch Stac](https://stacdefi.app)

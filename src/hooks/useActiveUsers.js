@@ -16,9 +16,9 @@ export function useActiveUsers() {
   const { data, isLoading } = useQuery({
     queryKey: ['activeUsers'],
     queryFn: async () => {
-      // Strictly reading from local dApp records to ensure accuracy with user's activity
-      const personalTxs = await getItem('myTransactions');
-      const allTxs = Array.isArray(personalTxs) ? personalTxs : [];
+      // Switched to 'globalTransactions' to capture platform-wide active users
+      const globalTxs = await getItem('globalTransactions');
+      const allTxs = Array.isArray(globalTxs) ? globalTxs : [];
       
       const uniqueAddresses = new Set();
       
@@ -60,11 +60,13 @@ export function useActiveUsers() {
     window.addEventListener('transactionSaved', invalidate);
     window.addEventListener('bridgeTransactionSaved', invalidate);
     window.addEventListener('swapTransactionSaved', invalidate);
+    window.addEventListener('globalTransactionsSaved', invalidate);
     
     return () => {
       window.removeEventListener('transactionSaved', invalidate);
       window.removeEventListener('bridgeTransactionSaved', invalidate);
       window.removeEventListener('swapTransactionSaved', invalidate);
+      window.removeEventListener('globalTransactionsSaved', invalidate);
     };
   }, [queryClient]);
 
