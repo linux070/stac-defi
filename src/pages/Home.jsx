@@ -230,16 +230,7 @@ const Home = ({ setActiveTab }) => {
       transition={{ duration: 0.15, ease: 'easeOut' }}
       className="min-h-screen bg-white dark:bg-page-dark"
     >
-      <section className="relative pt-32 pb-16 lg:pt-0 lg:pb-0 lg:min-h-[100dvh] overflow-hidden flex flex-col items-center justify-center bg-white dark:bg-page-dark hero-blueprint-grid">
-        <div className="hidden dark:block absolute inset-0 overflow-hidden pointer-events-none opacity-60">
-          <div className="absolute top-[-10%] md:top-[-15%] left-[-20%] md:left-[-10%] w-[350px] md:w-[700px] h-[350px] md:h-[700px] bg-brand rounded-full mix-blend-plus-lighter filter blur-[80px] md:blur-[120px] opacity-10 animate-blob" style={{ willChange: 'transform' }} />
-          <div className="absolute top-[5%] left-[5%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-brand-hover/30 rounded-full mix-blend-plus-lighter filter blur-[60px] md:blur-[100px] opacity-20 animate-blob animation-delay-3000" style={{ willChange: 'transform' }} />
-          <div className="absolute top-[-5%] md:top-[-10%] right-[0%] md:right-[10%] w-[350px] md:w-[600px] h-[350px] md:h-[600px] bg-brand/20 rounded-full mix-blend-plus-lighter filter blur-[80px] md:blur-[120px] opacity-20 animate-blob" style={{ willChange: 'transform' }} />
-          <div className="absolute bottom-[-10%] md:bottom-[-15%] right-[-10%] w-[400px] md:w-[800px] h-[400px] md:h-[800px] bg-brand-hover/40 rounded-full mix-blend-plus-lighter filter blur-[90px] md:blur-[130px] opacity-20 animate-blob animation-delay-2000" style={{ willChange: 'transform' }} />
-          <div className="absolute bottom-[20%] md:bottom-[15%] right-[5%] w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-brand/25 rounded-full mix-blend-plus-lighter filter blur-[70px] md:blur-[110px] opacity-20 animate-blob animation-delay-5000" style={{ willChange: 'transform' }} />
-          <div className="absolute top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-brand filter blur-[100px] md:blur-[150px] opacity-[0.05] pointer-events-none" />
-          <div className="absolute inset-0 opacity-[0.06] pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
-        </div>
+      <section className="relative pt-32 pb-16 lg:pt-0 lg:pb-0 lg:min-h-[100dvh] overflow-hidden flex flex-col items-center justify-center bg-white dark:bg-page-dark">
 
         <div className="relative z-10 text-center max-w-6xl mx-auto px-6 pt-4 pb-10 lg:py-20 lg:flex lg:flex-col lg:items-center lg:justify-center">
           <motion.div
@@ -248,13 +239,9 @@ const Home = ({ setActiveTab }) => {
             transition={{ duration: 0.15, ease: 'easeOut' }}
             className="relative inline-block px-4 py-8 sm:px-24 sm:py-16 lg:px-32"
           >
-            <div className="absolute top-0 left-0 w-4 h-4 sm:w-8 sm:h-8 border-t-[2px] border-l-[2px] border-brand/30 dark:border-brand-border" />
-            <div className="absolute top-0 right-0 w-4 h-4 sm:w-8 sm:h-8 border-t-[2px] border-r-[2px] border-brand/30 dark:border-brand-border" />
-            <div className="absolute bottom-0 left-0 w-4 h-4 sm:w-8 sm:h-8 border-b-[2px] border-l-[2px] border-brand/20 dark:border-brand/40" />
-            <div className="absolute bottom-0 right-0 w-4 h-4 sm:w-8 sm:h-8 border-b-[2px] border-r-[2px] border-brand/20 dark:border-brand/40" />
 
             <h1 className="text-4xl sm:text-6xl md:text-[60px] lg:text-[75px] xl:text-[85px] font-normal tracking-tighter text-[#0f172a] dark:text-white leading-[1.1] sm:leading-[0.82] mb-0 md:whitespace-nowrap">
-              {t('Omnichain Liquidity, ')} <span className="text-brand">{t('Unified.')}</span>
+              {t('Trade. Bridge. ')} <span className="text-brand">{t('Build.')}</span>
             </h1>
           </motion.div>
 
@@ -264,7 +251,7 @@ const Home = ({ setActiveTab }) => {
             transition={{ duration: 0.15, ease: 'easeOut', delay: 0.05 }}
             className="text-base sm:text-lg md:text-xl text-secondary/80 dark:text-secondary mt-10 mb-12 max-w-2xl mx-auto leading-relaxed font-medium"
           >
-            {t('Swap tokens, bridge assets, and provide liquidity with zero friction. Built on Arc\'s enterprise-grade infrastructure.')}
+            {t('Experience direct on-chain interactions, seamless swapping, and cross-chain bridging, all powered by the Arc App Kit.')}
           </motion.p>
 
           <motion.div
@@ -455,27 +442,6 @@ const Home = ({ setActiveTab }) => {
               <p className="text-lg text-slate-500 dark:text-secondary max-w-md font-medium leading-relaxed">{t('Experience sub-second finality on every transaction with Arc’s proprietary consensus mechanism, optimized for high-frequency trading.')}</p>
             </div>
 
-            <div className="relative h-32 md:h-48 mt-12 bg-white/60 dark:bg-black/40 rounded-[2rem] border border-slate-200 dark:border-white/5 p-6 md:p-8 flex items-end gap-1 md:gap-1.5 overflow-hidden">
-              {/* Haptic Waveform Grid */}
-              <div className="absolute inset-0 opacity-[0.1] dark:opacity-[0.03] pointer-events-none" style={{ backgroundImage: `linear-gradient(#6366F1 1px, transparent 1px), linear-gradient(90deg, #6366F1 1px, transparent 1px)`, backgroundSize: '24px 24px' }} />
-
-              {Array.from({ length: 48 }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  style={{ originY: 1, transformZ: 0 }}
-                  animate={{
-                    scaleY: [0.4 + Math.sin(i * 0.5) * 0.4, 0.8 + Math.cos(i * 0.8) * 0.2, 0.4 + Math.sin(i * 0.5) * 0.4]
-                  }}
-                  transition={{
-                    duration: 1.5 + Math.random(),
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: i * 0.05
-                  }}
-                  className={`${i >= 30 ? 'hidden md:block' : ''} flex-grow bg-brand/40 rounded-full w-0.5 md:w-px h-full min-w-[1px]`}
-                />
-              ))}
-            </div>
           </motion.div>
 
           {/* Secondary Card: Security (4 cols) */}
@@ -523,25 +489,6 @@ const Home = ({ setActiveTab }) => {
               <p className="text-lg text-white/80 font-medium leading-relaxed">{t('Abstracting the complexity of blockchain interaction. Pay gas in any asset, with native support for USDC and EURC.')}</p>
             </div>
 
-            <div className="mt-8 flex items-center justify-center py-12 relative overflow-hidden bg-white/10 dark:bg-black/20 rounded-3xl border border-white/5">
-              <div className="relative w-64 h-32 flex items-center justify-center">
-                {/* Static Orbital Path */}
-                <div className="absolute inset-0 rounded-full border border-white/10" />
-
-                {/* Static USDC Token (Left) */}
-                <div className="absolute left-2 w-20 h-20 rounded-full bg-white border border-white/20 shadow-[0_8px_32px_rgba(255,255,255,0.1)] flex items-center justify-center overflow-hidden z-20">
-                  <img src="/icons/usdc.png" alt="USDC" className="w-full h-full object-contain" />
-                </div>
-
-                {/* Connection Line */}
-                <div className="absolute h-px w-32 bg-gradient-to-r from-white/20 via-white/40 to-white/20" />
-
-                {/* Static EURC Token (Right) */}
-                <div className="absolute right-2 w-20 h-20 rounded-full bg-white border border-white/20 shadow-[0_8px_32px_rgba(255,255,255,0.1)] flex items-center justify-center overflow-hidden z-20">
-                  <img src="/icons/eurc.png" alt="EURC" className="w-full h-full object-cover" />
-                </div>
-              </div>
-            </div>
           </motion.div>
 
           {/* Quaternary Card: Developer (7 cols) */}
