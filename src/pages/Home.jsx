@@ -249,9 +249,10 @@ const Home = ({ setActiveTab }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.15, ease: 'easeOut', delay: 0.05 }}
-            className="text-base sm:text-lg md:text-xl text-secondary/80 dark:text-secondary mt-10 mb-12 max-w-2xl mx-auto leading-relaxed font-medium"
+            className="text-base sm:text-lg md:text-xl text-secondary/80 dark:text-secondary mt-6 mb-12 max-w-2xl mx-auto leading-relaxed font-medium"
           >
-            {t('Experience direct on-chain interactions, seamless swapping, and cross-chain bridging, all powered by the Arc App Kit.')}
+            {t('Experience direct on-chain interactions, seamless swapping, and cross-chain bridging, all powered by the ')}
+            <span className="font-semibold text-brand/90 dark:text-brand-glow">{t('Arc App Kit')}</span>.
           </motion.p>
 
           <motion.div
