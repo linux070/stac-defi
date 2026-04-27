@@ -316,6 +316,15 @@
     color: var(--theme-text-secondary);
     @apply text-sm md:text-base font-medium tracking-normal;
   }
+
+  /* Premium Dark Mode Gray Background for Swap/Bridge */
+  .bg-premium-gray {
+    background-color: #ffffff;
+  }
+
+  .dark .bg-premium-gray {
+    background-color: #121214 !important;
+  }
 }
 
 /* Media queries for responsive design */

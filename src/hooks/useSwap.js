@@ -1,8 +1,8 @@
 import { useWriteContract, useWaitForTransactionReceipt, useAccount, useReadContracts } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
 import { useEffect, useCallback, useMemo, useState, useRef } from 'react';
-import { DEX_ADDRESS, USDC_ADDRESS, TOKENS, DECIMALS, CHAINS } from '../config/constants';
-import { TOKEN_PRICES } from '../config/networks';
+import { USDC_ADDRESS, DECIMALS, CHAINS } from '../config/constants';
+import { TOKENS } from '../config/networks';
 
 import { useAppKitSwap, isAppKitSwapSupported } from './useAppKitSwap';
 import { logger } from '../utils/logger';
@@ -114,7 +114,7 @@ export function useSwap(
 
         fetchAppKitEstimate();
         return () => { isMounted = false; };
-    }, [fromTokenSymbol, toTokenSymbol, amountIn, chainId, appKitSwap.estimateSwap]);
+    }, [fromTokenSymbol, toTokenSymbol, amountIn, chainId, appKitSwap]);
 
     const possiblePaths = useMemo(() => {
         if (!fromTokenSymbol || !toTokenSymbol || chainId !== CHAINS.ARC_TESTNET) return [];
@@ -153,14 +153,14 @@ export function useSwap(
     const contractCalls = useMemo(() => {
         if (amountInBigInt === 0n) return [];
         return onChainPaths.map(({ source, path }) => {
-            const fromAddr = path[0] === 'USDC' ? USDC_ADDRESS : TOKENS[path[0]];
-            const toAddr = path[path.length - 1] === 'USDC' ? USDC_ADDRESS : TOKENS[path[path.length - 1]];
+            const fromAddr = path[0] === 'USDC' ? USDC_ADDRESS : TOKENS[path[0]]?.address?.[chainId];
+            const toAddr = path[path.length - 1] === 'USDC' ? USDC_ADDRESS : TOKENS[path[path.length - 1]]?.address?.[chainId];
 
             if (source.type === 'curve-stable-ng') {
                 return { address: source.poolAddress, abi: CurveStableSwapABI, functionName: 'get_dy', args: [BigInt(source.config.tokens[path[0]]), BigInt(source.config.tokens[path[1]]), amountInBigInt], sourceId: source.id, path };
             }
             if (source.type === 'uniswap-v2') {
-                const fullPath = path.map(symbol => symbol === 'USDC' ? USDC_ADDRESS : TOKENS[symbol]);
+                const fullPath = path.map(symbol => symbol === 'USDC' ? USDC_ADDRESS : TOKENS[symbol]?.address?.[chainId]);
                 return { address: source.routerAddress, abi: UniswapV2RouterABI, functionName: 'getAmountsOut', args: [amountInBigInt, fullPath], sourceId: source.id, path };
             }
             if (source.type === 'stac-dex') {
@@ -168,7 +168,7 @@ export function useSwap(
             }
             return null;
         }).filter(Boolean);
-    }, [onChainPaths, amountInBigInt]);
+    }, [onChainPaths, amountInBigInt, chainId]);
 
     const { data: results, isLoading: isOnChainQuoting } = useReadContracts({
         contracts: contractCalls.map(({ address, abi, functionName, args }) => ({ address, abi, functionName, args })),
@@ -215,7 +215,7 @@ export function useSwap(
         });
 
         return [...onChainQuotes, ...appKitQuotes].sort((a, b) => Number(b.amountOutRaw - a.amountOutRaw));
-    }, [results, contractCalls, appKitPaths, fromTokenSymbol, toTokenSymbol, amountInBigInt, decimalsIn, decimalsOut, appKitQuoteResult, isAppKitEstimating, amountIn]);
+    }, [results, contractCalls, appKitPaths, fromTokenSymbol, amountInBigInt, decimalsIn, decimalsOut, appKitQuoteResult, isAppKitEstimating, amountIn]);
 
     const bestQuote = useMemo(() => quotes.length > 0 ? quotes[0] : null, [quotes]);
 
@@ -223,12 +223,12 @@ export function useSwap(
     // 2. APPROVAL & EXECUTION LOGIC
     // ------------------------------------------
     const routerAddress = useMemo(() => {
-        if (!bestQuote) return DEX_ADDRESS;
+        if (!bestQuote) return null;
         return bestQuote.routerAddress || bestQuote.poolAddress;
     }, [bestQuote]);
 
-    const fromTokenAddress = fromTokenSymbol === 'USDC' ? USDC_ADDRESS : TOKENS[fromTokenSymbol];
-    const toTokenAddress = toTokenSymbol === 'USDC' ? USDC_ADDRESS : TOKENS[toTokenSymbol];
+    const fromTokenAddress = fromTokenSymbol === 'USDC' ? USDC_ADDRESS : TOKENS[fromTokenSymbol]?.address?.[chainId];
+    const toTokenAddress = toTokenSymbol === 'USDC' ? USDC_ADDRESS : TOKENS[toTokenSymbol]?.address?.[chainId];
 
     const { data: allowance, refetch: refetchAllowance } = useReadContracts({
         contracts: [{ address: fromTokenAddress, abi: TokenABI, functionName: 'allowance', args: [userAddress, routerAddress] }],
@@ -316,7 +316,7 @@ export function useSwap(
             if (bestQuote.type === 'curve-stable-ng') {
                 writeSwap({ address: bestQuote.poolAddress, abi: CurveStableSwapABI, functionName: 'exchange', args: [BigInt(bestQuote.config.tokens[fromTokenSymbol]), BigInt(bestQuote.config.tokens[toTokenSymbol]), amountInBigInt, amountOutMin] });
             } else if (bestQuote.type === 'uniswap-v2') {
-                const path = bestQuote.path.map(s => s === 'USDC' ? USDC_ADDRESS : TOKENS[s]);
+                const path = bestQuote.path.map(s => s === 'USDC' ? USDC_ADDRESS : TOKENS[s]?.address?.[chainId]);
                 writeSwap({ address: bestQuote.routerAddress, abi: UniswapV2RouterABI, functionName: 'swapExactTokensForTokens', args: [amountInBigInt, amountOutMin, path, userAddress, deadline] });
             }
         } catch (err) {
@@ -348,7 +348,6 @@ export function useSwap(
         reset,
         isApproving: isApprovingRaw || isWaitingApprove,
         approveSuccess,
-        isSwapping,
         isSwapping,
         swapSuccess,
         expectedOut: state.expectedOut || bestQuote?.amountOutFormatted || null,

@@ -1,20 +1,14 @@
 // Global constants for the Stac DeFi application
 
-export const APP_NAME = 'Stac DeFi';
-export const APP_DESCRIPTION = 'The next generation of blockchain infrastructure on Arc Network';
-export const DEX_ADDRESS = "0x00EBABdF8B2F811074DF4922f8601190Aa0bab4f"; // StacDEX Address (From Remix)
+export const APP_NAME = 'Stac';
+export const APP_DESCRIPTION = 'Experience direct on-chain interactions, seamless swapping, and cross-chain bridging, all powered by the Arc App Kit.';
+export const APP_KIT_ADDRESS = "0x3200000000000000000000000000000000000000"; // App Kit / Token Messenger on Arc
+export const SUBGRAPH_URL = "/api/subgraph";
 
 // The Official USDC Address on Arc (Do not change)
 export const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
 
-// Your 4 Token Addresses
-export const TOKENS = {
-    STC: "0x1116a7f6424350691D427fE8eF686550889947D1", // STC Address
-    BALL: "0x779665f58a31faD7D7E3700700026053Aea7276C", // BALL Address
-    MTB: "0x138f4ffa41dADB7860f429c1d1c2FF04736665e9", // MTB Address
-    ECR: "0x39a319F0B9D122ad4F4B714A2e1ebc204AB3Bc43", // ECR Address
-    EURC: "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a", // EURC Address
-};
+
 
 export const DECIMALS = {
     USDC: 6,
@@ -45,10 +39,3 @@ export const GAS_LIMITS = {
 export const REFRESH_INTERVAL = 30000; // 30 seconds
 export const TOAST_DURATION = 5000; // 5 seconds
 
-// Official Links
-// export const LINKS = {
-//     DOCS: 'https://docs.stac.finance',
-//     TWITTER: 'https://twitter.com/stac_finance',
-//     GITHUB: 'https://github.com/stac-finance',
-//     DISCORD: 'https://discord.gg/stac',
-// };

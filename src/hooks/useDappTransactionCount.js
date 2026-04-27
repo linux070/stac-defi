@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { getItem, setItem } from '../utils/indexedDB';
+import { SUBGRAPH_URL } from '../config/constants';
 
 const CACHE_KEY = 'dapp_transaction_count';
 const VERSION_KEY = 'dapp_stat_version';
@@ -15,8 +16,6 @@ const calculatePercentageChange = (current, previous) => {
 /**
  * useDappTransactionCount
  * Returns the total count of unique successful transactions performed through this dApp.
- * Strictly reads from the local 'myTransactions' ledger to ensure absolute accuracy 
- * with the user's recorded history, as requested.
  */
 export function useDappTransactionCount() {
     const queryClient = useQueryClient();
@@ -24,45 +23,37 @@ export function useDappTransactionCount() {
     const { data, isLoading } = useQuery({
         queryKey: ['dappTransactionCount'],
         queryFn: async () => {
-            // Self-healing: Reset if version changed
-            const version = await getItem(VERSION_KEY);
-            if (version !== CURRENT_VERSION) {
-                await setItem(CACHE_KEY, { value: 0, timestamp: Date.now() });
-                await setItem(VERSION_KEY, CURRENT_VERSION);
-            }
-
-            // Switched to 'globalTransactions' to show total platform-wide activity
-            const globalTxs = await getItem('globalTransactions');
-            const allTxs = Array.isArray(globalTxs) ? globalTxs : [];
             
-            const uniqueHashes = new Set();
-            allTxs.forEach(tx => {
-                if (!tx || typeof tx !== 'object') return;
-                const txHash = tx.hash || tx.transactionHash || tx.id;
-                const txStatus = tx.status || 'success';
-
-                if (txHash && txStatus === 'success') {
-                    uniqueHashes.add(txHash.toLowerCase());
+            const query = `
+                query {
+                    globalStat(id: "1") {
+                        totalTransactions
+                    }
                 }
-            });
+            `;
 
-            const currentCount = uniqueHashes.size;
-            const cached = await getItem(CACHE_KEY);
-            const previousCount = (cached && cached.value !== undefined) ? cached.value : 0;
-
-            let change = null;
-            let trend = 'stable';
-
-            if (previousCount !== currentCount && currentCount > 0 && previousCount > 0) {
-                const percentageChange = calculatePercentageChange(currentCount, previousCount);
-                if (percentageChange !== null) {
-                    change = Math.abs(percentageChange);
-                    trend = percentageChange > 0 ? 'up' : 'down';
+            try {
+                const response = await fetch(SUBGRAPH_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+                const result = await response.json();
+                const count = parseInt(result?.data?.globalStat?.totalTransactions || '0');
+                
+                // Fallback to local IndexDB discovery if subgraph is syncing or empty
+                if (count === 0) {
+                    const globalTxs = await getItem('globalTransactions');
+                    const allTxs = Array.isArray(globalTxs) ? globalTxs : [];
+                    return { transactionCount: allTxs.length, change: 0, trend: 'stable' };
                 }
+
+                return { transactionCount: count, change: null, trend: 'stable' };
+            } catch (err) {
+                console.error('[Subgraph Error]:', err);
+                const globalTxs = await getItem('globalTransactions');
+                return { transactionCount: Array.isArray(globalTxs) ? globalTxs.length : 0, change: null, trend: 'stable' };
             }
-
-            await setItem(CACHE_KEY, { value: currentCount, timestamp: Date.now() });
-            return { transactionCount: currentCount, change, trend };
         },
         staleTime: 10000, 
         refetchInterval: 30000,

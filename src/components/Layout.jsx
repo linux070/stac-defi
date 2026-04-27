@@ -153,11 +153,23 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
   ];
 
   return (
-    <div className={`min-h-[100dvh] flex flex-col bg-white dark:bg-page-dark transition-colors duration-300`}>
+    <div className={`min-h-[100dvh] flex flex-col transition-colors duration-300 ${
+      activeTab === 'transactions' 
+        ? 'bg-white dark:bg-black' 
+        : (activeTab === 'swap' || activeTab === 'bridge' || activeTab === 'liquidity')
+          ? 'bg-white dark:bg-[#121214]'
+          : 'bg-white dark:bg-page-dark'
+    }`}>
       {/* Primary Content Shell */}
 
       <div className={`fixed top-0 left-0 right-0 ${isMenuOpen ? 'z-[11000]' : 'z-[100]'}`}>
-        <div className="lg:hidden w-full h-[64px] bg-white dark:bg-page-dark border-b border-slate-100 dark:border-white/5 px-5 flex items-center justify-between relative transition-colors duration-300">
+        <div className={`lg:hidden w-full h-[64px] border-b px-5 flex items-center justify-between relative transition-colors duration-300 ${
+          activeTab === 'transactions'
+            ? 'bg-white dark:bg-black border-slate-100 dark:border-white/10'
+            : (activeTab === 'swap' || activeTab === 'bridge' || activeTab === 'liquidity')
+              ? 'bg-white dark:bg-[#121214] border-slate-100 dark:border-white/5'
+              : 'bg-white dark:bg-page-dark border-slate-100 dark:border-white/5'
+        }`}>
           <div className="flex items-center cursor-pointer group gap-2" onClick={() => setActiveTab('home')}>
             <StacLogo darkMode={darkMode} className="h-8 w-8 flex-shrink-0" />
             <span className="text-[22px] font-medium tracking-tight text-slate-900 dark:text-white font-sans pt-0.5">STAC</span>
@@ -208,7 +220,13 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         </div>
 
         {/* Desktop Header - Refined Nav Positions */}
-        <div className="hidden lg:grid grid-cols-[1fr_auto_1fr] fixed top-0 left-0 right-0 h-20 items-center px-10 bg-transparent transition-colors duration-300">
+        <div className={`hidden lg:grid grid-cols-[1fr_auto_1fr] fixed top-0 left-0 right-0 h-20 items-center px-10 transition-colors duration-300 ${
+          activeTab === 'transactions' 
+            ? 'bg-white/90 dark:bg-black/80 backdrop-blur-md' 
+            : (activeTab === 'swap' || activeTab === 'bridge' || activeTab === 'liquidity')
+              ? 'bg-white/90 dark:bg-[#121214]/80 backdrop-blur-md'
+              : 'bg-transparent'
+        }`}>
           {/* Column 1: Logo */}
           <div className="flex items-center">
             <div className="flex items-center cursor-pointer flex-shrink-0 group gap-2.5" onClick={() => setActiveTab('home')}>
@@ -485,7 +503,9 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
-              className="fixed inset-0 z-[11000] bg-white dark:bg-page-dark lg:hidden flex flex-col overflow-hidden"
+              className={`fixed inset-0 z-[11000] lg:hidden flex flex-col overflow-hidden ${
+                activeTab === 'transactions' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-page-dark'
+              }`}
             >
               <AnimatePresence initial={false}>
                 {settingsPage === 'main' ? (

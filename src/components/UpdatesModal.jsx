@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, X, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const UpdatesModal = ({ isOpen, onClose }) => {
@@ -9,10 +9,78 @@ const UpdatesModal = ({ isOpen, onClose }) => {
 
     const updates = [
         {
+            version: "v2.5.0",
+            title: "Goldsky & Network Speed",
+            date: "April 26, 2026",
+            isLatest: true,
+            description: "Faster transaction indexing and real-time network visibility.",
+            items: [
+                {
+                    title: "Goldsky Integration",
+                    description: "High-speed indexing for lightning-fast transaction tracking and activity feeds.",
+                },
+                {
+                    title: "Optimized Activity Feed",
+                    description: "Global transaction logs now update instantly with zero delay.",
+                },
+                {
+                    title: "UI/UX Refinement",
+                    description: "Premium slate-grey filters and refined interaction weights for a cleaner, high-end aesthetic.",
+                },
+                {
+                    title: "Ledger Persistence",
+                    description: "Unified global and personal history with resilient subgraph-powered recovery.",
+                },
+                {
+                    title: "AppKit Stability",
+                    description: "Enhanced wallet connection resilience for a smoother start-to-finish experience.",
+                }
+            ]
+        },
+        {
+            version: "v2.4.5",
+            title: "Persistent Ledger & Local Sync",
+            date: "April 24, 2026",
+            description: "Your data now stays with you across every session.",
+            items: [
+                {
+                    title: "IndexedDB Persistence",
+                    description: "Transaction history is now securely stored locally, surviving refreshes and cache clears.",
+                },
+                {
+                    title: "Local Sync Engine",
+                    description: "Instant balance updates and preference retrieval using optimized local storage.",
+                },
+                {
+                    title: "Resilient Recovery",
+                    description: "Reconstruct your entire activity ledger from on-chain data in seconds.",
+                }
+            ]
+        },
+        {
+            version: "v2.4.0",
+            title: "UI Polish & Optimization",
+            date: "April 21, 2026",
+            description: "Refined spacing, typography, and performance tuning.",
+            items: [
+                {
+                    title: "Spacing & Typography",
+                    description: "Improved layout and font scaling for better readability across all devices.",
+                },
+                {
+                    title: "Performance Tuning",
+                    description: "Reduced main-thread overhead for smoother animations and transitions.",
+                },
+                {
+                    title: "Global Stats Refresh",
+                    description: "Live network stats now update more frequently with lower CPU usage.",
+                }
+            ]
+        },
+        {
             version: "v2.3.4",
             title: "Wallet & Bridge Reliability",
             date: "Feb 22, 2026",
-            isLatest: true,
             description: "Better wallet connection and smoother bridging.",
             items: [
                 {
@@ -192,8 +260,8 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                         animate={{ y: 0, opacity: 1, scale: 1 }}
                         exit={typeof window !== 'undefined' && window.innerWidth < 768 ? { y: '100%' } : { opacity: 0, scale: 0.98, y: 30 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="relative w-full h-full sm:h-auto sm:max-w-[1080px] bg-white dark:bg-black sm:rounded-[32px] shadow-[0_32px_128px_rgba(0,0,0,0.15)] dark:shadow-[0_48px_160px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden border-t sm:border border-slate-200/80 dark:border-white/5"
-                        style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth < 768 ? '100dvh' : 'min(820px, 92vh)' }}
+                        className="relative w-full h-full sm:h-auto sm:max-w-[1080px] bg-white dark:bg-black rounded-t-[32px] sm:rounded-[32px] shadow-[0_32px_128px_rgba(0,0,0,0.15)] dark:shadow-[0_48px_160px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden border-t sm:border border-slate-200/80 dark:border-white/5"
+                        style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth < 768 ? '94dvh' : 'min(820px, 92vh)' }}
                     >
                         {/* Header */}
                          <div className="flex items-center justify-between px-6 sm:px-10 py-7 bg-white dark:bg-black border-b border-slate-100 dark:border-white/[0.05] sticky top-0 z-50">
@@ -302,12 +370,6 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                             className="overflow-hidden"
                                                         >
                                                             <div className="px-6 pb-8 md:p-0">
-                                                                <div className="hidden md:flex items-center gap-3 mb-6">
-                                                                    <div className="w-8 h-[2px] bg-brand rounded-full" />
-                                                                    <span className="text-[10px] sm:text-[11px] font-semibold text-brand uppercase tracking-[0.15em]">
-                                                                        {version.version} — {version.date}
-                                                                    </span>
-                                                                </div>
 
                                                                 <h3 className="text-[clamp(1.15rem,5vw,2.25rem)] font-semibold text-black dark:text-white tracking-tight leading-[1.2] mb-5 md:mb-6">
                                                                     {version.title}

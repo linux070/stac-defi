@@ -98,7 +98,7 @@ if (typeof window !== 'undefined') {
           }
         }
       }
-    } catch (err) {
+    } catch {
       // Silent fallback to avoid breaking requests if logic fails
     }
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader, X, Check, ShieldCheck, ChevronRight } from 'lucide-react';
+import { X, Check, ChevronRight } from 'lucide-react';
 import '../styles/bridge-styles.css';
 
 const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime, state, stopTimer, onClaim }) => {

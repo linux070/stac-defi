@@ -4,15 +4,14 @@
 // =============================================================================
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../hooks/useWallet';
 import { useAccount } from 'wagmi';
-import { ArrowDownUp, Loader, Wallet, X, ChevronDown, Check, Info, AlertTriangle } from 'lucide-react';
+import { ArrowDownUp, Wallet, ChevronDown, Check, Info, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TOKENS, TOKEN_PRICES } from '../config/networks';
+import { TOKENS } from '../config/networks';
 
-import { sanitizeInput, getFilteredTokens } from '../utils/blockchain';
+import { sanitizeInput } from '../utils/blockchain';
 import { CHAINS } from '../config/constants';
 
 import useMultiChainBalances from '../hooks/useMultiChainBalances';
@@ -47,21 +46,6 @@ const getTokenIcon = (symbol) => {
   if (s.includes('STC') || s.includes('STAC')) return '/icons/stc.png';
   return iconMap[s] || null;
 };
-
-
-// =============================================================================
-// WHITELISTED SWAP TOKENS — Only USDC and EURC for now
-// =============================================================================
-const SWAP_TOKENS = [
-  { symbol: 'USDC', name: 'USD Coin' },
-  { symbol: 'EURC', name: 'EUR Coin' },
-];
-
-
-// =============================================================================
-// SLIPPAGE PRESETS
-// =============================================================================
-const SLIPPAGE_PRESETS = [0.1, 0.5, 1.0];
 
 
 // =============================================================================
@@ -168,7 +152,7 @@ const Swap = () => {
 
   // ── Unified Swap & Quote ──
   const swapState = useSwap(fromToken, toToken, debouncedFromAmount, slippage);
-  const { bestQuote, isQuoting } = swapState;
+  const { bestQuote } = swapState;
 
   // ── Balance Hooks ──
   const { balances: multiChainBalances } = useMultiChainBalances(address, isConnected);
@@ -198,14 +182,7 @@ const Swap = () => {
   const toBalance = toBalanceData.balance;
   const toLoading = toBalanceData.loading;
 
-  // ── Token List (kept for compatibility) ──
-  const tokenList = useMemo(() => {
-    try {
-      const allTokens = Object.values(TOKENS);
-      const filtered = getFilteredTokens(allTokens, chainId);
-      return Array.isArray(filtered) ? filtered.filter(t => t?.symbol) : [];
-    } catch (err) { return []; }
-  }, [chainId]);
+
 
   // ── Reset tokens on chain switch ──
   useEffect(() => {
@@ -371,7 +348,7 @@ const Swap = () => {
     }
 
     if (swapState.reset) swapState.reset();
-  }, [swapState.error, swapState.reset]);
+  }, [swapState]);
 
   const handleSwapSuccess = useCallback((txHash) => {
     if (!txHash || savedHashesRef.current.has(txHash)) return;
@@ -464,13 +441,13 @@ const Swap = () => {
   // RENDER
   // =============================================================================
   return (
-    <div className="fixed inset-0 top-[64px] flex flex-col items-center justify-start overflow-y-auto overflow-x-hidden bg-transparent custom-scrollbar pb-10 pt-4 sm:pt-12 md:pt-16">
+    <div className="fixed inset-0 top-[64px] flex flex-col items-center justify-start overflow-y-auto overflow-x-hidden bg-premium-gray custom-scrollbar pb-10 pt-4 sm:pt-12 md:pt-16">
       <div className="w-full max-w-lg px-2 sm:px-4">
 
         <motion.div
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
-          className="bg-white dark:bg-surface-dark backdrop-blur-2xl border border-[#EAEAEA] dark:border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] rounded-[1.75rem] sm:rounded-[2.5rem] overflow-hidden shelf-inner"
+          className="bg-white dark:bg-surface-dark backdrop-blur-2xl border border-slate-100 dark:border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] rounded-[1.75rem] sm:rounded-[2.5rem] overflow-hidden"
         >
           {/* ── HEADER ── */}
           <div className="px-5 sm:px-8 pt-6 sm:pt-8 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5">

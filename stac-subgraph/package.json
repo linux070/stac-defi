@@ -1,0 +1,13 @@
+{
+  "name": "stac-subgraph",
+  "license": "UNLICENSED",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "goldsky subgraph deploy stac-defi/v1"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "0.60.0",
+    "@graphprotocol/graph-ts": "0.31.0"
+  }
+}

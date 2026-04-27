@@ -1,0 +1,24 @@
+type GlobalStat @entity {
+  id: ID!
+  totalValueProcessedUSD: BigDecimal!
+  totalTransactions: BigInt!
+  activeUsersCount: BigInt!
+}
+
+type User @entity {
+  id: ID!
+  transactionCount: BigInt!
+  totalVolumeUSD: BigDecimal!
+  lastTransactionTimestamp: BigInt!
+}
+
+type Transaction @entity {
+  id: ID!
+  type: String!
+  user: User!
+  fromToken: String!
+  toToken: String!
+  amountUSD: BigDecimal!
+  timestamp: BigInt!
+  chainId: BigInt!
+}

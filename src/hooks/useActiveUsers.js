@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { getItem, setItem } from '../utils/indexedDB';
+import { SUBGRAPH_URL } from '../config/constants';
 
 const CACHE_KEY = 'dapp_active_users';
 
@@ -16,40 +17,35 @@ export function useActiveUsers() {
   const { data, isLoading } = useQuery({
     queryKey: ['activeUsers'],
     queryFn: async () => {
-      // Switched to 'globalTransactions' to capture platform-wide active users
-      const globalTxs = await getItem('globalTransactions');
-      const allTxs = Array.isArray(globalTxs) ? globalTxs : [];
       
-      const uniqueAddresses = new Set();
-      
-      allTxs.forEach(tx => {
-        if (!tx || typeof tx !== 'object') return;
-        if (tx.status === 'success' && (tx.address || tx.from || tx.to)) {
-          const addr = tx.address || tx.from || tx.to;
-          if (addr && typeof addr === 'string') {
-            uniqueAddresses.add(addr.toLowerCase());
+      const query = `
+        query {
+          globalStat(id: "1") {
+            activeUsersCount
           }
         }
-      });
+      `;
 
-      const currentCount = uniqueAddresses.size;
-      const cached = await getItem(CACHE_KEY);
-      const previousCount = (cached && cached.value !== undefined) ? cached.value : 0;
+      try {
+        const response = await fetch(SUBGRAPH_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        const result = await response.json();
+        const count = parseInt(result?.data?.globalStat?.activeUsersCount || '0');
 
-      let change = null;
-      let trend = 'stable';
-
-      if (previousCount !== currentCount && currentCount > 0 && previousCount > 0) {
-        const percentageChange = calculatePercentageChange(currentCount, previousCount);
-        if (percentageChange !== null) {
-          change = Math.abs(percentageChange);
-          trend = percentageChange > 0 ? 'up' : 'down';
+        if (count === 0) {
+           const globalTxs = await getItem('globalTransactions');
+           const unique = new Set((globalTxs || []).map(t => t.from?.toLowerCase()).filter(Boolean));
+           return { activeUsers: unique.size, change: 0, trend: 'stable' };
         }
+
+        return { activeUsers: count, change: null, trend: 'stable' };
+      } catch (err) {
+        console.error('[Subgraph Error]:', err);
+        return { activeUsers: 0, change: null, trend: 'stable' };
       }
-
-      await setItem(CACHE_KEY, { value: currentCount, timestamp: Date.now() });
-
-      return { activeUsers: currentCount, change, trend };
     },
     staleTime: 60000,
     refetchInterval: 30000,

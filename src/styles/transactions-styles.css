@@ -25,9 +25,9 @@
   --tx-bg: #000000; 
   --tx-text: #f1f5f9;
   --tx-muted: #94A3B8;
-  --tx-border: rgba(255, 255, 255, 0.05);
-  --tx-surface: #0B0F1A;
-  --tx-surface-muted: #080C14;
+  --tx-border: rgba(255, 255, 255, 0.08);
+  --tx-surface: #000000;
+  --tx-surface-muted: #050505;
   --tx-navy: #6366F1; 
   --tx-navy-purple: #818cf8;
 }
@@ -78,7 +78,7 @@
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.search-input-wrapper input:focus { outline: none; border-color: rgba(99, 102, 241, 0.4); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.05); }
+.search-input-wrapper input:focus { outline: none; border-color: var(--tx-muted); box-shadow: 0 0 0 4px var(--tx-surface-muted); }
 
 .filter-group {
   display: flex; 
@@ -94,9 +94,10 @@
   cursor: pointer;
   transition: 0.2s;
 }
+.filter-dropdown-btn svg { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
 
-.filter-dropdown-btn:hover { border-color: rgba(99, 102, 241, 0.3); background: rgba(99, 102, 241, 0.02); }
-.filter-dropdown-btn.active { border-color: rgba(99, 102, 241, 0.5); color: #6366f1; background: rgba(99, 102, 241, 0.05); }
+.filter-dropdown-btn:hover { border-color: var(--tx-border); background: var(--tx-surface-muted); }
+.filter-dropdown-btn.active { border-color: var(--tx-border); color: var(--tx-text); background: var(--tx-surface); }
 
 /* DROPDOWN OPTIONS */
 .dropdown-menu-vanguard {
@@ -111,8 +112,9 @@
   font-size: 13.5px; font-weight: 600; cursor: pointer; transition: 0.15s;
 }
 
-.dropdown-item-vanguard:hover { background: rgba(99, 102, 241, 0.04); color: #6366f1; }
-.dropdown-item-vanguard.selected { background: rgba(99, 102, 241, 0.08); color: #6366f1; font-weight: 700; }
+.dropdown-item-vanguard:hover { background: var(--tx-surface-muted); color: var(--tx-text); }
+.dropdown-item-vanguard.selected { background: var(--tx-border); color: var(--tx-text); font-weight: 700; }
+.dark .dropdown-menu-vanguard { background: #050505; border-color: rgba(255, 255, 255, 0.1); }
 
 /* DASHBOARD LEDGER */
 .transactions-table-container {
@@ -211,6 +213,13 @@
   text-align: center;
   flex-shrink: 0;
   border: 1px solid var(--tx-border);
+  transition: all 0.2s ease;
+}
+
+.dark .hash-label {
+  background: #0a0a0a;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--tx-muted);
 }
 
 .hash-pending {
@@ -295,11 +304,14 @@
   height: 24px;
   border-radius: 6px;
   border: none;
-  background: transparent;
-  color: var(--tx-muted);
-  cursor: pointer;
   transition: all 0.2s;
   position: relative;
+  background: var(--tx-surface-muted);
+}
+
+.dark .copy-button-minimal {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .copy-button-minimal:hover {
@@ -398,8 +410,8 @@
 
 .status-icon-pending {
   width: 20px; height: 20px; border-radius: 50%;
-  background: rgba(99, 102, 241, 0.1); display: flex; align-items: center; justify-content: center;
-  color: #6366f1; flex-shrink: 0;
+  background: var(--tx-surface-muted); display: flex; align-items: center; justify-content: center;
+  color: var(--tx-muted); flex-shrink: 0;
 }
 
 .status-pill.success { 
@@ -427,7 +439,7 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.status-pill.pending { background: rgba(99, 102, 241, 0.08); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.15); }
+.status-pill.pending { background: var(--tx-surface-muted); color: var(--tx-muted); border: 1px solid var(--tx-border); }
 
 /* RESPONSIVE RECALIBRATION */
 @media (max-width: 1024px) {
@@ -516,9 +528,9 @@
     width: 100%;
   }
   .filter-dropdown-btn { 
-    height: 40px; 
-    padding: 0 10px; 
-    font-size: 12px;
+    height: 44px; /* Increased for better touch target */
+    padding: 0 14px; 
+    font-size: 16px; /* Bumping to prevent iOS auto-zoom */
     width: 100%;
   }
   .asset-name-stac { font-size: 13px; }
@@ -540,6 +552,6 @@
   transition: 0.2s; 
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
-.pagination-btn:hover:not(:disabled) { border-color: rgba(99, 102, 241, 0.4); color: #6366f1; background: rgba(99, 102, 241, 0.02); }
+.pagination-btn:hover:not(:disabled) { border-color: var(--tx-muted); color: var(--tx-text); background: var(--tx-surface-muted); }
 .pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .pagination-info { font-weight: 700; color: var(--tx-muted); font-size: 11px; }

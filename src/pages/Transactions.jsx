@@ -6,7 +6,6 @@ import {
   ChevronDown, 
   ChevronLeft, 
   ChevronRight, 
-  CheckCircle2,
   Check,
   Copy,
   Clock,
@@ -14,8 +13,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { timeAgo, formatAddress, copyToClipboard, getExplorerUrl } from '../utils/blockchain';
-import { getItem, setItem } from '../utils/indexedDB';
-import { useDappTransactionCount } from '../hooks/useDappTransactionCount';
 import { useTransactionHistory } from '../hooks/useTransactionHistory';
 import '../styles/transactions-styles.css';
 
@@ -111,11 +108,11 @@ const getSwapFromToken = (tx) => {
 
 const Transactions = () => {
   const { t } = useTranslation();
-  const { isConnected, walletAddress, chainId: activeChainId } = useWallet();
+  const { walletAddress, chainId: activeChainId } = useWallet();
   const [tooltipHash, setTooltipHash] = useState(null);
   
   // USE THE UNIFIED HOOK FOR REAL-TIME SYNC
-  const { transactions: hookTransactions, globalTransactions, loading: hookLoading, refetch } = useTransactionHistory();
+  const { transactions: hookTransactions, globalTransactions, refetch } = useTransactionHistory();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -145,17 +142,73 @@ const Transactions = () => {
     try {
       const personal = Array.isArray(hookTransactions) ? hookTransactions : [];
       const globalList = Array.isArray(globalTransactions) ? globalTransactions : [];
-      const combined = [...personal, ...globalList];
       
+      // Combine all sources
+      let combined = [...personal, ...globalList];
+      
+      // --- UNIFY BRIDGES (Pair SRC and DST) ---
+      // We look for bridges with the same amount and user, close in time, but different hashes
+      const processed = new Set();
+      const unified = [];
+      const bridgeTxs = combined.filter(tx => tx?.type === 'Bridge');
+      
+      for (let i = 0; i < combined.length; i++) {
+        const tx = combined[i];
+        if (!tx || processed.has(tx.hash || tx.id)) continue;
+
+        if (tx.type === 'Bridge') {
+          // Find a pair for this bridge
+          const pair = bridgeTxs.find(other => 
+            other !== tx &&
+            !processed.has(other.hash || other.id) &&
+            other.address?.toLowerCase() === tx.address?.toLowerCase() &&
+            Math.abs((Number(other.timestamp) || 0) - (Number(tx.timestamp) || 0)) < 7200000 && // 2 hour window
+            (other.hash || other.id) !== (tx.hash || tx.id)
+          );
+
+          if (pair) {
+            // Merge them into a single bridge entry
+            const isSrc = tx.chainId !== 5042002; // Simple heuristic: if not Arc, it's likely the SRC
+            const merged = {
+              ...(isSrc ? tx : pair),
+              destHash: (isSrc ? (pair.hash || pair.id) : (tx.hash || tx.id)),
+              status: (tx.status === 'success' && pair.status === 'success') ? 'success' : (tx.status || pair.status)
+            };
+            unified.push(merged);
+            processed.add(tx.hash || tx.id);
+            processed.add(pair.hash || pair.id);
+            continue;
+          }
+        }
+        
+        unified.push(tx);
+        processed.add(tx.hash || tx.id);
+      }
+
+      // --- FINAL DEDUPLICATION AND FILTERING ---
       const seen = new Set();
-      const result = [];
+      const bridgeDestHashes = new Set();
       
-      for (const tx of combined) {
-        if (!tx) continue;
-        const hash = tx.hash || tx.id;
+      // Collect destination hashes from the now-unified bridges
+      unified.forEach(tx => {
+        if (tx?.type === 'Bridge' && tx.destHash) {
+          const mainHash = (tx.hash || tx.id)?.toLowerCase();
+          const destHash = tx.destHash.toLowerCase();
+          if (mainHash && destHash !== mainHash) {
+            bridgeDestHashes.add(destHash);
+          }
+        }
+      });
+
+      const result = [];
+      for (const tx of unified) {
+        const hash = (tx.hash || tx.id)?.toLowerCase();
         if (!hash || seen.has(hash)) continue;
         
-        // ONLY SHOW DAPP TRANSACTIONS: check flag or type
+        // Skip 'Swap' or 'Bridge' entries that are actually just the destination side of an already-paired bridge
+        if (bridgeDestHashes.has(hash)) continue;
+
+        // ONLY SHOW DAPP TRANSACTIONS
         if (!tx.isStacTx && tx.type !== 'Swap' && tx.type !== 'Bridge') continue;
 
         seen.add(hash);
@@ -261,9 +314,9 @@ const Transactions = () => {
 
         <div className="filter-group">
           <div className="relative">
-            <button onClick={() => { setShowStatusDropdown(!showStatusDropdown); setShowDateDropdown(false); }} className={`filter-dropdown-btn ${showStatusDropdown || statusFilter !== 'all' ? 'active' : ''}`}>
+            <button onClick={() => { setShowStatusDropdown(!showStatusDropdown); setShowDateDropdown(false); }} className={`filter-dropdown-btn ${showStatusDropdown ? 'active' : ''}`}>
               <span className="flex-1 text-left">{statusFilter === 'all' ? t('All Status') : t(statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1))}</span>
-              <ChevronDown size={14} className={showStatusDropdown ? 'rotate-180' : ''} strokeWidth={3.5} />
+              <ChevronDown size={14} className={showStatusDropdown ? 'rotate-180' : ''} strokeWidth={2.5} />
             </button>
             <AnimatePresence>
               {showStatusDropdown && (
@@ -279,9 +332,9 @@ const Transactions = () => {
           </div>
 
           <div className="relative">
-            <button onClick={() => { setShowDateDropdown(!showDateDropdown); setShowStatusDropdown(false); }} className={`filter-dropdown-btn ${showDateDropdown || dateRangeFilter !== 'all' ? 'active' : ''}`}>
+            <button onClick={() => { setShowDateDropdown(!showDateDropdown); setShowStatusDropdown(false); }} className={`filter-dropdown-btn ${showDateDropdown ? 'active' : ''}`}>
               <span className="flex-1 text-left">{dateRangeFilter === 'all' ? t('All Time') : t(dateRangeFilter.toUpperCase())}</span>
-              <ChevronDown size={14} className={showDateDropdown ? 'rotate-180' : ''} strokeWidth={3.5} />
+              <ChevronDown size={14} className={showDateDropdown ? 'rotate-180' : ''} strokeWidth={2.5} />
             </button>
             <AnimatePresence>
               {showDateDropdown && (

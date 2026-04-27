@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAccount } from 'wagmi';
-import { createPublicClient, http, decodeEventLog } from 'viem';
+import { createPublicClient, http } from 'viem';
 import { sepolia } from 'viem/chains';
 import { SEPOLIA_CHAIN_ID, ARC_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID } from './useBridge';
 import { getItem, setItem } from '../utils/indexedDB';
-import { DEX_ADDRESS, TOKENS } from '../config/constants';
+import { SUBGRAPH_URL } from '../config/constants';
+import { TOKENS } from '../config/networks';
 
 // Chain configurations — use env vars with public fallbacks
 const ARC_RPC_URLS = [
@@ -110,8 +111,26 @@ const createBaseSepoliaClient = () => getClient(BASE_SEPOLIA_CHAIN_ID, BASE_SEPO
 
 // Token mapping
 const OTHER_TOKENS = {};
-Object.entries(TOKENS).forEach(([symbol, address]) => {
-  OTHER_TOKENS[address.toLowerCase()] = symbol;
+Object.entries(TOKENS).forEach(([symbol, tokenObj]) => {
+  if (!tokenObj) return;
+
+  // Handle structured token objects from networks.js
+  if (tokenObj.address && typeof tokenObj.address === 'object') {
+    Object.values(tokenObj.address).forEach(addr => {
+      if (addr && typeof addr === 'string') {
+        OTHER_TOKENS[addr.toLowerCase()] = symbol;
+      }
+    });
+  } else if (typeof tokenObj.address === 'string') {
+    OTHER_TOKENS[tokenObj.address.toLowerCase()] = symbol;
+  } else if (typeof tokenObj === 'object') {
+    // Handle nested structures like ETHEREUM_SEPOLIA: { USDC: { address: '...' } }
+    Object.entries(tokenObj).forEach(([subSymbol, subToken]) => {
+      if (subToken && subToken.address && typeof subToken.address === 'string') {
+        OTHER_TOKENS[subToken.address.toLowerCase()] = subSymbol;
+      }
+    });
+  }
 });
 OTHER_TOKENS[USDC_CONTRACTS[ARC_CHAIN_ID].toLowerCase()] = 'USDC';
 
@@ -146,10 +165,8 @@ const formatTransaction = (tx, receipt, block, chainId, chainName, address) => {
   
   // Identify if this is a transaction originating from or interacting with Stac protocols
   const isStacTx = 
-    tx.to?.toLowerCase() === DEX_ADDRESS.toLowerCase() ||
     tx.to?.toLowerCase() === bridgeMessenger ||
     receipt?.logs?.some(log => 
-      log.address?.toLowerCase() === DEX_ADDRESS.toLowerCase() || 
       log.address?.toLowerCase() === bridgeMessenger
     );
 
@@ -327,7 +344,7 @@ export function useTransactionHistory() {
     const isInitialLoad = transactionsRef.current.length === 0;
     // VERY IMPORTANT: Keep range small for Arc to avoid 413. 
     // Arc is fast but RPC is sensitive.
-    const range = (chainId === ARC_CHAIN_ID) ? (isInitialLoad ? 5000n : 500n) : (isInitialLoad ? 20000n : 1000n);
+    const range = (chainId === ARC_CHAIN_ID) ? (isInitialLoad ? 10000n : 2000n) : (isInitialLoad ? 50000n : 5000n);
 
     try {
       const nowBlock = await client.getBlockNumber();
@@ -360,15 +377,9 @@ export function useTransactionHistory() {
 
       let logs = [...fromLogs, ...toLogs];
 
-      // For personal history, also check DEX logs for swaps
+      // For personal history, check logs
       if (!targetAddress) {
-        const [dexFromLogs, dexToLogs] = await Promise.all([
-          client.getLogs({ ...filterConfig, args: { from: DEX_ADDRESS } }),
-          client.getLogs({ ...filterConfig, args: { to: DEX_ADDRESS } }),
-        ]).catch(() => [[], []]);
-        // Only include DEX logs that might be relevant to the current user (if any)
-        // or just merge them all if we want a global view
-        logs = [...logs, ...dexFromLogs, ...dexToLogs];
+        logs = [...logs];
       }
 
       if (logs.length === 0) return [];
@@ -456,45 +467,88 @@ export function useTransactionHistory() {
 
     globalIsFetchingStats = true;
     lastStatsFetchTime = now;
-    try {
-      const arcClient = createArcClient(); 
-      const sepoliaClient = createSepoliaClient(); 
-      const baseSepoliaClient = createBaseSepoliaClient();
-      
-      const fetchJobs = [
-        arcClient ? fetchChainTransactions(ARC_CHAIN_ID, 'Arc Testnet', arcClient, DEX_ADDRESS) : Promise.resolve([]),
-        arcClient ? fetchChainTransactions(ARC_CHAIN_ID, 'Arc Testnet', arcClient, TOKEN_MESSENGER[ARC_CHAIN_ID]) : Promise.resolve([]),
-        sepoliaClient ? fetchChainTransactions(SEPOLIA_CHAIN_ID, 'Sepolia', sepoliaClient, DEX_ADDRESS) : Promise.resolve([]),
-        sepoliaClient ? fetchChainTransactions(SEPOLIA_CHAIN_ID, 'Sepolia', sepoliaClient, TOKEN_MESSENGER[SEPOLIA_CHAIN_ID]) : Promise.resolve([]),
-        baseSepoliaClient ? fetchChainTransactions(BASE_SEPOLIA_CHAIN_ID, 'Base Sepolia', baseSepoliaClient, DEX_ADDRESS) : Promise.resolve([]),
-        baseSepoliaClient ? fetchChainTransactions(BASE_SEPOLIA_CHAIN_ID, 'Base Sepolia', baseSepoliaClient, TOKEN_MESSENGER[BASE_SEPOLIA_CHAIN_ID]) : Promise.resolve([]),
-      ];
+    
+    const query = `
+      query {
+        transactions(orderBy: timestamp, orderDirection: desc, first: 1000) {
+          id
+          type
+          user { id }
+          fromToken
+          toToken
+          amountUSD
+          timestamp
+          chainId
+        }
+      }
+    `;
 
-      const results = await Promise.all(fetchJobs);
-      const globalTxs = results.flat().filter(Boolean);
+    try {
+      const response = await fetch(SUBGRAPH_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+      const result = await response.json();
+      const rawTxs = result?.data?.transactions || [];
       
-      if (globalTxs.length > 0) {
-        const existing = await getItem(GLOBAL_TX_KEY) || [];
-        const seenHashes = new Set(existing.map(tx => tx.hash || tx.id));
-        const uniqueNewTxs = globalTxs.filter(tx => (tx.hash || tx.id) && !seenHashes.has(tx.hash || tx.id));
-        
-        const newGlobalTxs = [...uniqueNewTxs, ...existing]
-          .sort((a, b) => b.timestamp - a.timestamp)
-          .slice(0, 300);
+      if (rawTxs.length > 0) {
+        const formattedTxs = rawTxs.map(tx => {
+          const isBridge = tx.type === 'Bridge' || (tx.type === 'Swap' && tx.fromToken.toLowerCase() === tx.toToken.toLowerCase());
+          // Map token addresses to symbols using the OTHER_TOKENS mapping
+          const fromTokenSymbol = OTHER_TOKENS[tx.fromToken.toLowerCase()] || (tx.fromToken.length < 10 ? tx.fromToken : 'USDC');
+          const toTokenSymbol = OTHER_TOKENS[tx.toToken.toLowerCase()] || (tx.toToken.length < 10 ? tx.toToken : 'EURC');
           
-        await setItem(GLOBAL_TX_KEY, newGlobalTxs);
-        setGlobalTransactions(newGlobalTxs);
+          let fromVal, toVal, amountVal;
+          amountVal = tx.amountUSD;
+
+          if (isBridge) {
+            // For bridges, the UI expects chain names in 'from' and 'to'
+            fromVal = tx.chainId === 5042002 ? 'Sepolia' : 'Arc Testnet'; // Heuristic for Arc bridge-ins
+            toVal = tx.chainId === 5042002 ? 'Arc Testnet' : 'Sepolia';
+          } else {
+            // For non-bridges (Swaps/Transfers), the UI expects "Amount Symbol" format in 'from'/'to'
+            fromVal = `${parseFloat(tx.amountUSD).toFixed(2)} ${fromTokenSymbol}`;
+            toVal = `${parseFloat(tx.amountUSD).toFixed(2)} ${toTokenSymbol}`;
+          }
+
+          return {
+            id: tx.id,
+            type: isBridge ? 'Bridge' : tx.type,
+            from: fromVal,
+            to: toVal,
+            amount: amountVal,
+            fromToken: fromTokenSymbol,
+            toToken: toTokenSymbol,
+            timestamp: parseInt(tx.timestamp) * 1000,
+            status: 'success',
+            hash: tx.id,
+            chainId: parseInt(tx.chainId),
+            address: tx.user.id,
+            isStacTx: true,
+            isOutgoing: false
+          };
+        });
+
+        await setItem(GLOBAL_TX_KEY, formattedTxs);
+        setGlobalTransactions(formattedTxs);
         window.dispatchEvent(new CustomEvent('globalTransactionsSaved'));
       }
     } catch (err) {
-      console.warn("[useTransactionHistory] Global fetch error:", err);
+      console.warn("[useTransactionHistory] Subgraph fetch error:", err);
     } finally {
       globalIsFetchingStats = false;
     }
-  }, [fetchChainTransactions]);
+  }, []);
 
   useEffect(() => {
     const init = async () => {
+      // Always load global stats from storage first for instant UI
+      const savedGlobal = await getItem(GLOBAL_TX_KEY);
+      if (savedGlobal && savedGlobal.length > 0) {
+        setGlobalTransactions(savedGlobal);
+      }
+      
       if (!isConnected || !address) {
         setTransactions([]); previousAddressRef.current = null;
         fetchGlobalStats(); return;
@@ -513,7 +567,11 @@ export function useTransactionHistory() {
 
   useEffect(() => {
     fetchGlobalStats();
-    if (!isConnected || !address) return;
+    if (!isConnected || !address) {
+      // Even if not connected, keep global stats fresh
+      const i = setInterval(fetchGlobalStats, 20000);
+      return () => clearInterval(i);
+    }
     const t = setTimeout(fetchTransactions, 1000);
     const i = setInterval(() => { fetchTransactions(); fetchGlobalStats(); }, 20000);
     return () => { clearTimeout(t); clearInterval(i); };

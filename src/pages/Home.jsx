@@ -341,10 +341,10 @@ const Home = ({ setActiveTab }) => {
             initial={{ opacity: 0, scale: 0.99 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="relative inline-block px-4 py-8 sm:px-24 sm:py-16 lg:px-32"
+            className="relative inline-block px-2 py-8 sm:px-24 sm:py-16 lg:px-32"
           >
 
-            <h1 className="text-4xl sm:text-6xl md:text-[60px] lg:text-[75px] xl:text-[85px] font-normal tracking-tighter text-[#0f172a] dark:text-white leading-[1.1] sm:leading-[0.82] mb-0 md:whitespace-nowrap">
+            <h1 className="text-[32px] sm:text-6xl md:text-[60px] lg:text-[75px] xl:text-[85px] font-normal tracking-tighter text-[#0f172a] dark:text-white leading-[1.15] sm:leading-[0.82] mb-0 md:whitespace-nowrap">
               {t('Swap, Bridge, ')} <span className="text-[#1E293B] dark:text-blue-200">{t('with App Kit.')}</span>
             </h1>
           </motion.div>
@@ -362,11 +362,11 @@ const Home = ({ setActiveTab }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="flex flex-row items-center justify-center gap-4 mb-16 w-full px-4 sm:px-0"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 w-full px-6 sm:px-0"
           >
             <button
               onClick={handleGetStarted}
-              className="w-44 sm:w-52 h-14 bg-brand text-white rounded-xl font-medium hover:bg-brand-hover active:scale-[0.98] transition-all duration-200 flex items-center justify-center text-base sm:text-lg shadow-sm"
+              className="w-full sm:w-52 h-14 bg-brand text-white rounded-xl font-medium hover:bg-brand-hover active:scale-[0.98] transition-all duration-200 flex items-center justify-center text-base sm:text-lg shadow-sm"
             >
               {t('Get Started')}
             </button>
@@ -375,7 +375,7 @@ const Home = ({ setActiveTab }) => {
               href="https://www.arc.network/"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-44 sm:w-52 h-14 bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-white rounded-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-800 active:scale-[0.98] transition-all duration-200 flex items-center justify-center text-base sm:text-lg"
+              className="w-full sm:w-52 h-14 bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-white rounded-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-800 active:scale-[0.98] transition-all duration-200 flex items-center justify-center text-base sm:text-lg"
             >
               {t('Learn More')}
             </a>
@@ -384,44 +384,13 @@ const Home = ({ setActiveTab }) => {
         </div>
       </section>
 
-      <section className="py-20 lg:py-0 px-6 md:px-12 max-w-7xl mx-auto dark:bg-page-dark overflow-hidden lg:min-h-[100dvh] lg:flex lg:items-center lg:justify-center">
-        <div className="relative group w-full">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-y-16 md:gap-y-0 relative z-10 w-full">
-            {statCards.map((stat, index) => (
-              <motion.div
-                key={stat.id}
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ delay: index * 0.1, duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
-                className="flex flex-col items-center text-center px-4"
-              >
-                <div className="relative mb-3 flex flex-col items-center justify-center">
-                  <div className="text-6xl sm:text-7xl lg:text-8xl font-semibold tracking-tight text-brand tabular-nums mb-1 leading-none select-none">
-                    <AnimatedNumber value={stat.rawValue} formatFn={stat.formatFn} />
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <span className="text-[12px] sm:text-[14px] font-bold text-slate-400 dark:text-secondary/50 uppercase tracking-[0.4em] font-mono leading-none">
-                    {stat.label}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
-
       {/* ==================================================================
           HOW STAC WORKS
           Clean editorial card grid with soft UI styling.
       ================================================================== */}
-      <section className="py-40 px-6 md:px-12 bg-slate-50/50 dark:bg-surface-dark/50 border-y border-slate-200/50 dark:border-white/5">
+      <section className="py-16 sm:py-24 px-6 md:px-12 bg-slate-50/50 dark:bg-surface-dark/50 border-y border-slate-200/50 dark:border-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-24 gap-8">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
             <div className="max-w-2xl">
               <h2 className="text-5xl md:text-7xl font-bold text-[#0f172a] dark:text-white mb-8 tracking-tighter leading-[1.1] font-['Satoshi','Inter',sans-serif]">
                 {t('How ')} <span className="text-brand">{t('Stac')}</span> {t('Works.')}
@@ -453,7 +422,7 @@ const Home = ({ setActiveTab }) => {
                 icon: Droplets,
               },
             ].map((step, i) => (
-              <div key={i} className={`p-12 md:p-16 flex flex-col items-start transition-colors duration-500 hover:bg-slate-50 dark:hover:bg-white/5 ${i < 2 ? 'border-b md:border-b-0 md:border-r border-slate-200 dark:border-white/10' : ''}`}>
+              <div key={i} className={`p-10 md:p-14 flex flex-col items-start transition-colors duration-500 hover:bg-slate-50 dark:hover:bg-white/5 ${i < 2 ? 'border-b md:border-b-0 md:border-r border-slate-200 dark:border-white/10' : ''}`}>
                 <span className="text-6xl font-mono font-black text-brand/30 dark:text-brand/15 mb-10 translate-x-[-4px]">{step.id}</span>
                 <h3 className="text-3xl font-bold text-[#0f172a] dark:text-white mb-6 tracking-tighter font-['Satoshi','Inter',sans-serif]">{step.title}</h3>
                 <p className="text-slate-500 dark:text-secondary leading-relaxed font-medium text-lg max-w-[90%]">{step.desc}</p>
@@ -462,6 +431,44 @@ const Home = ({ setActiveTab }) => {
           </div>
         </div>
       </section>
+
+      {/* ==================================================================
+          NETWORK STATISTICS
+          Compact statistics with high-fidelity counters.
+      ================================================================== */}
+      {/* 
+      <section className="py-16 sm:py-20 px-6 md:px-12 max-w-7xl mx-auto dark:bg-page-dark overflow-hidden">
+        <div className="relative group w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-y-16 md:gap-y-0 relative z-10 w-full items-center">
+            {statCards.map((stat, index) => (
+              <motion.div
+                key={stat.id}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ delay: index * 0.1, duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+                className="flex flex-col items-center text-center px-4"
+              >
+                <div className="relative mb-2 flex flex-col items-center justify-center">
+                  <div className="text-6xl sm:text-7xl lg:text-[100px] font-bold tracking-tighter text-brand tabular-nums mb-0 leading-none select-none">
+                    <AnimatedNumber value={stat.rawValue} formatFn={stat.formatFn} />
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <span className="text-[12px] sm:text-[13px] font-black text-slate-400 dark:text-secondary/50 uppercase tracking-[0.2em] font-mono leading-none">
+                    {stat.label}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+      */}
+
+
+
 
       {/* ==================================================================
           WHY BUILD ON ARC

@@ -353,13 +353,13 @@ const Bridge = () => {
   if (!mounted) return null;
 
   return (
-    <div className="fixed inset-0 top-[64px] flex flex-col items-center justify-start overflow-y-auto overflow-x-hidden bg-transparent custom-scrollbar pb-10 pt-4 sm:pt-12 md:pt-16">
+    <div className="fixed inset-0 top-[64px] flex flex-col items-center justify-start overflow-y-auto overflow-x-hidden bg-premium-gray custom-scrollbar pb-10 pt-4 sm:pt-12 md:pt-16">
       <div className="w-full max-w-lg">
 
         <motion.div
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
-          className="bg-white dark:bg-surface-dark border border-slate-200/60 dark:border-white/10 shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] rounded-[2.5rem] overflow-hidden shelf-inner"
+          className="bg-white dark:bg-surface-dark border border-slate-100 dark:border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] rounded-[2.5rem] overflow-hidden"
         >
           {/* COMPACT INTERACTIVE HEADER */}
           <div className="px-5 sm:px-8 pt-6 sm:pt-8 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5">

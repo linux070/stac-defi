@@ -14,6 +14,13 @@ export default defineConfig({
     port: 5173,       // This forces the port to be 5173
     strictPort: true, // This stops it from switching to 5174/5175 if busy
     host: true,       // Helpful if you want to test on mobile via LAN
+    proxy: {
+      '/api/subgraph': {
+        target: 'https://api.goldsky.com/api/public/project_cmog0jc3vgutj011pe1883ouw/subgraphs/stac-defi/v1/gn',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/subgraph/, '')
+      }
+    }
   }
 
 
