@@ -1,11 +1,19 @@
-import { BigInt, BigDecimal, Address } from "@graphprotocol/graph-ts";
+import { BigInt, BigDecimal, Address, dataSource } from "@graphprotocol/graph-ts";
 import { Swap as SwapEvent } from "../generated/StacDEX/StacDex";
 import { MessageReceived as MessageReceivedEvent } from "../generated/CircleBridge/MessageTransmitter";
-import { Transaction, GlobalStat, User } from "../generated/schema";
+import { SwapTransaction, BridgeTransaction, GlobalStat } from "../generated/schema";
 
 const ZERO_BI = BigInt.fromI32(0);
 const ONE_BI = BigInt.fromI32(1);
 const ZERO_BD = BigDecimal.fromString("0");
+
+function getChainName(): string {
+  let network = dataSource.network();
+  if (network == "arc-testnet") return "Arc Testnet";
+  if (network == "sepolia") return "Ethereum Sepolia";
+  if (network == "base-sepolia") return "Base Sepolia";
+  return "Unknown";
+}
 
 function getOrCreateGlobalStat(): GlobalStat {
   let stat = GlobalStat.load("1");
@@ -19,72 +27,46 @@ function getOrCreateGlobalStat(): GlobalStat {
   return stat as GlobalStat;
 }
 
-function getOrCreateUser(address: Address): User {
-  let user = User.load(address.toHexString());
-  if (user == null) {
-    user = new User(address.toHexString());
-    user.transactionCount = ZERO_BI;
-    user.totalVolumeUSD = ZERO_BD;
-    user.lastTransactionTimestamp = ZERO_BI;
-    
-    let stats = getOrCreateGlobalStat();
-    stats.activeUsersCount = stats.activeUsersCount.plus(ONE_BI);
-    stats.save();
-  }
-  return user as User;
-}
-
 export function handleSwap(event: SwapEvent): void {
-  let user = getOrCreateUser(event.params.user);
   let stats = getOrCreateGlobalStat();
 
-  let tx = new Transaction(event.transaction.hash.toHexString());
-  tx.type = "Swap";
-  tx.user = user.id;
-  tx.fromToken = event.params.tokenIn.toHexString();
-  tx.toToken = event.params.tokenOut.toHexString();
+  let tx = new SwapTransaction(event.transaction.hash.toHexString().toLowerCase());
+  tx.sender = event.params.user.toHexString().toLowerCase();
+  tx.tokenIn = event.params.tokenIn.toHexString().toLowerCase();
+  tx.tokenOut = event.params.tokenOut.toHexString().toLowerCase();
   
   // Convert amount to USD (assuming 6 decimals for USDC/EURC on Arc for simplicity in this version)
-  let amountUSD = event.params.amountIn.toBigDecimal().div(BigDecimal.fromString("1000000"));
-  tx.amountUSD = amountUSD;
-  tx.timestamp = event.block.timestamp;
-  tx.chainId = BigInt.fromI32(5042002); // Arc Testnet
+  let amountIn = event.params.amountIn.toBigDecimal().div(BigDecimal.fromString("1000000"));
+  let amountOut = event.params.amountOut.toBigDecimal().div(BigDecimal.fromString("1000000"));
+  
+  tx.amountIn = amountIn;
+  tx.amountOut = amountOut;
+  tx.chain = getChainName();
+  tx.status = "Success";
+  tx.blockTimestamp = event.block.timestamp;
   tx.save();
-
-  // Update User
-  user.transactionCount = user.transactionCount.plus(ONE_BI);
-  user.totalVolumeUSD = user.totalVolumeUSD.plus(amountUSD);
-  user.lastTransactionTimestamp = event.block.timestamp;
-  user.save();
 
   // Update Global Stats
   stats.totalTransactions = stats.totalTransactions.plus(ONE_BI);
-  stats.totalValueProcessedUSD = stats.totalValueProcessedUSD.plus(amountUSD);
+  stats.totalValueProcessedUSD = stats.totalValueProcessedUSD.plus(amountIn);
   stats.save();
 }
 
 export function handleBridgeIn(event: MessageReceivedEvent): void {
-  // We identify the user from the caller or the message content
-  // For simplicity, we'll use the caller for now as a placeholder for the mint recipient
-  let user = getOrCreateUser(event.params.caller);
   let stats = getOrCreateGlobalStat();
 
-  let tx = new Transaction(event.transaction.hash.toHexString());
-  tx.type = "Bridge";
-  tx.user = user.id;
-  tx.fromToken = "USDC"; // CCTP on Arc is USDC
-  tx.toToken = "USDC";
+  let tx = new BridgeTransaction(event.transaction.hash.toHexString().toLowerCase());
+  tx.sender = event.params.caller.toHexString().toLowerCase();
   
-  // We'd parse the message for the exact amount, but using a placeholder or 
-  // looking at the transfer event in the same tx is better. 
-  // For now, we increment counts.
-  tx.amountUSD = ZERO_BD; 
-  tx.timestamp = event.block.timestamp;
-  tx.chainId = BigInt.fromI32(5042002);
+  // Circle messages don't expose source chain ID directly here easily without parsing.
+  // For the purpose of this explorer, we'll label based on common routes.
+  let dest = getChainName();
+  tx.sourceChain = dest == "Arc Testnet" ? "Ethereum Sepolia" : "Arc Testnet"; 
+  tx.destinationChain = dest;
+  tx.amount = ZERO_BD; // Placeholder
+  tx.status = "Success";
+  tx.blockTimestamp = event.block.timestamp;
   tx.save();
-
-  user.transactionCount = user.transactionCount.plus(ONE_BI);
-  user.save();
 
   stats.totalTransactions = stats.totalTransactions.plus(ONE_BI);
   stats.save();

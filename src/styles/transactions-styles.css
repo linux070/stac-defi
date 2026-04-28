@@ -354,6 +354,36 @@
   border-color: var(--tx-navy) transparent transparent transparent;
 }
 
+.tooltip-left-stac {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  transform: none;
+  background: var(--tx-navy);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+  z-index: 1000;
+  letter-spacing: 0.02em;
+}
+
+.tooltip-left-stac::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 12px;
+  left: auto;
+  transform: none;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--tx-navy) transparent transparent transparent;
+}
+
 .tooltip-vanguard {
   position: absolute;
   bottom: calc(100% + 10px);

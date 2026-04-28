@@ -6,24 +6,27 @@
 // a footer full of links. No wallet connection is required to view this page.
 // =============================================================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery, gql } from 'urql';
 import {
   Zap, ArrowRight, Code2, Layers, Droplets, ArrowRightLeft,
   ArrowUp, RefreshCw, ChevronDown
 } from 'lucide-react';
 import { motion, useMotionValue, useSpring, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { formatCurrency, formatNumber } from '../utils/blockchain';
-
-// Hooks that pull live data from the blockchain and our backend
-import { useDappTransactionCount } from '../hooks/useDappTransactionCount';
-import { useActiveUsers } from '../hooks/useActiveUsers';
-import { useTotalValueProcessed } from '../hooks/useTotalValueProcessed';
-
-
-import { useTransactionHistory } from '../hooks/useTransactionHistory';
 import { useTheme } from '../hooks/useTheme';
 import StacLogo from '../components/StacLogo';
+
+const GET_GLOBAL_STATS = gql`
+  query GetGlobalStats {
+    globalStat(id: "1") {
+      totalValueProcessedUSD
+      totalTransactions
+      activeUsersCount
+    }
+  }
+`;
 
 
 // =============================================================================
@@ -177,6 +180,8 @@ const FaqAccordion = ({ t, shouldReduceMotion }) => {
 };
 
 
+
+
 // =============================================================================
 // HOME COMPONENT
 // =============================================================================
@@ -184,84 +189,28 @@ const Home = ({ setActiveTab }) => {
   const { t } = useTranslation();
   const { darkMode } = useTheme();
 
-  // `fetchGlobalStats` updates the shared dApp-wide transaction summary
-  const { fetchGlobalStats } = useTransactionHistory();
-
-  // --- Live stats from the blockchain / backend hooks ---
-  // Each hook returns: a value, a percentage change, and a trend direction ('up'|'down'|'stable')
-  const { transactionCount, change, trend } = useDappTransactionCount();
-  const { activeUsers, change: usersChange, trend: usersTrend } = useActiveUsers();
-  const { totalValue, loading: tvpLoading } = useTotalValueProcessed();
-
-  // Poll global stats every 60 seconds
-  useEffect(() => {
-    fetchGlobalStats();
-    const interval = setInterval(fetchGlobalStats, 60000);
-    return () => clearInterval(interval);
-  }, [fetchGlobalStats]);
-
-
-  // ─── Stats object ──────────────────────────────────────────────────────────
-  // Starts with safe default values, then gets updated by the individual effects below.
-  const [stats, setStats] = useState({
-    tvl: { value: totalValue || 0, change: 0, trend: 'up' },
-    users: { value: activeUsers || 0, change: usersChange || 0, trend: usersTrend || 'stable' },
-    transactions: { value: transactionCount || 0, change: change || 0, trend: trend || 'stable' },
+  // Fetch global stats directly from the indexer
+  const [{ data: statsData, fetching: statsLoading }] = useQuery({
+    query: GET_GLOBAL_STATS,
+    requestPolicy: 'cache-and-network',
   });
 
+  // ─── Stats object ──────────────────────────────────────────────────────────
+  const stats = useMemo(() => {
+    const s = statsData?.globalStat || {};
+    return {
+      tvl: { value: parseFloat(s.totalValueProcessedUSD || '0'), change: 0, trend: 'up' },
+      users: { value: parseInt(s.activeUsersCount || '0'), change: 0, trend: 'stable' },
+      transactions: { value: parseInt(s.totalTransactions || '0'), change: 0, trend: 'stable' },
+    };
+  }, [statsData]);
 
   // ─── Interactive Feature State ──────────────────────────────────────────
   // Used in the "Why Arc Network" tabbed feature showcase.
   const [activeFeature, setActiveFeature] = useState(0);
 
-
   // Navigate to the Swap page when "Get Started" is clicked
   const handleGetStarted = () => setActiveTab('swap');
-
-
-  // ─── Keep stats in sync as live data arrives ───────────────────────────────
-  // Each effect below updates only its specific stat slice to avoid full re-renders.
-
-  // Update swap transaction count
-  useEffect(() => {
-    if (transactionCount !== null) {
-      setStats(prev => ({
-        ...prev,
-        transactions: {
-          ...prev.transactions,
-          value: transactionCount,
-          change: change !== null ? change : prev.transactions.change,
-          trend: trend !== 'stable' ? trend : prev.transactions.trend,
-        },
-      }));
-    }
-  }, [transactionCount, change, trend]);
-
-
-
-  // Update active wallet count
-  useEffect(() => {
-    if (activeUsers !== null) {
-      setStats(prev => ({
-        ...prev,
-        users: {
-          ...prev.users,
-          value: activeUsers,
-          change: usersChange !== null ? usersChange : prev.users.change,
-          trend: usersTrend !== 'stable' ? usersTrend : prev.users.trend,
-        },
-      }));
-    }
-  }, [activeUsers, usersChange, usersTrend]);
-
-
-
-  // Update total USD value processed (bridge + swap combined)
-  useEffect(() => {
-    if (totalValue !== null && !tvpLoading) {
-      setStats(prev => ({ ...prev, tvl: { ...prev.tvl, value: totalValue } }));
-    }
-  }, [totalValue, tvpLoading]);
 
   // ─── "Scroll to top" button visibility ────────────────────────────────────
   // Shows up after the user scrolls down 400px
@@ -436,7 +385,6 @@ const Home = ({ setActiveTab }) => {
           NETWORK STATISTICS
           Compact statistics with high-fidelity counters.
       ================================================================== */}
-      {/* 
       <section className="py-16 sm:py-20 px-6 md:px-12 max-w-7xl mx-auto dark:bg-page-dark overflow-hidden">
         <div className="relative group w-full">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-y-16 md:gap-y-0 relative z-10 w-full items-center">
@@ -465,7 +413,6 @@ const Home = ({ setActiveTab }) => {
           </div>
         </div>
       </section>
-      */}
 
 
 

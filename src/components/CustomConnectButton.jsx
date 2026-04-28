@@ -22,6 +22,8 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
 
     const [showDropdown, setShowDropdown] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [disconnected, setDisconnected] = useState(false);
+    const [hoveredAction, setHoveredAction] = useState(null);
 
     // Capture initial localStorage values in refs on mount.
     // Refs survive re-renders and prevent the ghost state from breaking
@@ -75,10 +77,14 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
 
     // Disconnect and reset refs so ghost state doesn't persist
     const handleDisconnect = () => {
-        wasConnectedRef.current = false;
-        lastAddressRef.current = null;
-        disconnect();
-        setShowDropdown(false);
+        setDisconnected(true);
+        setTimeout(() => {
+            wasConnectedRef.current = false;
+            lastAddressRef.current = null;
+            disconnect();
+            setShowDropdown(false);
+            setDisconnected(false);
+        }, 1500);
     };
 
     // Get shortened wallet address
@@ -263,28 +269,43 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                             <div className="flex items-center space-x-2">
                                                                                 <button
                                                                                     onClick={handleCopyAddress}
+                                                                                    onMouseEnter={() => setHoveredAction('copy')}
+                                                                                    onMouseLeave={() => setHoveredAction(null)}
                                                                                     className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-all duration-200 text-slate-500 dark:text-slate-400 relative border border-transparent active:scale-90"
                                                                                 >
                                                                                     <Copy size={18} />
                                                                                     <AnimatePresence>
-                                                                                        {copied && (
-                                                                                            <motion.span
-                                                                                                initial={{ opacity: 0, y: 5, scale: 0.9 }}
+                                                                                        {(copied || hoveredAction === 'copy') && (
+                                                                                            <motion.div
+                                                                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                                                                                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                                                                exit={{ opacity: 0, y: 5, scale: 0.9 }}
-                                                                                                className="absolute -top-11 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest shadow-xl border border-white/10 whitespace-nowrap z-50 capitalize"
-                                                                                                style={{ transition: 'none' }}
+                                                                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                                                                className="tooltip-left-stac"
                                                                                             >
-                                                                                                {t('copied')}
-                                                                                            </motion.span>
+                                                                                                {copied ? t('Copied') : t('Copy')}
+                                                                                            </motion.div>
                                                                                         )}
                                                                                     </AnimatePresence>
                                                                                 </button>
                                                                                 <button
                                                                                     onClick={handleDisconnect}
-                                                                                    className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-all duration-200 text-slate-500 dark:text-slate-400 border border-transparent active:scale-90"
+                                                                                    onMouseEnter={() => setHoveredAction('disconnect')}
+                                                                                    onMouseLeave={() => setHoveredAction(null)}
+                                                                                    className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-all duration-200 text-slate-500 dark:text-slate-400 relative border border-transparent active:scale-90"
                                                                                 >
                                                                                     <LogOut size={18} />
+                                                                                    <AnimatePresence>
+                                                                                        {(disconnected || hoveredAction === 'disconnect') && (
+                                                                                            <motion.div
+                                                                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                                                                className="tooltip-left-stac"
+                                                                                            >
+                                                                                                {disconnected ? t('Disconnected') : t('Disconnect')}
+                                                                                            </motion.div>
+                                                                                        )}
+                                                                                    </AnimatePresence>
                                                                                 </button>
                                                                             </div>
                                                                         </div>
@@ -413,27 +434,43 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                 <div className="flex items-center space-x-1.5">
                                                                     <button
                                                                         onClick={handleCopyAddress}
+                                                                        onMouseEnter={() => setHoveredAction('copy')}
+                                                                        onMouseLeave={() => setHoveredAction(null)}
                                                                         className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-all duration-200 text-slate-500 dark:text-slate-400 relative group/copy border border-transparent active:scale-95"
                                                                     >
                                                                         <Copy size={14} />
                                                                         <AnimatePresence>
-                                                                            {copied && (
-                                                                                <motion.span
-                                                                                    initial={{ opacity: 0, y: 5, scale: 0.9 }}
+                                                                            {(copied || hoveredAction === 'copy') && (
+                                                                                <motion.div
+                                                                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                                                    exit={{ opacity: 0, y: 5, scale: 0.9 }}
-                                                                                    className="absolute -top-11 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-bold shadow-xl border border-white/10 whitespace-nowrap z-50 capitalize"
+                                                                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                                                    className="tooltip-left-stac"
                                                                                 >
-                                                                                    {t('copied')}
-                                                                                </motion.span>
+                                                                                    {copied ? t('Copied') : t('Copy')}
+                                                                                </motion.div>
                                                                             )}
                                                                         </AnimatePresence>
                                                                     </button>
                                                                     <button
                                                                         onClick={handleDisconnect}
-                                                                        className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-all duration-200 text-slate-500 dark:text-slate-400 border border-transparent active:scale-95"
+                                                                        onMouseEnter={() => setHoveredAction('disconnect')}
+                                                                        onMouseLeave={() => setHoveredAction(null)}
+                                                                        className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-all duration-200 text-slate-500 dark:text-slate-400 relative border border-transparent active:scale-95"
                                                                     >
                                                                         <LogOut size={14} />
+                                                                        <AnimatePresence>
+                                                                            {(disconnected || hoveredAction === 'disconnect') && (
+                                                                                <motion.div
+                                                                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                                                    className="tooltip-left-stac"
+                                                                                >
+                                                                                    {disconnected ? t('Disconnected') : t('Disconnect')}
+                                                                                </motion.div>
+                                                                            )}
+                                                                        </AnimatePresence>
                                                                     </button>
                                                                 </div>
                                                             </div>

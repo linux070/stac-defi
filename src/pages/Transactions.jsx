@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo, memo } from 'react';
+import { useState, useMemo, memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useWallet } from '../hooks/useWallet';
+import { useAccount } from 'wagmi';
+import { useQuery, gql } from 'urql';
 import { 
   Search, 
   ChevronDown, 
@@ -9,15 +10,86 @@ import {
   Check,
   Copy,
   Clock,
-  Inbox
+  Inbox,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { timeAgo, formatAddress, copyToClipboard, getExplorerUrl } from '../utils/blockchain';
-import { useTransactionHistory } from '../hooks/useTransactionHistory';
 import '../styles/transactions-styles.css';
 
 // =============================================================================
-// STAC-TIER IDENTITY STACK [NON-REDUNDANT REFACTOR]
+// GRAPHQL QUERIES
+// =============================================================================
+
+const GET_GLOBAL_TRANSACTIONS = gql`
+  query GetGlobalTransactions {
+    bridgeTransactions(
+      orderBy: blockTimestamp
+      orderDirection: desc
+      first: 50
+    ) {
+      id
+      sender
+      sourceChain
+      destinationChain
+      amount
+      status
+      blockTimestamp
+    }
+    swapTransactions(
+      where: { chain: "Arc Testnet" }
+      orderBy: blockTimestamp
+      orderDirection: desc
+      first: 50
+    ) {
+      id
+      sender
+      tokenIn
+      tokenOut
+      amountIn
+      amountOut
+      chain
+      status
+      blockTimestamp
+    }
+  }
+`;
+
+const GET_USER_TRANSACTIONS = gql`
+  query GetUserTransactions($userAddress: String!) {
+    bridgeTransactions(
+      where: { sender: $userAddress }
+      orderBy: blockTimestamp
+      orderDirection: desc
+    ) {
+      id
+      sender
+      sourceChain
+      destinationChain
+      amount
+      status
+      blockTimestamp
+    }
+    swapTransactions(
+      where: { sender: $userAddress, chain: "Arc Testnet" }
+      orderBy: blockTimestamp
+      orderDirection: desc
+    ) {
+      id
+      sender
+      tokenIn
+      tokenOut
+      amountIn
+      amountOut
+      chain
+      status
+      blockTimestamp
+    }
+  }
+`;
+
+// =============================================================================
+// SUB-COMPONENTS
 // =============================================================================
 
 const StacAssetIdentity = memo(({ tokenSymbol, chainName, amount, isToAmount }) => {
@@ -26,12 +98,12 @@ const StacAssetIdentity = memo(({ tokenSymbol, chainName, amount, isToAmount }) 
   const fullName = getTokenName(tokenSymbol);
 
   const formattedAmount = useMemo(() => {
-    if (!amount || amount === '0.00') return null;
+    if (!amount || amount === '0' || amount === '0.00') return null;
     const num = parseFloat(String(amount).replace(/[^-0-9.]/g, ''));
     if (isNaN(num)) return amount;
     
     if (isToAmount) {
-      return num.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+      return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
     }
     return num % 1 === 0 ? num.toString() : num.toLocaleString(undefined, { maximumFractionDigits: 6 });
   }, [amount, isToAmount]);
@@ -69,209 +141,108 @@ StacAssetIdentity.displayName = 'StacAssetIdentity';
 const getTokenName = (symbol) => {
   if (!symbol) return 'Unknown Token';
   const s = String(symbol).toUpperCase();
-  if (s.includes('USDC')) return 'USD Coin';
-  if (s.includes('EURC')) return 'Euro Coin';
+  if (s.includes('USDC') || s.includes('0X75FAF114EAFB1BDBE2F0316DF893FD58CE46AA4D')) return 'USD Coin';
+  if (s.includes('EURC') || s.includes('0X89B50855AA3BE2F677CD6303CEC089B5F319D72A')) return 'Euro Coin';
   if (s.includes('STC') || s.includes('STAC')) return 'Stac Token';
   if (s.includes('ETH')) return 'Ethereum';
-  return s;
+  return s.length > 10 ? 'Token' : s;
 };
 
 const getChainIcon = (chainName) => {
   if (!chainName) return '/icons/eth.png';
   const name = String(chainName).toLowerCase();
-  if (name.includes('arc') || name.includes('5042002') || name.includes('4cef52')) return '/icons/arc.png';
-  if (name.includes('base') || name.includes('84532') || name.includes('8453')) return '/icons/base.png';
-  if (name.includes('eth') || name.includes('sepolia') || name.includes('11155111')) return '/icons/eth.png';
+  if (name.includes('arc') || name.includes('5042002')) return '/icons/arc.png';
+  if (name.includes('base') || name.includes('84532')) return '/icons/base.png';
+  if (name.includes('eth') || name.includes('sepolia')) return '/icons/eth.png';
   return '/icons/eth.png';
 };
 
 const getTokenLogo = (symbol) => {
   if (!symbol) return '/icons/stc.png';
   const s = String(symbol).toUpperCase();
-  if (s.includes('USDC')) return '/icons/usdc.png';
-  if (s.includes('EURC')) return '/icons/eurc.png';
+  if (s.includes('USDC') || s.includes('0X75FAF114EAFB1BDBE2F0316DF893FD58CE46AA4D')) return '/icons/usdc.png';
+  if (s.includes('EURC') || s.includes('0X89B50855AA3BE2F677CD6303CEC089B5F319D72A')) return '/icons/eurc.png';
   if (s.includes('STC') || s.includes('STAC')) return '/icons/stc.png';
   if (s.includes('ETH')) return '/icons/eth.png';
   return '/icons/stc.png';
 };
 
-const getSwapFromToken = (tx) => {
-  if (!tx) return '';
-  if (tx.type !== 'Swap') return tx.fromToken || (tx.from && tx.from.includes(' ') ? tx.from.split(' ').pop() : (tx.from || ''));
-  const fromStr = String(tx.from || '').trim();
-  return fromStr.includes(' ') ? fromStr.split(' ').pop() : fromStr;
+const getChainIdByName = (name) => {
+  const n = String(name).toLowerCase();
+  if (n.includes('arc')) return 5042002;
+  if (n.includes('base')) return 84532;
+  if (n.includes('sepolia')) return 11155111;
+  return 5042002;
 };
 
 // =============================================================================
-// MAIN ARCHITECTURE - LOCAL-ONLY "SITE INTEGRATED" LEDGER
+// MAIN ARCHITECTURE - TRANSACTIONS LEDGER
 // =============================================================================
 
 const Transactions = () => {
   const { t } = useTranslation();
-  const { walletAddress, chainId: activeChainId } = useWallet();
-  const [tooltipHash, setTooltipHash] = useState(null);
-  
-  // USE THE UNIFIED HOOK FOR REAL-TIME SYNC
-  const { transactions: hookTransactions, globalTransactions, refetch } = useTransactionHistory();
-  
+  const { address: connectedWallet } = useAccount();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateRangeFilter, setDateRangeFilter] = useState('all');
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [hoveredHash, setHoveredHash] = useState(null);
-
+  const [tooltipHash, setTooltipHash] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 10;
 
-  // Sync session event listeners
-  useEffect(() => {
-    const handleSync = () => { if (typeof refetch === 'function') refetch(); };
-    window.addEventListener('bridgeTransactionSaved', handleSync);
-    window.addEventListener('swapTransactionSaved', handleSync);
-    window.addEventListener('lpTransactionSaved', handleSync);
-    return () => {
-      window.removeEventListener('bridgeTransactionSaved', handleSync);
-      window.removeEventListener('swapTransactionSaved', handleSync);
-      window.removeEventListener('lpTransactionSaved', handleSync);
-    };
-  }, [refetch]);
+  // Determine which query to use
+  const isSearchQueryAddress = searchQuery.startsWith('0x') && searchQuery.length === 42;
+  const targetUserAddress = isSearchQueryAddress ? searchQuery.toLowerCase() : null;
+  const isAddressFiltered = !!targetUserAddress;
 
-  // COMBINE AND DEDUPLICATE WITH MAXIMUM SAFETY
-  const localTransactions = useMemo(() => {
-    try {
-      const personal = Array.isArray(hookTransactions) ? hookTransactions : [];
-      const globalList = Array.isArray(globalTransactions) ? globalTransactions : [];
-      
-      // Combine all sources
-      let combined = [...personal, ...globalList];
-      
-      // --- UNIFY BRIDGES (Pair SRC and DST) ---
-      // We look for bridges with the same amount and user, close in time, but different hashes
-      const processed = new Set();
-      const unified = [];
-      const bridgeTxs = combined.filter(tx => tx?.type === 'Bridge');
-      
-      for (let i = 0; i < combined.length; i++) {
-        const tx = combined[i];
-        if (!tx || processed.has(tx.hash || tx.id)) continue;
+  const [result] = useQuery({
+    query: isAddressFiltered ? GET_USER_TRANSACTIONS : GET_GLOBAL_TRANSACTIONS,
+    variables: isAddressFiltered ? { userAddress: targetUserAddress } : {}
+  });
 
-        if (tx.type === 'Bridge') {
-          // Find a pair for this bridge
-          const pair = bridgeTxs.find(other => 
-            other !== tx &&
-            !processed.has(other.hash || other.id) &&
-            other.address?.toLowerCase() === tx.address?.toLowerCase() &&
-            Math.abs((Number(other.timestamp) || 0) - (Number(tx.timestamp) || 0)) < 7200000 && // 2 hour window
-            (other.hash || other.id) !== (tx.hash || tx.id)
-          );
+  const { data, fetching } = result;
 
-          if (pair) {
-            // Merge them into a single bridge entry
-            const isSrc = tx.chainId !== 5042002; // Simple heuristic: if not Arc, it's likely the SRC
-            const merged = {
-              ...(isSrc ? tx : pair),
-              destHash: (isSrc ? (pair.hash || pair.id) : (tx.hash || tx.id)),
-              status: (tx.status === 'success' && pair.status === 'success') ? 'success' : (tx.status || pair.status)
-            };
-            unified.push(merged);
-            processed.add(tx.hash || tx.id);
-            processed.add(pair.hash || pair.id);
-            continue;
-          }
-        }
-        
-        unified.push(tx);
-        processed.add(tx.hash || tx.id);
-      }
-
-      // --- FINAL DEDUPLICATION AND FILTERING ---
-      const seen = new Set();
-      const bridgeDestHashes = new Set();
-      
-      // Collect destination hashes from the now-unified bridges
-      unified.forEach(tx => {
-        if (tx?.type === 'Bridge' && tx.destHash) {
-          const mainHash = (tx.hash || tx.id)?.toLowerCase();
-          const destHash = tx.destHash.toLowerCase();
-          if (mainHash && destHash !== mainHash) {
-            bridgeDestHashes.add(destHash);
-          }
-        }
-      });
-
-      const result = [];
-      for (const tx of unified) {
-        const hash = (tx.hash || tx.id)?.toLowerCase();
-        if (!hash || seen.has(hash)) continue;
-        
-        // Skip 'Swap' or 'Bridge' entries that are actually just the destination side of an already-paired bridge
-        if (bridgeDestHashes.has(hash)) continue;
-
-        // ONLY SHOW DAPP TRANSACTIONS
-        if (!tx.isStacTx && tx.type !== 'Swap' && tx.type !== 'Bridge') continue;
-
-        seen.add(hash);
-        result.push(tx);
-      }
-      
-      return result.sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
-    } catch (e) {
-      console.error("Error memoizing transactions:", e);
-      return [];
-    }
-  }, [hookTransactions, globalTransactions]);
-
+  // Merge, Filter and Sort Transactions
   const filteredTxs = useMemo(() => {
-    try {
-      let filtered = [...localTransactions];
+    if (!data) return [];
+    
+    let combined = [
+      ...(data.bridgeTransactions || []).map(tx => ({ ...tx, type: 'Bridge', timestamp: parseInt(tx.blockTimestamp) * 1000 })),
+      ...(data.swapTransactions || []).map(tx => ({ ...tx, type: 'Swap', timestamp: parseInt(tx.blockTimestamp) * 1000 }))
+    ];
 
-      if (statusFilter !== 'all') {
-        filtered = filtered.filter(tx => (tx?.status || 'success').toLowerCase() === statusFilter);
-      }
-
-      const q = searchQuery?.toLowerCase().trim() || '';
-      if (q) {
-        filtered = filtered.filter(tx => 
-          (tx?.hash?.toLowerCase().includes(q)) ||
-          (getTokenName(getSwapFromToken(tx)).toLowerCase().includes(q)) ||
-          (tx?.from?.toLowerCase().includes(q)) ||
-          (tx?.to?.toLowerCase().includes(q))
-        );
-      }
-
-      if (dateRangeFilter !== 'all') {
-        const now = Date.now();
-        const oneDay = 24 * 60 * 60 * 1000;
-        const sevenDays = 7 * oneDay;
-        const thirtyDays = 30 * oneDay;
-
-        filtered = filtered.filter(tx => {
-          if (!tx?.timestamp) return false;
-          const ts = new Date(tx.timestamp).getTime();
-          if (isNaN(ts)) return false;
-
-          const age = now - ts;
-
-          if (dateRangeFilter === '24h') {
-            return age >= 0 && age <= oneDay;
-          }
-          if (dateRangeFilter === '7d') {
-            return age > oneDay && age <= sevenDays;
-          }
-          if (dateRangeFilter === '30d') {
-            return age > sevenDays && age <= thirtyDays;
-          }
-          return true;
-        });
-      }
-
-      return filtered;
-    } catch (e) {
-      console.error("Error filtering transactions:", e);
-      return [];
+    // Status Filter
+    if (statusFilter !== 'all') {
+      combined = combined.filter(tx => (tx.status || 'success').toLowerCase() === statusFilter);
     }
-  }, [localTransactions, searchQuery, statusFilter, dateRangeFilter]);
+
+    // Search Query (Text search for non-address queries)
+    if (searchQuery && !isSearchQueryAddress) {
+      const q = searchQuery.toLowerCase();
+      combined = combined.filter(tx => 
+        tx.id.toLowerCase().includes(q) || 
+        (tx.tokenIn && tx.tokenIn.toLowerCase().includes(q)) ||
+        (tx.tokenOut && tx.tokenOut.toLowerCase().includes(q))
+      );
+    }
+
+    // Date Range Filter
+    if (dateRangeFilter !== 'all') {
+      const now = Date.now();
+      const oneDay = 24 * 60 * 60 * 1000;
+      combined = combined.filter(tx => {
+        const age = now - tx.timestamp;
+        if (dateRangeFilter === '24h') return age <= oneDay;
+        if (dateRangeFilter === '7d') return age <= 7 * oneDay;
+        if (dateRangeFilter === '30d') return age <= 30 * oneDay;
+        return true;
+      });
+    }
+
+    return combined.sort((a, b) => b.timestamp - a.timestamp);
+  }, [data, statusFilter, searchQuery, isSearchQueryAddress, dateRangeFilter]);
 
   const paginatedTxs = useMemo(() => {
     const start = (currentPage - 1) * transactionsPerPage;
@@ -291,7 +262,9 @@ const Transactions = () => {
     <div className="transactions-container pt-8 md:pt-12">
       <header className="transactions-header">
         <div className="transactions-title-section">
-          <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>{t('Transactions')}</motion.h1>
+          <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            {t('Transactions')}
+          </motion.h1>
           <div className="flex items-center gap-3">
              <motion.p className="transactions-subtitle">
               {`${filteredTxs.length} ${t('transactions')}`}
@@ -300,7 +273,7 @@ const Transactions = () => {
         </div>
       </header>
 
-      {/* SYNCED DASHBOARD TOOLBAR */}
+      {/* FILTER BAR - RESTORED ORIGINAL UI */}
       <div className="filter-bar">
         <div className="search-input-wrapper">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -310,6 +283,14 @@ const Transactions = () => {
             value={searchQuery}
             onChange={(e) => {setSearchQuery(e.target.value); setCurrentPage(1);}}
           />
+          {searchQuery && (
+            <button 
+              onClick={() => { setSearchQuery(''); setCurrentPage(1); }} 
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors"
+            >
+              <X size={14} className="text-slate-400" />
+            </button>
+          )}
         </div>
 
         <div className="filter-group">
@@ -367,87 +348,71 @@ const Transactions = () => {
               </thead>
               <tbody>
                 {paginatedTxs.map((tx) => {
-                  if (!tx) return null;
                   const isBridge = tx.type === 'Bridge';
-                  let fromToken, toToken, fromChain, toChain, fromAmount, toAmount;
-
-                  if (isBridge) {
-                    fromToken = tx.fromToken || 'USDC';
-                    toToken = tx.toToken || 'USDC';
-                    fromChain = tx.from;
-                    toChain = tx.to;
-                    fromAmount = tx.amount;
-                    if (tx.receiveAmount) {
-                      toAmount = tx.receiveAmount;
-                    } else {
-                      const fee = toChain?.toLowerCase().includes('sepolia') ? 1.25 : 0.20;
-                      toAmount = Math.max(0, (parseFloat(tx.amount) || 0) - fee).toFixed(2);
-                    }
-                  } else {
-                    const fromParts = String(tx.from || '').split(' ');
-                    fromAmount = fromParts[0];
-                    fromToken = fromParts[1] || 'USDC';
-                    
-                    const toParts = String(tx.to || '').split(' ');
-                    toAmount = toParts[0];
-                    toToken = toParts[1] || 'EURC';
-                    
-                    fromChain = 'Arc';
-                    toChain = 'Arc';
-                  }
-
-                  const txStatus = tx.status || 'success';
+                  const txStatus = (tx.status || 'success').toLowerCase();
 
                   return (
-                    <tr key={tx.hash || tx.id}>
+                    <tr key={tx.id}>
                       <td className="col-type" data-label={t('Type')}>
                         <div className="type-column-stack">
-                          <span className="type-main-txt">{t(tx.type || 'Transaction')}</span>
-                          <span className="type-sub-addr">{formatAddress(tx.address || walletAddress)}</span>
+                          <span className="type-main-txt">{t(tx.type)}</span>
+                          <span className="type-sub-addr">{formatAddress(tx.sender)}</span>
                         </div>
                       </td>
-                      <td className="col-from" data-label={t('From')}><StacAssetIdentity tokenSymbol={fromToken} chainName={fromChain} amount={fromAmount} isToAmount={false} /></td>
-                      <td className="col-to" data-label={t('To')}><StacAssetIdentity tokenSymbol={toToken} chainName={toChain} amount={toAmount} isToAmount={true} /></td>
-                    <td className="col-status" data-label={t('Status')}>
-                      <div className={`status-pill ${txStatus}`}>
-                        {txStatus === 'success' ? (
-                          <div className="status-icon-filled"><Check size={10} /></div>
+                      <td className="col-from" data-label={t('From')}>
+                        {isBridge ? (
+                          <StacAssetIdentity tokenSymbol="USDC" chainName={tx.sourceChain} amount={tx.amount} isToAmount={false} />
                         ) : (
-                          <div className="status-icon-pending"><Clock size={12} strokeWidth={3} /></div>
+                          <StacAssetIdentity tokenSymbol={tx.tokenIn} chainName={tx.chain} amount={tx.amountIn} isToAmount={false} />
                         )}
-                        {t(txStatus.charAt(0).toUpperCase() + txStatus.slice(1))}
-                      </div>
-                    </td>
-                    <td className="col-time" data-label={t('Time')}><span className="time-txt">{timeAgo(tx.timestamp)}</span></td>
-                    <td className="col-hash" data-label={t('Hash')}>
+                      </td>
+                      <td className="col-to" data-label={t('To')}>
+                        {isBridge ? (
+                          <StacAssetIdentity tokenSymbol="USDC" chainName={tx.destinationChain} amount={tx.amount} isToAmount={true} />
+                        ) : (
+                          <StacAssetIdentity tokenSymbol={tx.tokenOut} chainName={tx.chain} amount={tx.amountOut} isToAmount={true} />
+                        )}
+                      </td>
+                      <td className="col-status" data-label={t('Status')}>
+                        <div className={`status-pill ${txStatus}`}>
+                          {txStatus === 'success' ? (
+                            <div className="status-icon-filled"><Check size={10} /></div>
+                          ) : (
+                            <div className="status-icon-pending"><Clock size={12} strokeWidth={3} /></div>
+                          )}
+                          {t(txStatus.charAt(0).toUpperCase() + txStatus.slice(1))}
+                        </div>
+                      </td>
+                      <td className="col-time" data-label={t('Time')}><span className="time-txt">{timeAgo(tx.timestamp)}</span></td>
+                      <td className="col-hash" data-label={t('Hash')}>
                         {isBridge ? (
                           <div className="tx-hash-stack is-bridge">
                             <div className="tx-hash-box">
                               <span className="hash-label">SRC</span>
                               <div className="chain-mini-icon mr-2">
-                                <img src={getChainIcon(tx.fromChainId || tx.chainId)} alt="" />
+                                <img src={getChainIcon(tx.sourceChain)} alt="" />
                               </div>
-                              <a href={getExplorerUrl(tx.hash, tx.fromChainId || tx.chainId || activeChainId)} target="_blank" rel="noopener" className="hash-link">
-                                {formatAddress(tx.hash)}
+                              <a href={getExplorerUrl(tx.id, getChainIdByName(tx.sourceChain))} target="_blank" rel="noopener" className="hash-link">
+                                {formatAddress(tx.id)}
                               </a>
                               <div className="relative inline-flex items-center">
                                 <button 
-                                  onClick={() => handleCopyText(tx.hash, `src-${tx.hash}`)} 
-                                  onMouseEnter={() => setHoveredHash(`src-${tx.hash}`)}
+                                  onClick={() => handleCopyText(tx.id, `src-${tx.id}`)} 
+                                  onMouseEnter={() => setHoveredHash(`src-${tx.id}`)}
                                   onMouseLeave={() => setHoveredHash(null)}
                                   className="copy-button-minimal"
                                 >
                                   <Copy size={12} strokeWidth={2} />
                                 </button>
                                 <AnimatePresence>
-                                  {(tooltipHash === `src-${tx.hash}` || hoveredHash === `src-${tx.hash}`) && (
+                                  {(tooltipHash === `src-${tx.id}` || hoveredHash === `src-${tx.id}`) && (
                                     <motion.div 
-                                      initial={{ opacity: 0, y: 10, scale: 0.95 }} 
+                                      initial={{ opacity: 0, y: 5, scale: 0.95 }} 
                                       animate={{ opacity: 1, y: 0, scale: 1 }} 
-                                      exit={{ opacity: 0, y: 10, scale: 0.95 }} 
-                                      className="copy-tooltip-stac"
+                                      exit={{ opacity: 0, y: 5, scale: 0.95 }} 
+                                      className="tooltip-left-stac"
                                     >
-                                      {tooltipHash === `src-${tx.hash}` ? t('Copied') : t('Copy Hash')}
+                                      {tooltipHash === `src-${tx.id}` ? t('Copied') : t('Copy Hash')}
                                     </motion.div>
                                   )}
                                 </AnimatePresence>
@@ -457,65 +422,35 @@ const Transactions = () => {
                             <div className="tx-hash-box dest">
                               <span className="hash-label">DST</span>
                               <div className="chain-mini-icon mr-2">
-                                <img src={getChainIcon(tx.toChainId || activeChainId)} alt="" />
+                                <img src={getChainIcon(tx.destinationChain)} alt="" />
                               </div>
-                              {tx.destHash ? (
-                                <>
-                                  <a href={getExplorerUrl(tx.destHash, tx.toChainId || activeChainId)} target="_blank" rel="noopener" className="hash-link">
-                                    {formatAddress(tx.destHash)}
-                                  </a>
-                                  <div className="relative inline-flex items-center ml-1">
-                                    <button 
-                                      onClick={() => handleCopyText(tx.destHash, `dest-${tx.hash}`)} 
-                                      onMouseEnter={() => setHoveredHash(`dest-${tx.hash}`)}
-                                      onMouseLeave={() => setHoveredHash(null)}
-                                      className="copy-button-minimal"
-                                    >
-                                      <Copy size={12} strokeWidth={2} />
-                                    </button>
-                                    <AnimatePresence>
-                                      {(tooltipHash === `dest-${tx.hash}` || hoveredHash === `dest-${tx.hash}`) && (
-                                        <motion.div 
-                                          initial={{ opacity: 0, y: 10, scale: 0.95 }} 
-                                          animate={{ opacity: 1, y: 0, scale: 1 }} 
-                                          exit={{ opacity: 0, y: 10, scale: 0.95 }} 
-                                          className="copy-tooltip-stac"
-                                        >
-                                          {tooltipHash === `dest-${tx.hash}` ? t('Copied') : t('Copy Hash')}
-                                        </motion.div>
-                                      )}
-                                    </AnimatePresence>
-                                  </div>
-                                </>
-                              ) : (
-                                <span className="hash-pending">{t('Relaying')}...</span>
-                              )}
+                              <span className="hash-pending">{t('Relaying')}...</span>
                             </div>
                           </div>
                         ) : (
                           <div className="swap-hash-container">
                             <div className="tx-hash-box swap-hash-centered">
-                              <a href={getExplorerUrl(tx.hash, tx.fromChainId || tx.chainId || activeChainId)} target="_blank" rel="noopener" className="hash-link">
-                                {formatAddress(tx.hash)}
+                              <a href={getExplorerUrl(tx.id, getChainIdByName(tx.chain))} target="_blank" rel="noopener" className="hash-link">
+                                {formatAddress(tx.id)}
                               </a>
                               <div className="relative inline-flex items-center">
                                 <button 
-                                  onClick={() => handleCopyText(tx.hash, tx.hash)} 
-                                  onMouseEnter={() => setHoveredHash(tx.hash)}
+                                  onClick={() => handleCopyText(tx.id, tx.id)} 
+                                  onMouseEnter={() => setHoveredHash(tx.id)}
                                   onMouseLeave={() => setHoveredHash(null)}
                                   className="copy-button-minimal"
                                 >
                                   <Copy size={12} strokeWidth={2} />
                                 </button>
                                 <AnimatePresence>
-                                  {(tooltipHash === tx.hash || hoveredHash === tx.hash) && (
+                                  {(tooltipHash === tx.id || hoveredHash === tx.id) && (
                                     <motion.div 
-                                      initial={{ opacity: 0, y: 10, scale: 0.95 }} 
+                                      initial={{ opacity: 0, y: 5, scale: 0.95 }} 
                                       animate={{ opacity: 1, y: 0, scale: 1 }} 
-                                      exit={{ opacity: 0, y: 10, scale: 0.95 }} 
-                                      className="copy-tooltip-stac"
+                                      exit={{ opacity: 0, y: 5, scale: 0.95 }} 
+                                      className="tooltip-left-stac"
                                     >
-                                      {tooltipHash === tx.hash ? t('Copied') : t('Copy Hash')}
+                                      {tooltipHash === tx.id ? t('Copied') : t('Copy Hash')}
                                     </motion.div>
                                   )}
                                 </AnimatePresence>
@@ -523,8 +458,8 @@ const Transactions = () => {
                             </div>
                           </div>
                         )}
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
                   );
                 })}
               </tbody>
