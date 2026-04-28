@@ -384,7 +384,9 @@ const Home = ({ setActiveTab }) => {
       {/* ==================================================================
           NETWORK STATISTICS
           Compact statistics with high-fidelity counters.
+          COMMENTED OUT UNTIL INDEXER SYNC COMPLETE
       ================================================================== */}
+      {/* 
       <section className="py-16 sm:py-20 px-6 md:px-12 max-w-7xl mx-auto dark:bg-page-dark overflow-hidden">
         <div className="relative group w-full">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-y-16 md:gap-y-0 relative z-10 w-full items-center">
@@ -413,6 +415,7 @@ const Home = ({ setActiveTab }) => {
           </div>
         </div>
       </section>
+      */}
 
 
 
