@@ -329,9 +329,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                                 <div className="flex items-center gap-2">
                                   <span className="text-[15px] font-medium text-slate-700 dark:text-slate-300 group-hover/item:text-black dark:group-hover/item:text-white transition-colors tracking-tight font-['Satoshi','Inter',sans-serif]">{t("What's New")}</span>
                                 </div>
-                                <div className="bg-brand text-white px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg shadow-brand/30 transition-all duration-300 group-hover/item:scale-110">
-                                  {t('NEW')}
-                                </div>
                               </button>
 
                               {/* Resources */}
@@ -591,14 +588,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                            className="text-[17px] font-medium tracking-tight text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                         >
                           {t("What's New")}
-                        </button>
-                        
-                        {/* New Badge */}
-                        <button 
-                            onClick={() => { setShowUpdates(true); setIsMenuOpen(false); }}
-                            className="px-3.5 py-1 rounded-full bg-brand text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand/30 transition-all duration-300 active:scale-95"
-                        >
-                          {t('NEW')}
                         </button>
                       </div>
                     </div>
