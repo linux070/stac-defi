@@ -14,6 +14,8 @@ export const NETWORKS = {
     gasToken: 'USDC', // Arc uses USDC for gas
     iconUrl: '/icons/arc.png',
     iconBackground: '#131720',
+    category: 'L1 TESTNET',
+    tag: 'L1'
   },
   ETHEREUM_SEPOLIA: {
     chainId: '0xaa36a7', // 11155111 in hex
@@ -26,6 +28,8 @@ export const NETWORKS = {
     rpcUrls: [import.meta.env.VITE_SEPOLIA_RPC_URL],
     blockExplorerUrls: ['https://sepolia.etherscan.io/'],
     iconUrl: '/icons/eth.png',
+    category: 'TESTNET',
+    tag: 'Mainnet'
   },
   BASE_SEPOLIA: {
     chainId: '0x14a34', // 84532 in decimal - Base Sepolia
@@ -38,6 +42,8 @@ export const NETWORKS = {
     rpcUrls: [import.meta.env.VITE_BASE_SEPOLIA_RPC_URL],
     blockExplorerUrls: ['https://sepolia.basescan.org/'],
     iconUrl: '/icons/base.png',
+    category: 'L2 ROLLUP',
+    tag: 'L2'
   },
 }; export const SUPPORTED_CHAINS = [
   NETWORKS.ARC_TESTNET.chainId,

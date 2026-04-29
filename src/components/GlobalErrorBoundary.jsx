@@ -39,7 +39,7 @@ class GlobalErrorBoundary extends Component {
     render() {
         if (this.state.hasError) {
             return (
-                <div className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-white dark:bg-page-dark overflow-hidden font-['Satoshi','Inter',sans-serif] selection:bg-brand selection:text-white">
+                <div className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-white dark:bg-[#121212] overflow-hidden font-['Satoshi','Inter',sans-serif] selection:bg-brand selection:text-white">
                     {/* Replicated background logic for visual depth since it's a global overlay */}
                     <div className="absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.06] pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}></div>
                     
@@ -51,7 +51,7 @@ class GlobalErrorBoundary extends Component {
                     >
                         {/* Double-Bezel Architecture */}
                         <div className="p-1 rounded-[2.5rem] bg-slate-100/50 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5 shadow-2xl shadow-black/5">
-                            <div className="bg-white dark:bg-zinc-950 p-10 rounded-[calc(2.5rem-4px)] flex flex-col items-center text-center text-black dark:text-white">
+                            <div className="bg-white dark:bg-[#121212] p-10 rounded-[calc(2.5rem-4px)] flex flex-col items-center text-center text-black dark:text-white">
 
                                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight leading-none font-['Satoshi','Inter',sans-serif]">
                                     This page failed to load

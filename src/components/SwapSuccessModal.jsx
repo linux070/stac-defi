@@ -82,7 +82,7 @@ const SwapSuccessModal = ({ isOpen, onClose, fromToken, toToken, fromAmount, toA
                     onClick={onClose}
                 >
                     <motion.div
-                        className="w-full max-w-[420px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-surface-dark border border-slate-200/60 dark:border-white/10 rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] relative shelf-inner"
+                        className="w-full max-w-[420px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-[#121212] border border-slate-200/60 dark:border-white/10 rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] relative shelf-inner"
                         variants={modalVariants}
                         initial="hidden"
                         animate="visible"
@@ -130,7 +130,7 @@ const SwapSuccessModal = ({ isOpen, onClose, fromToken, toToken, fromAmount, toA
                                             <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 p-0 bg-white dark:bg-white/5 shadow-sm">
                                                 <img src={getTokenIcon(fromToken?.symbol)} alt="" className="w-full h-full object-cover" />
                                             </div>
-                                            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 p-0.5 shadow-sm">
+                                            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/10 p-0.5 shadow-sm">
                                                 <img src="/icons/arc.png" alt="" className="w-full h-full object-contain" />
                                             </div>
                                         </div>
@@ -158,7 +158,7 @@ const SwapSuccessModal = ({ isOpen, onClose, fromToken, toToken, fromAmount, toA
                                             <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 p-0 bg-white dark:bg-white/5 shadow-sm">
                                                 <img src={getTokenIcon(toToken?.symbol)} alt="" className="w-full h-full object-cover" />
                                             </div>
-                                            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 p-0.5 shadow-sm">
+                                            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white dark:bg-[#121212] border border-slate-200 dark:border-white/10 p-0.5 shadow-sm">
                                                 <img src="/icons/arc.png" alt="" className="w-full h-full object-contain" />
                                             </div>
                                         </div>

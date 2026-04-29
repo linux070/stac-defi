@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, ArrowLeft, MessageSquare } from 'lucide-react';
+import { Loader2, ChevronLeft, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 
@@ -54,7 +54,7 @@ const FeedbackButton = ({ isOpen, setIsOpen, showTrigger = true, onBack }) => {
                             <div className="p-1.5 rounded-[2rem] bg-white/5 dark:bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                                 <button
                                     onClick={() => setIsOpen(true)}
-                                    className="px-6 py-3 rounded-[calc(2rem-0.375rem)] bg-white dark:bg-page-dark flex items-center gap-3 group transition-all active:scale-[0.98] border border-slate-100 dark:border-white/5"
+                                    className="px-6 py-3 rounded-[calc(2rem-0.375rem)] bg-white dark:bg-[#121212] flex items-center gap-3 group transition-all active:scale-[0.98] border border-slate-100 dark:border-white/5"
                                 >
                                     <MessageSquare size={18} strokeWidth={2.5} className="text-brand transition-transform group-hover:scale-110" />
                                     <span className="text-[14px] font-bold tracking-tight text-slate-900 dark:text-white">{t("Feedback")}</span>
@@ -77,7 +77,7 @@ const FeedbackButton = ({ isOpen, setIsOpen, showTrigger = true, onBack }) => {
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 transition={{ duration: 0.5 }}
-                                className="absolute inset-0 bg-[#F7F6F3]/80 dark:bg-black/95 backdrop-blur-2xl"
+                                className="absolute inset-0 bg-[#F7F6F3]/80 dark:bg-[#121212]/95 backdrop-blur-2xl"
                                 onClick={() => !isSubmitting && setIsOpen(false)}
                             />
 
@@ -91,22 +91,19 @@ const FeedbackButton = ({ isOpen, setIsOpen, showTrigger = true, onBack }) => {
                                 style={{ maxHeight: 'min(820px, 94vh)' }}
                             >
                                 {/* Inner Core — Refractive Liquid Glass Core */}
-                                <div className="w-full h-full bg-white dark:bg-page-dark rounded-[calc(2.5rem-0.5rem)] flex flex-col overflow-hidden border border-white/10 relative shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+                                <div className="w-full h-full bg-white dark:bg-[#121212] rounded-[calc(2.5rem-0.5rem)] flex flex-col overflow-hidden border border-white/10 relative shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
                                     
                                     {/* Header — Editorial Luxury Architecture */}
-                                    <div className="flex items-center justify-between px-10 py-7 bg-white/50 dark:bg-page-dark/50 backdrop-blur-md border-b border-slate-100 dark:border-white/5 sticky top-0 z-[60]">
+                                    <div className="flex items-center justify-between px-10 py-7 bg-white/50 dark:bg-[#121212]/50 backdrop-blur-md border-b border-slate-100 dark:border-white/5 sticky top-0 z-[60]">
                                         <div className="flex-1 flex justify-start">
                                             <button 
                                                 onClick={() => { 
                                                     setIsOpen(false); 
                                                     if (onBack) onBack(); 
                                                 }} 
-                                                className="flex items-center gap-2.5 group/back active:scale-95 transition-all"
+                                                className="w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all active:scale-90 border border-transparent"
                                             >
-                                                <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center group-hover/back:bg-slate-200 dark:group-hover/back:bg-white/10 transition-all">
-                                                    <ArrowLeft size={18} strokeWidth={2.5} className="text-slate-600 dark:text-slate-300" />
-                                                </div>
-                                                <span className="text-[15px] font-medium tracking-tight text-slate-500 dark:text-slate-400 group-hover/back:text-slate-900 dark:group-hover/back:text-white transition-colors">{t('Back')}</span>
+                                                <ChevronLeft size={22} strokeWidth={2.5} />
                                             </button>
                                         </div>
                                         <div className="flex-1 flex justify-center">
@@ -168,7 +165,7 @@ const FeedbackButton = ({ isOpen, setIsOpen, showTrigger = true, onBack }) => {
                                     </div>
 
                                     {/* Action Island — Trailing Icon Pattern */}
-                                    <div className="px-10 py-8 border-t border-slate-100 dark:border-white/5 bg-white/50 dark:bg-page-dark/50 backdrop-blur-md flex items-center justify-center sticky bottom-0 z-[60]">
+                                    <div className="px-10 py-8 border-t border-slate-100 dark:border-white/5 bg-white/50 dark:bg-[#121212]/50 backdrop-blur-md flex items-center justify-center sticky bottom-0 z-[60]">
                                         <button
                                             onClick={() => setIsOpen(false)}
                                             className="group relative px-12 py-4 bg-brand text-white text-[13px] font-black uppercase tracking-[0.2em] rounded-full shadow-2xl shadow-brand/20 active:scale-[0.96] transition-all overflow-hidden"

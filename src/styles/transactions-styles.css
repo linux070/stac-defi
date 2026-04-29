@@ -22,12 +22,12 @@
 }
 
 [data-theme='dark'], .dark {
-  --tx-bg: #000000; 
+  --tx-bg: #121212; 
   --tx-text: #f1f5f9;
   --tx-muted: #94A3B8;
   --tx-border: rgba(255, 255, 255, 0.08);
-  --tx-surface: #000000;
-  --tx-surface-muted: #050505;
+  --tx-surface: #121212;
+  --tx-surface-muted: #1A1A1A;
   --tx-navy: #6366F1; 
   --tx-navy-purple: #818cf8;
 }

@@ -281,9 +281,9 @@ const Home = ({ setActiveTab }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
-      className="min-h-screen bg-white dark:bg-page-dark"
+      className="min-h-screen bg-white dark:bg-transparent"
     >
-      <section className="relative pt-32 pb-16 lg:pt-0 lg:pb-0 lg:min-h-[100dvh] overflow-hidden flex flex-col items-center justify-center bg-white dark:bg-page-dark">
+      <section className="relative pt-32 pb-16 lg:pt-0 lg:pb-0 lg:min-h-[100dvh] overflow-hidden flex flex-col items-center justify-center bg-white dark:bg-transparent">
 
         <div className="relative z-10 text-center max-w-6xl mx-auto px-6 pt-4 pb-10 lg:py-20 lg:flex lg:flex-col lg:items-center lg:justify-center">
           <motion.div
@@ -424,7 +424,7 @@ const Home = ({ setActiveTab }) => {
           WHY BUILD ON ARC
           Relay-style tabbed feature showcase with subtle grey background.
       ================================================================== */}
-      <section className="py-20 sm:py-32 lg:py-40 px-6 md:px-12 bg-white dark:bg-page-dark relative overflow-hidden">
+      <section className="py-20 sm:py-32 lg:py-40 px-6 md:px-12 bg-white dark:bg-transparent relative overflow-hidden">
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-8 sm:mb-12 lg:mb-16">
             <h2 className="text-[clamp(2.25rem,7vw,5.5rem)] font-bold tracking-tighter text-[#0f172a] dark:text-white leading-[1.2] mb-0 font-['Satoshi','Inter',sans-serif]">

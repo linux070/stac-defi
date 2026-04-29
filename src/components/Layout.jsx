@@ -9,14 +9,10 @@ import {
   ArrowLeft,
   Check,
   Moon,
-  Sun as SunIcon,
-  FileText,
-  MessageSquare,
-  Activity
+  Sun as SunIcon
 } from 'lucide-react';
 import UpdatesModal from './UpdatesModal';
 import { motion, AnimatePresence } from 'framer-motion';
-import FeedbackButton from './FeedbackButton';
 import CustomConnectButton from './CustomConnectButton';
 import StacLogo from './StacLogo';
 
@@ -83,7 +79,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showUpdates, setShowUpdates] = useState(false);
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  // const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsPage, setSettingsPage] = useState('main');
@@ -154,21 +150,17 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
   return (
     <div className={`min-h-[100dvh] flex flex-col transition-colors duration-300 ${
-      activeTab === 'transactions' 
-        ? 'bg-white dark:bg-black' 
-        : (activeTab === 'swap' || activeTab === 'bridge' || activeTab === 'liquidity')
-          ? 'bg-white dark:bg-[#121214]'
-          : 'bg-white dark:bg-page-dark'
+      (activeTab === 'home' || activeTab === 'transactions' || activeTab === 'swap' || activeTab === 'bridge' || activeTab === 'liquidity')
+        ? 'bg-white dark:bg-[#121212]'
+        : 'bg-white dark:bg-page-dark'
     }`}>
       {/* Primary Content Shell */}
 
       <div className={`fixed top-0 left-0 right-0 ${isMenuOpen ? 'z-[11000]' : 'z-[100]'}`}>
         <div className={`lg:hidden w-full h-[64px] border-b px-5 flex items-center justify-between relative transition-colors duration-300 ${
-          activeTab === 'transactions'
-            ? 'bg-white dark:bg-black border-slate-100 dark:border-white/10'
-            : (activeTab === 'swap' || activeTab === 'bridge' || activeTab === 'liquidity')
-              ? 'bg-white dark:bg-[#121214] border-slate-100 dark:border-white/5'
-              : 'bg-white dark:bg-page-dark border-slate-100 dark:border-white/5'
+          (activeTab === 'home' || activeTab === 'transactions' || activeTab === 'swap' || activeTab === 'bridge' || activeTab === 'liquidity')
+            ? 'bg-white dark:bg-[#121212] border-slate-100 dark:border-white/5'
+            : 'bg-white dark:bg-page-dark border-slate-100 dark:border-white/5'
         }`}>
           <div className="flex items-center cursor-pointer group gap-2" onClick={() => setActiveTab('home')}>
             <StacLogo darkMode={darkMode} className="h-8 w-8 flex-shrink-0" />
@@ -221,11 +213,9 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
         {/* Desktop Header - Refined Nav Positions */}
         <div className={`hidden lg:grid grid-cols-[1fr_auto_1fr] fixed top-0 left-0 right-0 h-20 items-center px-10 transition-colors duration-300 ${
-          activeTab === 'transactions' 
-            ? 'bg-white/90 dark:bg-black/80 backdrop-blur-md' 
-            : (activeTab === 'swap' || activeTab === 'bridge' || activeTab === 'liquidity')
-              ? 'bg-white/90 dark:bg-[#121214]/80 backdrop-blur-md'
-              : 'bg-transparent'
+          (activeTab === 'home' || activeTab === 'transactions' || activeTab === 'swap' || activeTab === 'bridge' || activeTab === 'liquidity')
+            ? 'bg-white/90 dark:bg-[#121212]/80 backdrop-blur-md'
+            : 'bg-transparent'
         }`}>
           {/* Column 1: Logo */}
           <div className="flex items-center">
@@ -308,7 +298,7 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 8, scale: 0.97 }}
                       transition={{ duration: 0.15, ease: 'easeOut' }}
-                      className="absolute top-[calc(100%+12px)] right-0 w-[280px] z-[2000] bg-white dark:bg-page-dark rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-xl overflow-hidden origin-top-right"
+                      className="absolute top-[calc(100%+12px)] right-0 w-[280px] z-[2000] bg-white dark:bg-[#121212] rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-xl overflow-hidden origin-top-right"
                     >
                       <AnimatePresence mode="wait">
                         {settingsPage === 'main' ? (
@@ -344,8 +334,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                                 </div>
                               </button>
 
-
-
                               {/* Resources */}
                               <button
                                 onClick={() => setSettingsPage('resources')}
@@ -376,16 +364,16 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                             exit={{ opacity: 0, x: 10 }}
                             transition={{ duration: 0.15 }}
                           >
-                            <div className="px-5 pt-5 pb-3 bg-slate-50/30 dark:bg-white/[0.02]">
+                             <div className="px-4 py-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5 bg-slate-50/30 dark:bg-white/[0.02]">
                                <button
                                  onClick={() => setSettingsPage('main')}
-                                 className="flex items-center gap-2.5 group/back text-slate-500 dark:text-white/60 hover:text-brand dark:hover:text-white"
+                                 className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all active:scale-90"
                                >
-                                 <div className="p-1.5 rounded-lg bg-white dark:bg-surface-dark border border-slate-200 dark:border-brand-border shadow-sm">
-                                   <ArrowLeft size={12} strokeWidth={3} className="text-slate-500 dark:text-white/60" />
-                                 </div>
-                                 <span className="text-[13px] font-medium tracking-tight text-slate-500 dark:text-white/70">{t('Back')}</span>
+                                 <ArrowLeft size={18} strokeWidth={2.5} />
                                </button>
+                               <span className="flex-1 text-center text-[15px] font-semibold text-slate-700 dark:text-white tracking-tight mr-8">
+                                 {t('Language')}
+                               </span>
                              </div>
                             <div className="py-2 px-1">
                               {languages.map((lang) => {
@@ -418,34 +406,29 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                             exit={{ opacity: 0, x: 10 }}
                             transition={{ duration: 0.15 }}
                           >
-                             <div className="px-5 pt-5 pb-3 bg-slate-50/30 dark:bg-white/[0.02]">
-                                <button
-                                  onClick={() => setSettingsPage('main')}
-                                  className="flex items-center gap-2.5 group/back text-slate-500 dark:text-white/60 hover:text-brand dark:hover:text-white"
-                                >
-                                  <div className="p-1.5 rounded-lg bg-white dark:bg-surface-dark border border-slate-200 dark:border-brand-border shadow-sm">
-                                    <ArrowLeft size={12} strokeWidth={3} className="text-slate-500 dark:text-white/60" />
-                                  </div>
-                                  <span className="text-[13px] font-medium tracking-tight text-slate-500 dark:text-white/70">{t('Back')}</span>
-                                </button>
-                              </div>
-                            <div className="py-2 px-1">
+                             <div className="px-4 py-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5 bg-slate-50/30 dark:bg-white/[0.02]">
+                               <button
+                                 onClick={() => setSettingsPage('main')}
+                                 className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all active:scale-90"
+                               >
+                                 <ArrowLeft size={18} strokeWidth={2.5} />
+                               </button>
+                               <span className="flex-1 text-center text-[15px] font-semibold text-slate-700 dark:text-white tracking-tight mr-8">
+                                 {t('Resources')}
+                               </span>
+                             </div>
+                            <div className="py-2 px-1 bg-white dark:bg-[#121212]">
                               {[
-                                { label: t('Docs'), comingSoon: true },
-                                { label: t('Brand Assets'), comingSoon: true },
-                                { label: t('Feedback'), comingSoon: true }
+                                { id: 'docs', label: t('Docs') },
+                                { id: 'brand', label: t('Brand Assets') }
                               ].map((item, idx) => (
                                 <button
                                   key={idx}
-                                  onClick={item.comingSoon ? undefined : item.onClick}
-                                  className={`w-full px-5 py-4 text-left flex items-center justify-between group/item transition-all duration-300 rounded-[1.5rem] ${item.comingSoon ? 'cursor-not-allowed opacity-60' : 'hover:bg-white dark:hover:bg-white/5 active:scale-[0.98]'}`}
+                                  className="w-full px-5 py-4 flex items-center justify-between group/item transition-all duration-300 rounded-[1.5rem] hover:bg-slate-50 dark:hover:bg-white/5"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <span className="text-[15px] font-medium text-slate-700 dark:text-slate-300 group-hover/item:text-black dark:group-hover/item:text-white transition-colors tracking-tight font-['Satoshi','Inter',sans-serif]">{item.label}</span>
+                                    <span className="text-[15px] font-medium text-slate-700 dark:text-slate-300 transition-colors tracking-tight font-['Satoshi','Inter',sans-serif]">{item.label}</span>
                                   </div>
-                                  {item.comingSoon && (
-                                    <span className="text-[9px] bg-slate-100 dark:bg-surface-dark px-1.5 py-0.5 rounded-md uppercase tracking-wider font-bold text-secondary">{t('Soon')}</span>
-                                  )}
                                 </button>
                               ))}
                             </div>
@@ -504,10 +487,12 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
               exit={{ x: '100%' }}
               transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
               className={`fixed inset-0 z-[11000] lg:hidden flex flex-col overflow-hidden ${
-                activeTab === 'transactions' ? 'bg-white dark:bg-black' : 'bg-white dark:bg-page-dark'
+                (activeTab === 'home' || activeTab === 'transactions' || activeTab === 'swap' || activeTab === 'bridge' || activeTab === 'liquidity') 
+                  ? 'bg-white dark:bg-[#121212]' 
+                  : 'bg-white dark:bg-page-dark'
               }`}
             >
-              <AnimatePresence initial={false}>
+              <AnimatePresence mode="wait">
                 {settingsPage === 'main' ? (
                   <motion.div
                     key="sheet-main"
@@ -620,7 +605,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
 
                     <div className="flex-1" />
 
-                    {/* Footer Socials Container */}
                     <div className="px-10 pb-8">
                       <div className="flex items-center justify-center gap-8 mb-10">
                         <button 
@@ -639,14 +623,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                             <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                           </svg>
                         </button>
-                        <button 
-                          onClick={() => window.open('https://discord.gg/', '_blank')}
-                          className="text-slate-900 dark:text-white hover:opacity-70 transition-all hover:scale-110 active:scale-95"
-                        >
-                          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-                            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.196.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.078.078 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.086 2.157 2.419 0 1.334-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.086 2.157 2.419 0 1.334-.946 2.419-2.157 2.419z" />
-                          </svg>
-                        </button>
                       </div>
 
                       <div className="flex justify-center mb-6">
@@ -655,13 +631,10 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                         </div>
                       </div>
 
-                      {/* Legal Links */}
                       <div className="flex items-center justify-center gap-6">
                         <a href="#" className="text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors tracking-wide underline-offset-4 hover:underline">{t('Terms & Conditions')}</a>
                         <div className="w-px h-3 bg-slate-200 dark:bg-white/10" />
                         <a href="#" className="text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors tracking-wide underline-offset-4 hover:underline">{t('Privacy Policy')}</a>
-                        <div className="w-px h-3 bg-slate-200 dark:bg-white/10" />
-                        <a href="#" className="text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors tracking-wide underline-offset-4 hover:underline">{t('Cookie Policy')}</a>
                       </div>
                     </div>
                   </motion.div>
@@ -672,18 +645,16 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute inset-0 flex flex-col p-6 bg-white dark:bg-page-dark"
+                    className="absolute inset-0 flex flex-col p-6 bg-white dark:bg-[#121212]"
                   >
                     <div className="flex items-center gap-4 mb-8">
                       <button
                         onClick={() => setSettingsPage('main')}
-                        className="group active:scale-95 flex items-center gap-3"
+                        className="w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all active:scale-90 border border-transparent"
                       >
-                        <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center">
-                          <ArrowLeft size={18} strokeWidth={2.5} className="text-slate-600 dark:text-slate-300" />
-                        </div>
-                        <span className="text-[15px] font-medium tracking-tight text-slate-500 dark:text-slate-400">{t('Back')}</span>
+                        <ArrowLeft size={22} strokeWidth={2.5} />
                       </button>
+                      <span className="text-[18px] font-bold tracking-tight text-slate-900 dark:text-white">{t('Language')}</span>
                     </div>
                     <div className="space-y-1 overflow-y-auto scrollbar-none max-h-[70vh]">
                       {languages.map((lang) => {
@@ -713,34 +684,28 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute inset-0 flex flex-col p-6 bg-white dark:bg-page-dark"
+                    className="absolute inset-0 flex flex-col p-6 bg-white dark:bg-[#121212]"
                   >
                     <div className="flex items-center gap-4 mb-8">
                       <button
                         onClick={() => setSettingsPage('main')}
-                        className="group active:scale-95 flex items-center gap-3"
+                        className="w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all active:scale-90 border border-transparent"
                       >
-                        <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center">
-                          <ArrowLeft size={18} strokeWidth={2.5} className="text-slate-600 dark:text-slate-300" />
-                        </div>
-                        <span className="text-[15px] font-medium tracking-tight text-slate-500 dark:text-slate-400">{t('Back')}</span>
+                        <ArrowLeft size={22} strokeWidth={2.5} />
                       </button>
+                      <span className="text-[18px] font-bold tracking-tight text-slate-900 dark:text-white">{t('Resources')}</span>
                     </div>
                     <div className="space-y-1 overflow-y-auto scrollbar-none max-h-[70vh]">
                       {[
-                        { id: 'docs', label: t('Docs'), comingSoon: true },
-                        { id: 'brand', label: t('Brand Assets'), comingSoon: true },
-                        { id: 'feedback', label: t('Feedback'), comingSoon: true }
+                        { id: 'docs', label: t('Docs') },
+                        { id: 'brand', label: t('Brand Assets') }
                       ].map((item) => (
                         <button
                           key={item.id}
-                          onClick={item.comingSoon ? undefined : item.onClick}
-                          className={`w-full p-4 flex items-center justify-between rounded-2xl transition-all duration-200 ${item.comingSoon ? 'opacity-50 cursor-not-allowed' : 'text-slate-900 dark:text-white hover:bg-slate-50/50 dark:hover:bg-white/5'}`}
+                          className="w-full p-4 flex items-center justify-between rounded-2xl transition-all duration-200 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5"
                         >
                           <span className="text-[17px] font-medium tracking-tight">{item.label}</span>
-                          {item.comingSoon && (
-                            <span className="text-[10px] bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-md uppercase tracking-widest font-black text-secondary">{t('Soon')}</span>
-                          )}
+                          <ChevronRight size={18} strokeWidth={2} className="text-slate-300" />
                         </button>
                       ))}
                     </div>
@@ -752,52 +717,12 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {isThemeModalOpen && (
-          <motion.div
-            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[20000] bg-white dark:bg-page-dark flex flex-col p-6 overflow-y-auto"
-          >
-            <div className="flex items-center justify-between mb-8">
-              <button 
-                onClick={() => setIsThemeModalOpen(false)} 
-                className="group active:scale-95 transition-transform"
-              >
-                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-slate-200 dark:group-hover:bg-white/10 transition-all">
-                  <ArrowLeft size={18} strokeWidth={2.5} className="text-slate-600 dark:text-white" />
-                </div>
-              </button>
-              <h2 className="text-[14px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-[0.3em]">{t('Theme')}</h2>
-              <div className="w-12" />
-            </div>
-            <div className="space-y-1">
-              {[
-                { id: 'light', label: t('Light'), active: !darkMode, icon: <SunIcon size={20} /> },
-                { id: 'dark', label: t('Dark'), active: darkMode, icon: <Moon size={18} strokeWidth={2.5} /> }
-              ].map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => { if (option.id === 'light' && darkMode) toggleDarkMode(); if (option.id === 'dark' && !darkMode) toggleDarkMode(); }}
-                  className={`w-full py-4 px-2 flex items-center justify-between group transition-all ${option.active ? 'text-black dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white'}`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`${option.active ? 'text-black dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>{option.icon}</div>
-                    <span className="text-[17px] font-medium">{option.label}</span>
-                  </div>
-                  {option.active && <Check size={20} className="text-black dark:text-white" />}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <main className={`flex-grow w-full ${activeTab === 'home' ? 'pt-0 pb-0' : 'pt-20 lg:pt-28 pb-12'} text-black dark:text-white overflow-x-hidden relative z-10 flex flex-col`}>
         {children}
       </main>
 
-      {/* Global Feedback Component - Trigger visibility handled via showTrigger prop */}
+      {/* Global Feedback Component */}
+      {/* 
       <FeedbackButton 
         isOpen={isFeedbackOpen} 
         setIsOpen={setIsFeedbackOpen} 
@@ -806,9 +731,13 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
           if (window.innerWidth < 1024) {
             setIsMenuOpen(true);
             setSettingsPage('resources');
+          } else {
+            setIsSettingsOpen(true);
+            setSettingsPage('resources');
           }
         }}
-      />
+      /> 
+      */}
 
       {/* Global Updates Modal */}
       <UpdatesModal isOpen={showUpdates} onClose={() => setShowUpdates(false)} />

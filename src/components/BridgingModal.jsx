@@ -74,7 +74,7 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
           onClick={() => state?.step === 'success' && onClose()}
         >
           <motion.div
-            className="w-full max-w-[420px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-surface-dark rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10"
+            className="w-full max-w-[420px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-[#121212] rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10"
             initial={{ scale: 0.95, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 30 }}
@@ -89,9 +89,9 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
                 </button>
               </div>
 
-              <div className="flex flex-col items-center mb-6">
+              <div className="flex flex-col items-center mb-4">
                 {state?.step !== 'success' ? (
-                  <div className="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center mb-5 text-indigo-500 relative">
+                  <div className="w-14 h-14 rounded-full bg-indigo-500/10 flex items-center justify-center mb-4 text-indigo-500 relative">
                     <div className="modern-spinner">
                       {[...Array(12)].map((_, i) => <div key={i} />)}
                     </div>
@@ -101,9 +101,9 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
                     initial={{ scale: 0, rotate: -45 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: 'spring', delay: 0.2 }}
-                    className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center mb-5 text-white shadow-[0_0_40px_-8px_rgba(16,185,129,0.4)]"
+                    className="w-14 h-14 rounded-full bg-emerald-500 flex items-center justify-center mb-4 text-white shadow-[0_0_32px_-8px_rgba(16,185,129,0.4)]"
                   >
-                    <Check size={32} strokeWidth={4} />
+                    <Check size={28} strokeWidth={4} />
                   </motion.div>
                 )}
                 
@@ -122,9 +122,9 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
             </div>
 
             {/* MAIN CONTENT AREA */}
-            <div className="p-6 sm:p-8 pt-0 space-y-4 sm:space-y-6">
+            <div className="p-4 sm:p-6 pt-0 space-y-4">
               {/* CHAIN VISUALIZER */}
-              <div className="grid grid-cols-[1fr,40px,1fr] items-center gap-2 py-6 border-y border-slate-100 dark:border-white/5">
+              <div className="grid grid-cols-[1fr,40px,1fr] items-center gap-2 py-4 border-y border-slate-100 dark:border-white/5">
                 <div className="flex flex-col items-center gap-2">
                    <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center">
                      <img src={getChainIcon(fromChain)} className="w-6 h-6" alt="" />
@@ -144,11 +144,11 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
 
               {/* STATS BENTO */}
               <div className="grid grid-cols-2 gap-3">
-                 <div className="bg-slate-50 dark:bg-white/[0.02] p-4 rounded-xl border border-slate-100 dark:border-white/5">
+                 <div className="bg-slate-50 dark:bg-white/[0.03] p-4 rounded-xl border border-slate-100 dark:border-white/5">
                     <p className="text-[10px] uppercase tracking-widest font-mono text-slate-600 dark:text-slate-300 mb-1 font-bold">Amount</p>
                     <p className="text-lg font-instrument text-slate-900 dark:text-white">{amount} USDC</p>
                  </div>
-                 <div className="bg-slate-50 dark:bg-white/[0.02] p-4 rounded-xl border border-slate-100 dark:border-white/5">
+                 <div className="bg-slate-50 dark:bg-white/[0.03] p-4 rounded-xl border border-slate-100 dark:border-white/5">
                     <p className="text-[10px] uppercase tracking-widest font-mono text-slate-600 dark:text-slate-300 mb-1 font-bold">Time</p>
                     <p className="text-lg font-instrument text-slate-900 dark:text-white">{formatTime(displayTime)}</p>
                  </div>
@@ -186,10 +186,10 @@ const BridgingModal = ({ isOpen, onClose, fromChain, toChain, amount, startTime,
             </div>
 
             {/* FOOTER */}
-            <div className="p-6 sm:p-8 pt-0">
-               <div className="flex items-center justify-center gap-2.5 pt-4">
+            <div className="p-4 sm:p-6 pt-0">
+               <div className="flex items-center justify-center gap-2.5 pt-2">
                   <img src="/icons/arc.png" className="w-4 h-4 rounded-full" alt="" />
-                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-[0.2em]">Powered by App Kit</span>
+                  <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-[0.2em]">Powered by App Kit</span>
                </div>
             </div>
           </motion.div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const UpdatesModal = ({ isOpen, onClose }) => {
@@ -260,33 +260,30 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                         animate={{ y: 0, opacity: 1, scale: 1 }}
                         exit={typeof window !== 'undefined' && window.innerWidth < 768 ? { y: '100%' } : { opacity: 0, scale: 0.98, y: 30 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="relative w-full h-full sm:h-auto sm:max-w-[1080px] bg-white dark:bg-black rounded-t-[32px] sm:rounded-[32px] shadow-[0_32px_128px_rgba(0,0,0,0.15)] dark:shadow-[0_48px_160px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden border-t sm:border border-slate-200/80 dark:border-white/5"
-                        style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth < 768 ? '94dvh' : 'min(820px, 92vh)' }}
+                        className="relative w-full h-full sm:h-auto sm:max-w-[1080px] bg-white dark:bg-[#121212] rounded-none sm:rounded-[32px] shadow-[0_32px_128px_rgba(0,0,0,0.15)] dark:shadow-[0_48px_160px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden sm:border border-slate-200/80 dark:border-white/5"
+                        style={{ maxHeight: typeof window !== 'undefined' && window.innerWidth < 768 ? '100dvh' : 'min(820px, 92vh)' }}
                     >
-                        {/* Header */}
-                         <div className="flex items-center justify-between px-6 sm:px-10 py-7 bg-white dark:bg-black border-b border-slate-100 dark:border-white/[0.05] sticky top-0 z-50">
+                         {/* Header */}
+                         <div className="flex items-center justify-between px-6 sm:px-10 py-7 bg-white dark:bg-[#121212] border-b border-slate-100 dark:border-white/[0.05] sticky top-0 z-50">
                              <div className="flex-1 flex justify-start">
-                                  <button 
-                                     onClick={onClose} 
-                                     className="flex items-center gap-2.5 group/back active:scale-95 transition-all"
+                                 <button
+                                     onClick={onClose}
+                                     className="w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all active:scale-90 border border-transparent"
                                  >
-                                     <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center group-hover/back:bg-slate-200 dark:group-hover/back:bg-white/10 transition-all">
-                                         <ArrowLeft size={18} strokeWidth={2.5} className="text-slate-600 dark:text-slate-300" />
-                                     </div>
-                                     <span className="text-[15px] font-medium tracking-tight text-slate-500 dark:text-slate-400 group-hover/back:text-slate-900 dark:group-hover/back:text-white transition-colors">{t('Back')}</span>
+                                     <ChevronLeft size={22} strokeWidth={2.5} />
                                  </button>
                              </div>
                              <div className="flex-1 flex justify-center">
-                                 <h2 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] whitespace-nowrap">{t("Change Log")}</h2>
+                                 <h2 className="text-[14px] font-bold text-slate-800 dark:text-white tracking-tight">{t("What's New")}</h2>
                              </div>
-                             <div className="flex-1 flex justify-end pointer-events-none" />
+                             <div className="flex-1 flex justify-end" />
                          </div>
 
                         {/* Body — Split Panel / Accordion */}
                         <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0 relative">
 
                             {/* Left Sidebar — Desktop Only */}
-                            <div className="hidden md:block w-[280px] flex-shrink-0 border-r border-slate-100 dark:border-white/[0.05] bg-slate-50/10 dark:bg-black/20 overflow-y-auto no-scrollbar">
+                            <div className="hidden md:block w-[280px] flex-shrink-0 border-r border-slate-100 dark:border-white/[0.05] bg-slate-50/10 dark:bg-white/[0.02] overflow-y-auto no-scrollbar">
                                 <div className="px-5 pt-5 pb-2">
                                     <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.15em]">
                                         {t("Release History")}
@@ -299,24 +296,31 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                              <button
                                                  key={idx}
                                                  onClick={() => handleVersionSelect(idx)}
-                                                 className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-300 group flex flex-col relative ${isActive
-                                                     ? 'bg-brand text-white shadow-lg shadow-brand/25 active:scale-[0.98]'
-                                                     : 'hover:bg-brand/10 dark:hover:bg-brand/10'
+                                                 className={`w-full text-left px-4 py-4 rounded-2xl transition-all duration-300 group flex flex-col relative ${isActive
+                                                     ? 'bg-slate-100 dark:bg-white/5 shadow-sm active:scale-[0.98]'
+                                                     : 'hover:bg-slate-50 dark:hover:bg-white/[0.02]'
                                                      }`}
                                              >
-                                                 <div className="flex items-center justify-between w-full gap-3 mb-1">
-                                                     <span className={`text-[14px] font-semibold tracking-tight ${isActive ? 'text-white' : 'text-slate-800 dark:text-slate-200 group-hover:text-brand'}`}>
+                                                 <div className="flex items-center justify-between w-full gap-3 mb-1.5">
+                                                     <span className={`text-[15px] font-bold tracking-tight ${isActive ? 'text-black dark:text-white' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'}`}>
                                                          {version.version}
                                                      </span>
                                                      {version.isLatest && (
-                                                         <span className="px-1.5 py-0.5 rounded-md text-[7px] font-black uppercase tracking-widest bg-brand text-white shadow-sm shadow-brand/20">
+                                                         <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${isActive ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400'}`}>
                                                              {t("NEW")}
                                                          </span>
                                                      )}
                                                  </div>
-                                                 <span className={`text-[10px] font-medium transition-colors ${isActive ? 'text-white/60' : 'text-slate-400 dark:text-slate-500 group-hover:text-brand/60'}`}>
+                                                 <span className={`text-[11px] font-medium transition-colors ${isActive ? 'text-slate-500 dark:text-slate-500' : 'text-slate-400 dark:text-slate-600'}`}>
                                                      {version.date}
                                                  </span>
+                                                 {isActive && (
+                                                     <motion.div 
+                                                         layoutId="activeIndicator"
+                                                         className="absolute left-0 top-4 bottom-4 w-1 bg-brand rounded-full"
+                                                         initial={false}
+                                                     />
+                                                 )}
                                              </button>
                                         );
                                     })}
@@ -324,7 +328,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                             </div>
 
                             {/* Main Content Area */}
-                            <div className="flex-1 overflow-y-auto no-scrollbar bg-white dark:bg-black scroll-smooth">
+                            <div className="flex-1 overflow-y-auto no-scrollbar bg-white dark:bg-[#121212] scroll-smooth">
                                 <div className="flex flex-col md:block">
                                     {updates.map((version, idx) => {
                                         const isActive = selectedIdx === idx;
@@ -337,25 +341,25 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                 {/* Mobile Accordion Header */}
                                                 <button
                                                     onClick={() => setSelectedIdx(isActive ? -1 : idx)}
-                                                    className="md:hidden w-full px-6 py-5 flex items-center justify-between group transition-colors hover:bg-brand/5 dark:hover:bg-white/[0.02]"
+                                                    className="md:hidden w-full px-6 py-6 flex items-center justify-between group transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.02]"
                                                 >
                                                     <div className="flex flex-col items-start text-left">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className={`text-[15px] font-medium tracking-tight ${isActive ? 'text-black dark:text-white' : 'text-black dark:text-slate-200'}`}>
+                                                        <div className="flex items-center gap-3 mb-1.5">
+                                                            <span className={`text-[17px] font-bold tracking-tight ${isActive ? 'text-black dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
                                                                 {version.version}
                                                             </span>
                                                             {version.isLatest && (
-                                                                <span className="px-1.5 py-0.5 rounded-md bg-brand text-white shadow-xl shadow-brand/30 text-[8px] font-black uppercase tracking-wider">
+                                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${isActive ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
                                                                     {t("NEW")}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-500 tracking-wider">
+                                                        <span className="text-[12px] font-medium text-slate-500 dark:text-slate-500 tracking-wider">
                                                             {version.date}
                                                         </span>
                                                     </div>
-                                                    <div className={`p-2 rounded-lg bg-slate-100 dark:bg-white/5 transition-transform duration-300 ${isActive ? 'rotate-180 text-black dark:text-white' : 'text-slate-400'}`}>
-                                                        <ChevronDown size={18} strokeWidth={3} />
+                                                    <div className={`p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 transition-transform duration-300 ${isActive ? 'rotate-180 text-black dark:text-white shadow-sm' : 'text-slate-400'}`}>
+                                                        <ChevronDown size={20} strokeWidth={2.5} />
                                                     </div>
                                                 </button>
 
@@ -369,25 +373,25 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                             transition={{ duration: 0.3, ease: 'easeInOut' }}
                                                             className="overflow-hidden"
                                                         >
-                                                            <div className="px-6 pb-8 md:p-0">
+                                                            <div className="px-6 pb-10 md:p-0">
 
-                                                                <h3 className="text-[clamp(1.15rem,5vw,2.25rem)] font-semibold text-black dark:text-white tracking-tight leading-[1.2] mb-5 md:mb-6">
+                                                                <h3 className="text-[clamp(1.25rem,5vw,2.5rem)] font-bold text-black dark:text-white tracking-tight leading-[1.1] mb-6 md:mb-8">
                                                                     {version.title}
                                                                 </h3>
 
-                                                                <p className="text-[14px] sm:text-[16px] leading-relaxed text-slate-500 dark:text-slate-400 font-medium max-w-[600px] mb-8 md:mb-10">
+                                                                <p className="text-[15px] sm:text-[17px] leading-relaxed text-slate-500 dark:text-slate-400 font-medium max-w-[640px] mb-10 md:mb-12">
                                                                     {version.description}
                                                                 </p>
 
-                                                                 <div className="space-y-6">
+                                                                 <div className="space-y-8 md:space-y-10">
                                                                      {version.items.map((item, itemIdx) => (
-                                                                         <div key={itemIdx} className="flex gap-4 items-start group/item">
-                                                                             <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-white/20 transition-all duration-300" />
+                                                                         <div key={itemIdx} className="flex gap-5 items-start group/item">
+                                                                             <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-brand/40 dark:bg-brand/60 ring-4 ring-brand/5 dark:ring-brand/10 transition-all duration-300" />
                                                                              <div className="flex flex-col text-left">
-                                                                                 <h4 className="text-[17px] font-bold text-slate-900 dark:text-white tracking-tight mb-1">
+                                                                                 <h4 className="text-[18px] font-bold text-slate-900 dark:text-white tracking-tight mb-2">
                                                                                      {item.title}
                                                                                  </h4>
-                                                                                 <p className="text-[15px] leading-relaxed text-slate-500 dark:text-slate-400 font-medium">
+                                                                                 <p className="text-[16px] leading-relaxed text-slate-500 dark:text-slate-400 font-medium">
                                                                                      {item.description}
                                                                                  </p>
                                                                              </div>
@@ -406,10 +410,10 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                         </div>
 
                         {/* Footer */}
-                        <div className="px-8 sm:px-10 py-8 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black flex items-center justify-center sticky bottom-0 z-50">
+                        <div className="px-8 sm:px-10 py-7 border-t border-slate-100 dark:border-white/5 bg-white dark:bg-[#121212] flex items-center justify-center sticky bottom-0 z-50">
                              <button
                                  onClick={onClose}
-                                 className="px-14 py-4 bg-brand text-white hover:bg-brand-hover transition-all active:scale-95 text-[13px] font-bold uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-brand/10"
+                                 className="px-16 py-4 bg-slate-900 dark:bg-white text-white dark:text-black hover:opacity-90 transition-all active:scale-95 text-[13px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-black/10"
                              >
                                  {t("Close")}
                              </button>

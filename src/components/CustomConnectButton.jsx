@@ -219,7 +219,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                 style={{ zIndex: 100000 }}
                                                                 className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center overflow-hidden"
                                                             >
-                                                                <motion.div
+                                                                    <motion.div
                                                                     drag="y"
                                                                     dragConstraints={{ top: 0 }}
                                                                     dragElastic={0.15}
@@ -231,7 +231,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                     exit={{ y: '100%' }}
                                                                     transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
                                                                     onClick={(e) => e.stopPropagation()}
-                                                                    className="w-full max-w-[480px] bg-white dark:bg-surface-dark backdrop-blur-2xl rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-20px_60px_rgba(0,0,0,0.5)] border-t border-x border-slate-200/60 dark:border-brand-border overflow-hidden touch-none"
+                                                                    className="w-full max-w-[480px] bg-white dark:bg-[#121212] backdrop-blur-2xl rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-20px_60px_rgba(0,0,0,0.8)] border-t border-x border-slate-200/60 dark:border-white/10 overflow-hidden touch-none"
                                                                 >
                                                                     {/* Drag Handle */}
                                                                     <div className="flex justify-center pt-4 pb-2 active:opacity-50 transition-opacity">
@@ -333,7 +333,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                                 >
                                                                                     <div className={`w-9 h-9 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 shadow-sm
                                                                                 ${isActive ? '' : ''}
-                                                                                ${network.isBase ? 'p-0.5 bg-white' : 'bg-white dark:bg-black p-0'}`}>
+                                                                                ${network.isBase ? 'p-0.5 bg-white' : 'bg-white dark:bg-[#1A1A1A] p-0'}`}>
                                                                                         <img src={network.icon} alt={network.name} className="w-full h-full object-cover" />
                                                                                     </div>
                                                                                     <div className={`flex-1 text-left ${isActive ? 'pl-0.5' : ''}`}>
@@ -409,7 +409,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                         initial={{ opacity: 0, y: 20, scale: 0.95 }}
                                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                                         exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                                                        className="absolute top-full right-0 mt-8 w-80 bg-white dark:bg-surface-dark rounded-3xl shadow-2xl border border-gray-200 dark:border-brand-border p-0 z-[60] overflow-hidden backdrop-blur-xl"
+                                                        className="absolute top-full right-0 mt-8 w-80 bg-white dark:bg-[#121212] rounded-[2.5rem] shadow-2xl border border-gray-200 dark:border-white/10 p-0 z-[60] overflow-hidden backdrop-blur-xl"
                                                     >
                                                         <div className="p-5 border-b border-gray-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
                                                             <div className="flex items-center justify-between mb-4">
@@ -476,7 +476,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                             </div>
                                                         </div>
 
-                                                        <div className="p-2 space-y-0.5 bg-white dark:bg-surface-dark border-b border-gray-100 dark:border-brand-border">
+                                                        <div className="p-2 space-y-0.5 bg-white dark:bg-transparent border-b border-gray-100 dark:border-white/5">
                                                             {[
                                                                 { id: 5042002, name: t('Arc Testnet'), icon: '/icons/arc.png', balance: balances.arcTestnet },
                                                                 { id: 11155111, name: t('Sepolia'), icon: '/icons/eth.png', balance: balances.sepolia },
@@ -495,7 +495,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                     >
                                                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 shadow-sm
                                                                                 ${isActive ? '' : ''}
-                                                                                ${network.isBase ? 'p-0.5 bg-white' : 'bg-white dark:bg-black p-0'}`}>
+                                                                                ${network.isBase ? 'p-0.5 bg-white' : 'bg-white dark:bg-[#1A1A1A] p-0'}`}>
                                                                             <img src={network.icon} alt={network.name} className="w-full h-full object-cover" />
                                                                         </div>
                                                                         <div className={`flex-1 text-left ${isActive ? 'pl-0.5' : ''}`}>
@@ -511,7 +511,7 @@ const CustomConnectButton = ({ connectText, isMobile }) => {
                                                                             </div>
                                                                         </div>
                                                                         {isActive && (
-                                                                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 dark:bg-emerald-500 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-page-dark transition-all duration-500 animate-in zoom-in">
+                                                                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 dark:bg-emerald-500 shadow-lg shadow-emerald-500/30 ring-2 ring-white dark:ring-[#121212] transition-all duration-500 animate-in zoom-in">
                                                                                 <motion.svg
                                                                                     initial={{ pathLength: 0, opacity: 0 }}
                                                                                     animate={{ pathLength: 1, opacity: 1 }}

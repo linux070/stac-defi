@@ -30,8 +30,13 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
     }
   }, [isOpen]);
 
-  const chainList = ['Arc Testnet', 'Sepolia', 'Base Sepolia'];
-  const filteredChains = chainList.filter(chain => chain.toLowerCase().includes(searchQuery.toLowerCase()));
+  const chainList = ['Arc Testnet', 'Ethereum Sepolia', 'Base Sepolia'];
+  const filteredChains = chainList.filter(name => {
+    const query = searchQuery.toLowerCase();
+    const chainCfg = Object.values(NETWORKS).find(n => n.chainName === name || n.chainName.includes(name));
+    const decimalId = chainCfg?.chainId ? parseInt(chainCfg.chainId, 16).toString() : '';
+    return name.toLowerCase().includes(query) || decimalId.includes(query);
+  });
 
   if (typeof document === 'undefined') return null;
 
@@ -39,51 +44,54 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="w-full max-w-[420px] bg-white dark:bg-surface-dark rounded-[28px] overflow-hidden border border-slate-200 dark:border-white/10 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)]"
-            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            className="w-full max-w-[400px] bg-white dark:bg-[#121212] rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/[0.08] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] dark:shadow-[0_40px_80px_-16px_rgba(0,0,0,0.8)] mx-4"
+            initial={{ scale: 0.98, opacity: 0, y: 10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 400 }}
+            exit={{ scale: 0.98, opacity: 0, y: 10 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 400 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* HEADER */}
-            <div className="px-6 py-5 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
-              <h3 className="text-[17px] font-semibold text-slate-900 dark:text-white font-['Satoshi','Inter',sans-serif] tracking-tight">
-                {t('Select Network')}
-              </h3>
+            <div className="px-7 pt-7 pb-4 flex items-center justify-between">
+              <div className="space-y-0.5">
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white font-['Satoshi','Inter',sans-serif] tracking-tight">
+                  {t('Select Network')}
+                </h3>
+                <p className="text-[12px] text-slate-500 dark:text-slate-400">
+                  {t('Choose a chain to bridge assets.')}
+                </p>
+              </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 active:scale-95 transition-all"
+                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* SEARCH */}
-            <div className="px-5 pt-4 pb-2">
-              <div className="relative">
-                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 dark:text-white/20" />
+            <div className="px-5 pb-2">
+              <div className="relative group">
+                <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/20 group-focus-within:text-slate-600 dark:group-focus-within:text-white/40 transition-colors" />
                 <input
                   ref={chainSearchRef}
                   type="text"
-                  placeholder={t('Search networks...')}
+                  placeholder={t('Search network or chain ID')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none focus:border-indigo-500/30 dark:focus:border-indigo-500/20 transition-colors font-mono placeholder:text-slate-300 dark:placeholder:text-white/15"
+                  className="w-full bg-slate-50 dark:bg-transparent border border-slate-200 dark:border-white/[0.08] rounded-xl pl-11 pr-4 py-3 text-[13px] text-slate-900 dark:text-white outline-none focus:border-slate-300 dark:focus:border-white/20 transition-all font-['Satoshi','Inter',sans-serif] placeholder:text-slate-400 dark:placeholder:text-white/40"
                 />
               </div>
             </div>
 
             {/* NETWORK LIST */}
-            <div className="px-3 pb-4 pt-1">
-              <div className="space-y-0.5">
+            <div className="px-3 pb-2 pt-4 max-h-[480px] overflow-y-auto custom-scrollbar">
+              <div className="px-3 space-y-1.5">
                 {filteredChains.map((name, i) => {
                   const isExcluded = name === exclude;
                   const isSelected = name === selectedChain;
@@ -95,59 +103,62 @@ const ChainSelector = ({ isOpen, onClose, selectedChain, onSelect, exclude }) =>
                     <motion.button
                       key={name}
                       disabled={isExcluded}
-                      initial={{ opacity: 0, y: 12 }}
+                      initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        delay: 0.05 + (i * 0.04),
-                        type: 'spring',
-                        damping: 22,
-                        stiffness: 350
-                      }}
+                      transition={{ delay: i * 0.03 }}
                       onClick={() => !isExcluded && (onSelect(name), onClose())}
-                      className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all duration-150 ${
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${
                         isSelected
-                          ? 'bg-indigo-50/60 dark:bg-indigo-500/10 ring-1 ring-inset ring-indigo-500/20'
+                          ? 'bg-slate-100 dark:bg-white/[0.06] border border-slate-200/50 dark:border-white/[0.08]'
                           : isExcluded
-                            ? 'opacity-35 cursor-not-allowed'
-                            : 'hover:bg-slate-50 dark:hover:bg-white/[0.03] active:scale-[0.99]'
+                            ? 'opacity-30 cursor-not-allowed'
+                            : 'hover:bg-slate-50 dark:hover:bg-white/[0.03] border border-transparent'
                       }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden ${
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden transition-all duration-300 ${
                           isSelected
-                            ? 'bg-white dark:bg-white/10 border border-indigo-200 dark:border-indigo-500/30'
-                            : 'bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10'
+                            ? 'bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/20 shadow-sm'
+                            : 'bg-white dark:bg-white/5 border border-slate-200/50 dark:border-white/10 group-hover:border-slate-300 dark:group-hover:border-white/20'
                         }`}>
                           <img
                             src={chainCfg?.iconUrl}
                             alt={name}
-                            className="w-5 h-5 object-contain"
+                            className={`w-5 h-5 object-contain transition-transform duration-300 group-hover:scale-110 shrink-0 ${isSelected ? 'scale-110' : ''}`}
                           />
                         </div>
-                        <div className="text-left min-w-0">
-                          <p className={`text-[14px] font-['Satoshi','Inter',sans-serif] font-medium tracking-tight truncate ${
-                            isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-900 dark:text-white'
-                          }`}>
+                        <div className="text-left min-w-0 flex flex-col justify-center">
+                          <p className={`text-[14px] font-semibold font-['Satoshi','Inter',sans-serif] tracking-tight text-slate-900 dark:text-white leading-tight`}>
                             {name}
                           </p>
-                          <p className="text-[9px] text-slate-300 font-mono uppercase tracking-[0.15em] mt-0.5">
-                            {chainCfg?.isMainnet ? 'Mainnet' : 'Testnet'}
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium font-mono mt-0.5">
+                            {chainCfg?.chainId ? `ID: ${parseInt(chainCfg.chainId, 16)}` : 'N/A'}
                           </p>
                         </div>
                       </div>
 
-                      {/* RIGHT INDICATOR */}
-                      {isSelected ? (
-                        <Check size={16} className="text-indigo-500 shrink-0" strokeWidth={2.5} />
-                      ) : isExcluded ? (
-                        <span className="text-[9px] font-mono text-slate-300 uppercase tracking-widest shrink-0">
-                          {t('Active')}
-                        </span>
-                      ) : null}
+                      <div className="flex items-center gap-3">
+                        {chainCfg?.tag && chainCfg.tag !== 'Mainnet' && chainCfg.tag !== 'L2' && chainCfg.tag !== 'L1' && (
+                          <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-600 uppercase tracking-widest bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 rounded-md">
+                            {chainCfg.tag}
+                          </span>
+                        )}
+                      </div>
                     </motion.button>
                   );
                 })}
               </div>
+            </div>
+
+            {/* FOOTER */}
+            <div className="mt-4 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.01] px-6 py-5 flex items-center justify-center gap-2">
+              <Info size={14} className="text-slate-400" />
+              <p className="text-[12px] text-slate-500 dark:text-slate-400 font-['Satoshi','Inter',sans-serif]">
+                {t("Don't see your network?")}{' '}
+                <button className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">
+                  {t('Add Custom Chain')}
+                </button>
+              </p>
             </div>
           </motion.div>
         </motion.div>
@@ -383,7 +394,7 @@ const Bridge = () => {
                   <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-500 dark:text-slate-300 px-1">{t('Source')}</label>
                   <button
                     onClick={() => !isBridgeInProgress && setShowChainSelector('from')}
-                    className="w-full flex items-center justify-between px-3.5 sm:px-4.5 py-3 sm:py-3.5 group bg-slate-50/50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all active:scale-[0.98] focus:ring-1 focus:ring-indigo-500/50 outline-none h-11 sm:h-12"
+                    className="w-full flex items-center justify-between px-3.5 sm:px-4.5 py-3 sm:py-3.5 group bg-slate-50/50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/[0.08] rounded-2xl hover:border-slate-300 dark:hover:border-white/20 transition-all active:scale-[0.98] outline-none h-11 sm:h-12"
                   >
                     <div className="flex items-center gap-2 sm:gap-2.5 overflow-hidden">
                       <img
@@ -393,7 +404,7 @@ const Bridge = () => {
                       />
                       <span className="text-[13px] sm:text-sm font-['Satoshi','Inter',sans-serif] text-slate-900 dark:text-white truncate">{fromChain}</span>
                     </div>
-                    <ChevronDown size={10} className="text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0" />
+                    <ChevronDown size={10} className="text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
                   </button>
                 </div>
 
@@ -427,7 +438,7 @@ const Bridge = () => {
                   <label className="text-[9px] sm:text-[10px] uppercase font-mono tracking-[0.2em] text-slate-500 dark:text-slate-300 px-1">{t('Destination')}</label>
                   <button
                     onClick={() => !isBridgeInProgress && setShowChainSelector('to')}
-                    className="w-full flex items-center justify-between px-3.5 sm:px-4.5 py-3 sm:py-3.5 group bg-slate-50/50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all active:scale-[0.98] focus:ring-1 focus:ring-indigo-500/50 outline-none"
+                    className="w-full flex items-center justify-between px-3.5 sm:px-4.5 py-3 sm:py-3.5 group bg-slate-50/50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/[0.08] rounded-2xl hover:border-slate-300 dark:hover:border-white/20 transition-all active:scale-[0.98] outline-none"
                   >
                     <div className="flex items-center gap-2 sm:gap-2.5 overflow-hidden">
                       <img

@@ -58,7 +58,7 @@ const SwapFailedModal = ({ isOpen, onClose, error }) => {
                     onClick={onClose}
                 >
                     <motion.div
-                        className="w-full max-w-[420px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-surface-dark border border-slate-200/60 dark:border-white/10 rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] relative shelf-inner"
+                        className="w-full max-w-[420px] max-h-[calc(100dvh-40px)] overflow-y-auto custom-scrollbar bg-white dark:bg-[#121212] border border-slate-200/60 dark:border-white/10 rounded-[24px] sm:rounded-[32px] overflow-hidden shadow-2xl dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] relative shelf-inner"
                         variants={modalVariants}
                         initial="hidden"
                         animate="visible"

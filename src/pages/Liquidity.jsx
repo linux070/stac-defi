@@ -6,30 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { LucideZap, LucideWaves, LucideSprout, LucideCrown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const containerVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.8,
-      ease: [0.16, 1, 0.3, 1],
-      staggerChildren: 0.1,
-    },
-  },
-};
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.16, 1, 0.3, 1],
-    },
-  },
-};
 
 const Liquidity = () => {
   const { t } = useTranslation();
@@ -42,38 +19,28 @@ const Liquidity = () => {
   ];
 
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 py-12 md:py-24 relative overflow-hidden">
+    <div className="w-full flex flex-col items-center px-6 py-12 md:py-24 lg:py-32 relative overflow-hidden">
       
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="max-w-4xl w-full z-10"
-      >
+      <div className="max-w-4xl w-full z-10">
         {/* Main Card */}
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-white dark:bg-page-dark p-8 md:p-16 border border-slate-200 dark:border-white/5 shadow-sm">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-white dark:bg-[#121212] p-8 md:p-16 border border-slate-200 dark:border-white/5 shadow-sm">
 
           <div className="flex flex-col items-center">
             {/* ── TYPOGRAPHY ── */}
-            <motion.h1 
-              variants={itemVariants}
-              className="text-3xl md:text-5xl font-['Satoshi','Inter',sans-serif] font-bold tracking-tighter text-slate-900 dark:text-white text-center mb-6 max-w-lg leading-[1.1]"
-            >
+            <h1 className="text-3xl md:text-5xl font-['Satoshi','Inter',sans-serif] font-bold tracking-tighter text-slate-900 dark:text-white text-center mb-6 max-w-lg leading-[1.1]">
               {t('liquidity.poolsLaunchingSoon')}
-            </motion.h1>
+            </h1>
 
 
 
             {/* ── BENTO FEATURE GRID ── */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full pt-12 border-t border-slate-100 dark:border-white/5">
               {features.map((item, i) => (
-                <motion.div 
+                <div 
                   key={item.label}
-                  custom={i}
-                  variants={itemVariants}
                   className="flex flex-col items-center gap-4 group/item"
                 >
-                  <div className={`p-4 rounded-2xl ${item.color} ring-1 ring-black/[0.03] dark:ring-white/5 transition-all duration-500 group-hover/item:scale-110 group-hover/item:-translate-y-1`}>
+                  <div className={`p-4 rounded-2xl ${item.color} ring-1 ring-black/[0.03] dark:ring-white/5 transition-all duration-500 group-hover/item:scale-110`}>
                     <item.icon size={22} strokeWidth={2} />
                   </div>
                   <div className="flex flex-col items-center">
@@ -81,12 +48,12 @@ const Liquidity = () => {
                       {item.label}
                     </span>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
