@@ -314,13 +314,6 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                  <span className={`text-[11px] font-medium transition-colors ${isActive ? 'text-slate-500 dark:text-slate-500' : 'text-slate-400 dark:text-slate-600'}`}>
                                                      {version.date}
                                                  </span>
-                                                 {isActive && (
-                                                     <motion.div 
-                                                         layoutId="activeIndicator"
-                                                         className="absolute left-0 top-4 bottom-4 w-1 bg-brand rounded-full"
-                                                         initial={false}
-                                                     />
-                                                 )}
                                              </button>
                                         );
                                     })}
@@ -386,7 +379,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                                                                  <div className="space-y-8 md:space-y-10">
                                                                      {version.items.map((item, itemIdx) => (
                                                                          <div key={itemIdx} className="flex gap-5 items-start group/item">
-                                                                             <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-brand/40 dark:bg-brand/60 ring-4 ring-brand/5 dark:ring-brand/10 transition-all duration-300" />
+                                                                             <div className="mt-2.5 w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-white/20 ring-4 ring-slate-50 dark:ring-white/[0.02] transition-all duration-300" />
                                                                              <div className="flex flex-col text-left">
                                                                                  <h4 className="text-[18px] font-bold text-slate-900 dark:text-white tracking-tight mb-2">
                                                                                      {item.title}
