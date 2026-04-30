@@ -581,129 +581,140 @@ const Swap = () => {
               </div>
             </div>
 
-            {/* COMPACT QUOTE DETAILS (Integrated Position) */}
-            {bestQuote && parseFloat(fromAmount) > 0 && (
+            {/* PREMIUM SWAP DETAILS DISCLOSURE */}
+            {(bestQuote || parseFloat(fromAmount) > 0) && (
               <div className="px-1">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowQuoteDetails(!showQuoteDetails);
                   }}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-50/50 dark:bg-white/[0.04] border border-slate-100 dark:border-white/5 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors font-geist text-[12px] text-slate-500 dark:text-slate-300 group"
+                  className="w-full flex items-center justify-between px-4 py-3.5 bg-slate-50/50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 rounded-2xl hover:bg-slate-100/50 dark:hover:bg-white/[0.06] transition-all duration-300 group"
                 >
-                  <div className="flex items-center gap-2">
-                    <Info size={14} className="opacity-70 group-hover:opacity-100 transition-opacity" />
-                    <span>Swap Details</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-white dark:bg-white/5 shadow-sm border border-slate-100 dark:border-white/10 flex items-center justify-center">
+                      <Info size={12} className="text-slate-400 dark:text-slate-500 group-hover:text-brand transition-colors" />
+                    </div>
+                    <span className="text-[12px] font-semibold text-slate-600 dark:text-slate-300 font-['Satoshi','Inter',sans-serif] tracking-tight">Swap Details</span>
                   </div>
-                  <ChevronDown size={14} className={`transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${showQuoteDetails ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center gap-3">
+                    {!showQuoteDetails && swapState.price && (
+                      <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-md">
+                        1 {fromToken} ≈ {parseFloat(swapState.price).toFixed(4)} {toToken}
+                      </span>
+                    )}
+                    <ChevronDown size={14} className={`text-slate-400 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${showQuoteDetails ? 'rotate-180' : ''}`} />
+                  </div>
                 </button>
 
                 <AnimatePresence>
                   {showQuoteDetails && (
                     <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="overflow-hidden"
+                      initial={{ opacity: 0, height: 0, y: -10 }}
+                      animate={{ opacity: 1, height: 'auto', y: 0 }}
+                      exit={{ opacity: 0, height: 0, y: -10 }}
+                      transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+                      className="overflow-visible"
                     >
-                      <div className="pt-3 pb-5 px-4 space-y-4">
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-300">
-                          <span className="font-geist">Circle Fee</span>
-                          <span className="font-mono text-slate-700 dark:text-white">{swapState.isAppKitRoute ? '0.02%' : '0.02%'}</span>
-                        </div>
+                      <div className="pt-3 pb-2 space-y-1">
+                        <div className="p-4 rounded-2xl bg-slate-50/30 dark:bg-white/[0.02] border border-slate-100/50 dark:border-white/[0.03] space-y-3.5">
 
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-300">
-                          <span className="font-geist">Stac Fee</span>
-                          <span className="font-mono text-slate-700 dark:text-white">$0.00 <span className="opacity-50">(Free)</span></span>
-                        </div>
+                          {/* Stac Fee Row (Restored Text) */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-geist text-slate-500 dark:text-slate-400">Stac Fee</span>
+                            <span className="text-[11px] font-mono text-slate-700 dark:text-white"><span className="opacity-50">Free</span></span>
+                          </div>
 
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-300">
-                          <span className="font-geist">Price Impact</span>
-                          <span className={`font-mono ${parseFloat(swapState.priceImpact) > 2 ? 'text-amber-500' : 'text-slate-700 dark:text-white'}`}>
-                            {swapState.priceImpact || '< 0.01'}%
-                          </span>
-                        </div>
+                          {/* Price Impact Row (Restored Text) */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-geist text-slate-500 dark:text-slate-400">Price Impact</span>
+                            <span className={`text-[11px] font-mono ${parseFloat(swapState.priceImpact) > 2 ? 'text-amber-500' : 'text-slate-700 dark:text-white'}`}>
+                              {swapState.priceImpact || '< 0.01'}%
+                            </span>
+                          </div>
 
-                        <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-300 relative">
-                          <span className="font-geist">Slippage Tolerance</span>
-                          <div className="relative">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowSlippage(!showSlippage);
-                              }}
-                              className="flex items-center gap-1 pl-2.5 pr-2 py-1 bg-slate-50 dark:bg-white/[0.04] rounded-lg border border-slate-200/80 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/15 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-all duration-200 font-mono text-[11px] text-slate-700 dark:text-slate-200 group"
-                            >
-                              {slippage}%
-                              <ChevronDown size={12} className={`text-slate-300 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] ${showSlippage ? 'rotate-180' : ''}`} />
-                            </button>
+                          {/* Slippage Row (UNTOUCHED LOGIC) */}
+                          <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between relative">
+                            <span className="text-[11px] font-geist text-slate-500 dark:text-slate-400">Slippage Tolerance</span>
+                            <div className="relative">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowSlippage(!showSlippage);
+                                }}
+                                className="flex items-center gap-1.5 pl-2.5 pr-2 py-1 bg-white dark:bg-white/[0.06] rounded-lg border border-slate-200/80 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/15 hover:bg-slate-50 dark:hover:bg-white/[0.1] transition-all duration-200 font-mono text-[11px] text-slate-700 dark:text-slate-200 shadow-sm"
+                              >
+                                {slippage}%
+                                <ChevronDown size={12} className={`text-slate-300 transition-transform duration-300 ${showSlippage ? 'rotate-180' : ''}`} />
+                              </button>
 
-                            <AnimatePresence>
-                              {showSlippage && (
-                                <motion.div
-                                  initial={{ opacity: 0, scale: 0.98, y: 5 }}
-                                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                                  exit={{ opacity: 0, scale: 0.98, y: 5 }}
-                                  transition={{ duration: 0.15 }}
-                                  className="absolute right-0 bottom-full mb-2 z-[101] w-56 bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 rounded-xl shadow-xl p-3 space-y-3"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <div className="grid grid-cols-3 gap-1.5">
-                                    {[0.1, 0.5, 1.0].map((val) => (
-                                      <button
-                                        key={val}
-                                        onClick={() => {
-                                          setSlippage(val);
-                                          setShowSlippage(false);
-                                        }}
-                                        className={`py-1.5 rounded-lg text-[10.5px] font-mono transition-colors ${slippage === val
-                                          ? 'bg-[#6366F1] text-white shadow-sm'
-                                          : 'bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-100 dark:border-white/[0.02]'
-                                          }`}
-                                      >
-                                        {val}%
-                                      </button>
-                                    ))}
-                                  </div>
+                              <AnimatePresence>
+                                {showSlippage && (
+                                  <motion.div
+                                    initial={{ opacity: 0, scale: 0.98, y: -5 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.98, y: -5 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="absolute right-0 top-full mt-2 z-[101] w-56 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl p-3 space-y-3"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <div className="grid grid-cols-3 gap-1.5">
+                                      {[0.1, 0.5, 1.0].map((val) => (
+                                        <button
+                                          key={val}
+                                          onClick={() => {
+                                            setSlippage(val);
+                                            setShowSlippage(false);
+                                          }}
+                                          className={`py-1.5 rounded-lg text-[10.5px] font-mono transition-colors ${slippage === val
+                                            ? 'bg-[#6366F1] text-white shadow-sm'
+                                            : 'bg-slate-50 dark:bg-white/5 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-100 dark:border-white/[0.02]'
+                                            }`}
+                                        >
+                                          {val}%
+                                        </button>
+                                      ))}
+                                    </div>
 
-                                  <div className="space-y-0 text-left">
-                                    <div className="relative group/slip">
-                                      <input
-                                        type="text"
-                                        inputMode="decimal"
-                                        placeholder="Custom"
-                                        onChange={(e) => {
-                                          const val = e.target.value.replace(/[^0-9.]/g, '');
-                                          const num = parseFloat(val);
-                                          if (!isNaN(num) && num >= 0 && num <= 50) setSlippage(num);
-                                        }}
-                                        className={`w-full bg-slate-50 dark:bg-black/40 border rounded-xl pl-3 py-2 text-[12px] font-mono outline-none transition-all text-slate-800 dark:text-slate-200 placeholder:text-slate-300 dark:placeholder:text-slate-600 ${parseFloat(slippage) > 1.0 ? 'pr-12 border-amber-500/50 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10' : 'pr-8 border-slate-200 dark:border-white/10 focus:border-[#6366F1] dark:focus:border-indigo-500 focus:ring-2 focus:ring-[#6366F1]/10 dark:focus:ring-indigo-500/10'}`}
-                                      />
-                                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                                        <AnimatePresence>
-                                          {parseFloat(slippage) > 1.0 && (
-                                            <div className="relative flex items-center">
-                                              <AlertTriangle size={14} strokeWidth={2.5} className="text-amber-500" />
-                                              <motion.div
-                                                initial={{ opacity: 0, scale: 0.9, y: -5 }}
-                                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                exit={{ opacity: 0, scale: 0.9, y: -5 }}
-                                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                                                className="absolute w-[200px] right-[-12px] top-full mt-[14px] bg-amber-50 dark:bg-[#1a1306] text-amber-900 dark:text-amber-500 border border-amber-500/30 rounded-xl p-3 text-[11px] font-geist font-medium leading-[1.35] shadow-[0_20px_40px_-15px_rgba(245,158,11,0.2)] dark:shadow-[0_20px_40px_-15px_rgba(245,158,11,0.1)] z-50 pointer-events-none"
-                                              >
-                                                Caution: High slippage increases your risk of frontrunning and unfavorable rates.
-                                                <div className="absolute bottom-full right-4 -mb-[5px] w-2.5 h-2.5 bg-amber-50 dark:bg-[#1a1306] border-t border-l border-amber-500/30 rotate-45 transform"></div>
-                                              </motion.div>
-                                            </div>
-                                          )}
-                                        </AnimatePresence>
-                                        <span className={`text-[11px] font-mono transition-colors ${parseFloat(slippage) > 1.0 ? 'text-amber-500' : 'text-slate-300 group-focus-within/slip:text-[#6366F1]'}`}>%</span>
+                                    <div className="space-y-0 text-left">
+                                      <div className="relative group/slip">
+                                        <input
+                                          type="text"
+                                          inputMode="decimal"
+                                          placeholder="Custom"
+                                          onChange={(e) => {
+                                            const val = e.target.value.replace(/[^0-9.]/g, '');
+                                            const num = parseFloat(val);
+                                            if (!isNaN(num) && num >= 0 && num <= 50) setSlippage(num);
+                                          }}
+                                          className={`w-full bg-slate-50 dark:bg-black/40 border rounded-xl pl-3 py-2 text-[12px] font-mono outline-none transition-all text-slate-800 dark:text-slate-200 placeholder:text-slate-300 dark:placeholder:text-slate-600 ${parseFloat(slippage) > 1.0 ? 'pr-12 border-amber-500/50 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10' : 'pr-8 border-slate-200 dark:border-white/10 focus:border-[#6366F1] dark:focus:border-indigo-500 focus:ring-2 focus:ring-[#6366F1]/10 dark:focus:ring-indigo-500/10'}`}
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                                          <AnimatePresence>
+                                            {parseFloat(slippage) > 1.0 && (
+                                              <div className="relative flex items-center">
+                                                <AlertTriangle size={14} strokeWidth={2.5} className="text-amber-500" />
+                                                <motion.div
+                                                  initial={{ opacity: 0, scale: 0.9, y: -5 }}
+                                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                  exit={{ opacity: 0, scale: 0.9, y: -5 }}
+                                                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                                  className="absolute w-[200px] right-[-12px] top-full mt-[14px] bg-amber-50 dark:bg-[#1a1306] text-amber-900 dark:text-amber-500 border border-amber-500/30 rounded-xl p-3 text-[11px] font-geist font-medium leading-[1.35] shadow-[0_20px_40px_-15px_rgba(245,158,11,0.2)] dark:shadow-[0_20px_40px_-15px_rgba(245,158,11,0.1)] z-50 pointer-events-none"
+                                                >
+                                                  Caution: High slippage increases your risk of frontrunning and unfavorable rates.
+                                                  <div className="absolute bottom-full right-4 -mb-[5px] w-2.5 h-2.5 bg-amber-50 dark:bg-[#1a1306] border-t border-l border-amber-500/30 rotate-45 transform"></div>
+                                                </motion.div>
+                                              </div>
+                                            )}
+                                          </AnimatePresence>
+                                          <span className={`text-[11px] font-mono transition-colors ${parseFloat(slippage) > 1.0 ? 'text-amber-500' : 'text-slate-300 group-focus-within/slip:text-[#6366F1]'}`}>%</span>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
                           </div>
                         </div>
                       </div>

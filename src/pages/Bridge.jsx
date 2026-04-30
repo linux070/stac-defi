@@ -545,7 +545,22 @@ const Bridge = () => {
                   {status === 'disconnected' ? (
                     <><Wallet size={16} sm:size={18} /><span>Connect Wallet</span></>
                   ) : bridgeLoading || isBridgeInProgress ? (
-                    <><Loader size={16} sm:size={18} className="animate-spin text-indigo-500 shadow-brand" /><span>{t('Bridging')}...</span></>
+                    <div className="flex items-center gap-3">
+                      <span className="font-geist">
+                        {state.step === 'approving' ? t('Approving') : 
+                         state.step === 'switching-network' ? t('Switching') :
+                         state.step === 'burning' ? t('Burning') :
+                         state.step === 'forwarding' ? t('Forwarding') :
+                         state.step === 'minting' ? t('Minting') :
+                         state.step === 'fetching-attestation' ? t('Attesting') :
+                         t('Bridging')}
+                      </span>
+                      <div className="flex gap-1">
+                        <motion.div animate={{ opacity: [0.2, 1, 0.2] }} transition={{ repeat: Infinity, duration: 0.8, times: [0, 0.5, 1] }} className="w-1.5 h-1.5 rounded-full bg-white" />
+                        <motion.div animate={{ opacity: [0.2, 1, 0.2] }} transition={{ repeat: Infinity, duration: 0.8, times: [0, 0.5, 1], delay: 0.15 }} className="w-1.5 h-1.5 rounded-full bg-white" />
+                        <motion.div animate={{ opacity: [0.2, 1, 0.2] }} transition={{ repeat: Infinity, duration: 0.8, times: [0, 0.5, 1], delay: 0.3 }} className="w-1.5 h-1.5 rounded-full bg-white" />
+                      </div>
+                    </div>
                   ) : (
                     <span>Bridge</span>
                   )}

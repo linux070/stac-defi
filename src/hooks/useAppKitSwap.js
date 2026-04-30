@@ -19,7 +19,7 @@ import { createPublicClient, http, fallback } from 'viem';
 import { AppKit } from '@circle-fin/app-kit';
 import { createViemAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
 import { getKitKey } from '../utils/kitKey';
-import { CHAINS } from '../config/constants';
+import { CHAINS, DEVELOPER_FEE_RECIPIENT } from '../config/constants';
 import { logger } from '../utils/logger';
 
 // --- Constants ---
@@ -169,8 +169,11 @@ export function useAppKitSwap() {
           amountIn: String(amountIn),
           config: {
             kitKey,
-            maxSlippage: Number(slippage)
-            // No customFee applied (0.00% recipient fee). Developer requested a completely free platform transaction.
+            maxSlippage: Number(slippage),
+            developerFee: {
+              recipient: DEVELOPER_FEE_RECIPIENT,
+              percentage: 0
+            }
           },
         });
 

@@ -8,6 +8,10 @@ export const SUBGRAPH_URL = "/api/subgraph";
 // The Official USDC Address on Arc (Do not change)
 export const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
 
+// Developer Fee Recipient
+export const DEVELOPER_FEE_RECIPIENT = "0x7fdfEb80A18BC30604090DeFB5Bb53206e7E2c4a";
+
+
 
 
 export const DECIMALS = {
