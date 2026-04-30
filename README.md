@@ -21,9 +21,8 @@ Stac is a high-performance decentralized application (dApp) engineered for the A
 * **Transparent Security**: Built on a zero-trust model to ensure liquidity provider safety and protocol stability.
 
 ### 4. Advanced Transaction Ledger
-* **Persisted Activity**: Local-first storage utilizing IndexedDB ensures your transaction history remains accessible across sessions.
-* **Global vs. Personal Views**: Toggle between your personal trade history and a real-time global network activity feed.
-* **Resilient Recovery**: Proprietary recovery protocols that reconstruct transaction history from on-chain data in the event of local data loss.
+* **Persisted Activity**: Local-first storage utilizing IndexedDB ensures your personal transaction history remains accessible across sessions.
+* **Resilient Data**: Built-in persistence ensures your trade history survives browser refreshes and cache clears without centralized tracking.
 
 ### 5. Premium UI/UX Design
 * **Real-Black Aesthetics**: A curated, high-contrast dark mode designed for professional environments.

@@ -8,7 +8,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, gql } from 'urql';
 import {
   Zap, ArrowRight, Code2, Layers, Droplets, ArrowRightLeft,
   ArrowUp, RefreshCw, ChevronDown
@@ -18,15 +17,6 @@ import { formatCurrency, formatNumber } from '../utils/blockchain';
 import { useTheme } from '../hooks/useTheme';
 import StacLogo from '../components/StacLogo';
 
-const GET_GLOBAL_STATS = gql`
-  query GetGlobalStats {
-    globalStat(id: "1") {
-      totalValueProcessedUSD
-      totalTransactions
-      activeUsersCount
-    }
-  }
-`;
 
 
 // =============================================================================
@@ -189,21 +179,14 @@ const Home = ({ setActiveTab }) => {
   const { t } = useTranslation();
   const { darkMode } = useTheme();
 
-  // Fetch global stats directly from the indexer
-  const [{ data: statsData, fetching: statsLoading }] = useQuery({
-    query: GET_GLOBAL_STATS,
-    requestPolicy: 'cache-and-network',
-  });
-
   // ─── Stats object ──────────────────────────────────────────────────────────
   const stats = useMemo(() => {
-    const s = statsData?.globalStat || {};
     return {
-      tvl: { value: parseFloat(s.totalValueProcessedUSD || '0'), change: 0, trend: 'up' },
-      users: { value: parseInt(s.activeUsersCount || '0'), change: 0, trend: 'stable' },
-      transactions: { value: parseInt(s.totalTransactions || '0'), change: 0, trend: 'stable' },
+      tvl: { value: 0, change: 0, trend: 'up' },
+      users: { value: 0, change: 0, trend: 'stable' },
+      transactions: { value: 0, change: 0, trend: 'stable' },
     };
-  }, [statsData]);
+  }, []);
 
   // ─── Interactive Feature State ──────────────────────────────────────────
   // Used in the "Why Arc Network" tabbed feature showcase.

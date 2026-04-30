@@ -106,14 +106,6 @@ const config = getDefaultConfig({
 
 const queryClient = new QueryClient();
 
-import { Client, cacheExchange, fetchExchange, Provider as UrqlProvider } from 'urql';
-import { SUBGRAPH_URL } from './config/constants';
-
-const urqlClient = new Client({
-  url: SUBGRAPH_URL,
-  exchanges: [cacheExchange, fetchExchange],
-});
-
 const rootElement = document.getElementById('root');
 if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
@@ -121,15 +113,13 @@ if (rootElement) {
       <GlobalErrorBoundary>
         <WagmiProvider config={config} reconnectOnMount={false}>
           <QueryClientProvider client={queryClient}>
-            <UrqlProvider value={urqlClient}>
-              <TransactionProvider>
+            <TransactionProvider>
                 <RainbowKitProvider avatar={CustomAvatar}>
                   <BrowserRouter>
                     <App />
                   </BrowserRouter>
                 </RainbowKitProvider>
               </TransactionProvider>
-            </UrqlProvider>
           </QueryClientProvider>
         </WagmiProvider>
       </GlobalErrorBoundary>

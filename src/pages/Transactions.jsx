@@ -1,7 +1,7 @@
 import { useState, useMemo, memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAccount } from 'wagmi';
-import { useQuery, gql } from 'urql';
+import { getItem } from '../utils/indexedDB';
 import { 
   Search, 
   ChevronDown, 
@@ -17,76 +17,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { timeAgo, formatAddress, copyToClipboard, getExplorerUrl } from '../utils/blockchain';
 import '../styles/transactions-styles.css';
 
-// =============================================================================
-// GRAPHQL QUERIES
-// =============================================================================
-
-const GET_GLOBAL_TRANSACTIONS = gql`
-  query GetGlobalTransactions {
-    bridgeTransactions(
-      orderBy: blockTimestamp
-      orderDirection: desc
-      first: 50
-    ) {
-      id
-      sender
-      sourceChain
-      destinationChain
-      amount
-      status
-      blockTimestamp
-    }
-    swapTransactions(
-      where: { chain: "Arc Testnet" }
-      orderBy: blockTimestamp
-      orderDirection: desc
-      first: 50
-    ) {
-      id
-      sender
-      tokenIn
-      tokenOut
-      amountIn
-      amountOut
-      chain
-      status
-      blockTimestamp
-    }
-  }
-`;
-
-const GET_USER_TRANSACTIONS = gql`
-  query GetUserTransactions($userAddress: String!) {
-    bridgeTransactions(
-      where: { sender: $userAddress }
-      orderBy: blockTimestamp
-      orderDirection: desc
-    ) {
-      id
-      sender
-      sourceChain
-      destinationChain
-      amount
-      status
-      blockTimestamp
-    }
-    swapTransactions(
-      where: { sender: $userAddress, chain: "Arc Testnet" }
-      orderBy: blockTimestamp
-      orderDirection: desc
-    ) {
-      id
-      sender
-      tokenIn
-      tokenOut
-      amountIn
-      amountOut
-      chain
-      status
-      blockTimestamp
-    }
-  }
-`;
 
 // =============================================================================
 // SUB-COMPONENTS
@@ -192,34 +122,36 @@ const Transactions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 10;
 
-  // Determine which query to use
-  const isSearchQueryAddress = searchQuery.startsWith('0x') && searchQuery.length === 42;
-  const targetUserAddress = isSearchQueryAddress ? searchQuery.toLowerCase() : null;
-  const isAddressFiltered = !!targetUserAddress;
+  const [localTxs, setLocalTxs] = useState([]);
+  const [isFetching, setIsFetching] = useState(true);
 
-  const [result] = useQuery({
-    query: isAddressFiltered ? GET_USER_TRANSACTIONS : GET_GLOBAL_TRANSACTIONS,
-    variables: isAddressFiltered ? { userAddress: targetUserAddress } : {}
-  });
+  // Fetch from IndexedDB
+  const refreshTransactions = async () => {
+    setIsFetching(true);
+    const txs = await getItem('myTransactions') || [];
+    setLocalTxs(txs);
+    setIsFetching(false);
+  };
 
-  const { data, fetching } = result;
+  useEffect(() => {
+    refreshTransactions();
+    // Listen for new transactions
+    window.addEventListener('bridgeTransactionSaved', refreshTransactions);
+    return () => window.removeEventListener('bridgeTransactionSaved', refreshTransactions);
+  }, []);
 
-  // Merge, Filter and Sort Transactions
+  const fetching = isFetching;
+
   const filteredTxs = useMemo(() => {
-    if (!data) return [];
-    
-    let combined = [
-      ...(data.bridgeTransactions || []).map(tx => ({ ...tx, type: 'Bridge', timestamp: parseInt(tx.blockTimestamp) * 1000 })),
-      ...(data.swapTransactions || []).map(tx => ({ ...tx, type: 'Swap', timestamp: parseInt(tx.blockTimestamp) * 1000 }))
-    ];
+    let combined = [...localTxs];
 
     // Status Filter
     if (statusFilter !== 'all') {
       combined = combined.filter(tx => (tx.status || 'success').toLowerCase() === statusFilter);
     }
 
-    // Search Query (Text search for non-address queries)
-    if (searchQuery && !isSearchQueryAddress) {
+    // Search Query (Text search)
+    if (searchQuery) {
       const q = searchQuery.toLowerCase();
       combined = combined.filter(tx => 
         tx.id.toLowerCase().includes(q) || 
@@ -242,7 +174,7 @@ const Transactions = () => {
     }
 
     return combined.sort((a, b) => b.timestamp - a.timestamp);
-  }, [data, statusFilter, searchQuery, isSearchQueryAddress, dateRangeFilter]);
+  }, [localTxs, statusFilter, searchQuery, dateRangeFilter]);
 
   const paginatedTxs = useMemo(() => {
     const start = (currentPage - 1) * transactionsPerPage;

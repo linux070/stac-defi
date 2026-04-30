@@ -3,7 +3,6 @@
 export const APP_NAME = 'Stac';
 export const APP_DESCRIPTION = 'Experience direct on-chain interactions, seamless swapping, and cross-chain bridging, all powered by the Arc App Kit.';
 export const APP_KIT_ADDRESS = "0x3200000000000000000000000000000000000000"; // App Kit / Token Messenger on Arc
-export const SUBGRAPH_URL = "/api/subgraph";
 
 // The Official USDC Address on Arc (Do not change)
 export const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";

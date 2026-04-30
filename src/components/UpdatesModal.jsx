@@ -29,7 +29,7 @@ const UpdatesModal = ({ isOpen, onClose }) => {
                 },
                 {
                     title: "Ledger Persistence",
-                    description: "Unified global and personal history with resilient subgraph-powered recovery.",
+                    description: "Unified activity history with resilient IndexedDB-powered recovery.",
                 },
                 {
                     title: "AppKit Stability",
