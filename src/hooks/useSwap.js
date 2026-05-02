@@ -6,6 +6,7 @@ import { TOKENS } from '../config/networks';
 
 import { useAppKitSwap, isAppKitSwapSupported } from './useAppKitSwap';
 import { logger } from '../utils/logger';
+import { transactionStore } from '../utils/transactionStore';
 
 const AGGREGATOR_SOURCES = [
     {
@@ -247,8 +248,6 @@ export function useSwap(
     useEffect(() => {
         if (onChainSwapSuccess && receipt && !isAppKitRoute) {
             // Find the Transfer event for the toToken received by the user
-            // Topic[0]: 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef (Transfer)
-            // Topic[2]: User address (padded)
             const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
             const userTopic = userAddress?.toLowerCase().replace('0x', '0x000000000000000000000000');
             
@@ -269,6 +268,24 @@ export function useSwap(
             }
         }
     }, [onChainSwapSuccess, receipt, isAppKitRoute, userAddress, toTokenAddress, decimalsOut]);
+
+    // Add transaction to store immediately when hash is available (On-Chain)
+    useEffect(() => {
+        if (swapHash && !isAppKitRoute) {
+            transactionStore.addTransaction({
+                id: swapHash,
+                type: 'Swap',
+                status: 'pending',
+                sender: userAddress,
+                tokenIn: fromTokenSymbol,
+                tokenOut: toTokenSymbol,
+                amountIn: amountIn,
+                amountOut: bestQuote?.amountOutFormatted,
+                chain: 'Arc Testnet',
+                timestamp: Date.now()
+            });
+        }
+    }, [swapHash, isAppKitRoute, userAddress, fromTokenSymbol, toTokenSymbol, amountIn, bestQuote]);
 
     useEffect(() => { if (approveSuccess) refetchAllowance(); }, [approveSuccess, refetchAllowance]);
 
@@ -296,7 +313,6 @@ export function useSwap(
             if (!bestQuote) throw new Error('No swap source selected.');
 
             if (isAppKitRoute) {
-                // Pass user-defined slippage to the App Kit SDK
                 const result = await appKitSwap.executeSwap(fromTokenSymbol, toTokenSymbol, amountIn, slippage);
                 if (result?.txHash) {
                     setSafeState({ 
@@ -305,6 +321,20 @@ export function useSwap(
                         txHash: result.txHash,
                         actualAmountOut: result.amountOut || null
                     }, txId);
+
+                    // Add to store immediately
+                    transactionStore.addTransaction({
+                        id: result.txHash,
+                        type: 'Swap',
+                        status: 'success',
+                        sender: userAddress,
+                        tokenIn: fromTokenSymbol,
+                        tokenOut: toTokenSymbol,
+                        amountIn: amountIn,
+                        amountOut: result.amountOut || bestQuote?.amountOutFormatted,
+                        chain: 'Arc Testnet',
+                        timestamp: Date.now()
+                    });
                 }
                 return;
             }
@@ -326,11 +356,8 @@ export function useSwap(
 
     const priceImpact = useMemo(() => {
         if (!amountIn || !bestQuote || bestQuote.amountOutRaw === 0n) return '0.00';
-        
-        // Enforce strict 1:1 parity for impact math to ensure precise UI synchronization
         const expected = parseFloat(amountIn); 
         const out = parseFloat(formatUnits(bestQuote.amountOutRaw, decimalsOut));
-        
         const impact = ((expected - out) / expected) * 100;
         return Math.max(0, impact).toFixed(2);
     }, [amountIn, bestQuote, decimalsOut]);

@@ -21,6 +21,7 @@ import { createViemAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
 import { getKitKey } from '../utils/kitKey';
 import { CHAINS, DEVELOPER_FEE_RECIPIENT } from '../config/constants';
 import { logger } from '../utils/logger';
+import { transactionStore } from '../utils/transactionStore';
 
 // --- Constants ---
 const ARC_CHAIN_ID = CHAINS.ARC_TESTNET; // 5042002
@@ -187,11 +188,24 @@ export function useAppKitSwap() {
 
         if (hash) {
           setSafe({
-            step: 'success',
-            isLoading: false,
             txHash: hash,
             expectedOut: result?.amountOut || result?.toAmount || amountIn || null,
           });
+
+          // Global Optimistic Store Update
+          transactionStore.addTransaction({
+            id: hash,
+            type: 'Swap',
+            status: 'success',
+            sender: isConnected ? connector.address : null, // Best effort
+            tokenIn: fromToken,
+            tokenOut: toToken,
+            amountIn: amountIn,
+            amountOut: result?.amountOut || null,
+            chain: 'Arc Testnet',
+            timestamp: Date.now()
+          });
+
           return { txHash: hash, amountOut: result?.amountOut };
         } else {
           throw new Error('Swap completed but no transaction hash was returned');

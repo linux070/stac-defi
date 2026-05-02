@@ -11,6 +11,7 @@ import { getKitKey } from '../utils/kitKey';
 import { isAllowedApiUrl } from '../utils/security';
 import { logger } from '../utils/logger';
 import { DEVELOPER_FEE_RECIPIENT } from '../config/constants';
+import { transactionStore } from '../utils/transactionStore';
 
 // --- Configuration & Constants ---
 
@@ -98,6 +99,7 @@ export function useBridge() {
   });
 
   const activeTxIdRef = useRef(0);
+  const sourceTxHashRef = useRef(null);
   const setBridgeStateTop = useCallback((ns) => setState(p => ({ ...p, ...ns })), []);
 
   useEffect(() => {
@@ -187,9 +189,36 @@ export function useBridge() {
 
       // Arc Docs Event Handlers
       kit.on("bridge.approve", () => setBridgeState({ step: 'approving' }));
-      kit.on("bridge.burn", (p) => setBridgeState({ step: 'burning', sourceTxHash: p.values.txHash, messageHash: p.values.messageHash, rawMessage: p.values.message }));
+      kit.on("bridge.burn", (p) => {
+        const sourceHash = p.values.txHash;
+        sourceTxHashRef.current = sourceHash;
+        setBridgeState({ step: 'burning', sourceTxHash: sourceHash, messageHash: p.values.messageHash, rawMessage: p.values.message });
+        
+        // Add to global store immediately
+        transactionStore.addTransaction({
+          id: sourceHash,
+          type: 'Bridge',
+          status: 'relaying',
+          sender: address,
+          amount: amount,
+          sourceChain: sourceChain.replace('_', ' '),
+          destinationChain: destChain.replace('_', ' '),
+          timestamp: Date.now()
+        });
+      });
       kit.on("bridge.fetchAttestation", (p) => setBridgeState({ step: 'forwarding', attestation: p.values.attestation, messageHash: p.values.messageHash }));
-      kit.on("bridge.mint", (p) => setBridgeState({ step: 'minting', receiveTxHash: p.values.txHash }));
+      kit.on("bridge.mint", (p) => {
+        const receiveHash = p.values.txHash;
+        setBridgeState({ step: 'minting', receiveTxHash: receiveHash });
+        
+        // Update store with destination hash using the Ref to avoid closure staleness
+        if (sourceTxHashRef.current) {
+          transactionStore.updateTransaction(sourceTxHashRef.current, { 
+            status: 'success', 
+            receiveTxHash: receiveHash 
+          });
+        }
+      });
 
       const result = await kit.bridge({
         from: { adapter, chain: sourceChain },

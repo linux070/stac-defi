@@ -1,9 +1,10 @@
 import { useState, useMemo, memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAccount, usePublicClient } from 'wagmi';
-import { parseAbiItem } from 'viem';
-import { DEVELOPER_FEE_RECIPIENT, APP_KIT_ADDRESS } from '../config/constants';
+import { parseAbiItem, createPublicClient, http } from 'viem';
+import { DEVELOPER_FEE_RECIPIENT, APP_KIT_ADDRESS, USDC_ADDRESS } from '../config/constants';
 import { getItem, setItem } from '../utils/indexedDB';
+import { transactionStore } from '../utils/transactionStore';
 import { 
   Search, 
   ChevronDown, 
@@ -25,8 +26,11 @@ import '../styles/transactions-styles.css';
 
 const SWAP_EVENT_SIGNATURE = 'event Swap(address indexed sender, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, address indexed feeRecipient, uint256 feeAmount)';
 const SWAP_EVENT_ABI = parseAbiItem(SWAP_EVENT_SIGNATURE);
-const BLOCKS_TO_SCAN = 10000n; // Scan last 10k blocks to prevent RPC spam
-const HISTORY_CACHE_KEY = 'stac_onchain_history_v1';
+const TRANSFER_EVENT_SIGNATURE = 'event Transfer(address indexed from, address indexed to, uint256 value)';
+const TRANSFER_EVENT_ABI = parseAbiItem(TRANSFER_EVENT_SIGNATURE);
+
+const BLOCKS_TO_SCAN = 10000n; // RPC limit is 10k
+const HISTORY_CACHE_KEY = 'stac_onchain_history_v4';
 
 
 // =============================================================================
@@ -132,14 +136,30 @@ const Transactions = () => {
   const [tooltipHash, setTooltipHash] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 10;
+  
+  const wagmiPublicClient = usePublicClient();
+  
+  // Dedicated Arc Client to ensure history is fetched even if wallet is on wrong chain (Relay.link style)
+  const arcClient = useMemo(() => createPublicClient({
+    chain: { id: 5042002, name: 'Arc Testnet', nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 }, rpcUrls: { default: { http: ['https://rpc.testnet.arc.network'] } } },
+    transport: http(import.meta.env.VITE_ARC_RPC_URL || 'https://rpc.testnet.arc.network')
+  }), []);
 
-  const publicClient = usePublicClient();
   const [blockchainTxs, setBlockchainTxs] = useState([]);
+  const [localTxs, setLocalTxs] = useState([]);
   const [isFetching, setIsFetching] = useState(true);
+
+  // Sync local optimistic transactions
+  const syncLocalTxs = async () => {
+    const txs = await transactionStore.getTransactions();
+    console.log(`[Transactions] Synced ${txs.length} local transactions.`);
+    setLocalTxs(txs);
+  };
 
   // Fetch Swap Logs Directly from the Blockchain (Direct API-Free Method)
   const fetchBlockchainHistory = async (force = false) => {
-    if (!publicClient) return;
+    const client = arcClient;
+    if (!client) return;
 
     // Load from cache first
     const cached = await getItem(HISTORY_CACHE_KEY);
@@ -152,43 +172,97 @@ const Transactions = () => {
 
     setIsFetching(true);
     try {
-      const latestBlock = await publicClient.getBlockNumber();
-      const fromBlock = latestBlock > BLOCKS_TO_SCAN ? latestBlock - BLOCKS_TO_SCAN : 0n;
+      const latestBlock = await client.getBlockNumber();
+      
+      // Multi-chunk fetcher to bypass the 10k RPC limit and go back ~100k blocks
+      // Multi-chunk fetcher to bypass the 10k RPC limit and go back ~500k blocks
+      const CHUNK_SIZE = 10000n;
+      const CHUNKS_TO_FETCH = 50; 
+      
+      let allSwapLogs = [];
+      let allFeeLogs = [];
+      
+      console.log(`[Transactions] Starting deep scan (up to ${CHUNKS_TO_FETCH * 10}k blocks)...`);
 
-      const logs = await publicClient.getLogs({
-        address: APP_KIT_ADDRESS,
-        event: SWAP_EVENT_ABI,
-        args: {
-          feeRecipient: DEVELOPER_FEE_RECIPIENT
-        },
-        fromBlock,
-        toBlock: 'latest'
-      });
-
-      // Efficient formatting without spamming getBlock
-      const formatted = await Promise.all(logs.map(async (log) => {
-        const { sender, tokenIn, tokenOut, amountIn, amountOut, feeRecipient } = log.args;
+      for (let i = 0; i < CHUNKS_TO_FETCH; i++) {
+        const chunkTo = latestBlock - (BigInt(i) * CHUNK_SIZE);
+        const chunkFrom = chunkTo - CHUNK_SIZE + 1n;
         
+        if (chunkTo <= 0n) break;
+
+        const [sLogs, fLogs] = await Promise.all([
+          client.getLogs({
+            address: APP_KIT_ADDRESS,
+            event: SWAP_EVENT_ABI,
+            args: { feeRecipient: DEVELOPER_FEE_RECIPIENT },
+            fromBlock: chunkFrom > 0n ? chunkFrom : 0n,
+            toBlock: chunkTo
+          }).catch(() => []),
+          client.getLogs({
+            address: USDC_ADDRESS,
+            event: TRANSFER_EVENT_ABI,
+            args: { to: DEVELOPER_FEE_RECIPIENT },
+            fromBlock: chunkFrom > 0n ? chunkFrom : 0n,
+            toBlock: chunkTo
+          }).catch(() => [])
+        ]);
+
+        allSwapLogs = [...allSwapLogs, ...sLogs];
+        allFeeLogs = [...allFeeLogs, ...fLogs];
+        
+        // Performance optimization: stop early if we have enough for initial view (e.g. 30 txs)
+        if (allSwapLogs.length + allFeeLogs.length > 30) break;
+      }
+
+      const swapLogs = allSwapLogs;
+      const feeLogs = allFeeLogs;
+
+      console.log(`[Transactions] Deep scan complete. Found ${swapLogs.length} swaps and ${feeLogs.length} fee events.`);
+
+      // Map existing swap hashes for de-duplication
+      const swapHashes = new Set(swapLogs.map(l => l.transactionHash.toLowerCase()));
+
+      // Process Swaps
+      const formattedSwaps = await Promise.all(swapLogs.map(async (log) => {
+        const { sender, tokenIn, tokenOut, amountIn, amountOut } = log.args;
         return {
           id: log.transactionHash,
-          sender,
+          sender: sender || '0x0000000000000000000000000000000000000000',
           tokenIn,
           tokenOut,
           amountIn: amountIn.toString(),
           amountOut: amountOut.toString(),
-          feeRecipient,
           type: 'Swap',
           status: 'success',
-          timestamp: Date.now() - (Number(latestBlock - log.blockNumber) * 2000), // Approximate timestamp (2s per block) to save RPC
+          timestamp: Date.now() - (Number(latestBlock - log.blockNumber) * 2000),
           chain: 'Arc Testnet'
         };
       }));
 
-      const sorted = formatted.sort((a, b) => b.timestamp - a.timestamp);
+      // Process Bridges (Transfers to fee recipient not part of a swap)
+      const bridgeTxs = feeLogs.filter(log => !swapHashes.has(log.transactionHash.toLowerCase()));
+      const formattedBridges = await Promise.all(bridgeTxs.map(async (log) => {
+        const { from, value } = log.args;
+        return {
+          id: log.transactionHash,
+          sender: from || '0x0000000000000000000000000000000000000000',
+          type: 'Bridge',
+          status: 'success',
+          amount: value ? (Number(value) / 1e6).toFixed(2) : '0.00', // Assuming USDC
+          sourceChain: 'Arc Testnet',
+          destinationChain: 'Ethereum Sepolia',
+          timestamp: Date.now() - (Number(latestBlock - log.blockNumber) * 2000),
+          chain: 'Arc Testnet'
+        };
+      }));
+
+      const combined = [...formattedSwaps, ...formattedBridges];
+      const sorted = combined.sort((a, b) => b.timestamp - a.timestamp);
+      
       setBlockchainTxs(sorted);
       await setItem(HISTORY_CACHE_KEY, sorted);
     } catch (err) {
-      console.error('[Transactions] Log Fetch Error:', err);
+      console.error('[Transactions] Fetch Error:', err);
     } finally {
       setIsFetching(false);
     }
@@ -196,43 +270,50 @@ const Transactions = () => {
 
   useEffect(() => {
     fetchBlockchainHistory();
-    // Refresh history when a new swap happens locally
+    syncLocalTxs();
+
+    // Listen for local store updates
+    window.addEventListener('stac_transactions_updated', syncLocalTxs);
     window.addEventListener('swapSuccess', () => fetchBlockchainHistory(true));
-    return () => window.removeEventListener('swapSuccess', () => fetchBlockchainHistory(true));
-  }, [publicClient]);
+    
+    return () => {
+      window.removeEventListener('stac_transactions_updated', syncLocalTxs);
+      window.removeEventListener('swapSuccess', () => fetchBlockchainHistory(true));
+    };
+  }, [arcClient]);
 
   const fetching = isFetching;
   const filteredTxs = useMemo(() => {
-    let combined = [...blockchainTxs];
+    // 1. Merge Blockchain and Local transactions
+    const blockchainHashes = new Set(blockchainTxs.map(tx => tx.id));
+    // Filter out local txs that are already confirmed on-chain
+    const uniqueLocal = localTxs.filter(tx => !blockchainHashes.has(tx.id));
+    
+    let combined = [...uniqueLocal, ...blockchainTxs];
 
     // Determine search/filter state
-    const isSearchQueryAddress = searchQuery.startsWith('0x') && searchQuery.length === 42;
-    const targetUserAddress = isSearchQueryAddress ? searchQuery.toLowerCase() : null;
-
-    if (isSearchQueryAddress) {
-      combined = combined.filter(tx => tx.sender.toLowerCase() === targetUserAddress.toLowerCase());
-    }
-
-    // Status Filter
-    if (statusFilter !== 'all') {
-      combined = combined.filter(tx => (tx.status || 'success').toLowerCase() === statusFilter);
-    }
-
-    // Search Query (Text search)
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+    // 2. Filter by Search Query (Wallet Address, Hash, or Token)
+    if (searchQuery && searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase().trim();
       combined = combined.filter(tx => 
-        tx.id.toLowerCase().includes(q) || 
+        (tx.sender && tx.sender.toLowerCase().includes(q)) || 
+        (tx.id && tx.id.toLowerCase().includes(q)) ||
         (tx.tokenIn && tx.tokenIn.toLowerCase().includes(q)) ||
         (tx.tokenOut && tx.tokenOut.toLowerCase().includes(q))
       );
     }
 
-    // Date Range Filter
+    // 3. Status Filter
+    if (statusFilter !== 'all') {
+      combined = combined.filter(tx => (tx.status || 'success').toLowerCase() === statusFilter);
+    }
+
+    // 4. Date Range Filter
     if (dateRangeFilter !== 'all') {
       const now = Date.now();
       const oneDay = 24 * 60 * 60 * 1000;
       combined = combined.filter(tx => {
+        if (!tx.timestamp) return false;
         const age = now - tx.timestamp;
         if (dateRangeFilter === '24h') return age <= oneDay;
         if (dateRangeFilter === '7d') return age <= 7 * oneDay;
@@ -241,8 +322,9 @@ const Transactions = () => {
       });
     }
 
-    return combined.sort((a, b) => b.timestamp - a.timestamp);
-  }, [blockchainTxs, statusFilter, searchQuery, dateRangeFilter]);
+    // 5. Final Sort (Newest first)
+    return combined.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  }, [blockchainTxs, localTxs, statusFilter, searchQuery, dateRangeFilter]);
 
   const paginatedTxs = useMemo(() => {
     const start = (currentPage - 1) * transactionsPerPage;
@@ -424,7 +506,37 @@ const Transactions = () => {
                               <div className="chain-mini-icon mr-2">
                                 <img src={getChainIcon(tx.destinationChain)} alt="" />
                               </div>
-                              <span className="hash-pending">{t('Relaying')}...</span>
+                              {tx.receiveTxHash ? (
+                                <div className="flex items-center">
+                                  <a href={getExplorerUrl(tx.receiveTxHash, getChainIdByName(tx.destinationChain))} target="_blank" rel="noopener" className="hash-link">
+                                    {formatAddress(tx.receiveTxHash)}
+                                  </a>
+                                  <div className="relative inline-flex items-center ml-1">
+                                    <button 
+                                      onClick={() => handleCopyText(tx.receiveTxHash, `dst-${tx.id}`)} 
+                                      onMouseEnter={() => setHoveredHash(`dst-${tx.id}`)}
+                                      onMouseLeave={() => setHoveredHash(null)}
+                                      className="copy-button-minimal"
+                                    >
+                                      <Copy size={12} strokeWidth={2} />
+                                    </button>
+                                    <AnimatePresence>
+                                      {(tooltipHash === `dst-${tx.id}` || hoveredHash === `dst-${tx.id}`) && (
+                                        <motion.div 
+                                          initial={{ opacity: 0, x: 5 }}
+                                          animate={{ opacity: 1, x: 0 }}
+                                          exit={{ opacity: 0, x: 5 }}
+                                          className="tooltip-left-stac"
+                                        >
+                                          {tooltipHash === `dst-${tx.id}` ? t('Copied') : t('Copy Hash')}
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="hash-pending">{t('Relaying')}...</span>
+                              )}
                             </div>
                           </div>
                         ) : (
