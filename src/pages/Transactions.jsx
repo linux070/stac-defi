@@ -175,9 +175,8 @@ const Transactions = () => {
       const latestBlock = await client.getBlockNumber();
       
       // Multi-chunk fetcher to bypass the 10k RPC limit and go back ~100k blocks
-      // Multi-chunk fetcher to bypass the 10k RPC limit and go back ~500k blocks
       const CHUNK_SIZE = 10000n;
-      const CHUNKS_TO_FETCH = 50; 
+      const CHUNKS_TO_FETCH = 10;
       
       let allSwapLogs = [];
       let allFeeLogs = [];
@@ -194,7 +193,6 @@ const Transactions = () => {
           client.getLogs({
             address: APP_KIT_ADDRESS,
             event: SWAP_EVENT_ABI,
-            args: { feeRecipient: DEVELOPER_FEE_RECIPIENT },
             fromBlock: chunkFrom > 0n ? chunkFrom : 0n,
             toBlock: chunkTo
           }).catch(() => []),
