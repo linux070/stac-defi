@@ -74,7 +74,7 @@ const getClient = (chainId, rpcUrls, chain) => {
 const RPC_URLS_BY_CHAIN = {
   [SEPOLIA_CHAIN_ID]: [import.meta.env.VITE_SEPOLIA_RPC_URL, 'https://ethereum-sepolia-rpc.publicnode.com', 'https://rpc.ankr.com/eth_sepolia'].filter(Boolean),
   [ARC_CHAIN_ID]: [import.meta.env.VITE_ARC_RPC_URL, 'https://rpc.testnet.arc.network'].filter(Boolean),
-  [BASE_SEPOLIA_CHAIN_ID]: [import.meta.env.VITE_BASE_SEPOLIA_RPC_URL, 'https://base-sepolia-rpc.publicnode.com'].filter(Boolean),
+  [BASE_SEPOLIA_CHAIN_ID]: [import.meta.env.VITE_BASE_SEPOLIA_RPC_URL, 'https://base-sepolia-rpc.publicnode.com', 'https://rpc.ankr.com/base_sepolia'].filter(Boolean),
 };
 
 const BALANCE_OF_ABI = [{ inputs: [{ name: 'owner', type: 'address' }], name: 'balanceOf', outputs: [{ name: '', type: 'uint256' }], type: 'function', stateMutability: 'view' }];
@@ -149,7 +149,7 @@ export function useBridge() {
       logger.log(`[AppKit] Initiating: ${direction}, Amount: ${amount}`);
       setBridgeState({ step: 'idle', error: null, result: null, isLoading: true, direction });
 
-      const kit = new AppKit();
+      const kit = new AppKit({ host: 'https://api.circle.com' });
 
       // Fetch kit key securely (runtime, never bundled)
       const kitKey = await getKitKey();

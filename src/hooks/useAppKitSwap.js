@@ -102,7 +102,7 @@ export function useAppKitSwap() {
 
       const kitKey = await getKitKey();
       const adapter = await createAdapter(connector);
-      const kit = new AppKit();
+      const kit = new AppKit({ host: 'https://api.circle.com' });
 
       const estimation = await kit.estimateSwap({
         from: { adapter, chain: 'Arc_Testnet' },
@@ -158,10 +158,10 @@ export function useAppKitSwap() {
         }
 
         setSafe({ step: 'swapping', error: null, isLoading: true, txHash: null });
-
+  
         const kitKey = await getKitKey();
         const adapter = await createAdapter(connector);
-        const kit = new AppKit();
+        const kit = new AppKit({ host: 'https://api.circle.com' });
 
         // Register event handlers
         kit.on('swap.approve', () => setSafe({ step: 'approving' }));
