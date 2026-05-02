@@ -10,6 +10,7 @@ import { createViemAdapterFromProvider } from "@circle-fin/adapter-viem-v2";
 import { getKitKey } from '../utils/kitKey';
 import { isAllowedApiUrl } from '../utils/security';
 import { logger } from '../utils/logger';
+import { DEVELOPER_FEE_RECIPIENT } from '../config/constants';
 
 // --- Configuration & Constants ---
 
@@ -195,7 +196,14 @@ export function useBridge() {
         to: { adapter, chain: destChain },
         amount: String(amount),
         token: 'USDC',
-        config: { transferSpeed: 'FAST', kitKey }
+        config: { 
+          transferSpeed: 'FAST', 
+          kitKey,
+          developerFee: {
+            recipient: DEVELOPER_FEE_RECIPIENT,
+            percentage: 0.01
+          }
+        }
       });
 
       if (result.state === 'success' || result.hash) {

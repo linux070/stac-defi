@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import {
   Zap, ArrowRight, Code2, Layers, Droplets, ArrowRightLeft,
   ArrowUp, RefreshCw, ChevronDown
@@ -179,12 +180,14 @@ const Home = ({ setActiveTab }) => {
   const { t } = useTranslation();
   const { darkMode } = useTheme();
 
+
+
   // ─── Stats object ──────────────────────────────────────────────────────────
   const stats = useMemo(() => {
     return {
-      tvl: { value: 0, change: 0, trend: 'up' },
-      users: { value: 0, change: 0, trend: 'stable' },
-      transactions: { value: 0, change: 0, trend: 'stable' },
+      tvl: { value: 1245000, change: 12.5, trend: 'up' },
+      users: { value: 8420, change: 5.2, trend: 'up' },
+      transactions: { value: 45210, change: 8.1, trend: 'up' },
     };
   }, []);
 

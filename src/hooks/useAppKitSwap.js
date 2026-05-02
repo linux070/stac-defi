@@ -108,7 +108,13 @@ export function useAppKitSwap() {
         tokenIn: fromToken,
         tokenOut: toToken,
         amountIn: String(amountIn),
-        config: { kitKey },
+        config: { 
+          kitKey,
+          developerFee: {
+            recipient: DEVELOPER_FEE_RECIPIENT,
+            percentage: 0.01
+          }
+        },
       });
 
       return {
@@ -172,7 +178,7 @@ export function useAppKitSwap() {
             maxSlippage: Number(slippage),
             developerFee: {
               recipient: DEVELOPER_FEE_RECIPIENT,
-              percentage: 0
+              percentage: 0.01
             }
           },
         });

@@ -1,7 +1,9 @@
 import { useState, useMemo, memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAccount } from 'wagmi';
-import { getItem } from '../utils/indexedDB';
+import { useAccount, usePublicClient } from 'wagmi';
+import { parseAbiItem } from 'viem';
+import { DEVELOPER_FEE_RECIPIENT, APP_KIT_ADDRESS } from '../config/constants';
+import { getItem, setItem } from '../utils/indexedDB';
 import { 
   Search, 
   ChevronDown, 
@@ -16,6 +18,15 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { timeAgo, formatAddress, copyToClipboard, getExplorerUrl } from '../utils/blockchain';
 import '../styles/transactions-styles.css';
+
+// =============================================================================
+// BLOCKCHAIN EVENT DEFINITIONS (Direct source of truth)
+// =============================================================================
+
+const SWAP_EVENT_SIGNATURE = 'event Swap(address indexed sender, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, address indexed feeRecipient, uint256 feeAmount)';
+const SWAP_EVENT_ABI = parseAbiItem(SWAP_EVENT_SIGNATURE);
+const BLOCKS_TO_SCAN = 10000n; // Scan last 10k blocks to prevent RPC spam
+const HISTORY_CACHE_KEY = 'stac_onchain_history_v1';
 
 
 // =============================================================================
@@ -122,28 +133,85 @@ const Transactions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 10;
 
-  const [localTxs, setLocalTxs] = useState([]);
+  const publicClient = usePublicClient();
+  const [blockchainTxs, setBlockchainTxs] = useState([]);
   const [isFetching, setIsFetching] = useState(true);
 
-  // Fetch from IndexedDB
-  const refreshTransactions = async () => {
+  // Fetch Swap Logs Directly from the Blockchain (Direct API-Free Method)
+  const fetchBlockchainHistory = async (force = false) => {
+    if (!publicClient) return;
+
+    // Load from cache first
+    const cached = await getItem(HISTORY_CACHE_KEY);
+    if (cached && !force) {
+      setBlockchainTxs(cached);
+      setIsFetching(false);
+      // Still fetch in background if cache is old? No, let's keep it simple for now to save RPC.
+      return;
+    }
+
     setIsFetching(true);
-    const txs = await getItem('myTransactions') || [];
-    setLocalTxs(txs);
-    setIsFetching(false);
+    try {
+      const latestBlock = await publicClient.getBlockNumber();
+      const fromBlock = latestBlock > BLOCKS_TO_SCAN ? latestBlock - BLOCKS_TO_SCAN : 0n;
+
+      const logs = await publicClient.getLogs({
+        address: APP_KIT_ADDRESS,
+        event: SWAP_EVENT_ABI,
+        args: {
+          feeRecipient: DEVELOPER_FEE_RECIPIENT
+        },
+        fromBlock,
+        toBlock: 'latest'
+      });
+
+      // Efficient formatting without spamming getBlock
+      const formatted = await Promise.all(logs.map(async (log) => {
+        const { sender, tokenIn, tokenOut, amountIn, amountOut, feeRecipient } = log.args;
+        
+        return {
+          id: log.transactionHash,
+          sender,
+          tokenIn,
+          tokenOut,
+          amountIn: amountIn.toString(),
+          amountOut: amountOut.toString(),
+          feeRecipient,
+          type: 'Swap',
+          status: 'success',
+          timestamp: Date.now() - (Number(latestBlock - log.blockNumber) * 2000), // Approximate timestamp (2s per block) to save RPC
+          chain: 'Arc Testnet'
+        };
+      }));
+
+      const sorted = formatted.sort((a, b) => b.timestamp - a.timestamp);
+      setBlockchainTxs(sorted);
+      await setItem(HISTORY_CACHE_KEY, sorted);
+    } catch (err) {
+      console.error('[Transactions] Log Fetch Error:', err);
+    } finally {
+      setIsFetching(false);
+    }
   };
 
   useEffect(() => {
-    refreshTransactions();
-    // Listen for new transactions
-    window.addEventListener('bridgeTransactionSaved', refreshTransactions);
-    return () => window.removeEventListener('bridgeTransactionSaved', refreshTransactions);
-  }, []);
+    fetchBlockchainHistory();
+    // Refresh history when a new swap happens locally
+    window.addEventListener('swapSuccess', () => fetchBlockchainHistory(true));
+    return () => window.removeEventListener('swapSuccess', () => fetchBlockchainHistory(true));
+  }, [publicClient]);
 
   const fetching = isFetching;
-
   const filteredTxs = useMemo(() => {
-    let combined = [...localTxs];
+    let combined = [...blockchainTxs];
+
+    // Determine search/filter state
+    const isSearchQueryAddress = searchQuery.startsWith('0x') && searchQuery.length === 42;
+    const targetUserAddress = isSearchQueryAddress ? searchQuery.toLowerCase() : null;
+
+    if (isSearchQueryAddress) {
+      combined = combined.filter(tx => tx.sender.toLowerCase() === targetUserAddress.toLowerCase());
+    }
 
     // Status Filter
     if (statusFilter !== 'all') {
@@ -174,7 +242,7 @@ const Transactions = () => {
     }
 
     return combined.sort((a, b) => b.timestamp - a.timestamp);
-  }, [localTxs, statusFilter, searchQuery, dateRangeFilter]);
+  }, [blockchainTxs, statusFilter, searchQuery, dateRangeFilter]);
 
   const paginatedTxs = useMemo(() => {
     const start = (currentPage - 1) * transactionsPerPage;

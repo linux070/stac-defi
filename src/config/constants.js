@@ -3,12 +3,13 @@
 export const APP_NAME = 'Stac';
 export const APP_DESCRIPTION = 'Experience direct on-chain interactions, seamless swapping, and cross-chain bridging, all powered by the Arc App Kit.';
 export const APP_KIT_ADDRESS = "0x3200000000000000000000000000000000000000"; // App Kit / Token Messenger on Arc
+export const SUBGRAPH_URL = "https://api.goldsky.com/api/public/project_cmog0jc3vgutj011pe1883ouw/subgraphs/stac-defi/v1/gn";
 
 // The Official USDC Address on Arc (Do not change)
 export const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
 
 // Developer Fee Recipient
-export const DEVELOPER_FEE_RECIPIENT = "0x7fdfEb80A18BC30604090DeFB5Bb53206e7E2c4a";
+export const DEVELOPER_FEE_RECIPIENT = "0x463e9783314c7532aE248425a0a502C12e17B8ae";
 
 
 
