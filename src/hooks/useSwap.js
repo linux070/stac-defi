@@ -6,7 +6,7 @@ import { TOKENS } from '../config/networks';
 
 import { useAppKitSwap, isAppKitSwapSupported } from './useAppKitSwap';
 import { logger } from '../utils/logger';
-import { transactionStore } from '../utils/transactionStore';
+import { txService } from '../lib/txService';
 
 const AGGREGATOR_SOURCES = [
     {
@@ -272,7 +272,7 @@ export function useSwap(
     // Add transaction to store immediately when hash is available (On-Chain)
     useEffect(() => {
         if (swapHash && !isAppKitRoute) {
-            transactionStore.addTransaction({
+            txService.saveTransaction({
                 id: swapHash,
                 type: 'Swap',
                 status: 'pending',
@@ -322,8 +322,8 @@ export function useSwap(
                         actualAmountOut: result.amountOut || null
                     }, txId);
 
-                    // Add to store immediately
-                    transactionStore.addTransaction({
+                    // Add to store immediately via txService
+                    txService.saveTransaction({
                         id: result.txHash,
                         type: 'Swap',
                         status: 'success',

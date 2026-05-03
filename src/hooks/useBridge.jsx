@@ -11,7 +11,7 @@ import { getKitKey } from '../utils/kitKey';
 import { isAllowedApiUrl } from '../utils/security';
 import { logger } from '../utils/logger';
 import { DEVELOPER_FEE_RECIPIENT } from '../config/constants';
-import { transactionStore } from '../utils/transactionStore';
+import { txService } from '../lib/txService';
 
 // --- Configuration & Constants ---
 
@@ -72,9 +72,20 @@ const getClient = (chainId, rpcUrls, chain) => {
 };
 
 const RPC_URLS_BY_CHAIN = {
-  [SEPOLIA_CHAIN_ID]: [import.meta.env.VITE_SEPOLIA_RPC_URL, 'https://ethereum-sepolia-rpc.publicnode.com', 'https://rpc.ankr.com/eth_sepolia'].filter(Boolean),
-  [ARC_CHAIN_ID]: [import.meta.env.VITE_ARC_RPC_URL, 'https://rpc.testnet.arc.network'].filter(Boolean),
-  [BASE_SEPOLIA_CHAIN_ID]: [import.meta.env.VITE_BASE_SEPOLIA_RPC_URL, 'https://base-sepolia-rpc.publicnode.com', 'https://rpc.ankr.com/base_sepolia'].filter(Boolean),
+  [SEPOLIA_CHAIN_ID]: [
+    'https://rpc.ankr.com/eth_sepolia',
+    'https://ethereum-sepolia-rpc.publicnode.com',
+    'https://sepolia.drpc.org'
+  ],
+  [ARC_CHAIN_ID]: [
+    'https://rpc.testnet.arc.network',
+    'https://arc-testnet.rpc.thirdweb.com'
+  ],
+  [BASE_SEPOLIA_CHAIN_ID]: [
+    'https://rpc.ankr.com/base_sepolia',
+    'https://base-sepolia-rpc.publicnode.com',
+    'https://base-sepolia.drpc.org'
+  ],
 };
 
 const BALANCE_OF_ABI = [{ inputs: [{ name: 'owner', type: 'address' }], name: 'balanceOf', outputs: [{ name: '', type: 'uint256' }], type: 'function', stateMutability: 'view' }];
@@ -187,6 +198,14 @@ export function useBridge() {
         }
       });
 
+      // 1. Create a persistent data object to avoid closure staleness
+      const txMetadata = {
+        address,
+        amount,
+        sourceChain: sourceChain.replace('_', ' '),
+        destChain: destChain.replace('_', ' ')
+      };
+
       // Arc Docs Event Handlers
       kit.on("bridge.approve", () => setBridgeState({ step: 'approving' }));
       kit.on("bridge.burn", (p) => {
@@ -194,31 +213,47 @@ export function useBridge() {
         sourceTxHashRef.current = sourceHash;
         setBridgeState({ step: 'burning', sourceTxHash: sourceHash, messageHash: p.values.messageHash, rawMessage: p.values.message });
         
-        // Add to global store immediately
-        transactionStore.addTransaction({
+        txService.saveTransaction({
           id: sourceHash,
           type: 'Bridge',
           status: 'relaying',
-          sender: address,
-          amount: amount,
-          sourceChain: sourceChain.replace('_', ' '),
-          destinationChain: destChain.replace('_', ' '),
+          sender: txMetadata.address,
+          tokenIn: 'USDC',
+          amount: txMetadata.amount,
+          sourceChain: txMetadata.sourceChain,
+          destinationChain: txMetadata.destChain,
           timestamp: Date.now()
         });
       });
+
       kit.on("bridge.fetchAttestation", (p) => setBridgeState({ step: 'forwarding', attestation: p.values.attestation, messageHash: p.values.messageHash }));
-      kit.on("bridge.mint", (p) => {
-        const receiveHash = p.values.txHash;
-        setBridgeState({ step: 'minting', receiveTxHash: receiveHash });
+      
+      // Handle both 'mint' and 'completed' to ensure we capture the hash
+      const handleDestinationHash = (p) => {
+        const destHash = p.values?.txHash || p.txHash;
+        if (!destHash) return;
+
+        setBridgeState(prev => ({ ...prev, step: 'completed', receiveTxHash: destHash }));
         
-        // Update store with destination hash using the Ref to avoid closure staleness
         if (sourceTxHashRef.current) {
-          transactionStore.updateTransaction(sourceTxHashRef.current, { 
-            status: 'success', 
-            receiveTxHash: receiveHash 
+          logger.info('[useBridge] Finalizing bridge in Supabase:', destHash);
+          txService.saveTransaction({
+            id: sourceTxHashRef.current,
+            receiveTxHash: destHash,
+            status: 'success',
+            sender: txMetadata.address,
+            type: 'Bridge',
+            tokenIn: 'USDC',
+            amount: txMetadata.amount,
+            sourceChain: txMetadata.sourceChain,
+            destinationChain: txMetadata.destChain,
+            timestamp: Date.now()
           });
         }
-      });
+      };
+
+      kit.on("bridge.mint", handleDestinationHash);
+      kit.on("bridge.completed", handleDestinationHash);
 
       const result = await kit.bridge({
         from: { adapter, chain: sourceChain },
