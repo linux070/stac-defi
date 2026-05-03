@@ -1,28 +1,26 @@
-# Stac | Professional DeFi Portal
+# Stac | 
 
-Experience direct on-chain interactions, seamless swapping, and cross-chain bridging, all powered by the **AppKit**.
-
-Stac is a high-performance decentralized application (dApp) engineered for the Arc Network. It provides a unified, institutional-grade interface for managing digital assets with absolute precision, security, and sub-second finality.
+Stac is A decentralized application (dApp) designed for users to experience direct on-chain interactions, seamless swapping, and cross-chain bridging, all powered by the **AppKit**.
 
 ## Core Features
 
-### 1. High-Performance Swapping
-* **Deterministic Execution**: Experience instant asset swaps with ultra-low latency and minimal slippage.
-* **Optimized Costs**: Leverages the Arc Network's efficiency to provide near-zero transaction costs.
-* **Direct Protocol Interaction**: Fully integrated with the **AppKit** for seamless, direct-to-contract execution.
+### 1. Lightning-Fast Swapping
+*  Experience instant asset swaps with ultra-low latency and minimal slippage.
+*  Leverages the Arc Network's efficiency to provide near-zero transaction costs.
+*  Fully integrated with the **AppKit** for seamless, direct-to-contract execution.
 
 ### 2. Multi-Chain Bridging
-* **Unified Asset Movement**: Bridge assets across supported networks with a streamlined, secure workflow.
-- **Enterprise-Grade Protection**: Multi-tiered validation and cryptographic integrity for every transfer.
-* **AppKit Powered**: Utilizes the latest **AppKit** architecture for reliable, high-fidelity cross-chain operations.
+*  Bridge assets across supported networks with a streamlined, secure workflow.
+*  Multi-tiered validation and cryptographic integrity for every transfer.
+*  Utilizes the latest **AppKit** architecture for reliable, high-fidelity cross-chain operations.
 
 ### 3. Institutional Liquidity (Coming Soon)
-* **Yield Optimization**: Provide liquidity to the network and earn protocol-level fees.
-* **Transparent Security**: Built on a zero-trust model to ensure liquidity provider safety and protocol stability.
+* Provide liquidity to the network and earn protocol-level fees.
+* Built on a zero-trust model to ensure liquidity provider safety and protocol stability.
 
-### 4. Advanced Transaction Ledger
-* **Persisted Activity**: Local-first storage utilizing IndexedDB ensures your personal transaction history remains accessible across sessions.
-* **Resilient Data**: Built-in persistence ensures your trade history survives browser refreshes and cache clears without centralized tracking.
+### 4. Advanced Transaction Page
+*  Local-first storage utilizing IndexedDB ensures your personal transaction history remains accessible across sessions.
+*  Built-in persistence ensures your trade history survives browser refreshes and cache clears without centralized tracking.
 
 ### 5. Premium UI/UX Design
 * **Real-Black Aesthetics**: A curated, high-contrast dark mode designed for professional environments.
